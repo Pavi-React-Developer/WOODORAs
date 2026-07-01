@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
+import ProductDetails from './pages/ProductDetails';
 import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
 import { authService } from './api/authService';
@@ -9,7 +10,8 @@ import CartOffcanvas from './components/CartOffcanvas';
 import WishlistOffcanvas from './components/WishlistOffcanvas';
 
 export default function App() {
-  const [view, setView] = useState('home'); // 'home' | 'login' | 'profile'
+  const [view, setView] = useState('home'); // 'home' | 'login' | 'profile' | 'product-detail'
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const [user, setUser] = useState(null);
   
   // Profile query state
@@ -97,13 +99,14 @@ export default function App() {
     setProfileData(null);
   };
 
-  const handleNavigate = (targetView, overrideUser = null) => {
-    const activeUser = overrideUser || user || authService.getCurrentUser();
+  const handleNavigate = (targetView, payload = null) => {
+    const activeUser = (targetView === 'admin' && payload && payload.role) ? payload : user || authService.getCurrentUser();
     if (targetView === 'admin' && (!activeUser || activeUser.role !== 'admin')) {
       alert("Unauthorized access");
       return;
     }
     setView(targetView);
+    setSelectedProduct(targetView === 'product-detail' ? payload : null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -170,6 +173,16 @@ export default function App() {
             onNavigate={handleNavigate} 
             onAddToCart={handleAddToCart} 
             onAddToWishlist={handleAddToWishlist} 
+          />
+        )}
+
+        {view === 'product-detail' && selectedProduct && (
+          <ProductDetails
+            product={selectedProduct}
+            user={user}
+            onNavigate={handleNavigate}
+            onAddToCart={handleAddToCart}
+            onAddToWishlist={handleAddToWishlist}
           />
         )}
 

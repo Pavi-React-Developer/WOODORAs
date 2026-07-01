@@ -77,6 +77,28 @@ export const catalogService = {
     }
   },
 
+  // Get a single product by id
+  getProductById: async (productId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/product/${productId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to fetch product details');
+      }
+
+      return data.data ? data.data : data;
+    } catch (error) {
+      console.error('Catalog API Error:', error);
+      throw error;
+    }
+  },
+
   // Get all categories
   getCategories: async () => {
     try {
