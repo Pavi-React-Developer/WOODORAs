@@ -4,6 +4,7 @@ const {
   addOrderItems,
   getOrderById,
   updateOrderToPaid,
+  updateOrderStatus,
   updateOrderToDelivered,
   getMyOrders,
   getOrders,
@@ -19,6 +20,8 @@ router.route('/myorders').get(protect, getMyOrders);
 router.route('/:id').get(protect, getOrderById);
 
 router.route('/:id/pay').put(protect, updateOrderToPaid);
+
+router.route('/:id/status').put(protect, authorize('admin', 'manager', 'staff'), updateOrderStatus);
 
 router.route('/:id/deliver').put(protect, authorize('admin', 'manager', 'staff'), updateOrderToDelivered);
 

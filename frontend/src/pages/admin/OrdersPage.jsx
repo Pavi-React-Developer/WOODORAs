@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { orderService } from '../../api/orderService';
-import { Package, Search, ExternalLink, Calendar, MapPin, Truck } from 'lucide-react';
+import { orderService, ORDER_STATUS_OPTIONS } from '../../api/orderService';
+import { Package, Search, Calendar, MapPin, Eye, Trash2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   useEffect(() => {
     fetchOrders();
@@ -34,6 +36,26 @@ export default function OrdersPage() {
     }
   };
 
+  const handleStatusChange = async (orderId, status) => {
+    try {
+      await orderService.updateOrderStatus(orderId, { status });
+      toast.success('Order status updated');
+      fetchOrders();
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  const handleViewOrder = (order) => {
+    setSelectedOrder(order);
+    setShowViewModal(true);
+  };
+
+  const closeViewModal = () => {
+    setShowViewModal(false);
+    setSelectedOrder(null);
+  };
+
   const filteredOrders = orders.filter(order => {
     const searchLower = searchTerm.toLowerCase();
     const matchId = order._id?.toLowerCase().includes(searchLower);
@@ -46,9 +68,12 @@ export default function OrdersPage() {
   const getStatusColor = (status) => {
     switch (status) {
       case 'Paid': return 'bg-green-100 text-green-700';
-      case 'Pending': return 'bg-yellow-100 text-yellow-700';
+      case 'Placed': return 'bg-yellow-100 text-yellow-700';
+      case 'Shipping': return 'bg-sky-100 text-sky-700';
+      case 'Out for delivery': return 'bg-purple-100 text-purple-700';
+      case 'Pending': return 'bg-amber-100 text-amber-700';
       case 'Processing': return 'bg-blue-100 text-blue-700';
-      case 'Shipped': return 'bg-purple-100 text-purple-700';
+      case 'Shipped': return 'bg-violet-100 text-violet-700';
       case 'Delivered': return 'bg-green-100 text-green-700';
       case 'Cancelled': return 'bg-red-100 text-red-700';
       default: return 'bg-gray-100 text-gray-700';
@@ -120,25 +145,55 @@ export default function OrdersPage() {
                     <div className="text-xs text-gray-500">{order.orderItems.length} items</div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${order.isPaid ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                      {order.paymentMethod} {order.isPaid ? '(Paid)' : '(Unpaid)'}
-                    </span>
+                    {order.paymentMethod === 'COD' ? (
+                      <div className="space-y-2">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${order.codAdvance > 0 ? 'bg-yellow-100 text-yellow-700' : order.isPaid ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
+                          COD{order.codAdvance > 0 ? ' (Partially Paid)' : ''}
+                        </span>
+                        {order.codAdvance > 0 && (
+                          <div className="text-xs text-gray-500 space-y-0.5">
+                            <div>Paid online: ₹{order.codAdvance.toLocaleString()}</div>
+                            <div>Balance due: ₹{(order.balanceAmount ?? 0).toLocaleString()}</div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${order.isPaid ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                        {order.paymentMethod} {order.isPaid ? '(Paid)' : '(Unpaid)'}
+                      </span>
+                    )}
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${getStatusColor(order.status)}`}>
-                      {order.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right space-x-2">
-                    {order.status !== 'Delivered' && (
-                      <button 
-                        onClick={() => handleMarkDelivered(order._id)}
-                        className="p-2 bg-[#8B5E3C]/10 text-[#8B5E3C] rounded-lg hover:bg-[#8B5E3C] hover:text-white transition-colors"
-                        title="Mark as Delivered"
+                    <div className="inline-flex items-center rounded-full border border-[#E6DFD4] bg-white shadow-sm">
+                      <select
+                        className="appearance-none bg-transparent px-4 py-2 text-sm font-semibold text-gray-900 rounded-full focus:outline-none"
+                        value={order.status}
+                        onChange={(e) => handleStatusChange(order._id, e.target.value)}
                       >
-                        <Truck className="w-4 h-4" />
-                      </button>
-                    )}
+                        {ORDER_STATUS_OPTIONS.map((statusOption) => (
+                          <option key={statusOption} value={statusOption}>
+                            {statusOption}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="pointer-events-none px-3 text-gray-500">▾</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-right flex justify-end gap-2">
+                    <button
+                      onClick={() => handleViewOrder(order)}
+                      className="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-[#E6DFD4] bg-white text-gray-700 hover:bg-[#f9fafb] transition-colors"
+                      title="View"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => toast('Delete action selected')}
+                      className="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-[#E6DFD4] bg-white text-gray-700 hover:bg-[#f9fafb] transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -146,6 +201,119 @@ export default function OrdersPage() {
           </table>
         </div>
       </div>
+
+      {showViewModal && selectedOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-2xl rounded-3xl bg-white shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[#E6DFD4]">
+              <h2 className="text-lg font-bold text-gray-900">Order Details</h2>
+              <button onClick={closeViewModal} className="text-gray-500 hover:text-gray-900">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-gray-500">Order ID</p>
+                  <p className="font-semibold text-gray-900">{selectedOrder._id}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-gray-500">Customer</p>
+                  <p className="font-semibold text-gray-900">{selectedOrder.shippingAddress?.fullName || selectedOrder.user?.name}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-gray-500">Status</p>
+                  <p className="font-semibold text-gray-900">{selectedOrder.status}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="rounded-3xl bg-[#F8F4EC] p-4">
+                  <p className="text-xs uppercase tracking-widest text-gray-500">Payment Method</p>
+                  <p className="mt-2 font-semibold text-gray-900">{selectedOrder.paymentMethod}</p>
+                </div>
+                <div className="rounded-3xl bg-[#F8F4EC] p-4">
+                  <p className="text-xs uppercase tracking-widest text-gray-500">Payment Status</p>
+                  <p className="mt-2 font-semibold text-gray-900">{selectedOrder.isPaid ? 'Paid' : 'Not paid'}</p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs uppercase tracking-widest text-gray-500 mb-3">Order Items</p>
+                <div className="space-y-4">
+                  {selectedOrder.orderItems.map((item, index) => (
+                    <div key={index} className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-4 rounded-3xl border border-[#E6DFD4] p-4 items-center">
+                      <div className="h-20 w-20 rounded-3xl overflow-hidden bg-gray-100 flex items-center justify-center">
+                        {item.image ? (
+                          <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="text-xs text-gray-400">No Image</div>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <p className="font-semibold text-gray-900">{item.name}</p>
+                        <p className="text-sm text-gray-500">Qty: {item.qty}</p>
+                        {item.weight && <p className="text-sm text-gray-500">Weight: {item.weight}</p>}
+                        <p className="text-sm text-gray-500">Subtotal: ₹{(item.price * item.qty).toLocaleString()}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-gray-500">Unit Price</p>
+                        <p className="font-semibold text-gray-900">₹{item.price.toLocaleString()}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-4 rounded-3xl bg-[#F8F4EC] p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-widest text-gray-500">Subtotal</p>
+                    <p className="mt-2 font-semibold text-gray-900">₹{selectedOrder.itemsPrice?.toLocaleString() ?? selectedOrder.totalPrice.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-widest text-gray-500">Paid Amount</p>
+                    <p className="mt-2 font-semibold text-gray-900">₹{(selectedOrder.codAdvance || 0).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-widest text-gray-500">Balance Amount</p>
+                    <p className="mt-2 font-semibold text-gray-900">₹{(selectedOrder.balanceAmount || 0).toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="rounded-3xl bg-[#F8F4EC] p-4">
+                  <p className="text-xs uppercase tracking-widest text-gray-500">From (Seller)</p>
+                  <p className="mt-2 font-semibold text-gray-900">Wooden Toys Warehouse</p>
+                  <p className="text-sm text-gray-500">12 Craft Street, Coimbatore, Tamil Nadu 641035</p>
+                </div>
+                <div className="rounded-3xl bg-[#F8F4EC] p-4">
+                  <p className="text-xs uppercase tracking-widest text-gray-500">To (Customer)</p>
+                  <p className="mt-2 font-semibold text-gray-900">{selectedOrder.shippingAddress?.fullName || selectedOrder.user?.name}</p>
+                  <p className="text-sm text-gray-500">
+                    {selectedOrder.shippingAddress?.address}<br />
+                    {selectedOrder.shippingAddress?.city}, {selectedOrder.shippingAddress?.state} {selectedOrder.shippingAddress?.pinCode}
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-3xl bg-[#F8F4EC] p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-gray-500">Order Status</p>
+                  <p className="mt-2 font-semibold text-gray-900">{selectedOrder.status}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-gray-500">Payment State</p>
+                  <p className="mt-2 font-semibold text-gray-900">{selectedOrder.isPaid ? 'Paid' : 'Pending'}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-gray-500">Delivery State</p>
+                  <p className="mt-2 font-semibold text-gray-900">{selectedOrder.isDelivered ? 'Delivered' : 'Not delivered'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

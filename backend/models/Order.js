@@ -13,6 +13,17 @@ const orderItemSchema = new mongoose.Schema({
   },
 });
 
+const ORDER_STATUSES = [
+  'Placed',
+  'Shipping',
+  'Out for delivery',
+  'Pending',
+  'Processing',
+  'Shipped',
+  'Delivered',
+  'Cancelled',
+];
+
 const orderSchema = new mongoose.Schema(
   {
     user: {
@@ -90,7 +101,7 @@ const orderSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'],
+      enum: ORDER_STATUSES,
       default: 'Pending',
     }
   },
@@ -99,4 +110,6 @@ const orderSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model('Order', orderSchema);
+const OrderModel = mongoose.model('Order', orderSchema);
+OrderModel.VALID_STATUSES = ORDER_STATUSES;
+module.exports = OrderModel;

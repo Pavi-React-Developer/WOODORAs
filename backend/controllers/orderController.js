@@ -98,6 +98,58 @@ const updateOrderToPaid = async (req, res) => {
   }
 };
 
+// @desc    Update order status
+// @route   PUT /api/orders/:id/status
+// @access  Private/Admin
+const updateOrderStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const validStatuses = Order.VALID_STATUSES || [
+      'Placed',
+      'Shipping',
+      'Out for delivery',
+      'Delivered',
+      'Cancelled',
+      'Pending',
+      'Processing',
+      'Shipped',
+    ];
+
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: 'Invalid order status' });
+    }
+
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    order.status = status;
+
+    if (status === 'Delivered') {
+      order.isDelivered = true;
+      order.deliveredAt = Date.now();
+      if (order.paymentMethod === 'COD' && !order.isPaid) {
+        order.isPaid = true;
+        order.paidAt = Date.now();
+      }
+    }
+
+    if (status === 'Cancelled') {
+      order.isDelivered = false;
+    }
+
+    if (['Placed', 'Shipping', 'Out for delivery', 'Pending', 'Processing', 'Shipped'].includes(status)) {
+      order.isDelivered = false;
+    }
+
+    const updatedOrder = await order.save();
+    res.json(updatedOrder);
+  } catch (error) {
+    res.status(500).json({ message: error.message || 'Server Error' });
+  }
+};
+
 // @desc    Update order to delivered
 // @route   PUT /api/orders/:id/deliver
 // @access  Private/Admin
@@ -105,22 +157,21 @@ const updateOrderToDelivered = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
 
-    if (order) {
-      order.isDelivered = true;
-      order.deliveredAt = Date.now();
-      order.status = 'Delivered';
-      
-      // If COD, mark as paid upon delivery
-      if (order.paymentMethod === 'COD' && !order.isPaid) {
-          order.isPaid = true;
-          order.paidAt = Date.now();
-      }
-
-      const updatedOrder = await order.save();
-      res.json(updatedOrder);
-    } else {
-      res.status(404).json({ message: 'Order not found' });
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
     }
+
+    order.isDelivered = true;
+    order.deliveredAt = Date.now();
+    order.status = 'Delivered';
+
+    if (order.paymentMethod === 'COD' && !order.isPaid) {
+      order.isPaid = true;
+      order.paidAt = Date.now();
+    }
+
+    const updatedOrder = await order.save();
+    res.json(updatedOrder);
   } catch (error) {
     res.status(500).json({ message: error.message || 'Server Error' });
   }
@@ -154,6 +205,7 @@ module.exports = {
   addOrderItems,
   getOrderById,
   updateOrderToPaid,
+  updateOrderStatus,
   updateOrderToDelivered,
   getMyOrders,
   getOrders,

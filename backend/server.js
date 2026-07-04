@@ -13,6 +13,7 @@ const orderRoutes = require('./routes/orderRoutes');
 const feeRoutes = require('./routes/feeRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const seedAttributes = require('./seedAttributes');
+const Order = require('./models/Order');
 
 // Load env vars
 dotenv.config();
@@ -23,6 +24,7 @@ connectDB();
 // Seed default attributes once DB is open
 mongoose.connection.once('open', () => {
     seedAttributes();
+    console.log('Connected to DB. Valid order statuses:', Order.VALID_STATUSES.join(', '));
 });
 
 const app = express();

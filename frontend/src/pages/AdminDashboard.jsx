@@ -18,6 +18,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
   const [currentTab, setCurrentTab] = useState('dashboard'); // 'dashboard' | 'catalog' | 'products'
   const [catalogSubTab, setCatalogSubTab] = useState('categories'); // 'categories' | 'subcategories' | etc.
   const [productSubTab, setProductSubTab] = useState('list'); // 'list' | 'add'
+  const [productMenuOpen, setProductMenuOpen] = useState(false);
   const [categorySubTab, setCategorySubTab] = useState('list'); // 'list' | 'add' | 'edit'
   const [subCategorySubTab, setSubCategorySubTab] = useState('list'); // 'list' | 'add'
 
@@ -504,7 +505,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
               >
                 <span className="flex items-center gap-2.5">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
-                  Catalog
+                  Catalog Management
                 </span>
                 <svg className={`w-3.5 h-3.5 transition-transform ${catalogMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
               </button>
@@ -544,20 +545,53 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                     Attributes
                   </button>
                   )}
-                  {canAccessCatalog && (
-                  <button
-                    onClick={() => setCurrentTab('v2-products')}
-                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors ${
-                      currentTab === 'v2-products' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
-                    }`}
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
-                    Products
-                  </button>
-                  )}
                 </div>
               )}
               </div>{/* close pt-4 */}
+
+              {/* Products */}
+              {canAccessCatalog && (
+                <div className="pt-2 border-t border-[#E6DFD4]/50 mt-2">
+                  <button
+                    onClick={() => {
+                      setProductMenuOpen(open => !open);
+                      setCurrentTab('v2-products');
+                      if (!productMenuOpen) setProductSubTab('list');
+                    }}
+                    className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 ${
+                      currentTab === 'v2-products' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+                      Products Management
+                    </span>
+                    <svg className={`w-3.5 h-3.5 transition-transform ${productMenuOpen || currentTab === 'v2-products' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                  </button>
+                  {(productMenuOpen || currentTab === 'v2-products') && (
+                    <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
+                      <button
+                        onClick={() => { setCurrentTab('v2-products'); setProductSubTab('list'); }}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors ${
+                          currentTab === 'v2-products' && productSubTab === 'list' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                        }`}
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                        Product List
+                      </button>
+                      <button
+                        onClick={() => { setCurrentTab('v2-products'); setProductSubTab('add'); }}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors ${
+                          currentTab === 'v2-products' && productSubTab === 'add' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                        }`}
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                        Add Product
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Orders Management */}
               {(isAdmin || canView('orders')) && (
@@ -570,7 +604,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                   >
                     <span className="flex items-center gap-2.5">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
-                      Orders
+                      Orders Management
                     </span>
                   </button>
                 </div>
@@ -1674,7 +1708,10 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
           {/* ── FEE MANAGEMENT ── */}
           {(isAdmin || canView('fees')) && currentTab === 'fees' && feeSubTab === 'list' && (
             <FeeListPage 
-              onNavigate={(tab) => setFeeSubTab(tab)} 
+              onNavigate={(tab, fee) => {
+                setEditingFee(fee || null);
+                setFeeSubTab(tab);
+              }} 
               onEditFee={(fee) => { setEditingFee(fee); setFeeSubTab('add'); }} 
             />
           )}

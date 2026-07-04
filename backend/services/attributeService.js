@@ -199,25 +199,32 @@ const createAttribute = async (data, auditContext) => {
         }
     } else {
         // Create a brand new attribute
-        attribute = await Attribute.create({
-            name,
-            slug: generatedSlug,
-            code: generatedCode,
-            category,
-            subCategory,
-            type: normalizeType(type),
-            description,
-            displayOrder: displayOrder || 1,
-            isActive: isActive !== undefined ? isActive : true,
-            isRequired: isRequired !== undefined ? isRequired : false,
-            isSearchable: isSearchable !== undefined ? isSearchable : false,
-            isFilterable: isFilterable !== undefined ? isFilterable : false,
-            isComparable: isComparable !== undefined ? isComparable : false,
-            isVariant: isVariant !== undefined ? isVariant : false,
-            visibleOnProduct: visibleOnProduct !== undefined ? visibleOnProduct : true,
-            visibleOnWebsite: visibleOnWebsite !== undefined ? visibleOnWebsite : true,
-            createdBy: auditContext.userId,
-        });
+        try {
+            attribute = await Attribute.create({
+                name,
+                slug: generatedSlug,
+                code: generatedCode,
+                category,
+                subCategory,
+                type: normalizeType(type),
+                description,
+                displayOrder: displayOrder || 1,
+                isActive: isActive !== undefined ? isActive : true,
+                isRequired: isRequired !== undefined ? isRequired : false,
+                isSearchable: isSearchable !== undefined ? isSearchable : false,
+                isFilterable: isFilterable !== undefined ? isFilterable : false,
+                isComparable: isComparable !== undefined ? isComparable : false,
+                isVariant: isVariant !== undefined ? isVariant : false,
+                visibleOnProduct: visibleOnProduct !== undefined ? visibleOnProduct : true,
+                visibleOnWebsite: visibleOnWebsite !== undefined ? visibleOnWebsite : true,
+                createdBy: auditContext.userId,
+            });
+        } catch (err) {
+            if (err.code === 11000) {
+                throw new Error('Attribute already exists');
+            }
+            throw err;
+        }
 
         // Create values if provided
         if (values && Array.isArray(values) && values.length > 0) {

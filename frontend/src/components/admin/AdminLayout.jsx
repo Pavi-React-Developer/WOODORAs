@@ -37,6 +37,7 @@ const AdminLayout = ({ children }) => {
                 { label: 'Categories', href: '/admin/catalog/categories' },
                 { label: 'Sub Categories', href: '/admin/catalog/subcategories' },
                 { label: 'Attributes', href: '/admin/catalog/attributes' },
+                { label: 'Products', href: '/admin/products' },
             ],
         },
         {

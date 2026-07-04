@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { Edit3, Trash2 } from 'lucide-react';
 import { feeAPI } from '../../../api/feeService';
 
 export default function FeeListPage({ onNavigate, onEditFee }) {
@@ -77,7 +78,7 @@ export default function FeeListPage({ onNavigate, onEditFee }) {
           <p className="text-sm text-brand-medium">Manage all configured fees</p>
         </div>
         <button 
-          onClick={() => onNavigate('add')}
+          onClick={() => onNavigate('add', null)}
           className="bg-brand-dark hover:bg-black text-white text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-xl transition-colors shadow-sm flex items-center gap-2"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
@@ -161,10 +162,23 @@ export default function FeeListPage({ onNavigate, onEditFee }) {
                         {fee.active ? 'Active' : 'Inactive'}
                       </span>
                     </td>
-                    <td className="py-4 px-4 text-right space-x-2 whitespace-nowrap">
-                      <button onClick={() => alert('View details modal not implemented yet')} className="text-blue-600 hover:text-blue-800 text-xs font-bold uppercase">View</button>
-                      <button onClick={() => onEditFee(fee)} className="text-brand-dark hover:text-black text-xs font-bold uppercase">Edit</button>
-                      <button onClick={() => handleDelete(fee._id)} className="text-red-500 hover:text-red-700 text-xs font-bold uppercase">Delete</button>
+                    <td className="py-4 px-4 text-right whitespace-nowrap">
+                      <div className="inline-flex items-center gap-2">
+                        <button
+                          onClick={() => onEditFee(fee)}
+                          className="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-[#E6DFD4] bg-white text-brand-dark hover:bg-[#F9FAFB] transition-colors"
+                          title="Edit"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(fee._id)}
+                          className="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-[#E6DFD4] bg-white text-red-500 hover:bg-[#FEF2F2] transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

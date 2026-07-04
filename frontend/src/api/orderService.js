@@ -1,80 +1,92 @@
 import axios from 'axios';
+import { authService } from './authService';
 
 const API_URL = 'http://localhost:5000/api/orders';
+export const ORDER_STATUS_OPTIONS = [
+  'Placed',
+  'Processing',
+  'Shipping',
+  'Delivered',
+  'Out for delivery',
+  'Cancelled',
+];
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');
   return {
     headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      'Content-Type': 'application/json',
+    },
   };
 };
 
-import { authService } from './authService';
+const withAuthRetry = async (requestFn, fallbackMessage) => {
+  try {
+    const response = await requestFn(getAuthHeaders());
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 401) {
+      const refreshed = await authService.refreshSession();
+      if (refreshed) {
+        const retryResponse = await requestFn(getAuthHeaders());
+        return retryResponse.data;
+      }
+      authService.logout();
+      window.location.href = '/?view=login';
+      throw new Error('Session expired, please log in again.');
+    }
+    throw new Error(error.response?.data?.message || error.message || fallbackMessage);
+  }
+};
 
 export const orderService = {
   createOrder: async (orderData) => {
-    try {
-      const response = await axios.post(API_URL, orderData, getAuthHeaders());
-      return response.data;
-    } catch (error) {
-      if (error.response?.status === 401) {
-        const refreshed = await authService.refreshSession();
-        if (refreshed) {
-          const retryResponse = await axios.post(API_URL, orderData, getAuthHeaders());
-          return retryResponse.data;
-        } else {
-          authService.logout();
-        }
-      }
-      throw new Error(error.response?.data?.message || 'Failed to create order');
-    }
+    return withAuthRetry(
+      (config) => axios.post(API_URL, orderData, config),
+      'Failed to create order'
+    );
   },
 
   getOrderById: async (id) => {
-    try {
-      const response = await axios.get(`${API_URL}/${id}`, getAuthHeaders());
-      return response.data;
-    } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch order');
-    }
+    return withAuthRetry(
+      (config) => axios.get(`${API_URL}/${id}`, config),
+      'Failed to fetch order'
+    );
   },
 
   getMyOrders: async () => {
-    try {
-      const response = await axios.get(`${API_URL}/myorders`, getAuthHeaders());
-      return response.data;
-    } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch your orders');
-    }
+    return withAuthRetry(
+      (config) => axios.get(`${API_URL}/myorders`, config),
+      'Failed to fetch your orders'
+    );
   },
 
   getAllOrders: async () => {
-    try {
-      const response = await axios.get(API_URL, getAuthHeaders());
-      return response.data;
-    } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch all orders');
-    }
+    return withAuthRetry(
+      (config) => axios.get(API_URL, config),
+      'Failed to fetch all orders'
+    );
   },
 
   updateOrderToDelivered: async (id) => {
-    try {
-      const response = await axios.put(`${API_URL}/${id}/deliver`, {}, getAuthHeaders());
-      return response.data;
-    } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to mark as delivered');
-    }
+    return withAuthRetry(
+      (config) => axios.put(`${API_URL}/${id}/deliver`, {}, config),
+      'Failed to mark as delivered'
+    );
   },
   
   updateOrderToPaid: async (id, paymentResult) => {
-      try {
-        const response = await axios.put(`${API_URL}/${id}/pay`, paymentResult, getAuthHeaders());
-        return response.data;
-      } catch (error) {
-        throw new Error(error.response?.data?.message || 'Failed to update payment status');
-      }
-  }
+    return withAuthRetry(
+      (config) => axios.put(`${API_URL}/${id}/pay`, paymentResult, config),
+      'Failed to update payment status'
+    );
+  },
+
+  updateOrderStatus: async (id, statusData) => {
+    return withAuthRetry(
+      (config) => axios.put(`${API_URL}/${id}/status`, statusData, config),
+      'Failed to update order status'
+    );
+  },
 };

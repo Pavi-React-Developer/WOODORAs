@@ -48,6 +48,10 @@ const createAttribute = async (req, res) => {
             data: attribute,
         });
     } catch (error) {
+        if (error.code === 11000) {
+            const duplicateField = error.keyValue ? Object.keys(error.keyValue).join(', ') : 'attribute';
+            return res.status(400).json({ success: false, message: `Attribute already exists with duplicate ${duplicateField}` });
+        }
         res.status(500).json({ success: false, message: error.message });
     }
 };
