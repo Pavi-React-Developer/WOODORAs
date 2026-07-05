@@ -75,7 +75,7 @@ const feeSchema = new mongoose.Schema(
   }
 );
 
-feeSchema.pre('validate', function syncWeightSlabCharge(next) {
+feeSchema.pre('validate', function syncWeightSlabCharge() {
   if (Array.isArray(this.weightSlabs)) {
     this.weightSlabs.forEach((slab, index) => {
       if (slab.charge === undefined || slab.charge === null) {
@@ -89,7 +89,6 @@ feeSchema.pre('validate', function syncWeightSlabCharge(next) {
       }
     });
   }
-  next();
 });
 
 module.exports = mongoose.model('Fee', feeSchema);

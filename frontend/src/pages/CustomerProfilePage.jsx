@@ -87,6 +87,7 @@ export default function CustomerProfilePage({
   const profile = profileData?.user || user || {};
   const { cartItems, updateQuantity, removeFromCart, getSubtotal } = useCartStore();
   const [activeModule, setActiveModule] = useState('profile');
+  const [activeOrder, setActiveOrder] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   
@@ -314,25 +315,173 @@ export default function CustomerProfilePage({
       ) : orders.length === 0 ? (
         <EmptyState icon={Package} title="No orders yet" text="Your placed orders will appear here after checkout." action="Start Shopping" onAction={() => onNavigate('home')} />
       ) : (
-        <div className="mt-6 space-y-4">
-          {orders.map((order) => (
-            <div key={order._id} className="rounded-[14px] border border-[#E9DED3] bg-white p-5">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm font-bold text-[#141225]">Order #{order._id.slice(-8).toUpperCase()}</p>
-                  <p className="mt-1 text-sm text-[#6D625C]">{formatDate(order.createdAt)} | {order.orderItems?.length || 0} item(s)</p>
-                </div>
-                <div className="text-right">
-                  <span className="rounded-full bg-[#F2E3D1] px-3 py-1 text-xs font-bold text-[#8B5E3C]">{order.status}</span>
-                  <p className="mt-2 text-base font-black text-[#141225]">Rs. {Number(order.totalPrice || 0).toLocaleString()}</p>
-                </div>
-              </div>
-            </div>
-          ))}
+        <div className="mt-6 overflow-x-auto rounded-[14px] border border-[#E9DED3] bg-white">
+          <table className="w-full text-left text-sm text-[#4A403B]">
+            <thead className="border-b border-[#E9DED3] bg-[#FAF8F5] text-xs font-bold uppercase tracking-wider text-[#6D625C]">
+              <tr>
+                <th className="p-4">Product Details</th>
+                <th className="p-4">Date</th>
+                <th className="p-4">Total</th>
+                <th className="p-4">Status</th>
+                <th className="p-4">Payment Type</th>
+                <th className="p-4 text-center">Rating</th>
+                <th className="p-4 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#E9DED3]">
+              {orders.map((order) => {
+                const firstItem = order.orderItems?.[0] || {};
+                const extraItemsCount = (order.orderItems?.length || 1) - 1;
+                const imageSrc = firstItem.image ? (firstItem.image.startsWith('http') ? firstItem.image : `http://localhost:5000${firstItem.image}`) : '/animal_balance_maze.png';
+
+                return (
+                  <tr key={order._id} className="transition-colors hover:bg-[#FAF8F5]/50">
+                    <td className="p-4">
+                      <div className="flex items-center gap-3 min-w-[200px]">
+                        <div className="h-12 w-12 shrink-0 overflow-hidden rounded-[8px] bg-[#F8F3EF]">
+                          <img src={imageSrc} alt={firstItem.name || 'Product'} className="h-full w-full object-cover" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-[#141225] line-clamp-1">{firstItem.name || `Order #${order._id.slice(-8).toUpperCase()}`}</p>
+                          {extraItemsCount > 0 && <p className="text-xs font-semibold text-[#9A6031]">+{extraItemsCount} more item(s)</p>}
+                          <p className="text-xs text-[#6D625C] mt-0.5">#{order._id.slice(-8).toUpperCase()}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4 whitespace-nowrap font-medium">{formatDate(order.createdAt)}</td>
+                    <td className="p-4 whitespace-nowrap font-black text-[#141225]">Rs. {Number(order.totalPrice || 0).toLocaleString()}</td>
+                    <td className="p-4 whitespace-nowrap">
+                      <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' : order.status === 'Cancelled' ? 'bg-red-100 text-red-700' : 'bg-[#F2E3D1] text-[#8B5E3C]'}`}>
+                        {order.status || 'Pending'}
+                      </span>
+                    </td>
+                    <td className="p-4 whitespace-nowrap font-medium">{order.paymentMethod || 'Online'}</td>
+                    <td className="p-4 text-center">
+                      <div className="flex justify-center gap-0.5 text-yellow-400">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className="h-3 w-3 fill-current" />
+                        ))}
+                      </div>
+                    </td>
+                    <td className="p-4 whitespace-nowrap text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        {order.status !== 'Cancelled' && order.status !== 'Delivered' && (
+                          <button 
+                            type="button"
+                            className="rounded border border-red-200 px-2.5 py-1.5 text-xs font-bold text-red-600 transition hover:bg-red-50"
+                            onClick={() => toast.error('Cancellation disabled for demo')}
+                          >
+                            Cancel
+                          </button>
+                        )}
+                        <button 
+                          type="button" 
+                          onClick={() => { setActiveOrder(order); setActiveModule('order-details'); }}
+                          className="flex items-center gap-1 rounded bg-[#9A6031] px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-[#7E4B25]"
+                        >
+                          <Eye className="h-3.5 w-3.5" /> View
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
     </section>
   );
+
+  const renderOrderDetails = () => {
+    if (!activeOrder) return null;
+    return (
+      <section className="px-5 py-7 lg:px-7">
+        <div className="flex items-center justify-between gap-4 mb-6">
+          <div>
+            <h2 className="text-lg font-bold text-[#141225]">Order Details</h2>
+            <p className="mt-1 text-sm text-[#6D625C]">Order #{activeOrder._id.slice(-8).toUpperCase()}</p>
+          </div>
+          <button type="button" onClick={() => { setActiveModule('orders'); setActiveOrder(null); }} className="rounded-[8px] border border-[#E9DED3] px-4 py-2 text-sm font-bold text-[#141225] hover:bg-gray-50">Back to Orders</button>
+        </div>
+
+        <div className="space-y-6">
+          <div className="rounded-[14px] border border-[#E9DED3] bg-white p-5">
+            <h3 className="font-bold text-[#141225] mb-4">Products</h3>
+            <div className="divide-y divide-[#E9DED3]">
+              {activeOrder.orderItems?.map((item, idx) => {
+                const imageSrc = item.image ? (item.image.startsWith('http') ? item.image : `http://localhost:5000${item.image}`) : '/animal_balance_maze.png';
+                return (
+                  <div key={idx} className="py-4 flex flex-col sm:flex-row gap-4 sm:items-center">
+                    <div className="h-20 w-20 shrink-0 overflow-hidden rounded-[8px] bg-[#F8F3EF]">
+                      <img src={imageSrc} alt={item.name} className="h-full w-full object-cover" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-bold text-[#141225]">{item.name}</p>
+                      <p className="text-sm text-[#6D625C] mt-1">Qty: {item.qty} | Rs. {Number(item.price).toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <button 
+                        onClick={() => onNavigate('product-detail', { _id: item.product })}
+                        className="rounded-[8px] bg-[#9A6031] px-5 py-2.5 text-xs font-bold text-white transition hover:bg-[#7E4B25] w-full sm:w-auto mt-2 sm:mt-0 shadow-sm"
+                      >
+                        Buy Again
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="mt-4 pt-4 border-t border-[#E9DED3] flex justify-between items-center">
+              <p className="text-sm font-bold text-[#6D625C]">Order Status:</p>
+              <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider ${activeOrder.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' : activeOrder.status === 'Cancelled' ? 'bg-red-100 text-red-700' : 'bg-[#F2E3D1] text-[#8B5E3C]'}`}>
+                {activeOrder.status || 'Pending'}
+              </span>
+            </div>
+          </div>
+
+          <div className="rounded-[14px] border border-[#E9DED3] bg-white p-5">
+            <h3 className="font-bold text-[#141225] mb-3">Shipping Address</h3>
+            {activeOrder.shippingAddress ? (
+              <div className="text-sm text-[#6D625C] space-y-1.5">
+                <p className="font-bold text-[#141225] text-base">{activeOrder.shippingAddress.fullName}</p>
+                <p>{activeOrder.shippingAddress.address}</p>
+                <p>{activeOrder.shippingAddress.city}, {activeOrder.shippingAddress.state} - {activeOrder.shippingAddress.pinCode}</p>
+                <p className="pt-2 flex items-center gap-2"><Phone className="w-4 h-4" /> {activeOrder.shippingAddress.phone}</p>
+              </div>
+            ) : (
+              <p className="text-sm text-[#6D625C]">No address provided.</p>
+            )}
+          </div>
+          
+          <div className="pt-4">
+            <h3 className="font-bold text-[#141225] mb-4">Recently Viewed Products</h3>
+            {savedItems && savedItems.length > 0 ? (
+               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                 {savedItems.slice(0, 3).map((item, i) => {
+                   const imageSrc = item.image ? (item.image.startsWith('http') ? item.image : `http://localhost:5000${item.image}`) : '/animal_balance_maze.png';
+                   return (
+                     <div key={i} className="group relative overflow-hidden rounded-[12px] border border-[#E9DED3] bg-white p-3 cursor-pointer shadow-sm hover:shadow-md transition-shadow" onClick={() => onNavigate('product-detail', { _id: item.id || item._id })}>
+                       <div className="aspect-square bg-[#F8F3EF] mb-3 rounded-lg overflow-hidden">
+                         <img src={imageSrc} alt={item.name} className="h-full w-full object-contain mix-blend-multiply transition duration-300 group-hover:scale-110" />
+                       </div>
+                       <p className="font-bold text-[#141225] text-sm line-clamp-1">{item.name}</p>
+                       <p className="font-bold text-[#8B5E3C] text-sm mt-1">Rs. {Number(item.price).toLocaleString()}</p>
+                     </div>
+                   );
+                 })}
+               </div>
+            ) : (
+               <div className="rounded-[12px] border border-[#E9DED3] bg-white p-6 text-center">
+                 <p className="text-sm text-[#6D625C]">No recently viewed products found.</p>
+                 <button onClick={() => onNavigate('home')} className="mt-3 text-[#9A6031] font-bold text-sm hover:underline">Start browsing toys</button>
+               </div>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  };
 
   const renderCart = () => (
     <section className="px-5 py-7 lg:px-7">
@@ -758,6 +907,7 @@ export default function CustomerProfilePage({
 
           {activeModule === 'profile' && renderProfile()}
           {activeModule === 'orders' && renderOrders()}
+          {activeModule === 'order-details' && renderOrderDetails()}
           {activeModule === 'addresses' && renderAddresses()}
           {activeModule === 'cart' && renderCart()}
           {activeModule === 'wishlist' && renderWishlist()}

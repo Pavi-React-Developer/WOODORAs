@@ -187,7 +187,8 @@ export default function AddFeePage({ onNavigate, editingFee }) {
       }
       onNavigate('list');
     } catch (error) {
-      alert('Failed to save fee');
+      alert(`Failed to save fee: ${error.message || 'Unknown error'}`);
+      console.error(error);
     }
   };
 

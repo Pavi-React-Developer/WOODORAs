@@ -74,6 +74,23 @@ const calculateWeightCharge = (fee, subtotal, totalWeight) => {
   const matchedSlab = slabs.find((slab) => totalWeight >= slab.minWeight && totalWeight <= slab.maxWeight);
   if (matchedSlab) return calculateFeeAmount(fee, subtotal, matchedSlab.feeValue);
 
+  // If weight does not match any slab directly (dynamic calculation)
+  const highestSlab = slabs[slabs.length - 1];
+  const lowestSlab = slabs[0];
+
+  if (totalWeight > highestSlab.maxWeight) {
+    // If exceeds maximum slab: Dynamically scale the charge (e.g., if max slab is 5kg for ₹200, charge ₹200 for every 5kg or part thereof)
+    const factor = Math.ceil(totalWeight / (highestSlab.maxWeight || 1));
+    return calculateFeeAmount(fee, subtotal, highestSlab.feeValue * factor);
+  } else if (totalWeight < lowestSlab.minWeight) {
+    // If below the minimum slab: apply the lowest slab's charge
+    return calculateFeeAmount(fee, subtotal, lowestSlab.feeValue);
+  } else {
+    // If falls in a gap between two slabs: use the next highest slab
+    const nextSlab = slabs.find((slab) => slab.minWeight >= totalWeight);
+    if (nextSlab) return calculateFeeAmount(fee, subtotal, nextSlab.feeValue);
+  }
+
   return 0;
 };
 
