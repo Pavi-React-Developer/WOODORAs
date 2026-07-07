@@ -12,8 +12,8 @@ import { calculateOrderFees } from '../utils/feeCalculator';
 export default function CompleteOrderPage({ onNavigate }) {
   const { cartItems, getSubtotal, clearCart, updateQuantity } = useCartStore();
 
-  const handleQtyChange = (productId, newQty, variant = null) => {
-    if (newQty >= 1 && newQty <= 10) {
+  const handleQtyChange = (productId, newQty, variant = null, maxStock = 999) => {
+    if (newQty >= 1 && newQty <= maxStock) {
       updateQuantity(productId, newQty, variant);
     }
   };
@@ -252,6 +252,7 @@ export default function CompleteOrderPage({ onNavigate }) {
           image: item.image,
           price: item.price,
           product: item.product,
+          variant: item.variant,
           weight: item.weight
         })),
         shippingAddress,
@@ -535,7 +536,7 @@ export default function CompleteOrderPage({ onNavigate }) {
                   <div key={idx} className="flex items-center gap-4">
                     <div className="w-16 h-16 bg-[#F8F4EC] rounded-xl overflow-hidden shrink-0 relative">
                       {item.image ? (
-                         <img src={item.image.startsWith('http') ? item.image : `http://localhost:5000${item.image}`} alt={item.name} className="w-full h-full object-cover" />
+                         <img src={item.image.startsWith('http') || item.image.startsWith('data:') ? item.image : (item.image.startsWith('/uploads') || item.image.startsWith('uploads/')) ? `http://localhost:5000${item.image.startsWith('/') ? '' : '/'}${item.image}` : item.image} alt={item.name} className="w-full h-full object-cover" />
                       ) : (
                          <div className="w-full h-full bg-gray-200"></div>
                       )}
@@ -559,9 +560,9 @@ export default function CompleteOrderPage({ onNavigate }) {
                         </button>
                         <span className="text-xs font-bold w-4 text-center">{item.qty}</span>
                         <button 
-                          onClick={() => handleQtyChange(item.product, item.qty + 1, item.variant)}
-                          disabled={item.qty >= 10}
-                          className="w-6 h-6 flex items-center justify-center rounded border border-[#E6DFD4] bg-white text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C] disabled:opacity-50 transition-colors"
+                          onClick={() => handleQtyChange(item.product, item.qty + 1, item.variant, item.maxStock)}
+                          disabled={item.maxStock !== undefined && item.qty >= item.maxStock}
+                          className="w-6 h-6 flex items-center justify-center rounded border border-[#E6DFD4] bg-white text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
                           <Plus className="w-3 h-3" />
                         </button>

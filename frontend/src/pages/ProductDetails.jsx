@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import { productV2API } from '../api/catalogV2Service';
 
 const finishOptions = ['Natural Maple', 'Oak Tint'];
@@ -262,7 +263,7 @@ const findMatchingVariant = (product, selectedAttributes) => {
   return null;
 };
 
-export default function ProductDetails({ product: initialProduct, user, onNavigate, onAddToCart, onAddToWishlist }) {
+export default function ProductDetails({ product: initialProduct, user, onNavigate, onAddToCart, onBuyNow, onAddToWishlist }) {
   const [selectedFinish, setSelectedFinish] = useState(finishOptions[0]);
   const [quantity, setQuantity] = useState(1);
   const [zipCode, setZipCode] = useState('');
@@ -454,6 +455,13 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
     const matchedVariant = findMatchingVariant(product, selectedAttributeValues);
     console.log('✨ Matched Variant:', matchedVariant);
     setSelectedVariant(matchedVariant || null);
+    
+    if (matchedVariant) {
+      const variantQty = Math.max(0, (matchedVariant.inventory || 0) - (matchedVariant.reserveStock || 0));
+      if (variantQty === 0) {
+        toast.error('Out of stock');
+      }
+    }
   }, [selectedAttributeValues, product, variantAttributeOptions]);
 
   const descriptionText = useMemo(() => {
@@ -502,6 +510,8 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
     };
     if (type === 'Cart') {
       onAddToCart?.(item);
+    } else if (type === 'Buy') {
+      onBuyNow?.(item);
     } else {
       onAddToWishlist?.(item);
     }
@@ -648,50 +658,95 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                 )}
                 <div>
                   <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Quantity</p>
-                  <div className="mt-3 inline-flex items-center rounded-full border border-slate-300 bg-white shadow-sm">
-                    <button
-                      type="button"
-                      onClick={() => setQuantity((value) => Math.max(1, value - 1))}
-                      className="px-4 py-3 text-base font-semibold text-slate-700 hover:bg-slate-100"
-                    >
-                      -
-                    </button>
-                    <span className="px-6 text-base font-semibold text-slate-900">{quantity}</span>
-                    <button
-                      type="button"
-                      onClick={() => setQuantity((value) => value + 1)}
-                      className="px-4 py-3 text-base font-semibold text-slate-700 hover:bg-slate-100"
-                    >
-                      +
-                    </button>
-                  </div>
+                  {(() => {
+                    const productVariants = product?.variants || [];
+                    const maxAllowedQty = selectedVariant
+                      ? Math.max(0, (selectedVariant.inventory || 0) - (selectedVariant.reserveStock || 0))
+                      : productVariants.length > 0
+                        ? productVariants.reduce((sum, v) => sum + Math.max(0, (v.inventory || 0) - (v.reserveStock || 0)), 0)
+                        : (product?.inventory?.stockQuantity || product?.stock || 0);
+
+                    // Clamp quantity if it exceeds the max allowed for the current variant
+                    if (maxAllowedQty > 0 && quantity > maxAllowedQty) {
+                      setTimeout(() => setQuantity(maxAllowedQty), 0);
+                    }
+
+                    return (
+                      <div className="mt-3 inline-flex items-center rounded-full border border-slate-300 bg-white shadow-sm">
+                        <button
+                          type="button"
+                          onClick={() => setQuantity((value) => Math.max(1, value - 1))}
+                          disabled={maxAllowedQty === 0}
+                          className="px-4 py-3 text-base font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+                        >
+                          -
+                        </button>
+                        <span className="px-6 text-base font-semibold text-slate-900">{maxAllowedQty === 0 ? 0 : quantity}</span>
+                        <button
+                          type="button"
+                          onClick={() => setQuantity((value) => Math.min(maxAllowedQty, value + 1))}
+                          disabled={quantity >= maxAllowedQty || maxAllowedQty === 0}
+                          className="px-4 py-3 text-base font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          +
+                        </button>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    onClick={() => handleAction('Cart')}
-                    disabled={productAttributes.length > 0 && !selectedVariant}
-                    className={`inline-flex min-h-[56px] w-full items-center justify-center rounded-full px-6 text-sm font-semibold uppercase tracking-[0.18em] transition ${
-                      productAttributes.length > 0 && !selectedVariant
-                        ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
-                        : 'bg-slate-900 text-white hover:bg-slate-800'
-                    }`}
-                  >
-                    Add to Cart
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleAction('Cart')}
-                    disabled={productAttributes.length > 0 && !selectedVariant}
-                    className={`inline-flex min-h-[56px] w-full items-center justify-center rounded-full border px-6 text-sm font-semibold uppercase tracking-[0.18em] transition ${
-                      productAttributes.length > 0 && !selectedVariant
-                        ? 'border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed'
-                        : 'border-slate-300 bg-white text-slate-900 hover:bg-slate-50'
-                    }`}
-                  >
-                    Buy Now
-                  </button>
+                  {(() => {
+                    const productVariants = product?.variants || [];
+                    const maxAllowedQty = selectedVariant
+                      ? Math.max(0, (selectedVariant.inventory || 0) - (selectedVariant.reserveStock || 0))
+                      : productVariants.length > 0
+                        ? productVariants.reduce((sum, v) => sum + Math.max(0, (v.inventory || 0) - (v.reserveStock || 0)), 0)
+                        : (product?.inventory?.stockQuantity || product?.stock || 0);
+                    
+                    const isOutOfStock = maxAllowedQty === 0;
+                    const isVariantRequiredButNotSelected = productAttributes.length > 0 && !selectedVariant;
+                    const isDisabled = isOutOfStock || isVariantRequiredButNotSelected;
+
+                    return (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (isOutOfStock) {
+                              toast.error('Product is out of stock!');
+                            } else {
+                              handleAction('Cart');
+                            }
+                          }}
+                          disabled={isVariantRequiredButNotSelected}
+                          className={`inline-flex min-h-[56px] w-full items-center justify-center rounded-full px-6 text-sm font-semibold uppercase tracking-[0.18em] transition ${
+                            isDisabled
+                              ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                              : 'bg-slate-900 text-white hover:bg-slate-800'
+                          }`}
+                        >
+                          {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (isOutOfStock) {
+                              toast.error('Product is out of stock!');
+                            } else {
+                              handleAction('Buy');
+                            }
+                          }}
+                          disabled={isVariantRequiredButNotSelected}
+                          className={`inline-flex min-h-[56px] w-full items-center justify-center rounded-full bg-slate-100 px-6 text-sm font-semibold uppercase tracking-[0.18em] text-slate-900 transition hover:bg-slate-200 ${
+                            isDisabled ? 'opacity-50 cursor-not-allowed' : ''
+                          }`}
+                        >
+                          Buy Now
+                        </button>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
             </div>

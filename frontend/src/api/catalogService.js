@@ -232,6 +232,19 @@ export const catalogService = {
     }
   },
 
+  // Update inventory
+  updateInventory: async (productId, inventoryData) => {
+    try {
+      return await authenticatedRequest(`${API_BASE_URL}/inventory/${productId}`, {
+        method: 'PUT',
+        body: JSON.stringify(inventoryData),
+      });
+    } catch (error) {
+      console.error('Update Inventory API Error:', error);
+      throw error;
+    }
+  },
+
   // Delete a product
   deleteProduct: async (productId) => {
     try {

@@ -11,6 +11,10 @@ const orderItemSchema = new mongoose.Schema({
     required: true,
     ref: 'Product',
   },
+  variant: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ProductVariant',
+  },
 });
 
 const ORDER_STATUSES = [

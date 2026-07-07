@@ -58,7 +58,7 @@ export default function ReviewOrderPage({ onNavigate }) {
               <div key={index} className="bg-white p-5 rounded-3xl shadow-sm border border-[#E6DFD4] flex flex-col sm:flex-row gap-5 items-center sm:items-start">
                 <div className="w-32 h-32 bg-[#F8F4EC] rounded-2xl overflow-hidden shrink-0">
                   {item.image ? (
-                    <img src={item.image.startsWith('http') ? item.image : `http://localhost:5000${item.image}`} alt={item.name} className="w-full h-full object-cover" />
+                    <img src={item.image.startsWith('http') || item.image.startsWith('data:') ? item.image : (item.image.startsWith('/uploads') || item.image.startsWith('uploads/')) ? `http://localhost:5000${item.image.startsWith('/') ? '' : '/'}${item.image}` : item.image} alt={item.name} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">No Image</div>
                   )}

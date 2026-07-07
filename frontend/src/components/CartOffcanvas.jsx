@@ -66,7 +66,8 @@ export default function CartOffcanvas({ isOpen, onClose, cartItems, onUpdateQuan
                         <span className="text-xs font-bold text-brand-dark w-4 text-center">{item.qty}</span>
                         <button 
                           onClick={() => onUpdateQuantity(index, 1)}
-                          className="w-6 h-6 flex items-center justify-center bg-white border border-brand-medium/30 rounded text-brand-dark font-bold hover:bg-brand-light/50 transition-colors"
+                          disabled={item.maxStock !== undefined && item.qty >= item.maxStock}
+                          className="w-6 h-6 flex items-center justify-center bg-white border border-brand-medium/30 rounded text-brand-dark font-bold hover:bg-brand-light/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           +
                         </button>

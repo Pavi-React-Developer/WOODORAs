@@ -5,8 +5,8 @@ import { Trash2, Plus, Minus, ArrowLeft, ShoppingBag } from 'lucide-react';
 export default function CartPage({ onNavigate }) {
   const { cartItems, removeFromCart, updateQuantity, getSubtotal } = useCartStore();
 
-  const handleQtyChange = (productId, newQty, variant = null) => {
-    if (newQty >= 1 && newQty <= 10) {
+  const handleQtyChange = (productId, newQty, variant = null, maxStock = 999) => {
+    if (newQty >= 1 && newQty <= maxStock) {
       updateQuantity(productId, newQty, variant);
     }
   };
@@ -45,7 +45,6 @@ export default function CartPage({ onNavigate }) {
         </div>
 
         <div className="bg-white rounded-3xl shadow-sm border border-[#E6DFD4] overflow-hidden mb-8">
-          {/* Cart Header - Hidden on small screens */}
           <div className="hidden md:grid grid-cols-12 gap-4 p-6 border-b border-[#E6DFD4] bg-gray-50/50 text-sm font-semibold text-gray-500">
             <div className="col-span-6">PRODUCT</div>
             <div className="col-span-3 text-center">QUANTITY</div>
@@ -53,16 +52,14 @@ export default function CartPage({ onNavigate }) {
             <div className="col-span-1 text-right"></div>
           </div>
 
-          {/* Cart Items */}
           <div className="divide-y divide-[#E6DFD4]">
             {cartItems.map((item) => (
               <div key={`${item.product}-${item.variant || 'default'}`} className="p-6 flex flex-col md:grid md:grid-cols-12 gap-6 items-center">
                 
-                {/* Product Info */}
                 <div className="col-span-6 flex items-center gap-4 w-full">
                   <div className="w-24 h-24 bg-[#F8F4EC] rounded-2xl overflow-hidden shrink-0">
                     {item.image ? (
-                      <img src={item.image.startsWith('http') ? item.image : `http://localhost:5000${item.image}`} alt={item.name} className="w-full h-full object-cover" />
+                      <img src={item.image.startsWith('http') || item.image.startsWith('data:') ? item.image : (item.image.startsWith('/uploads') || item.image.startsWith('uploads/')) ? `http://localhost:5000${item.image.startsWith('/') ? '' : '/'}${item.image}` : item.image} alt={item.name} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-400">No Img</div>
                     )}
@@ -75,12 +72,10 @@ export default function CartPage({ onNavigate }) {
                     {item.weight && !isNaN(Number(item.weight)) && Number(item.weight) > 0 && (
                       <p className="text-sm text-gray-500 font-medium">Weight: {(Number(item.weight) * item.qty)} kg</p>
                     )}
-                    {/* Mobile price */}
                     <div className="md:hidden mt-2 font-bold text-[#8B5E3C]">₹{(item.price * item.qty).toLocaleString()}</div>
                   </div>
                 </div>
 
-                {/* Quantity */}
                 <div className="col-span-3 flex justify-center w-full md:w-auto mt-4 md:mt-0">
                   <div className="flex items-center bg-[#F8F4EC] rounded-xl p-1 border border-[#E6DFD4]/50">
                     <button
@@ -92,21 +87,19 @@ export default function CartPage({ onNavigate }) {
                     </button>
                     <span className="w-10 text-center font-bold text-gray-800">{item.qty}</span>
                     <button
-                      onClick={() => handleQtyChange(item.product, item.qty + 1, item.variant)}
-                      className="w-8 h-8 flex items-center justify-center bg-white rounded-lg text-gray-600 hover:text-[#8B5E3C] shadow-sm disabled:opacity-50 transition-colors"
-                      disabled={item.qty >= 10}
+                      onClick={() => handleQtyChange(item.product, item.qty + 1, item.variant, item.maxStock)}
+                      className="w-8 h-8 flex items-center justify-center bg-white rounded-lg text-gray-600 hover:text-[#8B5E3C] shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      disabled={item.maxStock !== undefined && item.qty >= item.maxStock}
                     >
                       <Plus className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
 
-                {/* Price Desktop */}
                 <div className="col-span-2 text-right hidden md:block">
                   <span className="font-bold text-lg text-gray-800">₹{(item.price * item.qty).toLocaleString()}</span>
                 </div>
 
-                {/* Remove */}
                 <div className="col-span-1 text-right flex justify-end w-full md:w-auto absolute md:relative top-6 md:top-auto right-6 md:right-auto">
                   <button
                     onClick={() => removeFromCart(item.product, item.variant)}
@@ -121,7 +114,6 @@ export default function CartPage({ onNavigate }) {
           </div>
         </div>
 
-        {/* Footer Actions */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <button
             onClick={() => onNavigate('home')}
@@ -129,19 +121,16 @@ export default function CartPage({ onNavigate }) {
           >
             Continue Shopping
           </button>
-          
-          <div className="w-full sm:w-auto flex items-center gap-4 bg-white p-2 pl-6 rounded-2xl shadow-sm border border-[#E6DFD4]">
-            <div className="text-left">
-              <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-0.5">Subtotal</p>
-              <p className="text-xl font-black text-gray-900">₹{getSubtotal().toLocaleString()}</p>
-            </div>
-            <button
-              onClick={() => onNavigate('review-order')}
-              className="px-8 py-3 bg-[#8B5E3C] text-white rounded-xl font-bold hover:bg-[#7a5234] transition-colors whitespace-nowrap shadow-md shadow-[#8B5E3C]/20"
-            >
-              Buy Now
-            </button>
+          <div className="w-full sm:w-auto flex items-center gap-4 bg-white px-6 py-3.5 rounded-xl border border-[#E6DFD4]">
+            <span className="text-gray-500 font-medium uppercase text-sm tracking-wider">Subtotal</span>
+            <span className="font-bold text-2xl text-gray-900">₹{getSubtotal().toLocaleString()}</span>
           </div>
+          <button 
+            onClick={() => onNavigate('review-order')}
+            className="w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-white bg-[#8B5E3C] hover:bg-[#7a5234] shadow-sm transition-colors text-center"
+          >
+            Buy Now
+          </button>
         </div>
       </div>
     </div>

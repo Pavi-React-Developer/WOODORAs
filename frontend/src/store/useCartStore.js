@@ -62,6 +62,13 @@ const useCartStore = create(
           ?.map(opt => `${opt.attribute?.name || opt.attributeName || 'Option'}: ${opt.value}`)
           ?.join(', ');
 
+        const productVariants = product?.variants || [];
+        const maxStock = product.selectedVariant 
+            ? Math.max(0, (product.selectedVariant.inventory || 0) - (product.selectedVariant.reserveStock || 0))
+            : productVariants.length > 0
+              ? productVariants.reduce((sum, v) => sum + Math.max(0, (v.inventory || 0) - (v.reserveStock || 0)), 0)
+              : (product?.inventory?.stockQuantity || product?.stock || 0);
+
         const item = {
           product: product._id,
           name: product.name,
@@ -71,6 +78,7 @@ const useCartStore = create(
           qty,
           variant: product.selectedVariant?._id || product.selectedVariant?.id || null,
           variantOptions: variantOptions || null,
+          maxStock: maxStock,
         };
 
         set((state) => {

@@ -15,6 +15,7 @@ import FeeListPage from './admin/fees/FeeListPage';
 import AddFeePage from './admin/fees/AddFeePage';
 import CancellationManagementPage from './admin/cancellations/CancellationManagementPage';
 import RefundManagementPage from './admin/refunds/RefundManagementPage';
+import InventoryManagement from './admin/inventory/InventoryManagement';
 
 export default function AdminDashboard({ user, onNavigate, onLogout }) {
   const [products, setProducts] = useState([]);
@@ -41,6 +42,9 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
   // Refund Management state
   const [refundSubTab, setRefundSubTab] = useState('list'); // 'list' | 'analytics' | 'settings'
   const [refundMenuOpen, setRefundMenuOpen] = useState(false);
+
+  // Inventory Management state
+  const [inventoryMenuOpen, setInventoryMenuOpen] = useState(false);
 
   // Dynamic permissions for sidebar
   const [userPermissions, setUserPermissions] = useState(null); // null = not loaded yet
@@ -631,6 +635,37 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                       Orders Management
                     </span>
                   </button>
+                </div>
+              )}
+
+              {/* Inventory Management */}
+              {(isAdmin || canView('inventory')) && (
+                <div className="pt-2 border-t border-[#E6DFD4]/50 mt-2">
+                  <button
+                    onClick={() => setInventoryMenuOpen(o => !o)}
+                    className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 ${
+                      currentTab === 'inventory' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+                      Inventory Management
+                    </span>
+                    <svg className={`w-3.5 h-3.5 transition-transform ${inventoryMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                  </button>
+                  {inventoryMenuOpen && (
+                    <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
+                      <button
+                        onClick={() => { setCurrentTab('inventory'); }}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors ${
+                          currentTab === 'inventory' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                        }`}
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                        Inventory List
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1789,6 +1824,11 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
               targetStaff={roleAssignStaff}
               onBack={() => setStaffSubTab('list')}
             />
+          )}
+
+          {/* ── INVENTORY MANAGEMENT ── */}
+          {(isAdmin || canView('inventory')) && currentTab === 'inventory' && (
+            <InventoryManagement />
           )}
 
           {/* ── ORDERS MANAGEMENT ── */}

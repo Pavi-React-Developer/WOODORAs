@@ -5,6 +5,31 @@ const CancellationRule = require('../models/CancellationRule');
 const User = require('../models/User');
 const Product = require('../models/Product');
 const { calculateOrderFees } = require('../utils/feeCalculator');
+const ProductVariant = require('../models/ProductVariant');
+
+const updateVariantStock = async (variantId, qty, type) => {
+  if (!variantId) return;
+  try {
+    const variant = await ProductVariant.findById(variantId);
+    if (!variant) return;
+
+    if (type === 'reserve') {
+      variant.reserveStock = (variant.reserveStock || 0) + qty;
+    } else if (type === 'deliver') {
+      variant.reserveStock = Math.max(0, (variant.reserveStock || 0) - qty);
+      variant.inventory = Math.max(0, (variant.inventory || 0) - qty);
+    } else if (type === 'cancel') {
+      variant.reserveStock = Math.max(0, (variant.reserveStock || 0) - qty);
+    } else if (type === 'refund') {
+      variant.inventory = (variant.inventory || 0) + qty;
+    }
+
+    variant.currentStock = Math.max(0, (variant.inventory || 0) - (variant.reserveStock || 0));
+    await variant.save();
+  } catch (err) {
+    console.error('Failed to update variant stock', err);
+  }
+};
 
 const mapOrderStatusToRuleStatus = (status) => {
   const mapping = {
@@ -35,6 +60,8 @@ const addOrderItems = async (req, res) => {
     if (orderItems && orderItems.length === 0) {
       return res.status(400).json({ message: 'No order items' });
     } else {
+      console.log('--- RECEIVED ORDER ITEMS ---', JSON.stringify(orderItems, null, 2));
+
       const configuredFees = await Fee.find({ active: true })
         .populate('feeCategory', 'name')
         .populate('paymentMethod', 'name')
@@ -74,6 +101,25 @@ const addOrderItems = async (req, res) => {
       });
 
       const createdOrder = await order.save();
+      
+      // Reserve stock when order is placed
+      for (const item of createdOrder.orderItems) {
+        if (item.variant) {
+          await updateVariantStock(item.variant, item.qty, 'reserve');
+        } else if (item.product) {
+          // Implement simple product stock decrement
+          try {
+            const productToUpdate = await Product.findById(item.product);
+            if (productToUpdate && productToUpdate.inventory) {
+              productToUpdate.inventory.stockQuantity = Math.max(0, (productToUpdate.inventory.stockQuantity || 0) - item.qty);
+              await productToUpdate.save();
+            }
+          } catch(err) {
+            console.error('Failed to update product stock', err);
+          }
+        }
+      }
+
       res.status(201).json(createdOrder);
     }
   } catch (error) {
@@ -196,6 +242,42 @@ const updateOrderStatus = async (req, res) => {
       if (order.paymentMethod === 'COD' && !order.isPaid) {
         order.isPaid = true;
         order.paidAt = Date.now();
+      }
+
+      // Deduct stock when delivered
+      for (const item of order.orderItems) {
+        if (item.variant) {
+          await updateVariantStock(item.variant, item.qty, 'deliver');
+        } else if (item.product) {
+          try {
+            const productToUpdate = await Product.findById(item.product);
+            if (productToUpdate && productToUpdate.inventory) {
+              productToUpdate.inventory.stockQuantity = Math.max(0, (productToUpdate.inventory.stockQuantity || 0) - item.qty);
+              await productToUpdate.save();
+            }
+          } catch(err) {
+            console.error('Failed to update product stock on deliver', err);
+          }
+        }
+      }
+    }
+
+    if (status === 'Cancelled' && currentWeight !== 99) {
+      // Release reserved stock when cancelled
+      for (const item of order.orderItems) {
+        if (item.variant) {
+          await updateVariantStock(item.variant, item.qty, 'cancel');
+        } else if (item.product) {
+          try {
+            const productToUpdate = await Product.findById(item.product);
+            if (productToUpdate && productToUpdate.inventory) {
+              productToUpdate.inventory.stockQuantity = (productToUpdate.inventory.stockQuantity || 0) + item.qty;
+              await productToUpdate.save();
+            }
+          } catch(err) {
+            console.error('Failed to update product stock on cancel', err);
+          }
+        }
       }
     }
 
@@ -348,8 +430,8 @@ const getCancellationPreview = async (req, res) => {
     });
 
     let cancellationFee = 0;
-    let isAllowed = true;
-    let notAllowedReason = '';
+    let isAllowed = false;
+    let notAllowedReason = 'Cancellation rule not configured for this status';
 
     let timeLimit = null;
 
@@ -359,6 +441,8 @@ const getCancellationPreview = async (req, res) => {
         isAllowed = false;
         notAllowedReason = `Cancellation is not allowed when order is ${ruleStatus}`;
       } else {
+        isAllowed = true;
+        notAllowedReason = '';
         cancellationFee = rule.cancellationFee || 0;
       }
     }
@@ -437,6 +521,29 @@ const cancelOrder = async (req, res) => {
     const updatedOrder = await order.save();
     
     await newRefund.save();
+
+    // Release stock based on whether it was delivered or just reserved
+    for (const item of order.orderItems) {
+      if (item.variant) {
+        if (order.isDelivered) {
+          // If for some reason it was delivered and cancelled, add back to inventory
+          await updateVariantStock(item.variant, item.qty, 'refund');
+        } else {
+          // It was just placed/packed, release reserved stock
+          await updateVariantStock(item.variant, item.qty, 'cancel');
+        }
+      } else if (item.product) {
+        try {
+          const productToUpdate = await Product.findById(item.product);
+          if (productToUpdate && productToUpdate.inventory) {
+            productToUpdate.inventory.stockQuantity = (productToUpdate.inventory.stockQuantity || 0) + item.qty;
+            await productToUpdate.save();
+          }
+        } catch(err) {
+          console.error('Failed to update product stock on cancellation', err);
+        }
+      }
+    }
 
     res.json(updatedOrder);
   } catch (error) {

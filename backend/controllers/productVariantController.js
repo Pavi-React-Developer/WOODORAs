@@ -284,6 +284,8 @@ const updateVariant = async (req, res) => {
             discountPrice,
             costPrice,
             inventory,
+            currentStock,
+            reserveStock,
             sku,
             barcode,
             weight,
@@ -305,6 +307,10 @@ const updateVariant = async (req, res) => {
         if (discountPrice !== undefined) variant.discountPrice = discountPrice;
         if (costPrice !== undefined) variant.costPrice = costPrice;
         if (inventory !== undefined) variant.inventory = inventory;
+        if (reserveStock !== undefined) variant.reserveStock = reserveStock;
+        
+        // Dynamically compute currentStock
+        variant.currentStock = Math.max(0, variant.inventory - variant.reserveStock);
         if (sku) variant.sku = sku;
         if (barcode) variant.barcode = barcode;
         if (weight !== undefined) variant.weight = weight;

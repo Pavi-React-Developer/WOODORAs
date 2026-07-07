@@ -4,6 +4,7 @@ const SubCategory = require('../models/SubCategory');
 const Attribute = require('../models/Attribute');
 const ProductAttributeValue = require('../models/ProductAttributeValue');
 const Inventory = require('../models/Inventory');
+const ProductImage = require('../models/catalog/ProductImage');
 
 // ==========================================
 // PRODUCT CONTROLLERS (ENHANCED)
@@ -133,9 +134,15 @@ const getProducts = async (req, res) => {
                 const inventory = await Inventory.findOne({ product: product._id });
                 const attributes = await ProductAttributeValue.find({ product: product._id })
                     .populate('attribute', 'name type');
+                const images = await ProductImage.find({ product: product._id }).sort({ displayOrder: 1 });
+                
+                const productObj = product.toObject();
+                if (images && images.length > 0) {
+                    productObj.images = images.map(img => img.url);
+                }
                 
                 return {
-                    ...product.toObject(),
+                    ...productObj,
                     inventory: inventory ? { sku: inventory.sku, stockQuantity: inventory.stockQuantity } : null,
                     attributes,
                 };
@@ -178,11 +185,17 @@ const getProductById = async (req, res) => {
         const attributes = await ProductAttributeValue.find({ product: product._id })
             .populate('attribute', 'name type slug')
             .populate('attribute.values', 'value colorCode');
+        const images = await ProductImage.find({ product: product._id }).sort({ displayOrder: 1 });
+        
+        const productObj = product.toObject();
+        if (images && images.length > 0) {
+            productObj.images = images.map(img => img.url);
+        }
 
         res.json({
             success: true,
             data: {
-                ...product.toObject(),
+                ...productObj,
                 inventory,
                 attributes,
             },

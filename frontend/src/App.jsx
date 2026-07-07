@@ -60,6 +60,12 @@ export default function App() {
     setIsCartOpen(true);
   };
 
+  const handleBuyNow = (product) => {
+    const addedQuantity = product.quantity || 1;
+    addToCart(product, addedQuantity);
+    handleNavigate('checkout');
+  };
+
   const handleUpdateQuantity = (index, delta) => {
     // CartOffcanvas uses array index, but useCartStore uses productId
     const item = cartItems[index];
@@ -242,6 +248,7 @@ export default function App() {
             user={user}
             onNavigate={handleNavigate}
             onAddToCart={handleAddToCart}
+            onBuyNow={handleBuyNow}
             onAddToWishlist={handleAddToWishlist}
           />
         )}

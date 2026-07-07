@@ -126,7 +126,7 @@ export default function OrderHistoryPage({ onNavigate }) {
                     <div key={index} className="py-4 flex gap-4 sm:gap-6 items-center">
                       <div className="w-20 h-20 sm:w-24 sm:h-24 bg-[#F8F4EC] rounded-2xl overflow-hidden shrink-0">
                         {item.image ? (
-                          <img src={item.image.startsWith('http') ? item.image : `http://localhost:5000${item.image}`} alt={item.name} className="w-full h-full object-cover" />
+                          <img src={item.image.startsWith('http') || item.image.startsWith('data:') ? item.image : (item.image.startsWith('/uploads') || item.image.startsWith('uploads/')) ? `http://localhost:5000${item.image.startsWith('/') ? '' : '/'}${item.image}` : item.image} alt={item.name} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full bg-gray-200"></div>
                         )}

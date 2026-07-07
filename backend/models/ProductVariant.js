@@ -40,6 +40,16 @@ const productVariantSchema = new mongoose.Schema({
         default: 0,
         min: 0,
     },
+    currentStock: {
+        type: Number,
+        default: 0,
+        min: 0,
+    },
+    reserveStock: {
+        type: Number,
+        default: 0,
+        min: 0,
+    },
     // Physical dimensions
     weight: {
         type: Number,

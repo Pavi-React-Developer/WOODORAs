@@ -8,6 +8,7 @@ const normalizeItem = (item = {}) => ({
   price: Number(item.price) || 0,
   weight: item.weight || '',
   qty: Math.max(1, Number(item.qty) || 1),
+  maxStock: Number(item.maxStock) || 999,
   variantOptions: item.variantOptions || null,
 });
 
