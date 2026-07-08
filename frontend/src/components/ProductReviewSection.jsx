@@ -97,21 +97,24 @@ function StarInput({ value, onChange }) {
 }
 
 /* ═══════════════════════════════════════════════════
-   RATING BREAKDOWN BAR
+   RATING BREAKDOWN BAR (new labeled style)
 ═══════════════════════════════════════════════════ */
+const STAR_LABELS = { 5: 'Very Good', 4: 'Good', 3: 'Ok-Ok', 2: 'Bad', 1: 'Very Bad' };
+const STAR_COLORS = { 5: '#22c55e', 4: '#4ade80', 3: '#f59e0b', 2: '#f97316', 1: '#ef4444' };
+
 function RatingBar({ star, pct, count }) {
+  const label = STAR_LABELS[star] || `${star} Star`;
+  const color = STAR_COLORS[star] || '#9A6031';
   return (
-    <div className="flex items-center gap-3 text-sm">
-      <span className="text-xs font-semibold text-[#6D625C] w-4 text-right">{star}</span>
-      <Star size={12} className="text-amber-400 shrink-0" fill="currentColor" />
-      <div className="flex-1 bg-[#F2EBE4] rounded-full h-2 overflow-hidden">
+    <div className="flex items-center gap-3">
+      <span className="text-sm font-semibold text-[#4A403B] w-20 shrink-0">{label}</span>
+      <div className="flex-1 bg-[#F2EBE4] rounded-full h-2.5 overflow-hidden">
         <div
-          className="h-full bg-amber-400 rounded-full transition-all duration-700"
-          style={{ width: `${pct}%` }}
+          className="h-full rounded-full transition-all duration-700"
+          style={{ width: `${pct}%`, background: color }}
         />
       </div>
-      <span className="text-xs text-[#8A817C] w-8 text-right">{pct}%</span>
-      <span className="text-xs text-[#C4B9B0] w-6">({count})</span>
+      <span className="text-sm font-semibold text-[#6D625C] w-6 text-right shrink-0">{count}</span>
     </div>
   );
 }
@@ -119,6 +122,7 @@ function RatingBar({ star, pct, count }) {
 /* ═══════════════════════════════════════════════════
    WRITE REVIEW FORM
 ═══════════════════════════════════════════════════ */
+
 function WriteReviewForm({ productId, user, onSuccess }) {
   const [rating, setRating]   = useState(0);
   const [title, setTitle]     = useState('');
@@ -170,7 +174,7 @@ function WriteReviewForm({ productId, user, onSuccess }) {
         <ShieldCheck size={28} className="text-emerald-600" />
       </div>
       <h3 className="text-lg font-bold text-emerald-800">Review Submitted!</h3>
-      <p className="text-sm text-emerald-600 mt-1">Thank you for sharing your experience.</p>
+      <p className="text-sm text-emerald-600 mt-1">Thank you for sharing your experience. Your review is currently pending approval.</p>
     </div>
   );
 
@@ -427,13 +431,16 @@ export default function ProductReviewSection({ product, user }) {
 
   /* ── new review added ─────────────── */
   const handleNewReview = (review) => {
-    setReviews(prev => [review, ...prev]);
-    if (stats) setStats(s => ({
-      ...s,
-      total: s.total + 1,
-      avg: Math.round(((s.avg * s.total + review.rating) / (s.total + 1)) * 10) / 10,
-    }));
-    loadGallery();
+    // Only show immediately if it happens to be approved, otherwise wait for admin approval
+    if (review.status === 'approved') {
+      setReviews(prev => [review, ...prev]);
+      if (stats) setStats(s => ({
+        ...s,
+        total: s.total + 1,
+        avg: Math.round(((s.avg * s.total + review.rating) / (s.total + 1)) * 10) / 10,
+      }));
+      loadGallery();
+    }
   };
 
   /* ── stats ──────────────────────── */
@@ -446,65 +453,34 @@ export default function ProductReviewSection({ product, user }) {
     <div className="bg-[#FAF8F5] py-12 px-4">
       <div className="max-w-5xl mx-auto space-y-10">
 
-        {/* ── TOP: Product + Rating Summary ── */}
-        {product && (
+        {/* ── RATING SUMMARY ── */}
+        {stats?.total > 0 && (
           <div className="bg-white rounded-3xl border border-[#E9DED3] shadow-sm overflow-hidden">
-            <div className="flex flex-col md:flex-row gap-0">
-              {/* Product Image */}
-              <div className="md:w-56 shrink-0 bg-[#FAF8F5] flex items-center justify-center p-6">
-                {product.images?.[0] ? (
-                  <img src={product.images[0]} alt={product.name}
-                    className="w-44 h-44 object-cover rounded-2xl shadow-md" />
-                ) : (
-                  <div className="w-44 h-44 rounded-2xl bg-[#F2EBE4] flex items-center justify-center">
-                    <ImageIcon size={40} className="text-[#C4B9B0]" />
-                  </div>
-                )}
+            <div className="p-5 border-b border-[#F2EBE4]">
+              <h2 className="text-xl font-bold text-[#141225] flex items-center gap-2">
+                <Star size={18} className="text-amber-400" fill="currentColor" />
+                Customer Ratings &amp; Reviews
+              </h2>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-0">
+              {/* Left: Big score box */}
+              <div className="sm:w-48 shrink-0 flex flex-col items-center justify-center p-8 bg-amber-400 gap-1">
+                <span className="text-6xl font-black text-white leading-none">{fmt(stats.avg)}</span>
+                <Star size={28} className="text-white mt-1" fill="currentColor" />
+                <span className="text-sm font-semibold text-amber-100 mt-2">{stats.total} ratings</span>
               </div>
 
-              {/* Rating Info */}
-              <div className="flex-1 p-6 border-t md:border-t-0 md:border-l border-[#E9DED3]">
-                <h2 className="text-2xl font-bold text-[#141225]">{product.name}</h2>
-                {stats && (
-                  <>
-                    <div className="flex items-center gap-3 mt-2 mb-4">
-                      <StarRow rating={Math.round(stats.avg)} size={22} />
-                      <span className="text-3xl font-bold text-[#141225]">{fmt(stats.avg)}</span>
-                      <span className="text-sm text-[#8A817C]">({stats.total} Reviews)</span>
-                    </div>
-                    <div className="space-y-1.5 max-w-xs">
-                      {(stats.dist || []).map(d => (
-                        <RatingBar key={d.star} star={d.star} pct={d.pct} count={d.count} />
-                      ))}
-                    </div>
-                  </>
-                )}
+              {/* Right: Labeled bars */}
+              <div className="flex-1 p-6 sm:border-l border-[#E9DED3] space-y-3">
+                {(stats.dist || []).map(d => (
+                  <RatingBar key={d.star} star={d.star} pct={d.pct} count={d.count} />
+                ))}
               </div>
             </div>
           </div>
         )}
 
-        {/* ── STATS CARDS ── */}
-        {stats && (
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            {[
-              { label: 'Total Reviews',   value: stats.total,          icon: '📝' },
-              { label: 'Avg Rating',      value: `${fmt(stats.avg)} ★`, icon: '⭐' },
-              { label: '5-Star Reviews',  value: stats.dist?.[0]?.count ?? 0, icon: '🏆' },
-              { label: 'Photo Reviews',   value: stats.photoReviews,   icon: '📸' },
-              { label: 'Verified Buyers', value: stats.verifiedBuyers, icon: '✅' },
-            ].map(c => (
-              <div key={c.label} className="bg-white rounded-2xl border border-[#E9DED3] p-4 text-center shadow-sm">
-                <span className="text-2xl">{c.icon}</span>
-                <p className="text-xl font-bold text-[#141225] mt-1">{c.value}</p>
-                <p className="text-[10px] font-semibold text-[#8A817C] uppercase tracking-wide mt-0.5">{c.label}</p>
-              </div>
-            ))}
-          </div>
-        )}
 
-        {/* ── WRITE REVIEW ── */}
-        <WriteReviewForm productId={productId} user={user} onSuccess={handleNewReview} />
 
         {/* ── CUSTOMER REVIEWS ── */}
         <div>

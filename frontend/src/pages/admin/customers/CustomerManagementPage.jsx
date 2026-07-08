@@ -102,8 +102,9 @@ function CustomerDetailPage({ customer, onBack }) {
                 <p className="text-3xl font-bold text-[#141225] mt-1">{customer.totalOrders || 0}</p>
               </div>
               <div className="text-center bg-[#FAF8F5] rounded-xl p-4 border border-[#E9DED3] min-w-[110px]">
-                <p className="text-[10px] font-bold text-[#8A817C] uppercase tracking-wider">Total Spent</p>
+                <p className="text-[10px] font-bold text-[#8A817C] uppercase tracking-wider">Delivered Spent</p>
                 <p className="text-xl font-bold text-[#9A6031] mt-1">{fmt(customer.totalSpend)}</p>
+                <p className="text-[9px] text-emerald-600 font-semibold mt-0.5">Delivered only</p>
               </div>
             </div>
           </div>
@@ -308,7 +309,7 @@ export default function CustomerManagementPage() {
             { label: 'Total Customers',  value: stats.total,           icon: <Users size={20} />,       color: 'text-indigo-600',  bg: 'bg-indigo-50' },
             { label: 'Active Customers', value: stats.active,          icon: <Users size={20} />,       color: 'text-emerald-600', bg: 'bg-emerald-50' },
             { label: 'Total Orders',     value: stats.totalOrders,     icon: <Package size={20} />,     color: 'text-amber-600',   bg: 'bg-amber-50' },
-            { label: 'Revenue Generated',value: fmt(stats.totalRevenue),icon: <IndianRupee size={20} />,color: 'text-[#9A6031]',  bg: 'bg-[#F8F4EC]', big: true },
+            { label: 'Delivered Revenue', value: fmt(stats.totalRevenue),icon: <IndianRupee size={20} />,color: 'text-[#9A6031]',  bg: 'bg-[#F8F4EC]', big: true },
           ].map(s => (
             <div key={s.label} className="bg-white rounded-2xl border border-[#E9DED3] p-5 shadow-sm flex flex-col gap-3">
               <div className={`w-10 h-10 rounded-xl ${s.bg} ${s.color} flex items-center justify-center`}>{s.icon}</div>
@@ -348,7 +349,7 @@ export default function CustomerManagementPage() {
                     { label: 'Contact',       key: null },
                     { label: 'Joined Date',   key: 'createdAt' },
                     { label: 'Total Orders',  key: 'totalOrders' },
-                    { label: 'Total Spend',   key: 'totalSpend' },
+                    { label: 'Delivered Spend', key: 'totalSpend' },
                     { label: 'Actions',       key: null },
                   ].map(col => (
                     <th

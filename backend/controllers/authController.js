@@ -249,25 +249,36 @@ const getCustomers = async (req, res) => {
         const Order = require('../models/Order');
         const users = await User.find({ role: 'user' }).select('-password -resetPasswordToken -resetPasswordExpire').lean();
 
-        // Aggregate order stats per user
-        const orderStats = await Order.aggregate([
+        // Aggregate total orders count (all statuses) per user
+        const allOrderStats = await Order.aggregate([
             { $group: {
                 _id: '$user',
                 totalOrders: { $sum: 1 },
-                totalSpend: { $sum: '$totalPrice' },
                 lastOrderDate: { $max: '$createdAt' }
             }}
         ]);
 
-        const statsMap = {};
-        orderStats.forEach(s => { statsMap[String(s._id)] = s; });
+        // Aggregate total spend — only Delivered orders count
+        const deliveredStats = await Order.aggregate([
+            { $match: { status: 'Delivered' } },
+            { $group: {
+                _id: '$user',
+                totalSpend: { $sum: '$totalPrice' }
+            }}
+        ]);
+
+        const allStatsMap = {};
+        allOrderStats.forEach(s => { allStatsMap[String(s._id)] = s; });
+
+        const spendMap = {};
+        deliveredStats.forEach(s => { spendMap[String(s._id)] = s.totalSpend; });
 
         const customers = users.map(u => {
-            const stats = statsMap[String(u._id)] || { totalOrders: 0, totalSpend: 0, lastOrderDate: null };
+            const stats = allStatsMap[String(u._id)] || { totalOrders: 0, lastOrderDate: null };
             return {
                 ...u,
                 totalOrders: stats.totalOrders,
-                totalSpend: stats.totalSpend,
+                totalSpend: spendMap[String(u._id)] || 0,
                 lastOrderDate: stats.lastOrderDate,
             };
         });

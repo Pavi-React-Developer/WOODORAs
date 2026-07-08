@@ -18,8 +18,24 @@ export const reviewService = {
     return res.data;
   },
 
+  // Get the current user's own review for a product (null if none)
+  getMyReview: async (productId) => {
+    const res = await axios.get(`${API_URL}/${productId}/my-review`, {
+      headers: getAuthHeaders(),
+    });
+    return res.data; // null or review object
+  },
+
   createReview: async (productId, formData) => {
     const res = await axios.post(`${API_URL}/${productId}`, formData, {
+      headers: { ...getAuthHeaders(), 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data;
+  },
+
+  // Update current user's existing review
+  updateReview: async (productId, formData) => {
+    const res = await axios.put(`${API_URL}/${productId}/my-review`, formData, {
       headers: { ...getAuthHeaders(), 'Content-Type': 'multipart/form-data' },
     });
     return res.data;

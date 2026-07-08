@@ -1,5 +1,6 @@
 const Review = require('../models/Review');
 const Product = require('../models/Product');
+const ProductImage = require('../models/catalog/ProductImage');
 const Order   = require('../models/Order');
 const multer  = require('multer');
 const path    = require('path');
@@ -136,6 +137,56 @@ const createReview = [
   },
 ];
 
+/* ── Get current user's review for a product ─── */
+// GET /api/reviews/:productId/my-review
+const getMyReview = async (req, res) => {
+  try {
+    const review = await Review.findOne({
+      product: req.params.productId,
+      user: req.user._id,
+    }).populate('user', 'name profileImage').lean();
+    if (!review) return res.json(null);
+    res.json(review);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/* ── Update current user's review for a product ─── */
+// PUT /api/reviews/:productId/my-review  (multipart/form-data)
+const updateMyReview = [
+  upload.fields([
+    { name: 'images', maxCount: 5 },
+    { name: 'videos', maxCount: 2 },
+  ]),
+  async (req, res) => {
+    try {
+      const { rating, title, description } = req.body;
+      const productId = req.params.productId;
+
+      const existing = await Review.findOne({ product: productId, user: req.user._id });
+      if (!existing) return res.status(404).json({ message: 'No review found to update.' });
+
+      const baseUrl   = `${req.protocol}://${req.get('host')}`;
+      const newImages = (req.files?.images || []).map(f => `${baseUrl}/uploads/${f.filename}`);
+      const newVideos = (req.files?.videos || []).map(f => `${baseUrl}/uploads/${f.filename}`);
+
+      existing.rating      = Number(rating);
+      existing.title       = title || '';
+      existing.description = description || '';
+      existing.status      = 'pending'; // reset to pending for re-moderation
+      if (newImages.length > 0) existing.images = newImages;
+      if (newVideos.length > 0) existing.videos = newVideos;
+
+      await existing.save();
+      const populated = await existing.populate('user', 'name profileImage');
+      res.json(populated);
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  },
+];
+
 /* ── Vote helpful / not helpful ──────────────── */
 // PUT /api/reviews/:reviewId/vote
 const voteReview = async (req, res) => {
@@ -207,4 +258,150 @@ const getStats = async (req, res) => {
   }
 };
 
-module.exports = { getReviews, getGallery, createReview, voteReview, replyToReview, deleteReview, getStats };
+/* ── Helper: Attach Real Product Images ─────── */
+const attachProductImages = async (reviews) => {
+  const productIds = [...new Set(reviews.map(r => r.product?._id?.toString()).filter(Boolean))];
+  if (productIds.length > 0) {
+    const images = await ProductImage.find({ product: { $in: productIds } }).sort({ displayOrder: 1 }).lean();
+    const imgMap = {};
+    images.forEach(img => {
+      const pId = img.product.toString();
+      if (!imgMap[pId]) imgMap[pId] = [];
+      imgMap[pId].push(img.url);
+    });
+    reviews.forEach(r => {
+      if (r.product?._id) {
+        const pId = r.product._id.toString();
+        if (imgMap[pId] && imgMap[pId].length > 0) {
+          r.product.images = imgMap[pId];
+        }
+      }
+    });
+  }
+};
+
+/* ── Admin: Get ALL reviews across products ──── */
+// GET /api/reviews/admin/all
+const adminGetAllReviews = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, rating, status, search, productId, sort = 'newest' } = req.query;
+    const query = {};
+    if (rating)    query.rating = Number(rating);
+    if (status)    query.status = status;
+    if (productId) query.product = productId;
+
+    const sortMap = {
+      newest:  { createdAt: -1 },
+      oldest:  { createdAt:  1 },
+      highest: { rating: -1 },
+      lowest:  { rating:  1 },
+    };
+
+    let reviewsQuery = Review.find(query)
+      .populate('user',    'name email phone profileImage')
+      .populate('product', 'name images sku category')
+      .sort(sortMap[sort] || { createdAt: -1 });
+
+    if (search) {
+      // Post-filter by customer name/email after populate (simple approach)
+      const all = await reviewsQuery.lean();
+      const q   = search.toLowerCase();
+      const filtered = all.filter(r =>
+        r.user?.name?.toLowerCase().includes(q)  ||
+        r.user?.email?.toLowerCase().includes(q) ||
+        r.product?.name?.toLowerCase().includes(q) ||
+        r.description?.toLowerCase().includes(q)
+      );
+      const total    = filtered.length;
+      const paginated = filtered.slice((page - 1) * limit, page * limit);
+      await attachProductImages(paginated);
+      return res.json({ reviews: paginated, total, page: Number(page), pages: Math.ceil(total / limit) });
+    }
+
+    const total   = await Review.countDocuments(query);
+    const reviews = await reviewsQuery.skip((page - 1) * limit).limit(Number(limit)).lean();
+    await attachProductImages(reviews);
+    res.json({ reviews, total, page: Number(page), pages: Math.ceil(total / limit) });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/* ── Admin: Approve or Reject a review ──────── */
+// PATCH /api/reviews/admin/:reviewId/status
+const adminUpdateReviewStatus = async (req, res) => {
+  try {
+    const { status } = req.body; // 'approved' | 'rejected' | 'pending'
+    if (!['approved', 'rejected', 'pending'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+    const review = await Review.findByIdAndUpdate(
+      req.params.reviewId,
+      { status },
+      { new: true }
+    ).populate('user', 'name email profileImage').populate('product', 'name images');
+    if (!review) return res.status(404).json({ message: 'Review not found' });
+    res.json(review);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/* ── Admin: Global review stats (KPIs) ──────── */
+// GET /api/reviews/admin/stats
+const adminGetGlobalStats = async (req, res) => {
+  try {
+    const total    = await Review.countDocuments();
+    const pending  = await Review.countDocuments({ status: 'pending' });
+    const reported = await Review.countDocuments({ status: 'rejected' });
+    const approved = await Review.countDocuments({ status: 'approved' });
+
+    const ratingAgg = await Review.aggregate([
+      { $match: { status: 'approved' } },
+      { $group: { _id: null, avg: { $avg: '$rating' }, count: { $sum: 1 } } },
+    ]);
+    const avgRating = ratingAgg[0]?.avg ? Math.round(ratingAgg[0].avg * 10) / 10 : 0;
+
+    // Rating distribution
+    const dist = await Review.aggregate([
+      { $match: { status: 'approved' } },
+      { $group: { _id: '$rating', count: { $sum: 1 } } },
+      { $sort: { _id: -1 } },
+    ]);
+
+    // Monthly trend (last 6 months)
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    const monthly = await Review.aggregate([
+      { $match: { createdAt: { $gte: sixMonthsAgo } } },
+      { $group: {
+        _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
+        count: { $sum: 1 },
+        avgRating: { $avg: '$rating' },
+      }},
+      { $sort: { '_id.year': 1, '_id.month': 1 } },
+    ]);
+
+    // Top rated products
+    const topProducts = await Review.aggregate([
+      { $match: { status: 'approved' } },
+      { $group: {
+        _id: '$product',
+        avgRating: { $avg: '$rating' },
+        reviewCount: { $sum: 1 },
+      }},
+      { $sort: { reviewCount: -1 } },
+      { $limit: 5 },
+      { $lookup: { from: 'products', localField: '_id', foreignField: '_id', as: 'product' } },
+      { $unwind: '$product' },
+      { $project: { name: '$product.name', avgRating: 1, reviewCount: 1 } },
+    ]);
+
+    res.json({ total, pending, reported, approved, avgRating, dist, monthly, topProducts });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+module.exports = { getReviews, getGallery, createReview, getMyReview, updateMyReview, voteReview, replyToReview, deleteReview, getStats, adminGetAllReviews, adminUpdateReviewStatus, adminGetGlobalStats };
+

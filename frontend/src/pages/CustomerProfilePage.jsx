@@ -37,7 +37,9 @@ import {
 import { authService } from '../api/authService';
 import { orderService } from '../api/orderService';
 import { uploadAPI } from '../api/catalogAdminService';
+import { reviewService } from '../api/reviewService';
 import useCartStore from '../store/useCartStore';
+import WriteReviewModal from '../components/WriteReviewModal';
 
 const modules = [
   { id: 'profile', label: 'My Profile', icon: User },
@@ -117,6 +119,9 @@ export default function CustomerProfilePage({
   const [cancelLoading, setCancelLoading] = useState(false);
   const [showRefundDestinationModal, setShowRefundDestinationModal] = useState(false);
   const [refundDestinationInput, setRefundDestinationInput] = useState('');
+  const [reviewModalProduct, setReviewModalProduct] = useState(null);
+  const [productRatings, setProductRatings] = useState({}); // { productId: avgRating }
+  const [userReviews, setUserReviews] = useState({});       // { productId: userRating | null }
   
   useEffect(() => {
     try {
@@ -159,6 +164,39 @@ export default function CustomerProfilePage({
         setOrdersLoading(true);
         const data = await orderService.getMyOrders();
         setOrders(data || []);
+
+        // Collect all unique product IDs from delivered orders
+        const deliveredProductIds = [...new Set(
+          (data || [])
+            .filter(o => o.status === 'Delivered')
+            .flatMap(o => o.orderItems?.map(item => item.product).filter(Boolean) || [])
+        )];
+
+        if (deliveredProductIds.length > 0) {
+          // Fetch product avg ratings AND user's own reviews in parallel
+          const [avgEntries, userEntries] = await Promise.all([
+            Promise.all(
+              deliveredProductIds.map(async (productId) => {
+                try {
+                  const res = await fetch(`http://localhost:5000/api/reviews/${productId}/stats`);
+                  const stats = await res.json();
+                  return [productId, stats?.avg ?? 0];
+                } catch { return [productId, 0]; }
+              })
+            ),
+            Promise.all(
+              deliveredProductIds.map(async (productId) => {
+                try {
+                  const review = await reviewService.getMyReview(productId);
+                  return [productId, review?.rating ?? null];
+                } catch { return [productId, null]; }
+              })
+            ),
+          ]);
+
+          setProductRatings(Object.fromEntries(avgEntries));
+          setUserReviews(Object.fromEntries(userEntries));
+        }
       } catch (error) {
         toast.error(error.message || 'Failed to load orders');
       } finally {
@@ -415,12 +453,61 @@ export default function CustomerProfilePage({
                     </td>
                     <td className="p-4 whitespace-nowrap font-medium text-center text-[#6D625C]">{order.paymentMethod || 'Online'}</td>
                     <td className="p-4 text-center">
-                      <div className="flex justify-center gap-0.5 text-yellow-400">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className="h-3 w-3 fill-current" />
-                        ))}
-                      </div>
+                      {order.status === 'Delivered' ? (() => {
+                        const productId = firstItem?.product;
+                        const myRating = productId ? userReviews[productId] : undefined;
+                        const hasReviewed = myRating != null && myRating > 0;
+                        const avg = productRatings[productId] ?? 0;
+                        const displayRating = hasReviewed ? myRating : Math.round(avg * 2) / 2;
+
+                        const StarDisplay = ({ rating, clickable }) => (
+                          <div className="flex items-center gap-0.5">
+                            {[1,2,3,4,5].map(i => {
+                              const filled = rating >= i;
+                              const half = !filled && rating >= i - 0.5;
+                              return (
+                                <span key={i} className="relative inline-block h-4 w-4">
+                                  <Star className="absolute inset-0 h-4 w-4 text-gray-200 fill-gray-200" />
+                                  {(filled || half) && (
+                                    <span
+                                      className="absolute inset-0 overflow-hidden"
+                                      style={{ width: filled ? '100%' : '50%' }}
+                                    >
+                                      <Star className={`h-4 w-4 fill-amber-400 ${clickable ? 'text-amber-400 group-hover:text-amber-500 group-hover:fill-amber-500 transition-colors' : 'text-amber-400'}`} />
+                                    </span>
+                                  )}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        );
+
+                        if (hasReviewed) {
+                          // Already reviewed — static, non-clickable
+                          return (
+                            <div className="flex flex-col items-center gap-0.5" title="You have already reviewed this product">
+                              <StarDisplay rating={myRating} clickable={false} />
+                              <span className="text-[10px] font-bold text-emerald-600">Reviewed ✓</span>
+                            </div>
+                          );
+                        }
+
+                        // Not reviewed yet — clickable
+                        return (
+                          <button
+                            onClick={() => setReviewModalProduct(productId)}
+                            className="flex flex-col items-center justify-center gap-0.5 group"
+                            title="Write a Review"
+                          >
+                            <StarDisplay rating={displayRating} clickable={true} />
+                            <span className="text-[10px] font-semibold text-[#9A6031]">Rate</span>
+                          </button>
+                        );
+                      })() : (
+                        <span className="text-[#C4B9B0]">—</span>
+                      )}
                     </td>
+
                     <td className="p-4 whitespace-nowrap text-center">
                       <div className="flex items-center justify-center gap-2">
                         {!['Delivered', 'Cancelled'].includes(order.status) && (
@@ -599,6 +686,14 @@ export default function CustomerProfilePage({
                       >
                         Buy Again
                       </button>
+                      {activeOrder.status === 'Delivered' && (
+                        <button 
+                          onClick={() => setReviewModalProduct(item.product)}
+                          className="sm:ml-2 rounded-[8px] border border-[#9A6031] text-[#9A6031] px-5 py-2.5 text-xs font-bold transition hover:bg-[#FAF8F5] w-full sm:w-auto mt-2 sm:mt-0 shadow-sm"
+                        >
+                          Write Review
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
@@ -1444,6 +1539,14 @@ export default function CustomerProfilePage({
             </div>
           </div>
         </div>
+      )}
+      {reviewModalProduct && (
+        <WriteReviewModal
+          productId={reviewModalProduct}
+          user={user}
+          onClose={() => setReviewModalProduct(null)}
+          onSuccess={() => setReviewModalProduct(null)}
+        />
       )}
 
     </section>

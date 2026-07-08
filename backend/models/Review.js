@@ -44,7 +44,7 @@ const reviewSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ['pending', 'approved', 'rejected'],
-    default: 'approved',
+    default: 'pending',
   },
 }, { timestamps: true });
 
