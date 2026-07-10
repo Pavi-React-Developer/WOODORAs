@@ -1,4 +1,6 @@
 const Refund = require('../models/Refund');
+const User = require('../models/User');
+const { addWalletCredit } = require('./walletController');
 
 // @desc    Get all refunds
 // @route   GET /api/refunds
@@ -77,7 +79,27 @@ const approveRefund = async (req, res) => {
 
     refund.status = 'Refund Approved';
     refund.refundActionStatus = 'Refunded';
-    
+
+    if (refund.orderRef) {
+      const order = await require('../models/Order').findById(refund.orderRef);
+      if (order?.user) {
+        const user = await User.findById(order.user);
+        if (user) {
+          await addWalletCredit({
+            userId: user._id,
+            amount: refund.amount,
+            description: `Refund credited for order ${refund.orderId}`,
+            referenceId: refund._id.toString(),
+            metadata: {
+              refundId: refund._id.toString(),
+              orderId: refund.orderId,
+              source: 'refund-approval',
+            },
+          });
+        }
+      }
+    }
+
     const updatedRefund = await refund.save();
     res.json(updatedRefund);
   } catch (error) {

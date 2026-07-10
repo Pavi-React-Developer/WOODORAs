@@ -2,6 +2,7 @@ const CmsNavbar = require('../models/CmsNavbar');
 const CmsHeroBanner = require('../models/CmsHeroBanner');
 const CmsThirdBanner = require('../models/CmsThirdBanner');
 const CmsProductGrid = require('../models/CmsProductGrid');
+const CmsCategoryGrid = require('../models/CmsCategoryGrid');
 const CmsFooter = require('../models/CmsFooter');
 
 // Utility to wrap async functions
@@ -126,6 +127,56 @@ exports.updateProductGrid = asyncHandler(async (req, res) => {
 exports.deleteProductGrid = asyncHandler(async (req, res) => {
   await CmsProductGrid.findByIdAndDelete(req.params.id);
   res.json({ success: true, message: 'Grid deleted' });
+});
+
+// --- CATEGORY GRID ---
+exports.getCategoryGrids = asyncHandler(async (req, res) => {
+  const ProductImage = require('../models/catalog/ProductImage');
+  const ProductVariant = require('../models/ProductVariant');
+  const grids = await CmsCategoryGrid.find().populate('category').populate('products').sort({ sortOrder: 1 });
+
+  const enrichedGrids = await Promise.all(grids.map(async (grid) => {
+    const gridObj = grid.toObject();
+    gridObj.products = await Promise.all((gridObj.products || []).map(async (prod) => {
+      if (!prod || !prod._id) return prod;
+
+      let productImages = await ProductImage.find({ product: prod._id }).sort({ displayOrder: 1 });
+
+      if (productImages.length === 0) {
+        const variants = await ProductVariant.find({ product: prod._id }).limit(3);
+        for (const v of variants) {
+          if (v.images && v.images.length > 0) {
+            productImages = v.images.map((url, idx) => ({ url, isThumbnail: idx === 0, displayOrder: idx + 1 }));
+            break;
+          }
+        }
+      }
+
+      const fallbackImages = (prod.images || [])
+        .filter(url => typeof url === 'string' && url.trim().length > 0)
+        .map(url => ({ url, isThumbnail: false, displayOrder: 1 }));
+
+      return { ...prod, images: productImages.length > 0 ? productImages : fallbackImages };
+    }));
+    return gridObj;
+  }));
+
+  res.json({ success: true, data: enrichedGrids });
+});
+
+exports.createCategoryGrid = asyncHandler(async (req, res) => {
+  const grid = await CmsCategoryGrid.create(req.body);
+  res.status(201).json({ success: true, data: grid });
+});
+
+exports.updateCategoryGrid = asyncHandler(async (req, res) => {
+  const grid = await CmsCategoryGrid.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true }).populate('category').populate('products');
+  res.json({ success: true, data: grid });
+});
+
+exports.deleteCategoryGrid = asyncHandler(async (req, res) => {
+  await CmsCategoryGrid.findByIdAndDelete(req.params.id);
+  res.json({ success: true, message: 'Category grid deleted' });
 });
 
 // --- FOOTER ---

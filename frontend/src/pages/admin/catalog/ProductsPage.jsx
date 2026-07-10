@@ -72,6 +72,14 @@ export const ProductsPage = () => {
         fetchSubCategories();
     }, [search, categoryFilter, subCategoryFilter, attributeFilters, page]);
 
+    // Auto-refresh every 30 seconds so MongoDB changes are reflected dynamically
+    useEffect(() => {
+        const interval = setInterval(() => {
+            fetchProducts();
+        }, 30000);
+        return () => clearInterval(interval);
+    }, [search, categoryFilter, subCategoryFilter, attributeFilters, page]);
+
     useEffect(() => {
         if (subCategoryFilter) {
             subCategoryV2API.getMappedAttributes(subCategoryFilter)
@@ -212,7 +220,8 @@ export const ProductsPage = () => {
                         description: prod.description || '',
                         category: prod.category?._id || prod.category || '',
                         subCategory: prod.subCategory?._id || prod.subCategory || '',
-                        price: prod.price || 0,
+                        // Use basePrice = authoritative MongoDB stored price
+                        price: prod.basePrice !== undefined ? prod.basePrice : (prod.price || 0),
                         compareAtPrice: prod.compareAtPrice || 0,
                         sku: prod.sku || '',
                         barcode: prod.barcode || '',
@@ -803,7 +812,6 @@ export const ProductsPage = () => {
                                     ))}
                                 </div>
                             </div>
-
 
                             {/* Section 2: Custom attributes */}
                             {mappedAttributes.length > 0 && (

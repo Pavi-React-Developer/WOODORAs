@@ -142,7 +142,7 @@ function DualBannerSection({ bannerData, onNavigate }) {
                 ))}
               </Swiper>
               {/* Gradient overlay + hero-style button */}
-              <div className="absolute inset-0 z-10 bg-gradient-to-r from-black/55 via-black/20 to-transparent pointer-events-none" />
+              <div className="absolute inset-0 z-10 bg-linear-to-r from-black/55 via-black/20 to-transparent pointer-events-none" />
               <div className="absolute inset-0 z-20 flex items-end p-8 pointer-events-none">
                 <button
                   onClick={() => onNavigate && onNavigate(bannerData.leftCtaUrl || 'all-products')}
@@ -174,7 +174,7 @@ function DualBannerSection({ bannerData, onNavigate }) {
                 ))}
               </Swiper>
               {/* Gradient overlay + hero-style button */}
-              <div className="absolute inset-0 z-10 bg-gradient-to-r from-black/55 via-black/20 to-transparent pointer-events-none" />
+              <div className="absolute inset-0 z-10 bg-linear-to-r from-black/55 via-black/20 to-transparent pointer-events-none" />
               <div className="absolute inset-0 z-20 flex items-end p-8 pointer-events-none">
                 <button
                   onClick={() => onNavigate && onNavigate(bannerData.rightCtaUrl || 'all-products')}
@@ -314,30 +314,26 @@ function ProductGridSection({ grid, onNavigate, onAddToCart, onAddToWishlist, us
 
 // ── Category Products ────────────────────────────────────────────────────────
 function CategoryProductsSection({ onNavigate, onAddToCart, user }) {
-  const [categories, setCategories] = useState([]);
-  const [activeCategory, setActiveCategory] = useState(null);
-  const [products, setProducts] = useState([]);
-  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [cmsSections, setCmsSections] = useState([]);
+  const [activeSection, setActiveSection] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    catalogService.getCategories().then(data => {
-      const cats = Array.isArray(data) ? data : data.categories || [];
-      const active = cats.filter(c => c.isActive !== false).slice(0, 6);
-      setCategories(active);
-      if (active.length > 0) setActiveCategory(active[0]);
-    }).catch(console.error);
+    cmsService.getCategoryGrids()
+      .then((res) => {
+        const sections = (res.data || []).filter((item) => item.status !== false).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+        setCmsSections(sections);
+        if (sections.length) setActiveSection(sections[0]);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => {
-    if (!activeCategory) return;
-    setLoadingProducts(true);
-    productV2API.getAll({ category: activeCategory._id, limit: 4, isActive: 'true' })
-      .then(data => setProducts(data.products || data.data || []))
-      .catch(console.error)
-      .finally(() => setLoadingProducts(false));
-  }, [activeCategory]);
+  if (loading || !cmsSections.length) return null;
 
-  if (!categories.length) return null;
+  const activeProducts = Array.isArray(activeSection?.products) ? activeSection.products : [];
+  const activeImage = activeSection?.images?.find((image) => image.isThumbnail)?.url || activeSection?.images?.[0]?.url || '';
+  const animationVariant = activeSection?.animation === 'slide' ? { initial: { opacity: 0, x: 24 }, animate: { opacity: 1, x: 0 } } : activeSection?.animation === 'zoom' ? { initial: { opacity: 0, scale: 0.96 }, animate: { opacity: 1, scale: 1 } } : { initial: { opacity: 0, y: 15 }, animate: { opacity: 1, y: 0 } };
 
   return (
     <section className="py-16 bg-white border-y border-gray-100">
@@ -350,43 +346,90 @@ function CategoryProductsSection({ onNavigate, onAddToCart, user }) {
             </div>
             <button onClick={() => onNavigate('all-products')} className="text-[10px] font-bold uppercase tracking-widest text-brand-medium hover:text-brand-dark">View All &gt;</button>
           </motion.div>
-          <div className="flex gap-3 mb-8 flex-wrap">
-            {categories.map(cat => (
-              <motion.button
-                key={cat._id}
-                onClick={() => setActiveCategory(cat)}
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.97 }}
-                className={`px-4 py-2 text-xs font-semibold rounded-xl border transition-all ${activeCategory?._id === cat._id ? 'bg-brand-dark text-white border-brand-dark' : 'border-[#E6DFD4] text-brand-medium hover:border-brand-dark hover:text-brand-dark'}`}
-              >
-                {cat.name}
-              </motion.button>
-            ))}
-          </div>
-          <AnimatePresence mode="wait">
-            <motion.div key={activeCategory?._id}
-              initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-              className="grid grid-cols-2 sm:grid-cols-4 gap-4"
-            >
-              {loadingProducts ? [1,2,3,4].map(i => <SkeletonCard key={i} />) :
-                products.slice(0, 4).map(p => (
-                  <div key={p._id} className="group cursor-pointer" onClick={() => onNavigate('product-detail', p)}>
-                    <div className="aspect-square bg-[#F7F3EE] rounded-xl overflow-hidden mb-2 relative">
-                      <img src={p.images?.find(i=>i.isThumbnail)?.url || p.images?.[0]?.url || p.image || ''} alt={p.name}
-                        className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500"
-                        onError={e => e.target.style.display='none'} />
-                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-end justify-center pb-3 transition-opacity">
-                        <button onClick={e => { e.stopPropagation(); if (!user) { onNavigate('login'); return; } onAddToCart?.(p); }}
-                          className="bg-brand-dark text-white text-[9px] uppercase tracking-widest font-bold px-3 py-1.5">Add to Cart</button>
-                      </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] gap-6">
+            <div className="space-y-3">
+              {cmsSections.map((section) => (
+                <button
+                  key={section._id}
+                  onClick={() => setActiveSection(section)}
+                  className={`w-full rounded-2xl border p-4 text-left transition-all ${activeSection?._id === section._id ? 'bg-brand-dark text-white border-brand-dark shadow' : 'bg-[#FDFCFB] border-[#E6DFD4] text-brand-dark hover:border-brand-dark'}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-14 w-14 overflow-hidden rounded-xl bg-[#F7F3EE] shrink-0">
+                      {section.images?.[0]?.url ? <img src={section.images[0].url} alt={section.title} className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center text-[10px] text-brand-medium">IMG</div>}
                     </div>
-                    <h3 className="text-sm font-medium text-brand-dark truncate">{p.name}</h3>
-                    <p className="text-xs text-brand-medium">₹{p.price?.toFixed(2)}</p>
+                    <div>
+                      <p className="text-sm font-semibold">{section.title}</p>
+                      <p className="text-xs mt-1 opacity-80">{section.category?.name || 'Category'}</p>
+                    </div>
                   </div>
-                ))}
-            </motion.div>
-          </AnimatePresence>
+                </button>
+              ))}
+            </div>
+
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeSection?._id}
+                initial={animationVariant.initial}
+                animate={animationVariant.animate}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+                className="grid grid-cols-1 md:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] gap-6 rounded-3xl border border-[#E6DFD4] bg-[#FDFCFB] p-4 sm:p-6"
+              >
+                <div className="relative overflow-hidden rounded-2xl bg-[#F7F3EE] min-h-70">
+                  {activeSection?.images?.length ? (
+                    <div className="absolute inset-0">
+                      <motion.img
+                        key={activeImage}
+                        src={activeImage}
+                        alt={activeSection.title}
+                        className="w-full h-full object-cover"
+                        initial={{ opacity: 0, scale: 1.03 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.35 }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-brand-medium">No image</div>
+                  )}
+                  <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/10 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
+                    <p className="text-xs uppercase tracking-[0.3em] opacity-80">{activeSection?.category?.name || 'Featured'}</p>
+                    <h3 className="text-xl font-semibold mt-2">{activeSection?.title}</h3>
+                    {activeSection?.ctaText && (
+                      <button onClick={() => activeSection?.ctaUrl && onNavigate(activeSection.ctaUrl)} className="mt-4 inline-flex items-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-brand-dark">
+                        {activeSection.ctaText}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-brand-dark">{activeSection?.category?.name || 'Category Products'}</p>
+                      <p className="text-xs text-brand-medium">{activeProducts.length} products in this collection</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    {activeProducts.length ? activeProducts.slice(0, 4).map((product) => (
+                      <div key={product._id} className="group cursor-pointer" onClick={() => onNavigate('product-detail', product)}>
+                        <div className="aspect-square bg-white rounded-xl overflow-hidden mb-2 relative border border-[#E6DFD4]">
+                          <img src={product.images?.find((image) => image.isThumbnail)?.url || product.images?.[0]?.url || product.image || ''} alt={product.name} className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500" onError={(e) => { e.target.style.display = 'none'; }} />
+                          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-end justify-center pb-3 transition-opacity">
+                            <button onClick={(e) => { e.stopPropagation(); if (!user) { onNavigate('login'); return; } onAddToCart?.(product); }} className="bg-brand-dark text-white text-[9px] uppercase tracking-widest font-bold px-3 py-1.5">Add to Cart</button>
+                          </div>
+                        </div>
+                        <h3 className="text-sm font-medium text-brand-dark truncate">{product.name}</h3>
+                        <p className="text-xs text-brand-medium">₹{Number(product.price || 0).toFixed(2)}</p>
+                      </div>
+                    )) : <div className="col-span-2 rounded-xl border border-dashed border-[#E6DFD4] p-6 text-sm text-brand-medium">No products selected for this category yet.</div>}
+                  </div>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </motion.div>
       </div>
     </section>
@@ -457,7 +500,7 @@ export default function Home({ user, onNavigate, onAddToCart, onAddToWishlist })
     <div className="bg-brand-light font-sans text-brand-dark">
 
       {/* ── HERO BANNER SLIDER ── */}
-      <section className="relative w-full h-[90vh] min-h-[600px] overflow-hidden bg-brand-dark">
+      <section className="relative w-full h-[90vh] min-h-150 overflow-hidden bg-brand-dark">
         <Swiper
           modules={[Autoplay, Pagination, EffectFade, EffectCreative]}
           effect="fade"
@@ -472,7 +515,7 @@ export default function Home({ user, onNavigate, onAddToCart, onAddToWishlist })
                 <img src={slide.bannerImage} alt={slide.title}
                   className="w-full h-full object-cover object-center brightness-90"
                   onError={e => { e.target.style.display='none'; e.target.parentElement.style.background='#2C1A0E'; }} />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/25 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-r from-black/60 via-black/25 to-transparent" />
                 <div className="absolute inset-0 flex items-center">
                   <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 w-full">
                     <motion.div
@@ -675,7 +718,7 @@ export default function Home({ user, onNavigate, onAddToCart, onAddToWishlist })
       {/* ── NEWSLETTER ── */}
       <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}
-          className="bg-gradient-to-br from-[#2C1A0E] to-[#4A2C17] rounded-3xl p-12 text-center max-w-4xl mx-auto">
+          className="bg-linear-to-br from-[#2C1A0E] to-[#4A2C17] rounded-3xl p-12 text-center max-w-4xl mx-auto">
           <h2 className="text-2xl font-serif text-white mb-3">Join the WoodenToys Family</h2>
           <p className="text-white/70 text-sm max-w-md mx-auto mb-8">
             {footerData?.description || 'Get early access to new collections, gift guides, and stories about mindful parenting.'}

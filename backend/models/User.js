@@ -59,6 +59,11 @@ const userSchema = new mongoose.Schema({
         points: { type: Number, default: 0 },
         tier: { type: String, default: 'Premium Member' },
     },
+    wallet: {
+        balance: { type: Number, default: 0 },
+        currency: { type: String, default: 'INR' },
+        status: { type: String, enum: ['active', 'disabled'], default: 'active' },
+    },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
 }, { timestamps: true });

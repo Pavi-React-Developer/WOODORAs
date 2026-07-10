@@ -22,6 +22,7 @@ const serializeUser = (user) => ({
     addresses: user.addresses || [],
     preferences: user.preferences || { preferredAgeGroup: 'All Ages', emailNotifications: true },
     loyalty: user.loyalty || { points: 0, tier: 'Premium Member' },
+    wallet: user.wallet || { balance: 0, currency: 'INR', status: 'active' },
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
 });

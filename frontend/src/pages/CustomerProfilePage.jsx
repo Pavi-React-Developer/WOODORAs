@@ -38,6 +38,7 @@ import { authService } from '../api/authService';
 import { orderService } from '../api/orderService';
 import { uploadAPI } from '../api/catalogAdminService';
 import { reviewService } from '../api/reviewService';
+import { walletService } from '../api/walletService';
 import useCartStore from '../store/useCartStore';
 import WriteReviewModal from '../components/WriteReviewModal';
 
@@ -47,6 +48,7 @@ const modules = [
   { id: 'reviews', label: 'Reviews & Ratings', icon: Star },
   { id: 'addresses', label: 'Addresses', icon: MapPin },
   { id: 'cart', label: 'Cart', icon: ShoppingBag },
+  { id: 'wallet', label: 'Wallet', icon: CreditCard },
   { id: 'wishlist', label: 'Wishlist', icon: Heart },
   { id: 'saved', label: 'Saved Products', icon: Bookmark },
   { id: 'rewards', label: 'Loyalty Rewards', icon: Star },
@@ -123,6 +125,8 @@ export default function CustomerProfilePage({
   const [reviewModalProduct, setReviewModalProduct] = useState(null);
   const [productRatings, setProductRatings] = useState({}); // { productId: avgRating }
   const [userReviews, setUserReviews] = useState({});       // { "orderId:orderItemId": userRating | null }
+  const [walletSummary, setWalletSummary] = useState({ balance: 0, currency: 'INR', status: 'active', transactions: [] });
+  const [walletLoading, setWalletLoading] = useState(false);
   
   useEffect(() => {
     try {
@@ -156,6 +160,23 @@ export default function CustomerProfilePage({
       addresses: profile.addresses?.length ? profile.addresses : [{ ...emptyAddress, fullName: profile.name || '', phone: profile.phone || '' }],
     });
   }, [profile._id, profile.name, profile.phone, profile.dateOfBirth, profile.gender, profile.profileImage, profile.addresses, profile.preferences]);
+
+  useEffect(() => {
+    if (activeModule === 'wallet') {
+      const loadWallet = async () => {
+        try {
+          setWalletLoading(true);
+          const data = await walletService.getSummary();
+          setWalletSummary(data?.data || { balance: 0, currency: 'INR', status: 'active', transactions: [] });
+        } catch (error) {
+          toast.error(error.message || 'Failed to load wallet');
+        } finally {
+          setWalletLoading(false);
+        }
+      };
+      loadWallet();
+    }
+  }, [activeModule]);
 
   useEffect(() => {
     if (!['orders', 'reviews'].includes(activeModule)) return;
@@ -1214,6 +1235,81 @@ export default function CustomerProfilePage({
     </section>
   );
 
+  const renderWallet = () => {
+    const txns = walletSummary.transactions || [];
+    const credits = txns.filter((entry) => entry.type === 'credit').reduce((sum, entry) => sum + (entry.amount || 0), 0);
+    const debits = txns.filter((entry) => entry.type === 'debit').reduce((sum, entry) => sum + (entry.amount || 0), 0);
+
+    return (
+      <section className="px-5 py-7 lg:px-7">
+        <div className="rounded-[24px] border border-[#E9DED3] bg-[linear-gradient(135deg,#FFF8F0_0%,#F7E7D6_100%)] p-6 shadow-[0_20px_45px_rgba(139,94,60,0.12)]">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#9A6031]">Wallet Balance</p>
+              <h2 className="mt-2 text-4xl font-black text-[#141225]">₹{Number(walletSummary.balance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h2>
+              <p className="mt-3 max-w-2xl text-sm text-[#6D625C]">Refunds are credited here automatically after admin approval, and you can use this balance during future purchases.</p>
+            </div>
+            <div className="rounded-[16px] border border-white/70 bg-white/70 px-4 py-3 text-sm font-semibold text-[#6D625C]">
+              Status: <span className="text-[#141225]">{walletSummary.status === 'active' ? 'Active' : 'Disabled'}</span>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-3 md:grid-cols-3">
+            <div className="rounded-[16px] border border-[#EFE2D1] bg-white/70 p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#8A817C]">Credits</p>
+              <p className="mt-2 text-xl font-black text-[#2E7D32]">₹{credits.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
+            </div>
+            <div className="rounded-[16px] border border-[#EFE2D1] bg-white/70 p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#8A817C]">Debits</p>
+              <p className="mt-2 text-xl font-black text-[#C94A4A]">₹{debits.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
+            </div>
+            <div className="rounded-[16px] border border-[#EFE2D1] bg-white/70 p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#8A817C]">Transactions</p>
+              <p className="mt-2 text-xl font-black text-[#141225]">{txns.length}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 rounded-[20px] border border-[#E9DED3] bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-bold text-[#141225]">Recent Activity</h3>
+              <p className="mt-1 text-sm text-[#6D625C]">Your latest wallet credits and debits appear here.</p>
+            </div>
+          </div>
+
+          {walletLoading ? (
+            <div className="mt-5 rounded-[14px] border border-[#E9DED3] bg-[#FAF8F5] p-6 text-sm text-[#6D625C]">Loading wallet history…</div>
+          ) : txns.length === 0 ? (
+            <div className="mt-5 rounded-[14px] border border-dashed border-[#E9DED3] bg-[#FAF8F5] p-8 text-center text-sm text-[#6D625C]">No wallet activity yet. Refund approvals will appear here automatically.</div>
+          ) : (
+            <div className="mt-5 space-y-3">
+              {txns.map((entry) => (
+                <div key={entry._id || entry.referenceId || entry.createdAt} className="flex flex-col gap-3 rounded-[14px] border border-[#E9DED3] p-4 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] ${entry.type === 'credit' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                        {entry.type === 'credit' ? 'Credit' : 'Debit'}
+                      </span>
+                      <span className="text-xs font-semibold text-[#8A817C]">{new Date(entry.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</span>
+                    </div>
+                    <p className="mt-2 text-sm font-semibold text-[#141225]">{entry.description || 'Wallet activity'}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className={`text-lg font-black ${entry.type === 'credit' ? 'text-emerald-600' : 'text-[#C94A4A]'}`}>
+                      {entry.type === 'credit' ? '+' : '-'}₹{Number(entry.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </p>
+                    <p className="text-xs text-[#8A817C]">Balance: ₹{Number(entry.balanceAfter || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  };
+
   const renderNotifications = () => {
     const notifications = [];
     
@@ -1365,6 +1461,7 @@ export default function CustomerProfilePage({
           {activeModule === 'wishlist' && renderWishlist()}
           {activeModule === 'saved' && renderSavedProducts()}
           {activeModule === 'rewards' && renderRewards()}
+          {activeModule === 'wallet' && renderWallet()}
           {activeModule === 'password' && renderChangePassword()}
           {activeModule === 'notifications' && renderNotifications()}
         </div>

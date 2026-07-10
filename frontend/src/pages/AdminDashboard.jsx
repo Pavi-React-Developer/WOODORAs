@@ -568,23 +568,6 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                 </>
               )}
 
-              {/* CMS Management */}
-              {(isAdmin || canView('cms')) && (
-              <div className="pt-2 border-t border-[#E6DFD4]/50 mt-2 mb-1">
-                <button
-                  onClick={() => setCurrentTab('cms')}
-                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mt-1 mb-0.5 ${
-                    currentTab === 'cms' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
-                  }`}
-                >
-                  <span className="flex items-center gap-2.5">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
-                    CMS Management
-                  </span>
-                </button>
-              </div>
-              )}
-
               {/* Catalog Dropdown - only shown if user has catalog view permission */}
               {(isAdmin || canView('catalog')) && (
               <button
@@ -759,6 +742,21 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                       </button>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* CMS Management */}
+              {isAdmin && (
+                <div className="pt-2 border-t border-[#E6DFD4]/50 mt-2">
+                  <button
+                    onClick={() => setCurrentTab('cms')}
+                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 ${
+                      currentTab === 'cms' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                    }`}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg>
+                    CMS Management
+                  </button>
                 </div>
               )}
 
@@ -1923,12 +1921,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
           {canAccessCatalog && currentTab === 'v2-attributes' && <AttributesPage />}
           {canAccessCatalog && currentTab === 'v2-products' && <ProductsPage />}
 
-          {/* 🔥 CMS MANAGEMENT 🔥 */}
-          {(isAdmin || canView('cms')) && currentTab === 'cms' && (
-            <HomePageCMS />
-          )}
-
-          {/* 🔥 STAFF MANAGEMENT ── */}
+          {/* ── STAFF MANAGEMENT ── */}
           {canAccessStaff && currentTab === 'staff' && staffSubTab === 'list' && (
             <StaffListPage
               canCreate={hasPermission('staff_management', 'create')}
@@ -2003,6 +1996,11 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
           {/* ── RATING & REVIEW MANAGEMENT ── */}
           {isAdmin && currentTab === 'reviews' && (
             <ReviewManagementPage />
+          )}
+
+          {/* ── CMS MANAGEMENT ── */}
+          {isAdmin && currentTab === 'cms' && (
+            <HomePageCMS />
           )}
 
         </div>

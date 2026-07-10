@@ -8,6 +8,7 @@ router.get('/navbar', cmsController.getNavbars);
 router.get('/hero', cmsController.getHeroBanners);
 router.get('/third-banner', cmsController.getThirdBanners);
 router.get('/product-grid', cmsController.getProductGrids);
+router.get('/category-grid', cmsController.getCategoryGrids);
 router.get('/footer', cmsController.getFooter);
 
 // Protected admin routes for CMS
@@ -26,6 +27,10 @@ router.delete('/third-banner/:id', protect, authorize('admin'), cmsController.de
 router.post('/product-grid', protect, authorize('admin'), cmsController.createProductGrid);
 router.put('/product-grid/:id', protect, authorize('admin'), cmsController.updateProductGrid);
 router.delete('/product-grid/:id', protect, authorize('admin'), cmsController.deleteProductGrid);
+
+router.post('/category-grid', protect, authorize('admin'), cmsController.createCategoryGrid);
+router.put('/category-grid/:id', protect, authorize('admin'), cmsController.updateCategoryGrid);
+router.delete('/category-grid/:id', protect, authorize('admin'), cmsController.deleteCategoryGrid);
 
 router.put('/footer', protect, authorize('admin'), cmsController.updateFooter);
 

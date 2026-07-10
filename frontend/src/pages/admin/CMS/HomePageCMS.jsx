@@ -3,6 +3,7 @@ import NavbarAdmin from './NavbarAdmin';
 import HeroBannerAdmin from './HeroBannerAdmin';
 import ThirdBannerAdmin from './ThirdBannerAdmin';
 import ProductGridAdmin from './ProductGridAdmin';
+import CategoryGridAdmin from './CategoryGridAdmin';
 import FooterAdmin from './FooterAdmin';
 
 const TABS = [
@@ -10,6 +11,7 @@ const TABS = [
   { id: 'hero', label: '🖼️ Hero Banner' },
   { id: 'third', label: '🎨 Third Banner' },
   { id: 'grid', label: '📦 Product Grid' },
+  { id: 'category-grid', label: '🗂️ Category Grid' },
   { id: 'footer', label: '📋 Footer' },
 ];
 
@@ -22,6 +24,7 @@ export default function HomePageCMS() {
       case 'hero': return <HeroBannerAdmin />;
       case 'third': return <ThirdBannerAdmin />;
       case 'grid': return <ProductGridAdmin />;
+      case 'category-grid': return <CategoryGridAdmin />;
       case 'footer': return <FooterAdmin />;
       default: return null;
     }
