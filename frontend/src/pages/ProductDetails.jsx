@@ -13,10 +13,10 @@ const featureBullets = [
 ];
 const certifications = ['EN71 Certified', 'ASTM F963', 'CPSC Compliant'];
 const relatedProducts = [
-  { title: 'Building Blocks', price: '$42.00' },
-  { title: 'Pull Along Friend', price: '$28.00' },
-  { title: 'Earth Play Silks', price: '$18.00' },
-  { title: 'Modern Shape Sorter', price: '$48.00' },
+  { title: 'Building Blocks', price: '₹42.00' },
+  { title: 'Pull Along Friend', price: '₹28.00' },
+  { title: 'Earth Play Silks', price: '₹18.00' },
+  { title: 'Modern Shape Sorter', price: '₹48.00' },
 ];
 
 const formatFieldLabel = (key) => {

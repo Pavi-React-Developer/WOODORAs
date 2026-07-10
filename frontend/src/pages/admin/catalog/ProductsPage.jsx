@@ -608,7 +608,7 @@ export const ProductsPage = () => {
                                             <td className="px-6 py-4">
                                                 <p className="text-gray-900">{prod.category?.name || 'Unknown'}</p>
                                             </td>
-                                            <td className="px-6 py-4 font-semibold text-amber-900">${(prod.price || 0).toFixed(2)}</td>
+                                            <td className="px-6 py-4 font-semibold text-amber-900">₹{(prod.price || 0).toFixed(2)}</td>
                                             <td className="px-6 py-4">
                                                 {prod.totalStock <= prod.lowStockAlert ? (
                                                     <Badge variant="red">{prod.totalStock} low</Badge>

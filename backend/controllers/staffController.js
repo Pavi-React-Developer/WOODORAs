@@ -1,6 +1,7 @@
 const Staff = require('../models/Staff');
 const Role = require('../models/Role');
 const { PERMISSION_MODULES } = require('../models/Staff');
+const Module = require('../models/Module');
 
 const buildEmptyPermissions = () =>
   PERMISSION_MODULES.map((module) => ({
@@ -168,7 +169,20 @@ const updatePermissions = async (req, res) => {
 
 // ─── GET PERMISSION MODULES LIST ─────────────────────────────────────────────
 const getPermissionModules = async (req, res) => {
-  res.json({ success: true, modules: PERMISSION_MODULES });
+  try {
+    const modules = await Module.find({ isActive: true }).sort({ displayOrder: 1 }).lean();
+    if (modules && modules.length > 0) {
+      // return objects compatible with frontend: { key, label, icon }
+      const mapped = modules.map(m => ({ key: m.key, label: m.label, icon: m.icon }));
+      return res.json({ success: true, modules: mapped });
+    }
+  } catch (err) {
+    console.warn('Could not load modules from DB:', err.message);
+  }
+
+  // Fallback to static list defined in Staff model
+  const fallback = PERMISSION_MODULES.map(k => ({ key: k, label: k, icon: '' }));
+  res.json({ success: true, modules: fallback });
 };
 
 module.exports = { getAllStaff, getStaffById, createStaff, updateStaff, deleteStaff, updatePermissions, getPermissionModules };

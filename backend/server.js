@@ -22,6 +22,8 @@ const cmsRoutes = require('./routes/cmsRoutes');
 const seedAttributes = require('./seedAttributes');
 const Order = require('./models/Order');
 const Review = require('./models/Review');
+const Module = require('./models/Module');
+const StaffModel = require('./models/Staff');
 
 // Load env vars
 dotenv.config();
@@ -60,6 +62,24 @@ mongoose.connection.once('open', async () => {
 
     await Review.syncIndexes();
     console.log('Connected to DB. Valid order statuses:', Order.VALID_STATUSES.join(', '));
+    try {
+        const count = await Module.countDocuments();
+        if (count === 0) {
+            const initial = (StaffModel.PERMISSION_MODULES || []).map((k, i) => ({
+                key: k,
+                label: k.split('_').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' '),
+                icon: '',
+                isActive: true,
+                displayOrder: i,
+            }));
+            if (initial.length > 0) {
+                await Module.insertMany(initial);
+                console.log('Seeded Module collection with default admin modules');
+            }
+        }
+    } catch (err) {
+        console.warn('Could not seed Module collection:', err.message);
+    }
 });
 
 const app = express();

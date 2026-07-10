@@ -203,7 +203,7 @@ export default function AddFeePage({ onNavigate, editingFee }) {
         await feeAPI.createFee(payload);
         alert('Fee created successfully');
       }
-      onNavigate('/admin/fees');
+      onNavigate('list');
     } catch (error) {
       alert(`Failed to save fee: ${error.message || 'Unknown error'}`);
       console.error(error);
@@ -282,7 +282,7 @@ export default function AddFeePage({ onNavigate, editingFee }) {
           <p className="text-sm text-brand-medium">Configure fee parameters and rules</p>
         </div>
         <button
-          onClick={() => onNavigate('/admin/fees')}
+          onClick={() => onNavigate('list')}
           className="bg-white border border-[#E6DFD4] text-brand-dark hover:bg-gray-50 text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-xl transition-colors shadow-sm"
         >
           Back to List
@@ -505,8 +505,8 @@ export default function AddFeePage({ onNavigate, editingFee }) {
           </>
         )}
 
-        <div className="flex justify-end gap-3 pt-6">
-          <button onClick={() => onNavigate('/admin/fees')} className="px-6 py-3 border border-[#E6DFD4] rounded-xl text-sm font-bold text-brand-dark hover:bg-gray-50">Cancel</button>
+          <div className="flex justify-end gap-3 pt-6">
+            <button onClick={() => onNavigate('list')} className="px-6 py-3 border border-[#E6DFD4] rounded-xl text-sm font-bold text-brand-dark hover:bg-gray-50">Cancel</button>
           <button onClick={handleSave} className="px-6 py-3 bg-brand-dark text-white rounded-xl text-sm font-bold hover:bg-black shadow-md">Save Fee Configuration</button>
         </div>
 

@@ -3,21 +3,20 @@ import { staffAPI } from '../../api/staffService';
 import { roleAPI } from '../../api/roleService';
 import { ADMIN_MODULES } from '../../config/adminModules';
 
-// Dynamically derived from the shared admin modules config.
-// Adding a new module to src/config/adminModules.js will automatically
-// add a new row here — no changes needed in this file.
-const PERMISSION_MODULES = ADMIN_MODULES;
+// Permission modules will be fetched from backend if available.
+// Fall back to frontend config `ADMIN_MODULES` when backend call fails.
 
 const ACTIONS = ['view', 'create', 'edit', 'delete'];
 
-const initPerms = () =>
-  PERMISSION_MODULES.reduce((acc, mod) => {
-    acc[mod.key] = { view: false, create: false, edit: false, delete: false };
+const initPerms = (modules) =>
+  (modules || []).reduce((acc, mod) => {
+    const key = mod.key || mod;
+    acc[key] = { view: false, create: false, edit: false, delete: false };
     return acc;
   }, {});
 
-const permsToMap = (permissionsArr) => {
-  const map = initPerms();
+const permsToMap = (permissionsArr, modules) => {
+  const map = initPerms(modules);
   (permissionsArr || []).forEach(p => {
     if (map[p.module] !== undefined) {
       map[p.module] = { view: !!p.view, create: !!p.create, edit: !!p.edit, delete: !!p.delete };
@@ -29,7 +28,7 @@ const permsToMap = (permissionsArr) => {
 const mapToPerms = (map) =>
   Object.entries(map).map(([module, actions]) => ({ module, ...actions }));
 
-const PermissionTable = ({ permissions, onToggle, onToggleRow, onToggleColumn, onSelectAll, onClearAll }) => (
+const PermissionTable = ({ modules, permissions, onToggle, onToggleRow, onToggleColumn, onSelectAll, onClearAll }) => (
   <div className="overflow-x-auto">
     <div className="flex justify-end gap-2 mb-3">
       <button onClick={onSelectAll} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-[#F8F4EC] text-gray-600 transition-colors">Select All</button>
@@ -48,7 +47,7 @@ const PermissionTable = ({ permissions, onToggle, onToggleRow, onToggleColumn, o
         </tr>
       </thead>
       <tbody>
-        {PERMISSION_MODULES.map((mod, idx) => {
+        {modules.map((mod, idx) => {
           const perm = permissions[mod.key] || {};
           const allOn = ACTIONS.every(a => perm[a]);
           return (
@@ -85,14 +84,15 @@ const PermissionTable = ({ permissions, onToggle, onToggleRow, onToggleColumn, o
 export default function RoleAssignPage({ onBack, targetStaff }) {
   const [staffList, setStaffList] = useState([]);
   const [selectedStaff, setSelectedStaff] = useState(targetStaff || null);
-  const [staffPerms, setStaffPerms] = useState(initPerms());
+  const [permissionModules, setPermissionModules] = useState(ADMIN_MODULES);
+  const [staffPerms, setStaffPerms] = useState(initPerms(ADMIN_MODULES));
   const [loadingPerms, setLoadingPerms] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
   // Create Role state
   const [roleName, setRoleName] = useState('');
-  const [rolePerms, setRolePerms] = useState(initPerms());
+  const [rolePerms, setRolePerms] = useState(initPerms(ADMIN_MODULES));
   const [creatingRole, setCreatingRole] = useState(false);
   const [roleCreated, setRoleCreated] = useState('');
   const [roleError, setRoleError] = useState('');
@@ -108,17 +108,37 @@ export default function RoleAssignPage({ onBack, targetStaff }) {
 
   useEffect(() => { fetchStaffList(); }, [fetchStaffList]);
 
+  // Fetch permission modules from backend (if available)
+  useEffect(() => {
+    let mounted = true;
+    staffAPI.getModules()
+      .then(res => {
+        if (!mounted) return;
+        if (res && Array.isArray(res.modules) && res.modules.length > 0) {
+          // remove 'users' and 'brands' from modules list so they don't show in permissions
+          const filtered = res.modules.filter(m => m.key !== 'users' && m.key !== 'brands');
+          setPermissionModules(filtered);
+          setRolePerms(initPerms(filtered));
+          setStaffPerms(initPerms(filtered));
+        }
+      })
+      .catch(() => {
+        // ignore and keep fallback
+      });
+    return () => { mounted = false; };
+  }, []);
+
   useEffect(() => {
     if (selectedStaff) {
       setLoadingPerms(true);
       staffAPI.getById(selectedStaff._id)
         .then(data => {
-          setStaffPerms(permsToMap(data.staff?.permissions || []));
+          setStaffPerms(permsToMap(data.staff?.permissions || [], permissionModules));
         })
         .catch(console.error)
         .finally(() => setLoadingPerms(false));
     }
-  }, [selectedStaff]);
+  }, [selectedStaff, permissionModules]);
 
   // Role permission helpers
   const toggleRolePerm = (moduleKey, action) => {
@@ -129,19 +149,19 @@ export default function RoleAssignPage({ onBack, targetStaff }) {
     setRolePerms(prev => ({ ...prev, [moduleKey]: { view: !allOn, create: !allOn, edit: !allOn, delete: !allOn } }));
   };
   const toggleRoleColumn = (action) => {
-    const allOn = PERMISSION_MODULES.every(m => rolePerms[m.key][action]);
+    const allOn = permissionModules.every(m => rolePerms[m.key][action]);
     setRolePerms(prev => {
       const next = { ...prev };
-      PERMISSION_MODULES.forEach(m => { next[m.key] = { ...next[m.key], [action]: !allOn }; });
+      permissionModules.forEach(m => { next[m.key] = { ...next[m.key], [action]: !allOn }; });
       return next;
     });
   };
   const roleSelectAll = () => {
     const map = {};
-    PERMISSION_MODULES.forEach(m => { map[m.key] = { view: true, create: true, edit: true, delete: true }; });
+    permissionModules.forEach(m => { map[m.key] = { view: true, create: true, edit: true, delete: true }; });
     setRolePerms(map);
   };
-  const roleClearAll = () => setRolePerms(initPerms());
+  const roleClearAll = () => setRolePerms(initPerms(permissionModules));
 
   const handleCreateRole = async () => {
     if (!roleName.trim()) return;
@@ -152,7 +172,7 @@ export default function RoleAssignPage({ onBack, targetStaff }) {
       await roleAPI.create({ name: roleName.trim(), permissions: mapToPerms(rolePerms) });
       setRoleCreated(`Role "${roleName.trim()}" created successfully!`);
       setRoleName('');
-      setRolePerms(initPerms());
+      setRolePerms(initPerms(permissionModules));
     } catch (err) {
       setRoleError(err.message || 'Error creating role');
     } finally {
@@ -171,21 +191,21 @@ export default function RoleAssignPage({ onBack, targetStaff }) {
     setSaved(false);
   };
   const toggleStaffColumn = (action) => {
-    const allOn = PERMISSION_MODULES.every(m => staffPerms[m.key][action]);
+    const allOn = permissionModules.every(m => staffPerms[m.key][action]);
     setStaffPerms(prev => {
       const next = { ...prev };
-      PERMISSION_MODULES.forEach(m => { next[m.key] = { ...next[m.key], [action]: !allOn }; });
+      permissionModules.forEach(m => { next[m.key] = { ...next[m.key], [action]: !allOn }; });
       return next;
     });
     setSaved(false);
   };
   const staffSelectAll = () => {
     const map = {};
-    PERMISSION_MODULES.forEach(m => { map[m.key] = { view: true, create: true, edit: true, delete: true }; });
+    permissionModules.forEach(m => { map[m.key] = { view: true, create: true, edit: true, delete: true }; });
     setStaffPerms(map);
     setSaved(false);
   };
-  const staffClearAll = () => { setStaffPerms(initPerms()); setSaved(false); };
+  const staffClearAll = () => { setStaffPerms(initPerms(permissionModules)); setSaved(false); };
 
   const handleSave = async () => {
     if (!selectedStaff) return;
@@ -236,6 +256,7 @@ export default function RoleAssignPage({ onBack, targetStaff }) {
         <div className="mb-5">
           <h3 className="text-sm font-semibold text-gray-700 mb-3">Permission Matrix</h3>
           <PermissionTable
+            modules={permissionModules}
             permissions={rolePerms}
             onToggle={toggleRolePerm}
             onToggleRow={toggleRoleRow}
@@ -310,6 +331,7 @@ export default function RoleAssignPage({ onBack, targetStaff }) {
           ) : (
             <div className="p-6">
               <PermissionTable
+                modules={permissionModules}
                 permissions={staffPerms}
                 onToggle={toggleStaffPerm}
                 onToggleRow={toggleStaffRow}
