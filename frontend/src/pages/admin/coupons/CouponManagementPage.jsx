@@ -232,6 +232,8 @@ export default function CouponManagementPage() {
         maxDiscount: Number(form.maxDiscount || 0),
         usageLimit: Number(form.usageLimit || 0),
         minimumQuantity: Number(form.minimumQuantity || 1),
+        startDate: form.startDate || null,
+        endDate: form.endDate || null,
         category: form.category || null,
         subCategory: form.subCategory || null,
         product: form.product || null,
@@ -470,12 +472,15 @@ export default function CouponManagementPage() {
                   <span className="mb-1 block font-semibold text-[#2F241D]">Minimum Order Value{form.offerType === 'Cart Offer' ? ' *' : ''}</span>
                   <input type="number" min="0" value={form.minOrderValue} onChange={(e) => setForm({ ...form, minOrderValue: e.target.value })} className="w-full rounded-xl border border-[#E6DFD4] px-3 py-2.5 outline-none focus:border-[#8B5E3C]" />
                 </label>
-                {form.discountType === 'Percentage' && (
-                  <label className="text-sm">
-                    <span className="mb-1 block font-semibold text-[#2F241D]">Maximum Discount</span>
-                    <input type="number" min="0" value={form.maxDiscount} onChange={(e) => setForm({ ...form, maxDiscount: e.target.value })} className="w-full rounded-xl border border-[#E6DFD4] px-3 py-2.5 outline-none focus:border-[#8B5E3C]" />
-                  </label>
-                )}
+              </div>
+            )}
+
+            {form.discountType === 'Percentage' && (
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="text-sm">
+                  <span className="mb-1 block font-semibold text-[#2F241D]">Maximum Discount</span>
+                  <input type="number" min="0" value={form.maxDiscount} onChange={(e) => setForm({ ...form, maxDiscount: e.target.value })} className="w-full rounded-xl border border-[#E6DFD4] px-3 py-2.5 outline-none focus:border-[#8B5E3C]" />
+                </label>
               </div>
             )}
 

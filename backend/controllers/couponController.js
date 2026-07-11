@@ -17,6 +17,12 @@ const normalizeReference = (value) => {
   return String(value);
 };
 
+const parseOptionalDate = (value) => {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
 const getItemProductId = (item = {}) => normalizeReference(
   item?.product || item?.productId || item?.product_id || item?._id
 );
@@ -169,6 +175,8 @@ exports.createCoupon = async (req, res) => {
       usageLimit: Number(req.body.usageLimit || 0),
       usageCount: Number(req.body.usageCount || 0),
       minimumQuantity: Number(req.body.minimumQuantity || 1),
+      startDate: parseOptionalDate(req.body.startDate),
+      endDate: parseOptionalDate(req.body.endDate),
       visible: req.body.visible !== false,
       showOnCheckout: req.body.showOnCheckout !== false,
       status: req.body.status || 'active',
@@ -200,6 +208,8 @@ exports.updateCoupon = async (req, res) => {
       maxDiscount: Number(req.body.maxDiscount || 0),
       usageLimit: Number(req.body.usageLimit || 0),
       minimumQuantity: Number(req.body.minimumQuantity || 1),
+      startDate: parseOptionalDate(req.body.startDate),
+      endDate: parseOptionalDate(req.body.endDate),
       visible: req.body.visible !== false,
       showOnCheckout: req.body.showOnCheckout !== false,
       status: req.body.status || 'active',
@@ -262,8 +272,22 @@ exports.getEligibleCoupons = async (req, res) => {
       status: 'active',
       visible: true,
       showOnCheckout: { $ne: false },
-      startDate: { $lte: now },
-      endDate: { $gte: now },
+      $and: [
+        {
+          $or: [
+            { startDate: { $exists: false } },
+            { startDate: null },
+            { startDate: { $lte: now } },
+          ],
+        },
+        {
+          $or: [
+            { endDate: { $exists: false } },
+            { endDate: null },
+            { endDate: { $gte: now } },
+          ],
+        },
+      ],
       minOrderValue: { $lte: Number(subtotal || 0) },
     }).sort({ createdAt: -1 });
 

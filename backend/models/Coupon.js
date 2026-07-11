@@ -46,6 +46,13 @@ const couponSchema = new mongoose.Schema({
     default: 0,
     min: 0,
   },
+  remainingCount: {
+    type: Number,
+    default: function () {
+      return Math.max(0, Number(this.usageLimit || 0) - Number(this.usageCount || 0));
+    },
+    min: 0,
+  },
   category: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Category',
@@ -68,15 +75,15 @@ const couponSchema = new mongoose.Schema({
   },
   startDate: {
     type: Date,
-    required: true,
+    default: null,
   },
   endDate: {
     type: Date,
-    required: true,
+    default: null,
   },
   status: {
     type: String,
-    enum: ['active', 'inactive', 'expired'],
+    enum: ['active', 'inactive', 'expired', 'exhausted'],
     default: 'active',
     index: true,
   },
@@ -109,6 +116,23 @@ const couponSchema = new mongoose.Schema({
   },
 }, {
   timestamps: true,
+});
+
+couponSchema.pre('save', function () {
+  this.usageCount = Math.max(0, Number(this.usageCount || 0));
+  if (Number(this.usageLimit) > 0) {
+    this.remainingCount = Math.max(0, Number(this.usageLimit || 0) - Number(this.usageCount || 0));
+    if (this.remainingCount === 0 && this.status === 'active') {
+      this.status = 'exhausted';
+    } else if (this.remainingCount > 0 && this.status === 'exhausted') {
+      this.status = 'active';
+    }
+  } else {
+    this.remainingCount = null;
+    if (this.status === 'exhausted') {
+      this.status = 'active';
+    }
+  }
 });
 
 couponSchema.index({ offerType: 1 });
