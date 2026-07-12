@@ -36,7 +36,7 @@ const getStatusBadge = (status) => {
   return 'bg-slate-200 text-slate-700';
 };
 
-export default function CouponManagementPage() {
+export default function CouponManagementPage({ canCreate = true, canEdit = true, canDelete = true }) {
   const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState('list');
@@ -394,11 +394,11 @@ export default function CouponManagementPage() {
                       <td className="px-4 py-3">{coupon.visible ? <span className="text-emerald-700">Visible</span> : <span className="text-slate-500">Hidden</span>}</td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-2">
-                          <button onClick={() => openView(coupon)} className="rounded-lg border border-[#E6DFD4] p-2 text-[#6B4F37] hover:bg-[#F8F4EC]" title="View"><Eye size={15} /></button>
-                          <button onClick={() => openEdit(coupon)} className="rounded-lg border border-[#E6DFD4] p-2 text-[#6B4F37] hover:bg-[#F8F4EC]" title="Edit"><Pencil size={15} /></button>
-                          <button onClick={() => setConfirmDelete(coupon)} className="rounded-lg border border-red-200 p-2 text-red-500 hover:bg-red-50" title="Delete"><Trash2 size={15} /></button>
-                          <button onClick={() => handleToggleStatus(coupon)} className="rounded-lg border border-[#E6DFD4] p-2 text-[#6B4F37] hover:bg-[#F8F4EC]" title="Enable/Disable">{coupon.status === 'active' ? <BadgeX size={15} /> : <BadgeCheck size={15} />}</button>
-                          <button onClick={() => handleToggleVisibility(coupon)} className="rounded-lg border border-[#E6DFD4] p-2 text-[#6B4F37] hover:bg-[#F8F4EC]" title="Visible/Invisible">{coupon.visible ? <XCircle size={15} /> : <CheckCircle2 size={15} />}</button>
+                          <button onClick={() => openView(coupon)} className="p-1.5 text-teal-600 hover:text-teal-700 transition-colors" title="View"><Eye size={15} /></button>
+                          {canEdit && <button onClick={() => openEdit(coupon)} className="p-1.5 text-blue-600 hover:text-blue-700 transition-colors" title="Edit"><Pencil size={15} /></button>}
+                          {canDelete && <button onClick={() => setConfirmDelete(coupon)} className="p-1.5 text-red-500 hover:text-red-700 transition-colors" title="Delete"><Trash2 size={15} /></button>}
+                          {canEdit && <button onClick={() => handleToggleStatus(coupon)} className="p-1.5 text-amber-600 hover:text-amber-700 transition-colors" title="Enable/Disable">{coupon.status === 'active' ? <BadgeX size={15} /> : <BadgeCheck size={15} />}</button>}
+                          {canEdit && <button onClick={() => handleToggleVisibility(coupon)} className="p-1.5 text-indigo-600 hover:text-indigo-700 transition-colors" title="Visible/Invisible">{coupon.visible ? <XCircle size={15} /> : <CheckCircle2 size={15} />}</button>}
                         </div>
                       </td>
                     </tr>
@@ -443,9 +443,7 @@ export default function CouponManagementPage() {
                   <option>Product Offer</option>
                   <option>Category Offer</option>
                 </select>
-                {form.offerType === 'Cart Offer' && (
-                  <p className="mt-2 text-xs text-gray-500">Cart Offer discounts are applied at checkout when the cart meets the minimum order value and eligibility rules.</p>
-                )}
+                {form.offerType === 'Cart Offer'}
               </label>
             </div>
 
@@ -463,21 +461,28 @@ export default function CouponManagementPage() {
               </label>
             </div>
 
-            {(form.offerType === 'General Offer' || form.offerType === 'Category Offer' || form.offerType === 'Cart Offer') && (
+            {(form.offerType === 'General Offer' || form.offerType === 'Category Offer' || form.offerType === 'Cart Offer' || form.discountType === 'Percentage') && (
               <div className="grid gap-4 md:grid-cols-2">
-                <label className="text-sm">
-                  <span className="mb-1 block font-semibold text-[#2F241D]">Minimum Order Value{form.offerType === 'Cart Offer' ? ' *' : ''}</span>
-                  <input type="number" min="0" value={form.minOrderValue} onChange={(e) => setForm({ ...form, minOrderValue: e.target.value })} className="w-full rounded-xl border border-[#E6DFD4] px-3 py-2.5 outline-none focus:border-[#8B5E3C]" />
-                </label>
-              </div>
-            )}
+                {(form.offerType === 'General Offer' || form.offerType === 'Category Offer' || form.offerType === 'Cart Offer') && (
+                  <label className="text-sm">
+                    <span className="mb-1 block font-semibold text-[#2F241D]">Minimum Order Value{form.offerType === 'Cart Offer' ? ' *' : ''}</span>
+                    <input type="number" min="0" value={form.minOrderValue} onChange={(e) => setForm({ ...form, minOrderValue: e.target.value })} className="w-full rounded-xl border border-[#E6DFD4] px-3 py-2.5 outline-none focus:border-[#8B5E3C]" />
+                  </label>
+                )}
 
-            {form.discountType === 'Percentage' && (
-              <div className="grid gap-4 md:grid-cols-2">
-                <label className="text-sm">
-                  <span className="mb-1 block font-semibold text-[#2F241D]">Maximum Discount</span>
-                  <input type="number" min="0" value={form.maxDiscount} onChange={(e) => setForm({ ...form, maxDiscount: e.target.value })} className="w-full rounded-xl border border-[#E6DFD4] px-3 py-2.5 outline-none focus:border-[#8B5E3C]" />
-                </label>
+                {form.discountType === 'Percentage' && (
+                  <label className="text-sm">
+                    <span className="mb-1 block font-semibold text-[#2F241D]">Maximum Discount</span>
+                    <input type="number" min="0" value={form.maxDiscount} onChange={(e) => setForm({ ...form, maxDiscount: e.target.value })} className="w-full rounded-xl border border-[#E6DFD4] px-3 py-2.5 outline-none focus:border-[#8B5E3C]" />
+                  </label>
+                )}
+
+                {(form.offerType === 'Category Offer' || form.offerType === 'Product Offer') && (
+                  <label className="text-sm">
+                    <span className="mb-1 block font-semibold text-[#2F241D]">Minimum Quantity</span>
+                    <input type="number" min="1" value={form.minimumQuantity} onChange={(e) => setForm({ ...form, minimumQuantity: e.target.value })} className="w-full rounded-xl border border-[#E6DFD4] px-3 py-2.5 outline-none focus:border-[#8B5E3C]" />
+                  </label>
+                )}
               </div>
             )}
 
@@ -556,14 +561,7 @@ export default function CouponManagementPage() {
               </div>
             )}
 
-            {(form.offerType === 'Category Offer' || form.offerType === 'Product Offer') && (
-              <div className="grid gap-4 md:grid-cols-2">
-                <label className="text-sm">
-                  <span className="mb-1 block font-semibold text-[#2F241D]">Minimum Quantity</span>
-                  <input type="number" min="1" value={form.minimumQuantity} onChange={(e) => setForm({ ...form, minimumQuantity: e.target.value })} className="w-full rounded-xl border border-[#E6DFD4] px-3 py-2.5 outline-none focus:border-[#8B5E3C]" />
-                </label>
-              </div>
-            )}
+            
 
             <div className="grid gap-4 md:grid-cols-3">
               <label className="text-sm">

@@ -186,9 +186,6 @@ export default function Header({
                     Admin Dashboard
                   </button>
                 )}
-                <button type="button" onClick={() => { onNavigate('/profile'); setDropdownOpen(false); }} className="block w-full px-4 py-3 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF]">
-                  My Profile
-                </button>
                 <button type="button" onClick={() => { onLogout(); setDropdownOpen(false); }} className="block w-full px-4 py-3 text-left text-sm font-semibold text-red-600 hover:bg-red-50">
                   Sign Out
                 </button>

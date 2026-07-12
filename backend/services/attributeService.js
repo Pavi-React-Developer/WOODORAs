@@ -338,22 +338,18 @@ const deleteAttribute = async (id, auditContext) => {
     }
 
     const beforeState = await getAttributeById(id);
+    await Attribute.deleteOne({ _id: id });
 
-    attribute.isDeleted = true;
-    attribute.deletedAt = new Date();
-    attribute.updatedBy = auditContext.userId;
-    await attribute.save();
-
-    // Clean up mapping and values (or leave them for soft-delete archive, but marked inactive)
+    // Clean up mapping and values when attribute is removed permanently
     await CategoryAttributeMapping.deleteMany({ attribute: id });
-    await AttributeValue.updateMany({ attribute: id }, { $set: { isActive: false } });
+    await AttributeValue.deleteMany({ attribute: id });
 
     await auditService.logAction(auditContext, {
         entityType: 'Attribute',
         entityId: id,
         action: 'DELETE',
         before: beforeState,
-        after: { ...beforeState, isDeleted: true, deletedAt: new Date() },
+        after: null,
     });
 
     return attribute;

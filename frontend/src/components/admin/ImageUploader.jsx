@@ -176,6 +176,16 @@ export const ImageUploader = ({
                                 className="w-full h-full object-cover"
                             />
 
+                            {/* Always-visible delete button at top-right */}
+                            <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); handleRemove(idx); }}
+                                title="Delete Image"
+                                className="absolute top-2 right-2 z-20 p-1.5 rounded-full bg-white/90 text-red-600 hover:bg-red-600 hover:text-white transition-colors"
+                            >
+                                <X size={14} />
+                            </button>
+
                             {/* Badges/Indicators */}
                             {img.isThumbnail && (
                                 <span className="absolute top-2 left-2 flex items-center gap-1 bg-amber-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">

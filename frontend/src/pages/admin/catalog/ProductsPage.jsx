@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Globe, Sparkles, Layers, ListFilter, Download } from 'lucide-react';
+import { Plus, Edit2, Trash2, Settings, ToggleLeft, ToggleRight, List, Columns, ShieldAlert, Download, RefreshCw, Sparkles, Layers, Globe } from 'lucide-react';
 import { productV2API, categoryV2API, subCategoryV2API } from '../../../api/catalogV2Service';
 import { downloadExcelFile } from '../../../utils/exportUtils';
 import { SearchBar, Button, Badge, Card } from '../../../components/admin/CommonComponents';
@@ -9,7 +9,7 @@ import ImageUploader from '../../../components/admin/ImageUploader';
 import DynamicFormBuilder from '../../../components/admin/DynamicFormBuilder';
 import VariantManagement from '../../../components/admin/VariantManagement';
 
-export const ProductsPage = () => {
+export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = true }) => {
     // List/Table state
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -456,6 +456,9 @@ export const ProductsPage = () => {
                     <p className="text-gray-500 mt-1">Manage catalog inventory, customizable variables, and attributes.</p>
                 </div>
                 <div className="flex items-center gap-3">
+                    <button onClick={fetchProducts} className="admin-secondary-btn">
+                        <RefreshCw size={16} /> Refresh
+                    </button>
                     <button onClick={exportProductsExcel} className="admin-export-btn">
                         <Download size={16} /> Export Excel
                     </button>
@@ -629,20 +632,24 @@ export const ProductsPage = () => {
                                                 </button>
                                             </td>
                                             <td className="px-6 py-4 text-right flex justify-end gap-2 mt-2">
-                                                <button
-                                                    onClick={() => handleOpenForm(prod)}
-                                                    className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-amber-700 transition-colors"
-                                                    title="Edit"
-                                                >
-                                                    <Edit2 size={16} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteClick(prod._id)}
-                                                    className="p-1.5 hover:bg-red-50 rounded-lg text-gray-600 hover:text-red-600 transition-colors"
-                                                    title="Delete"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
+                                                {canEdit && (
+                                                    <button
+                                                        onClick={() => handleOpenForm(prod)}
+                                                        className="p-1.5 text-blue-600 hover:text-blue-700 transition-colors"
+                                                        title="Edit"
+                                                    >
+                                                        <Edit2 size={16} />
+                                                    </button>
+                                                )}
+                                                {canDelete && (
+                                                    <button
+                                                        onClick={() => handleDeleteClick(prod._id)}
+                                                        className="p-1.5 text-red-600 hover:text-red-700 transition-colors"
+                                                        title="Delete"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                )}
                                             </td>
                                         </tr>
                                     );

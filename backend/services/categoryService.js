@@ -154,18 +154,14 @@ const deleteCategory = async (id, auditContext) => {
     }
 
     const beforeState = category.toObject();
-
-    category.isDeleted = true;
-    category.deletedAt = new Date();
-    category.updatedBy = auditContext.userId;
-    await category.save();
+    await Category.deleteOne({ _id: id });
 
     await auditService.logAction(auditContext, {
         entityType: 'Category',
         entityId: category._id,
         action: 'DELETE',
         before: beforeState,
-        after: category.toObject(),
+        after: null,
     });
 
     return category;
@@ -232,16 +228,7 @@ const bulkUpdateStatus = async (ids, isActive, auditContext) => {
 const bulkDelete = async (ids, auditContext) => {
     const categoriesBefore = await Category.find({ _id: { $in: ids }, isDeleted: false });
 
-    await Category.updateMany(
-        { _id: { $in: ids }, isDeleted: false },
-        { 
-            $set: { 
-                isDeleted: true, 
-                deletedAt: new Date(),
-                updatedBy: auditContext.userId 
-            } 
-        }
-    );
+    await Category.deleteMany({ _id: { $in: ids }, isDeleted: false });
 
     for (const cat of categoriesBefore) {
         await auditService.logAction(auditContext, {
@@ -249,7 +236,7 @@ const bulkDelete = async (ids, auditContext) => {
             entityId: cat._id,
             action: 'DELETE',
             before: cat.toObject(),
-            after: { ...cat.toObject(), isDeleted: true, deletedAt: new Date() },
+            after: null,
         });
     }
 

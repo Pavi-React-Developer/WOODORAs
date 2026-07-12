@@ -652,6 +652,43 @@ const getDashboardStats = async (req, res) => {
   }
 };
 
+// @desc    Delete order
+// @route   DELETE /api/orders/:id
+// @access  Private/Admin
+const deleteOrder = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+
+    if (order) {
+      // Revert stock reservations if order was not delivered or cancelled yet
+      if (['Placed', 'Packed', 'Shipping', 'Out for delivery', 'Pending', 'Shipped'].includes(order.status)) {
+        for (const item of order.orderItems) {
+          if (item.variant) {
+            await updateVariantStock(item.variant, item.qty, 'cancel');
+          } else if (item.product) {
+            try {
+              const productToUpdate = await Product.findById(item.product);
+              if (productToUpdate && productToUpdate.inventory) {
+                productToUpdate.inventory.stockQuantity = (productToUpdate.inventory.stockQuantity || 0) + item.qty;
+                await productToUpdate.save();
+              }
+            } catch (err) {
+              console.error('Failed to restore product stock on order delete', err);
+            }
+          }
+        }
+      }
+
+      await Order.findByIdAndDelete(req.params.id);
+      res.json({ message: 'Order deleted successfully' });
+    } else {
+      res.status(404).json({ message: 'Order not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message || 'Server Error' });
+  }
+};
+
 module.exports = {
   addOrderItems,
   getOrderById,
@@ -664,4 +701,6 @@ module.exports = {
   updateOrderDetails,
   cancelOrder,
   getCancellationPreview,
+  deleteOrder,
 };
+

@@ -45,20 +45,20 @@ export const Button = ({
     loading = false,
     ...props
 }) => {
-    const baseStyles = 'font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2';
+    const baseStyles = 'font-bold uppercase tracking-wider text-xs rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-sm cursor-pointer box-border';
 
     const variants = {
-        primary: 'bg-amber-700 hover:bg-amber-800 text-white disabled:bg-gray-300',
-        secondary: 'bg-gray-200 hover:bg-gray-300 text-gray-900 disabled:bg-gray-100',
+        primary: 'bg-[#8B5E3C] hover:bg-[#70482B] text-white disabled:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed',
+        secondary: 'bg-white border border-[#E6DFD4] hover:bg-gray-50 text-brand-dark disabled:bg-gray-100',
         danger: 'bg-red-600 hover:bg-red-700 text-white disabled:bg-gray-300',
         success: 'bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-300',
-        outline: 'border-2 border-amber-700 text-amber-700 hover:bg-amber-50 disabled:border-gray-300 disabled:text-gray-300',
+        outline: 'border-2 border-[#8B5E3C] text-[#8B5E3C] hover:bg-[#EFEBE9] disabled:border-gray-300 disabled:text-gray-300',
     };
 
     const sizes = {
-        sm: 'px-3 py-1 text-sm',
-        md: 'px-4 py-2 text-base',
-        lg: 'px-6 py-3 text-lg',
+        sm: 'h-8 px-3 text-xs',
+        md: 'h-10 px-5 text-xs',
+        lg: 'h-12 px-6 text-sm',
     };
 
     return (

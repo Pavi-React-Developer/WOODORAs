@@ -310,7 +310,7 @@ const replyToReview = async (req, res) => {
     const review = await Review.findByIdAndUpdate(
       req.params.reviewId,
       { adminReply: { text, repliedAt: new Date() } },
-      { new: true }
+      { returnDocument: 'after' }
     ).populate('user', 'name profileImage');
     if (!review) return res.status(404).json({ message: 'Review not found' });
     res.json(review);
@@ -426,7 +426,7 @@ const adminUpdateReviewStatus = async (req, res) => {
     const review = await Review.findByIdAndUpdate(
       req.params.reviewId,
       { status },
-      { new: true }
+      { returnDocument: 'after' }
     ).populate('user', 'name email profileImage').populate('product', 'name images');
     if (!review) return res.status(404).json({ message: 'Review not found' });
     res.json(review);

@@ -26,9 +26,39 @@ export const ADMIN_MODULES = [
     icon: '🗂️',
   },
   {
+    key: 'products',
+    label: 'Products',
+    icon: '🛍️',
+  },
+  {
+    key: 'categories',
+    label: 'Categories',
+    icon: '🏷️',
+  },
+  {
     key: 'orders',
     label: 'Orders Management',
     icon: '📦',
+  },
+  {
+    key: 'inventory',
+    label: 'Inventory',
+    icon: '🏭',
+  },
+  {
+    key: 'customers',
+    label: 'Customers',
+    icon: '🙋',
+  },
+  {
+    key: 'coupons',
+    label: 'Coupons',
+    icon: '🎟️',
+  },
+  {
+    key: 'reviews',
+    label: 'Reviews',
+    icon: '⭐',
   },
   {
     key: 'fees',
@@ -44,6 +74,16 @@ export const ADMIN_MODULES = [
     key: 'refund',
     label: 'Refund Management',
     icon: '💳',
+  },
+  {
+    key: 'reports',
+    label: 'Reports',
+    icon: '📈',
+  },
+  {
+    key: 'settings',
+    label: 'Settings',
+    icon: '⚙️',
   },
 ];
 

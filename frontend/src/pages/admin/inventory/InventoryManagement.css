@@ -372,11 +372,11 @@
 .status-badge {
   display: inline-flex;
   align-items: center;
-  padding: 0.25rem 0.75rem;
+  padding: 0.35rem 0.85rem;
   border-radius: 9999px;
   font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.025em;
+  font-weight: 700;
+  letter-spacing: 0.03em;
 }
 
 .status-in-stock {
@@ -392,6 +392,159 @@
 .status-out-of-stock {
   background-color: #fee2e2;
   color: #991b1b;
+}
+
+/* Variant Card */
+.variant-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 1.25rem;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.05);
+  padding: 1.25rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.variant-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 35px rgba(15, 23, 42, 0.08);
+}
+
+.variant-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.variant-card-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 0.35rem 0;
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 1.25rem;
+}
+
+.detail-breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #334155;
+  font-size: 0.9rem;
+}
+
+.detail-backlink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  color: #475569;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.detail-back-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.detail-backlink:hover {
+  color: #0f172a;
+}
+
+.detail-breadcrumb-separator {
+  color: #cbd5e1;
+}
+
+.detail-breadcrumb-title {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.variant-card-sku {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.75rem;
+  color: #6b7280;
+  background: #f9fafb;
+  padding: 0.35rem 0.65rem;
+  border-radius: 0.65rem;
+  display: inline-block;
+}
+
+.variant-card-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 1rem 0;
+  margin-bottom: 1rem;
+}
+
+.variant-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.variant-stat-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #9ca3af;
+}
+
+.variant-stat-value {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.variant-card-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.variant-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.85rem;
+  border: 1px solid #e5e7eb;
+  background-color: #ffffff;
+  color: #111827;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.variant-action-btn:hover {
+  background-color: #f9fafb;
+}
+
+.variant-action-btn.secondary {
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.variant-action-btn.secondary:hover {
+  background-color: #e5e7eb;
 }
 
 /* Action Buttons */

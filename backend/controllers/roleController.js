@@ -1,4 +1,5 @@
 const Role = require('../models/Role');
+const Staff = require('../models/Staff');
 
 // @desc    Get all roles
 // @route   GET /api/roles
@@ -12,7 +13,7 @@ const getRoles = async (req, res) => {
   }
 };
 
-// @desc    Create a new role
+// @desc    Create a new role and apply its permissions to all existing staff with that role
 // @route   POST /api/roles
 // @access  Private/Admin
 const createRole = async (req, res) => {
@@ -28,6 +29,15 @@ const createRole = async (req, res) => {
     }
 
     const role = await Role.create({ name, permissions: permissions || [] });
+
+    // Apply the new role's permissions to all staff members who already have this role name
+    if (permissions && permissions.length > 0) {
+      await Staff.updateMany(
+        { role: name },
+        { $set: { permissions: permissions } }
+      );
+    }
+
     res.status(201).json(role);
   } catch (error) {
     res.status(500).json({ message: 'Server Error creating role' });

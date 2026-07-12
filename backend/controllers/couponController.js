@@ -213,7 +213,7 @@ exports.updateCoupon = async (req, res) => {
       status: req.body.status || 'active',
     };
 
-    const coupon = await Coupon.findOneAndUpdate({ _id: req.params.id, deleted: false }, payload, { new: true });
+    const coupon = await Coupon.findOneAndUpdate({ _id: req.params.id, deleted: false }, payload, { returnDocument: 'after' });
     if (!coupon) return res.status(404).json({ message: 'Coupon not found' });
     res.json(coupon);
   } catch (error) {

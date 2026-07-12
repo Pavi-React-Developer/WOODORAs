@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Search, ChevronDown, ChevronLeft, ChevronRight, Eye, X, CheckCircle2 } from 'lucide-react';
+import { Download, Search, ChevronDown, ChevronLeft, ChevronRight, Eye, X, CheckCircle2, RefreshCw } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import toast from 'react-hot-toast';
 import { adminService } from '../../../api/adminService';
@@ -87,7 +87,7 @@ export default function RefundManagementPage() {
     }
     const searchLower = searchQuery.toLowerCase();
     const matchSearch = r.orderId?.toLowerCase().includes(searchLower) || r.customerName?.toLowerCase().includes(searchLower);
-    
+
     return matchPayment && matchStatus && matchSearch;
   });
 
@@ -113,14 +113,14 @@ export default function RefundManagementPage() {
 
   const codCount = refunds.filter(r => r.paymentType === 'COD').length;
   const cashfreeCount = refunds.filter(r => r.paymentType === 'Cashfree').length;
-  
+
   const barData = [
     { name: 'COD', value: codCount, fill: '#ec4899' },
     { name: 'Cashfree', value: cashfreeCount, fill: '#3b82f6' },
   ];
 
   const getStatusStyle = (status) => {
-    switch(status) {
+    switch (status) {
       case 'Approved Refund':
       case 'Refund Approved':
       case 'Completed': return 'bg-emerald-100 text-emerald-700';
@@ -133,7 +133,7 @@ export default function RefundManagementPage() {
   };
 
   const getActionStyle = (action) => {
-    switch(action) {
+    switch (action) {
       case 'Refunded': return 'bg-emerald-500 text-white';
       case 'Refund': return 'bg-[#8B5E3C] text-white';
       case 'Processing': return 'bg-blue-100 text-blue-700';
@@ -159,7 +159,7 @@ export default function RefundManagementPage() {
   return (
     <div className="bg-[#FAF8F5] min-h-screen">
       <div className="max-w-7xl mx-auto px-8 py-10">
-        
+
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
           <div>
@@ -167,7 +167,11 @@ export default function RefundManagementPage() {
             <p className="text-[#6D625C] mt-1.5 text-sm">Manage pending and processed refunds.</p>
           </div>
           <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-[#E9DED3] text-[#6D625C] rounded-lg text-sm font-bold shadow-sm">
+            <button onClick={fetchRefunds} className="admin-secondary-btn">
+              <RefreshCw size={16} />
+              Refresh
+            </button>
+            <button className="admin-secondary-btn flex items-center gap-2">
               Last 30 Days
               <ChevronDown size={14} />
             </button>
@@ -190,14 +194,14 @@ export default function RefundManagementPage() {
               <p className="text-[10px] text-[#8A817C] mt-1">All time total refunds</p>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-[14px] border border-[#E9DED3] p-5 shadow-sm flex items-start gap-4">
             <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500 flex-shrink-0">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             </div>
             <div>
               <p className="text-xs font-bold text-[#6D625C]">Total Refunded Amount</p>
-              <h3 className="text-2xl font-bold text-[#141225] mt-0.5">₹{totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</h3>
+              <h3 className="text-2xl font-bold text-[#141225] mt-0.5">₹{totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h3>
               <p className="text-[10px] text-[#8A817C] mt-1">All time refunded amount</p>
             </div>
           </div>
@@ -227,7 +231,7 @@ export default function RefundManagementPage() {
 
         {/* Charts Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          
+
           <div className="bg-white rounded-[14px] border border-[#E9DED3] p-6 shadow-sm">
             <h3 className="text-sm font-bold text-[#141225] mb-6">Refunds by Status</h3>
             <div className="flex items-center">
@@ -257,7 +261,7 @@ export default function RefundManagementPage() {
                   return (
                     <div key={i} className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2">
-                        <div className="w-2.5 h-2.5 rounded-full" style={{backgroundColor: d.color}}></div>
+                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }}></div>
                         <span className="text-[#6D625C]">{d.name}</span>
                       </div>
                       <div className="text-[#141225]">{d.value} <span className="text-[#8A817C]">({perc}%)</span></div>
@@ -273,9 +277,9 @@ export default function RefundManagementPage() {
             <div className="h-48">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={barData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#8A817C'}} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#8A817C'}} />
-                  <Tooltip cursor={{fill: '#f3f4f6'}} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#8A817C' }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#8A817C' }} />
+                  <Tooltip cursor={{ fill: '#f3f4f6' }} />
                   <Bar dataKey="value" barSize={80} radius={[4, 4, 0, 0]}>
                     {barData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -292,16 +296,16 @@ export default function RefundManagementPage() {
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
           <div className="relative w-full md:w-80">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-            <input 
-              type="text" 
-              placeholder="Search by Order ID or Customer..." 
+            <input
+              type="text"
+              placeholder="Search by Order ID or Customer..."
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
               className="w-full pl-9 pr-4 py-2 bg-white border border-[#E9DED3] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#8B5E3C]"
             />
           </div>
           <div className="flex gap-3 w-full md:w-auto">
-            <select 
+            <select
               value={paymentTypeFilter}
               onChange={(e) => { setPaymentTypeFilter(e.target.value); setCurrentPage(1); }}
               className="bg-white border border-[#E9DED3] text-[#4A403B] text-sm rounded-lg px-4 py-2 focus:outline-none shadow-sm cursor-pointer"
@@ -310,7 +314,7 @@ export default function RefundManagementPage() {
               <option>COD</option>
               <option>Cashfree</option>
             </select>
-            <select 
+            <select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
               className="bg-white border border-[#E9DED3] text-[#4A403B] text-sm rounded-lg px-4 py-2 focus:outline-none shadow-sm cursor-pointer"
@@ -346,7 +350,7 @@ export default function RefundManagementPage() {
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
                     <td className="px-6 py-4 text-xs font-bold text-[#141225]">{refund.orderId}</td>
                     <td className="px-6 py-4 text-xs text-[#141225]">{refund.customerName}</td>
-                    <td className="px-6 py-4 text-xs font-bold text-[#141225]">₹{refund.amount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                    <td className="px-6 py-4 text-xs font-bold text-[#141225]">₹{refund.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                     <td className="px-6 py-4 text-center">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tracking-wide ${refund.paymentType === 'Cashfree' ? 'text-blue-500 bg-blue-50' : 'text-purple-500 bg-purple-50'}`}>
                         {refund.paymentType}
@@ -363,11 +367,11 @@ export default function RefundManagementPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <button 
+                      <button
                         onClick={() => {
-                           if (refund.status === 'Approval Pending' || refund.status === 'Pending') {
-                             openProcessModal(refund);
-                           }
+                          if (refund.status === 'Approval Pending' || refund.status === 'Pending') {
+                            openProcessModal(refund);
+                          }
                         }}
                         disabled={!(refund.status === 'Approval Pending' || refund.status === 'Pending')}
                         className={`inline-block px-4 py-1.5 rounded-lg text-[10px] font-bold shadow-sm transition-opacity ${refund.status === 'Approval Pending' || refund.status === 'Pending' ? 'cursor-pointer hover:opacity-80' : 'cursor-default opacity-90'} ${getActionStyle(refund.refundActionStatus)}`}
@@ -392,21 +396,21 @@ export default function RefundManagementPage() {
               </tbody>
             </table>
           </div>
-          
+
           {/* Pagination */}
           <div className="px-6 py-4 border-t border-[#E9DED3] flex items-center justify-between">
             <span className="text-xs text-[#8A817C] font-medium">
               Showing {filteredRefunds.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredRefunds.length)} of {filteredRefunds.length} results
             </span>
             <div className="flex items-center gap-1">
-              <button 
+              <button
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
                 className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 text-gray-500 transition-colors disabled:opacity-50"
               >
                 <ChevronLeft size={16} />
               </button>
-              
+
               {Array.from({ length: totalPages }).map((_, idx) => {
                 const pageNum = idx + 1;
                 if (totalPages > 5 && (pageNum < currentPage - 1 || pageNum > currentPage + 1) && pageNum !== 1 && pageNum !== totalPages) {
@@ -414,21 +418,20 @@ export default function RefundManagementPage() {
                   return null;
                 }
                 return (
-                  <button 
+                  <button
                     key={pageNum}
                     onClick={() => setCurrentPage(pageNum)}
-                    className={`w-8 h-8 flex items-center justify-center rounded font-bold text-xs shadow-sm transition-colors ${
-                      currentPage === pageNum 
-                        ? 'bg-[#8B5E3C] text-white' 
+                    className={`w-8 h-8 flex items-center justify-center rounded font-bold text-xs shadow-sm transition-colors ${currentPage === pageNum
+                        ? 'bg-[#8B5E3C] text-white'
                         : 'hover:bg-gray-100 text-[#4A403B]'
-                    }`}
+                      }`}
                   >
                     {pageNum}
                   </button>
                 );
               })}
 
-              <button 
+              <button
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
                 className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 text-gray-500 transition-colors disabled:opacity-50"
@@ -448,7 +451,7 @@ export default function RefundManagementPage() {
             {/* Modal Header */}
             <div className="flex items-center justify-between p-5 pb-4 bg-[#647C5E] text-white">
               <h2 className="text-lg font-bold">Process Refund</h2>
-              <button 
+              <button
                 onClick={() => setIsProcessModalOpen(false)}
                 className="text-white/80 hover:text-white transition-colors"
                 disabled={processLoading}
@@ -459,7 +462,7 @@ export default function RefundManagementPage() {
 
             {/* Modal Body */}
             <div className="p-6">
-              
+
               <div className="mb-5">
                 <span className="text-[11px] font-bold text-[#8A817C] uppercase tracking-wider mb-1 block">Customer Details</span>
                 <p className="font-bold text-[#141225] text-base">{activeRefund.customerName}</p>
@@ -479,7 +482,7 @@ export default function RefundManagementPage() {
               <div className="flex justify-between items-center bg-[#F4EBE2]/50 rounded-xl p-4 mb-6 border border-[#E9DED3]">
                 <span className="text-sm font-bold text-[#6D625C]">Refund Amount</span>
                 <span className="text-xl font-black text-[#A7632E]">
-                  ₹{activeRefund.amount.toLocaleString('en-IN', {minimumFractionDigits: 2})}
+                  ₹{activeRefund.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                 </span>
               </div>
 
@@ -489,21 +492,21 @@ export default function RefundManagementPage() {
 
               {/* Action Buttons */}
               <div className="flex gap-3">
-                <button 
+                <button
                   onClick={() => setIsProcessModalOpen(false)}
                   className="flex-1 py-3 bg-white border border-[#E9DED3] text-[#4A403B] rounded-xl font-bold text-sm shadow-sm hover:bg-gray-50 transition-colors"
                   disabled={processLoading}
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   onClick={handleConfirmRefund}
                   disabled={processLoading}
                   className="flex-[1.5] flex justify-center items-center gap-2 py-3 bg-[#647C5E] text-white rounded-xl font-bold text-sm shadow-sm hover:bg-[#52664d] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {processLoading ? 'Processing...' : (
                     <>
-                       Confirm Refund
+                      Confirm Refund
                     </>
                   )}
                 </button>
@@ -521,7 +524,7 @@ export default function RefundManagementPage() {
             {/* Modal Header */}
             <div className="flex items-center justify-between p-5 pb-4">
               <h2 className="text-lg font-bold text-[#141225]">View Refund Details</h2>
-              <button 
+              <button
                 onClick={() => setIsViewModalOpen(false)}
                 className="text-[#6D625C] hover:text-[#141225] transition-colors"
               >
@@ -531,7 +534,7 @@ export default function RefundManagementPage() {
 
             {/* Modal Body */}
             <div className="px-5 pb-5">
-              
+
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <p className="text-xs text-[#8A817C] mb-1">Order ID</p>
@@ -605,7 +608,7 @@ export default function RefundManagementPage() {
               </div>
 
               <div className="flex justify-end">
-                <button 
+                <button
                   onClick={() => setIsViewModalOpen(false)}
                   className="px-6 py-2.5 bg-[#647C5E] text-white rounded-lg font-bold text-sm shadow-sm hover:bg-[#52664d] transition-colors"
                 >

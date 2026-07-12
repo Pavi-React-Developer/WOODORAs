@@ -50,15 +50,15 @@ function CustomerDetailPage({ customer, onBack }) {
   return (
     <div className="bg-[#FAF8F5] min-h-screen">
       {/* ── Top Bar ── */}
-      <div className="bg-white border-b border-[#E9DED3] px-6 py-4 flex items-center gap-4 sticky top-0 z-10 shadow-sm">
+      <div className="px-6 py-3 flex items-center gap-3 text-sm text-[#334155]">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 text-sm font-bold text-[#6D625C] hover:text-[#9A6031] transition"
+          className="flex items-center gap-2 font-semibold text-[#475569] hover:text-[#0f172a] transition"
         >
           <ArrowLeft size={16} /> Back to Customers
         </button>
-        <span className="text-[#E9DED3]">|</span>
-        <span className="text-sm text-[#141225] font-bold">{customer.name}</span>
+        <span className="text-[#CBD5E1]">|</span>
+        <span className="font-bold text-[#0f172a]">{customer.name}</span>
       </div>
 
       <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
@@ -313,7 +313,7 @@ export default function CustomerManagementPage() {
           <div className="flex flex-wrap gap-3">
             <button
               onClick={load}
-              className="flex items-center gap-2 px-4 py-2 bg-[#9A6031] text-white rounded-xl text-sm font-bold hover:bg-[#7E4B25] shadow-sm transition"
+              className="admin-secondary-btn"
             >
               <RefreshCw size={14} /> Refresh
             </button>
@@ -430,9 +430,10 @@ export default function CustomerManagementPage() {
                       <td className="px-5 py-4 whitespace-nowrap">
                         <button
                           onClick={() => setDetail(c)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#FAF8F5] border border-[#E9DED3] rounded-lg text-xs font-bold text-[#6D625C] hover:border-[#9A6031] hover:text-[#9A6031] transition"
+                          className="p-1.5 text-teal-600 hover:text-teal-700 transition-colors"
+                          title="View"
                         >
-                          <Eye size={12} /> View
+                          <Eye size={16} />
                         </button>
                       </td>
                     </tr>

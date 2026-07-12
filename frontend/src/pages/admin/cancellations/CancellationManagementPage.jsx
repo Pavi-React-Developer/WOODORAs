@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Pencil, Trash2, Download, Plus, Search, ChevronDown, Check, X, Lock, AlertCircle } from 'lucide-react';
+import { Pencil, Trash2, Download, Plus, Search, ChevronDown, Check, X, Lock, AlertCircle, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { downloadExcelFile } from '../../../utils/exportUtils';
 
@@ -177,6 +177,10 @@ export default function CancellationManagementPage() {
           </div>
           
           <div className="flex items-center gap-3 pb-4">
+            <button onClick={fetchRules} className="admin-secondary-btn">
+              <RefreshCw size={16} />
+              Refresh
+            </button>
             <button onClick={exportRulesExcel} className="admin-export-btn">
               <Download size={16} />
               Export Excel
@@ -187,7 +191,7 @@ export default function CancellationManagementPage() {
                 setFormData({ orderStatus: 'Order Placed', cancellationFee: '', timeLimit: '', isAllowed: true });
                 setIsModalOpen(true);
               }}
-              className="flex items-center gap-2 px-4 py-2 bg-[#9A6031] text-white rounded-lg text-sm font-bold hover:bg-[#7E4B25] shadow-sm"
+              className="admin-btn"
             >
               <Plus size={16} />
               Add Rule

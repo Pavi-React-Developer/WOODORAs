@@ -78,7 +78,7 @@ const getPrimaryVariantPrice = (variants = []) => {
     return Number.isFinite(normalized) ? normalized : null;
 };
 
-const buildProductPricing = (product = {}, variants = [], images = []) => {
+const buildProductPricing = (product = {}, variants = [], images = [], inventory = null) => {
     const normalizeNumber = (value, fallback = 0) => {
         const numeric = Number(value);
         return Number.isFinite(numeric) ? numeric : fallback;
@@ -119,9 +119,9 @@ const buildProductPricing = (product = {}, variants = [], images = []) => {
         compareAtPrice = (compareAtPrice > 0 ? compareAtPrice : basePrice);
     }
 
-    const totalStock = Array.isArray(variants)
+    const totalStock = Array.isArray(variants) && variants.length > 0
         ? variants.reduce((sum, v) => sum + Math.max(0, (v.inventory || 0) - (v.reserveStock || 0)), 0)
-        : 0;
+        : (inventory ? (inventory.stockQuantity || 0) : 0);
 
     return {
         effectivePrice,
@@ -262,13 +262,15 @@ const getProducts = async (query = {}) => {
     for (const prod of products) {
         const variants = await ProductVariant.find({ product: prod._id });
         const images = await ProductImage.find({ product: prod._id }).sort({ displayOrder: 1 });
-        const pricing = buildProductPricing(prod.toObject(), variants, images.map(img => img.toObject()));
+        const inventory = await Inventory.findOne({ product: prod._id });
+        const pricing = buildProductPricing(prod.toObject(), variants, images.map(img => img.toObject()), inventory);
 
         result.push({
             ...prod.toObject(),
             ...pricing,
             variantsCount: variants.length,
-            totalStock: variants.reduce((sum, v) => sum + (v.inventory || 0), 0),
+            totalStock: pricing.totalStock,
+            inventory: inventory ? { sku: inventory.sku, stockQuantity: inventory.stockQuantity } : null,
         });
     }
 
@@ -329,7 +331,8 @@ const getProductById = async (id) => {
         }
     }
 
-    const pricing = buildProductPricing(product.toObject(), variants, images.map(img => img.toObject()));
+    const inventory = await Inventory.findOne({ product: id });
+    const pricing = buildProductPricing(product.toObject(), variants, images.map(img => img.toObject()), inventory);
     const relatedProducts = await enrichRelatedProducts(product.relatedProducts);
     const crossSellProducts = await enrichRelatedProducts(product.crossSellProducts);
     const upSellProducts = await enrichRelatedProducts(product.upSellProducts);
@@ -344,6 +347,7 @@ const getProductById = async (id) => {
         relatedProducts,
         crossSellProducts,
         upSellProducts,
+        inventory: inventory ? { sku: inventory.sku, stockQuantity: inventory.stockQuantity } : null,
     };
 };
 

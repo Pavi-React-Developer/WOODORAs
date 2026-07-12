@@ -73,7 +73,7 @@ export default function NavbarAdmin() {
         <h3 className="text-lg font-bold text-brand-dark">Navbar Menu Items</h3>
         <button
           onClick={() => { setShowForm(true); setEditId(null); setForm(emptyForm); }}
-          className="flex items-center gap-2 bg-brand-dark text-white text-sm px-4 py-2 rounded-xl hover:bg-black transition-colors"
+          className="admin-btn"
         >
           <Plus className="w-4 h-4" /> Add Menu Item
         </button>

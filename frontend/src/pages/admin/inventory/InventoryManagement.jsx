@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Boxes, AlertTriangle, XCircle, Search, Filter, Download, Plus, Eye, Edit2, Clock, X } from 'lucide-react';
+import { Package, Boxes, AlertTriangle, XCircle, Search, Filter, Download, Plus, Eye, Edit2, Clock, X, RefreshCw } from 'lucide-react';
 import './InventoryManagement.css';
 import { catalogService } from '../../../api/catalogService';
 import { variantAPI } from '../../../api/catalogAdminService';
@@ -44,6 +44,7 @@ export default function InventoryManagement() {
   const [addStockModalOpen, setAddStockModalOpen] = useState(false);
   const [addStockItem, setAddStockItem] = useState(null);
   const [addStockAmount, setAddStockAmount] = useState(0);
+  const [selectedVariantId, setSelectedVariantId] = useState('');
 
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState('list'); // 'list' or 'detail'
@@ -85,27 +86,38 @@ export default function InventoryManagement() {
   const handleUpdateStock = async () => {
     try {
       if (editItem.type === 'product') {
-        const productId = editItem.data._id;
-        const currentInv = editItem.data.inventory;
-        const sku = currentInv?.sku || `SKU-${productId.substring(0,6)}`;
-        const payload = { stockQuantity: Number(editStock), sku };
-
-        if (currentInv) {
-          await catalogService.updateInventory(productId, payload);
+        const productVariants = getProductVariants(editItem.data);
+        if (productVariants.length > 0 && selectedVariantId) {
+          await variantAPI.updateVariant(selectedVariantId, { 
+            inventory: Number(editStock),
+            currentStock: Math.max(0, Number(editStock) - Number(editReserveStock)),
+            reserveStock: Number(editReserveStock)
+          });
+          toast.success('Variant stock updated successfully');
         } else {
-          await catalogService.createInventory({ product: productId, stockQuantity: payload.stockQuantity, sku, warehouseLocation: 'Main', lowStockThreshold: 5 });
+          const productId = editItem.data._id;
+          const currentInv = editItem.data.inventory;
+          const sku = currentInv?.sku || `SKU-${productId.substring(0,6)}`;
+          const payload = { stockQuantity: Number(editStock), sku };
+  
+          if (currentInv) {
+            await catalogService.updateInventory(productId, payload);
+          } else {
+            await catalogService.createInventory({ product: productId, stockQuantity: payload.stockQuantity, sku, warehouseLocation: 'Main', lowStockThreshold: 5 });
+          }
+          toast.success('Stock updated successfully');
         }
-        toast.success('Stock updated successfully');
       } else if (editItem.type === 'variant') {
         const variantId = editItem.data._id;
         await variantAPI.updateVariant(variantId, { 
           inventory: Number(editStock),
-          currentStock: Number(editCurrentStock),
+          currentStock: Math.max(0, Number(editStock) - Number(editReserveStock)),
           reserveStock: Number(editReserveStock)
         });
         toast.success('Variant stock updated successfully');
       }
       setEditModalOpen(false);
+      setSelectedVariantId('');
       fetchInventoryData();
     } catch (error) {
       toast.error('Failed to update stock');
@@ -116,18 +128,27 @@ export default function InventoryManagement() {
   const handleAddStock = async () => {
     try {
       if (addStockItem.type === 'product') {
-        const productId = addStockItem.data._id;
-        const currentInv = addStockItem.data.inventory;
-        const newStock = Number(currentInv?.stockQuantity || 0) + Number(addStockAmount);
-        const sku = currentInv?.sku || `SKU-${productId.substring(0,6)}`;
-        const payload = { stockQuantity: newStock, sku };
-        
-        if (currentInv) {
-          await catalogService.updateInventory(productId, payload);
+        const productVariants = getProductVariants(addStockItem.data);
+        if (productVariants.length > 0 && selectedVariantId) {
+          const selectedVar = productVariants.find(v => v._id === selectedVariantId);
+          const currentStock = selectedVar?.inventory || 0;
+          const newStock = Number(currentStock) + Number(addStockAmount);
+          await variantAPI.updateVariant(selectedVariantId, { inventory: newStock });
+          toast.success('Variant stock added successfully');
         } else {
-          await catalogService.createInventory({ product: productId, stockQuantity: payload.stockQuantity, sku, warehouseLocation: 'Main', lowStockThreshold: 5 });
+          const productId = addStockItem.data._id;
+          const currentInv = addStockItem.data.inventory;
+          const newStock = Number(currentInv?.stockQuantity || 0) + Number(addStockAmount);
+          const sku = currentInv?.sku || `SKU-${productId.substring(0,6)}`;
+          const payload = { stockQuantity: newStock, sku };
+          
+          if (currentInv) {
+            await catalogService.updateInventory(productId, payload);
+          } else {
+            await catalogService.createInventory({ product: productId, stockQuantity: payload.stockQuantity, sku, warehouseLocation: 'Main', lowStockThreshold: 5 });
+          }
+          toast.success('Stock added successfully');
         }
-        toast.success('Stock added successfully');
       } else if (addStockItem.type === 'variant') {
         const variantId = addStockItem.data._id;
         const currentStock = addStockItem.data.inventory || 0;
@@ -137,6 +158,7 @@ export default function InventoryManagement() {
       }
       setAddStockModalOpen(false);
       setAddStockAmount(0);
+      setSelectedVariantId('');
       fetchInventoryData();
     } catch (error) {
       toast.error('Failed to add stock');
@@ -224,11 +246,21 @@ export default function InventoryManagement() {
   const openEditModal = (item, type) => {
     setEditItem({ type, data: item });
     if (type === 'product') {
-      setEditStock(item.inventory?.stockQuantity || 0);
-      setEditCurrentStock(0);
-      setEditReserveStock(0);
+      const productVariants = getProductVariants(item);
+      if (productVariants.length > 0) {
+        setSelectedVariantId(productVariants[0]._id);
+        setEditStock(productVariants[0].inventory || 0);
+        setEditCurrentStock(productVariants[0].currentStock || 0);
+        setEditReserveStock(productVariants[0].reserveStock || 0);
+      } else {
+        setSelectedVariantId('');
+        setEditStock(item.inventory?.stockQuantity || 0);
+        setEditCurrentStock(0);
+        setEditReserveStock(0);
+      }
     }
     if (type === 'variant') {
+      setSelectedVariantId('');
       setEditStock(item.inventory || 0);
       setEditCurrentStock(item.currentStock || 0);
       setEditReserveStock(item.reserveStock || 0);
@@ -239,6 +271,16 @@ export default function InventoryManagement() {
   const openAddStockModal = (item, type) => {
     setAddStockItem({ type, data: item });
     setAddStockAmount(0);
+    if (type === 'product') {
+      const productVariants = getProductVariants(item);
+      if (productVariants.length > 0) {
+        setSelectedVariantId(productVariants[0]._id);
+      } else {
+        setSelectedVariantId('');
+      }
+    } else {
+      setSelectedVariantId('');
+    }
     setAddStockModalOpen(true);
   };
 
@@ -290,7 +332,10 @@ export default function InventoryManagement() {
           <h1 className="inventory-page-title">Inventory Management</h1>
           <p className="inventory-page-subtitle">Track and manage your product stock efficiently.</p>
         </div>
-        <div className="action-bar">
+        <div className="action-bar flex items-center gap-3">
+          <button className="admin-secondary-btn" onClick={fetchInventoryData}>
+            <RefreshCw size={16} /> Refresh
+          </button>
           <div className="search-wrapper">
             <Search className="search-icon" size={18} />
             <input 
@@ -349,10 +394,16 @@ export default function InventoryManagement() {
 
       {viewMode === 'detail' && viewProduct ? (
         <div className="inventory-detail-view bg-white p-8 rounded-2xl shadow-sm border border-gray-100 mt-6">
-          <button onClick={closeViewMode} className="mb-6 text-sm font-bold text-gray-500 hover:text-brand-dark flex items-center gap-2">
-            <span className="text-lg leading-none">&larr;</span> Back to Inventory
-          </button>
-          
+          <div className="detail-header">
+            <div className="detail-breadcrumb">
+              <button onClick={closeViewMode} className="detail-backlink">
+                <span className="detail-back-icon">&larr;</span> Back to Inventory
+              </button>
+              <span className="detail-breadcrumb-separator">|</span>
+              <span className="detail-breadcrumb-title">{viewProduct?.name}</span>
+            </div>
+          </div>
+
           <div className="flex flex-col md:flex-row gap-8 items-start">
             <ProductThumbnail
               src={getInventoryImage(viewProduct, getProductVariants(viewProduct))}
@@ -400,42 +451,42 @@ export default function InventoryManagement() {
                   const vStock = v.inventory || 0;
                   const vStatus = getStatus(vStock, 5);
                   return (
-                    <div key={v._id} className="bg-[#faf9f8] p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-start mb-4">
+                    <div key={v._id} className="variant-card">
+                      <div className="variant-card-header">
                         <div>
-                          <p className="text-base font-semibold text-gray-800">{v.variantCombination}</p>
-                          <p className="text-xs text-gray-500 mt-1 font-mono bg-white px-2 py-0.5 rounded border border-gray-200 inline-block">{v.sku || 'No SKU'}</p>
+                          <p className="variant-card-title">{v.variantCombination}</p>
+                          <p className="variant-card-sku">{v.sku || 'No SKU'}</p>
                         </div>
-                        <span className={`status-badge ${vStatus.class} scale-90 m-0`}>
+                        <span className={`status-badge ${vStatus.class}`}>
                           {vStatus.label}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between border-t border-gray-200 pt-4 mt-2">
-                        <div className="flex gap-4">
-                          <div>
-                            <p className="text-[10px] font-bold uppercase text-gray-400 mb-1">Total Stock</p>
-                            <p className="text-lg font-bold text-gray-800">{vStock}</p>
-                          </div>
-                          <div>
-                            <p className="text-[10px] font-bold uppercase text-gray-400 mb-1">Current Stock</p>
-                            <p className="text-lg font-bold text-gray-800">{Math.max(0, (v.inventory || 0) - (v.reserveStock || 0))}</p>
-                          </div>
-                          <div>
-                            <p className="text-[10px] font-bold uppercase text-gray-400 mb-1">Reserve Stock</p>
-                            <p className="text-lg font-bold text-gray-800">{v.reserveStock || 0}</p>
-                          </div>
+
+                      <div className="variant-card-stats">
+                        <div className="variant-stat">
+                          <p className="variant-stat-label">Total Stock</p>
+                          <p className="variant-stat-value">{vStock}</p>
                         </div>
-                        <div className="flex gap-2">
-                          <button className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-brand-dark bg-white border border-gray-200 hover:bg-gray-50 rounded-lg transition-colors" title="Add Stock" onClick={() => openAddStockModal(v, 'variant')}>
-                            <Plus size={14}/> Add
-                          </button>
-                          <button className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-brand-dark bg-white border border-gray-200 hover:bg-gray-50 rounded-lg transition-colors" title="Edit Stock" onClick={() => openEditModal(v, 'variant')}>
-                            <Edit2 size={14}/> Edit
-                          </button>
+                        <div className="variant-stat">
+                          <p className="variant-stat-label">Current Stock</p>
+                          <p className="variant-stat-value">{Math.max(0, (v.inventory || 0) - (v.reserveStock || 0))}</p>
+                        </div>
+                        <div className="variant-stat">
+                          <p className="variant-stat-label">Reserve Stock</p>
+                          <p className="variant-stat-value">{v.reserveStock || 0}</p>
                         </div>
                       </div>
+
+                      <div className="variant-card-actions">
+                        <button className="variant-action-btn" title="Add Stock" onClick={() => openAddStockModal(v, 'variant')}>
+                          <Plus size={14}/> Add
+                        </button>
+                        <button className="variant-action-btn secondary" title="Edit Stock" onClick={() => openEditModal(v, 'variant')}>
+                          <Edit2 size={14}/> Edit
+                        </button>
+                      </div>
                     </div>
-                  )
+                  );
                 })}
               </div>
             </div>
@@ -499,11 +550,11 @@ export default function InventoryManagement() {
                               </td>
                               <td>
                                 <div className="action-buttons">
-                                  <button className="icon-btn" title="Add Stock" onClick={() => openAddStockModal(item, 'product')}>
+                                  <button className="p-1.5 text-indigo-600 hover:text-indigo-700 transition-colors" title="Add Stock" onClick={() => openAddStockModal(item, 'product')}>
                                     <Plus size={16}/>
                                   </button>
-                                  <button className="icon-btn view-btn" title="View" onClick={() => openViewModal(item)}><Eye size={16}/></button>
-                                  <button className="icon-btn edit-btn" title="Edit Stock" onClick={() => openEditModal(item, 'product')}><Edit2 size={16}/></button>
+                                  <button className="p-1.5 text-teal-600 hover:text-teal-700 transition-colors" title="View" onClick={() => openViewModal(item)}><Eye size={16}/></button>
+                                  <button className="p-1.5 text-blue-600 hover:text-blue-700 transition-colors" title="Edit Stock" onClick={() => openEditModal(item, 'product')}><Edit2 size={16}/></button>
                                 </div>
                               </td>
                             </tr>
@@ -560,50 +611,76 @@ export default function InventoryManagement() {
                 <X size={20} />
               </button>
             </div>
-            <div className="modal-body p-6">
-              <p className="text-sm font-medium mb-4 text-gray-700">
-                Updating stock for: <span className="font-bold">{editItem?.type === 'product' ? editItem?.data?.name : `${editItem?.data?.productName} (${editItem?.data?.sku})`}</span>
-              </p>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-widest text-brand-medium">
-                    {editItem?.type === 'variant' ? 'Total Stock' : 'Current Stock'}
-                  </label>
-                  <input 
-                    type="number" 
-                    min="0"
-                    value={editStock} 
-                    onChange={(e) => setEditStock(e.target.value)}
-                    className="w-full border border-[#E6DFD4] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-medium"
-                  />
+            <div className="modal-body">
+              <div className="p-6 space-y-4">
+                <p className="text-sm font-medium mb-4 text-gray-700">
+                  Updating stock for: <span className="font-bold">{editItem?.type === 'product' ? editItem?.data?.name : `${editItem?.data?.productName} (${editItem?.data?.sku})`}</span>
+                </p>
+                {editItem?.type === 'product' && getProductVariants(editItem?.data).length > 0 && (
+                  <div className="space-y-2 mb-4">
+                    <label className="text-xs font-bold uppercase tracking-widest text-brand-medium">Select Variant</label>
+                    <select
+                      value={selectedVariantId}
+                      onChange={(e) => {
+                        const vId = e.target.value;
+                        setSelectedVariantId(vId);
+                        const v = getProductVariants(editItem?.data).find(x => x._id === vId);
+                        if (v) {
+                          setEditStock(v.inventory || 0);
+                          setEditCurrentStock(v.currentStock || 0);
+                          setEditReserveStock(v.reserveStock || 0);
+                        }
+                      }}
+                      className="w-full border border-[#E6DFD4] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-medium bg-white"
+                    >
+                      {getProductVariants(editItem?.data).map(v => (
+                        <option key={v._id} value={v._id}>
+                          {v.variantCombination} ({v.sku || 'No SKU'})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}                 <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-widest text-brand-medium">
+                      {(editItem?.type === 'variant' || getProductVariants(editItem?.data).length > 0) ? 'Total Stock' : 'Current Stock'}
+                    </label>
+                    <input 
+                      type="number" 
+                      min="0"
+                      value={editStock} 
+                      onChange={(e) => setEditStock(e.target.value)}
+                      className="w-full border border-[#E6DFD4] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-medium"
+                    />
+                  </div>
+                  {(editItem?.type === 'variant' || getProductVariants(editItem?.data).length > 0) && (
+                    <>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-widest text-brand-medium">Current Stock</label>
+                        <input 
+                          type="number" 
+                          value={Math.max(0, parseInt(editStock || 0) - parseInt(editReserveStock || 0))} 
+                          disabled
+                          className="w-full border border-[#E6DFD4] rounded-xl px-4 py-3 text-sm bg-gray-50 text-gray-500 cursor-not-allowed"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-widest text-brand-medium">Reserve Stock</label>
+                        <input 
+                          type="number" 
+                          min="0"
+                          value={editReserveStock} 
+                          onChange={(e) => setEditReserveStock(e.target.value)}
+                          className="w-full border border-[#E6DFD4] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-medium"
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
-                {editItem?.type === 'variant' && (
-                  <>
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase tracking-widest text-brand-medium">Current Stock</label>
-                      <input 
-                        type="number" 
-                        value={Math.max(0, parseInt(editStock || 0) - parseInt(editReserveStock || 0))} 
-                        disabled
-                        className="w-full border border-[#E6DFD4] rounded-xl px-4 py-3 text-sm bg-gray-50 text-gray-500 cursor-not-allowed"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase tracking-widest text-brand-medium">Reserve Stock</label>
-                      <input 
-                        type="number" 
-                        min="0"
-                        value={editReserveStock} 
-                        onChange={(e) => setEditReserveStock(e.target.value)}
-                        className="w-full border border-[#E6DFD4] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-medium"
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
-              <div className="mt-6 flex justify-end gap-3">
-                <button onClick={() => setEditModalOpen(false)} className="px-4 py-2.5 text-xs uppercase font-bold tracking-wider text-brand-dark bg-white border border-[#E6DFD4] hover:bg-gray-50 rounded-xl">Cancel</button>
-                <button onClick={handleUpdateStock} className="px-5 py-2.5 text-xs uppercase font-bold tracking-wider bg-brand-dark text-white rounded-xl hover:bg-black transition-colors shadow-sm">Save Changes</button>
+                <div className="mt-6 flex justify-end gap-3">
+                  <button onClick={() => setEditModalOpen(false)} className="px-4 py-2.5 text-xs uppercase font-bold tracking-wider text-brand-dark bg-white border border-[#E6DFD4] hover:bg-gray-50 rounded-xl">Cancel</button>
+                  <button onClick={handleUpdateStock} className="px-5 py-2.5 text-xs uppercase font-bold tracking-wider bg-brand-dark text-white rounded-xl hover:bg-black transition-colors shadow-sm">Save Changes</button>
+                </div>
               </div>
             </div>
           </div>
@@ -620,24 +697,42 @@ export default function InventoryManagement() {
                 <X size={20} />
               </button>
             </div>
-            <div className="modal-body p-6">
-              <p className="text-sm font-medium mb-4 text-gray-700">
-                Adding stock for: <span className="font-bold">{addStockItem?.type === 'product' ? addStockItem?.data?.name : `${addStockItem?.data?.productName} (${addStockItem?.data?.sku})`}</span>
-              </p>
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-widest text-brand-medium">Quantity to Add</label>
-                <input 
-                  type="number" 
-                  min="1"
-                  value={addStockAmount} 
-                  onChange={(e) => setAddStockAmount(e.target.value)}
-                  className="w-full border border-[#E6DFD4] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-medium"
-                  placeholder="e.g. 50"
-                />
-              </div>
-              <div className="mt-6 flex justify-end gap-3">
-                <button onClick={() => setAddStockModalOpen(false)} className="px-4 py-2.5 text-xs uppercase font-bold tracking-wider text-brand-dark bg-white border border-[#E6DFD4] hover:bg-gray-50 rounded-xl">Cancel</button>
-                <button onClick={handleAddStock} className="px-5 py-2.5 text-xs uppercase font-bold tracking-wider bg-brand-dark text-white rounded-xl hover:bg-black transition-colors shadow-sm">Add Stock</button>
+            <div className="modal-body">
+              <div className="p-6 space-y-4">
+                <p className="text-sm font-medium mb-4 text-gray-700">
+                  Adding stock for: <span className="font-bold">{addStockItem?.type === 'product' ? addStockItem?.data?.name : `${addStockItem?.data?.productName} (${addStockItem?.data?.sku})`}</span>
+                </p>
+                {addStockItem?.type === 'product' && getProductVariants(addStockItem?.data).length > 0 && (
+                  <div className="space-y-2 mb-4">
+                    <label className="text-xs font-bold uppercase tracking-widest text-brand-medium">Select Variant</label>
+                    <select
+                      value={selectedVariantId}
+                      onChange={(e) => setSelectedVariantId(e.target.value)}
+                      className="w-full border border-[#E6DFD4] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-medium bg-white"
+                    >
+                      {getProductVariants(addStockItem?.data).map(v => (
+                        <option key={v._id} value={v._id}>
+                          {v.variantCombination} ({v.sku || 'No SKU'})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-brand-medium">Quantity to Add</label>
+                  <input 
+                    type="number" 
+                    min="1"
+                    value={addStockAmount} 
+                    onChange={(e) => setAddStockAmount(e.target.value)}
+                    className="w-full border border-[#E6DFD4] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-medium"
+                    placeholder="e.g. 50"
+                  />
+                </div>
+                <div className="mt-6 flex justify-end gap-3">
+                  <button onClick={() => setAddStockModalOpen(false)} className="px-4 py-2.5 text-xs uppercase font-bold tracking-wider text-brand-dark bg-white border border-[#E6DFD4] hover:bg-gray-50 rounded-xl">Cancel</button>
+                  <button onClick={handleAddStock} className="px-5 py-2.5 text-xs uppercase font-bold tracking-wider bg-brand-dark text-white rounded-xl hover:bg-black transition-colors shadow-sm">Add Stock</button>
+                </div>
               </div>
             </div>
           </div>

@@ -12,6 +12,7 @@ const {
   cancelOrder,
   getCancellationPreview,
   getDashboardStats,
+  deleteOrder,
 } = require('../controllers/orderController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
@@ -23,7 +24,10 @@ router.route('/')
 
 router.route('/myorders').get(protect, getMyOrders);
 
-router.route('/:id').get(protect, getOrderById);
+router.route('/:id')
+  .get(protect, getOrderById)
+  .delete(protect, authorize('admin', 'manager'), deleteOrder);
+
 
 router.route('/:id/details').put(protect, authorize('admin', 'manager', 'staff'), updateOrderDetails);
 

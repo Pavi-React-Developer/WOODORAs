@@ -117,9 +117,14 @@ export default function RoleAssignPage({ onBack, targetStaff }) {
         if (res && Array.isArray(res.modules) && res.modules.length > 0) {
           // remove 'users' and 'brands' from modules list so they don't show in permissions
           const filtered = res.modules.filter(m => m.key !== 'users' && m.key !== 'brands');
-          setPermissionModules(filtered);
-          setRolePerms(initPerms(filtered));
-          setStaffPerms(initPerms(filtered));
+          // enrich with icons from the frontend ADMIN_MODULES config (backend may not store icons)
+          const enriched = filtered.map(m => {
+            const local = ADMIN_MODULES.find(a => a.key === m.key);
+            return { ...m, icon: local?.icon || m.icon || '' };
+          });
+          setPermissionModules(enriched);
+          setRolePerms(initPerms(enriched));
+          setStaffPerms(initPerms(enriched));
         }
       })
       .catch(() => {
@@ -288,82 +293,6 @@ export default function RoleAssignPage({ onBack, targetStaff }) {
         </div>
       </div>
 
-      {/* ── Assign Permissions to Staff ── */}
-      <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm p-6 mb-6">
-        <h2 className="font-bold text-gray-800 text-base mb-4 flex items-center gap-2">
-          <span className="w-7 h-7 bg-[#F8F4EC] rounded-lg flex items-center justify-center text-[#8B5E3C] text-sm">👥</span>
-          Assign Permissions to Staff
-        </h2>
-        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Select Staff Member</label>
-        <select
-          value={selectedStaff?._id || ''}
-          onChange={e => {
-            const found = staffList.find(s => s._id === e.target.value);
-            setSelectedStaff(found || null);
-            setSaved(false);
-          }}
-          className="w-full md:w-96 px-4 py-2.5 text-sm border border-[#E6DFD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 bg-white"
-        >
-          <option value="">-- Select Staff --</option>
-          {staffList.map(s => <option key={s._id} value={s._id}>{s.fullName} ({s.role})</option>)}
-        </select>
-      </div>
-
-      {/* Staff Permission Matrix */}
-      {selectedStaff && (
-        <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm overflow-hidden">
-          {/* Toolbar */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-[#F0EAE2] bg-[#FAFAFA]">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-[#8B5E3C] text-white flex items-center justify-center font-bold text-sm">
-                {selectedStaff.fullName?.charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <p className="font-bold text-gray-800 text-sm">{selectedStaff.fullName}</p>
-                <p className="text-xs text-gray-500">{selectedStaff.role}</p>
-              </div>
-            </div>
-            <p className="text-sm font-semibold text-gray-700">Permission Matrix</p>
-          </div>
-
-          {loadingPerms ? (
-            <div className="text-center py-12 text-gray-400">Loading permissions...</div>
-          ) : (
-            <div className="p-6">
-              <PermissionTable
-                modules={permissionModules}
-                permissions={staffPerms}
-                onToggle={toggleStaffPerm}
-                onToggleRow={toggleStaffRow}
-                onToggleColumn={toggleStaffColumn}
-                onSelectAll={staffSelectAll}
-                onClearAll={staffClearAll}
-              />
-            </div>
-          )}
-
-          {/* Save Footer */}
-          <div className="flex items-center justify-between px-6 py-4 border-t border-[#E6DFD4] bg-[#FAFAFA]">
-            {saved ? (
-              <span className="flex items-center gap-1.5 text-sm text-green-600 font-semibold">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                Permissions saved successfully!
-              </span>
-            ) : <span />}
-            <div className="flex gap-3">
-              <button onClick={onBack} className="px-5 py-2.5 border border-[#E6DFD4] rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50">Cancel</button>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="flex items-center gap-2 bg-[#8B5E3C] hover:bg-[#7a5234] disabled:opacity-60 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                {saving ? 'Saving...' : 'Save Permissions'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

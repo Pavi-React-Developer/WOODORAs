@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Edit3, Trash2, Download } from 'lucide-react';
+import { Edit3, Trash2, Download, Plus, RefreshCw } from 'lucide-react';
 import { feeAPI } from '../../../api/feeService';
 import { downloadExcelFile } from '../../../utils/exportUtils';
 
-export default function FeeListPage({ onNavigate, onEditFee }) {
+export default function FeeListPage({ onNavigate, onEditFee, canEdit = true, canDelete = true }) {
   const [fees, setFees] = useState([]);
   const [categories, setCategories] = useState([]);
   const [paymentMethods, setPaymentMethods] = useState([]);
-  
+
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -20,34 +20,37 @@ export default function FeeListPage({ onNavigate, onEditFee }) {
   }, []);
 
   const loadData = async () => {
-    setLoading(true);
     try {
+      setLoading(true);
       const [feesData, catsData] = await Promise.all([
         feeAPI.getAllFees(),
         feeAPI.getFeeCategories()
       ]);
-      setFees(feesData);
-      setCategories(catsData);
-    } catch (error) {
-      console.error('Error loading fee data:', error);
-      alert('Failed to load fees');
+      setFees(feesData || []);
+      setCategories(catsData || []);
+
+      // Extract unique payment methods
+      if (feesData && feesData.length > 0) {
+        const uniquePMs = [...new Set(feesData.map(f => f.paymentMethod).filter(Boolean))];
+        setPaymentMethods(uniquePMs);
+      }
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
   const exportFeesExcel = () => {
-    const header = ['Fee Name', 'Category', 'Fee Type', 'Payment Method', 'State(s)', 'Weight/Amount', 'Status'];
+    const header = ['Fee Name', 'Category', 'Fee Type', 'Payment Method', 'State', 'Weight Limits / Amount', 'Status'];
     const rows = fees.map((fee) => [
-      fee.feeName || '',
-      fee.feeCategory?.name || '',
+      fee.name || '',
+      fee.category?.name || '',
       fee.feeType || '',
-      fee.paymentMethod || 'Both (COD & CashFree)',
-      Array.isArray(fee.applicationState) ? fee.applicationState.join(', ') : fee.applicationState || '',
-      fee.weightSlabs && fee.weightSlabs.length > 0
-        ? fee.weightSlabs.map((slab) => `${slab.minWeight}-${slab.maxWeight}kg: ${fee.feeType === 'Percentage' ? `${slab.feeValue}%` : `₹${slab.feeValue}`}`).join('; ')
-        : `${fee.feeType === 'Fixed Amount' ? '₹' : ''}${fee.flatFeeValue ?? ''}${fee.feeType === 'Percentage' ? '%' : ''}`,
-      fee.active ? 'Active' : 'Inactive',
+      fee.paymentMethod || '',
+      fee.state || 'All States',
+      fee.feeType === 'Fixed Amount' ? `₹${fee.amount}` : `₹${fee.amount} per kg`,
+      fee.isActive ? 'Active' : 'Inactive',
     ]);
     downloadExcelFile('fees', header, rows);
   };
@@ -57,7 +60,7 @@ export default function FeeListPage({ onNavigate, onEditFee }) {
       try {
         await feeAPI.deleteFee(id);
         setFees(fees.filter(f => f._id !== id));
-      } catch (error) {
+      } catch (err) {
         alert('Failed to delete fee');
       }
     }
@@ -65,12 +68,14 @@ export default function FeeListPage({ onNavigate, onEditFee }) {
 
   const filteredFees = useMemo(() => {
     let result = fees;
-
-    if (search) {
-      result = result.filter(f => f.feeName.toLowerCase().includes(search.toLowerCase()));
+    if (search.trim()) {
+      result = result.filter(f => f.name?.toLowerCase().includes(search.toLowerCase()));
     }
     if (categoryFilter) {
-      result = result.filter(f => f.feeCategory?._id === categoryFilter);
+      result = result.filter(f => {
+        const catId = typeof f.category === 'object' ? f.category?._id : f.category;
+        return catId === categoryFilter;
+      });
     }
     if (paymentFilter) {
       result = result.filter(f => f.paymentMethod === paymentFilter);
@@ -92,51 +97,53 @@ export default function FeeListPage({ onNavigate, onEditFee }) {
           <h2 className="text-2xl font-bold text-brand-dark font-serif">Fee List</h2>
           <p className="text-sm text-brand-medium">Manage all configured fees</p>
         </div>
-        <button 
-          onClick={() => onNavigate('add')}
-          className="bg-brand-dark hover:bg-black text-white text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-xl transition-colors shadow-sm flex items-center gap-2"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-          Add New Fee
-        </button>
+        <div className="flex justify-end gap-3 mb-4">
+          <button onClick={loadData} className="admin-secondary-btn">
+            <RefreshCw size={16} /> Refresh
+          </button>
+          <button
+            onClick={() => onNavigate('add')}
+            className="admin-btn"
+          >
+            <Plus size={16} /> Add New Fee
+          </button>
+          <button
+            onClick={() => {
+              if (!fees || fees.length === 0) {
+                alert('No fee data available to export');
+                return;
+              }
+              exportFeesExcel();
+            }}
+            disabled={!fees || fees.length === 0}
+            className={`admin-export-btn flex items-center gap-2 ${(!fees || fees.length === 0) ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            <Download size={16} /> Export Excel
+          </button>
+        </div>
       </div>
 
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={() => {
-            if (!fees || fees.length === 0) {
-              alert('No fee data available to export');
-              return;
-            }
-            exportFeesExcel();
-          }}
-          disabled={!fees || fees.length === 0}
-          className={`admin-export-btn flex items-center gap-2 ${(!fees || fees.length === 0) ? 'opacity-50 cursor-not-allowed' : ''}`}
-        >
-          <Download size={16} /> Export Excel
-        </button>
-      </div>
 
       <div className="bg-white border border-[#E6DFD4] rounded-2xl p-6 shadow-sm">
         {/* Filters */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <input 
-            type="text" 
-            placeholder="Search by Fee Name..." 
+          <input
+            type="text"
+            placeholder="Search by Fee Name..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
             className="w-full border border-[#E6DFD4] rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand-medium"
           />
-          <select 
-            value={categoryFilter} 
+          <select
+            value={categoryFilter}
             onChange={(e) => { setCategoryFilter(e.target.value); setCurrentPage(1); }}
             className="w-full border border-[#E6DFD4] rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand-medium"
           >
             <option value="">All Categories</option>
             {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
           </select>
-          <select 
-            value={paymentFilter} 
+          <select
+            value={paymentFilter}
             onChange={(e) => { setPaymentFilter(e.target.value); setCurrentPage(1); }}
             className="w-full border border-[#E6DFD4] rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand-medium"
           >
@@ -197,20 +204,24 @@ export default function FeeListPage({ onNavigate, onEditFee }) {
                     </td>
                     <td className="py-4 px-4 text-right whitespace-nowrap">
                       <div className="inline-flex items-center gap-2">
-                        <button
-                          onClick={() => onEditFee(fee)}
-                          className="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-[#E6DFD4] bg-white text-brand-dark hover:bg-[#F9FAFB] transition-colors"
-                          title="Edit"
-                        >
-                          <Edit3 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(fee._id)}
-                          className="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-[#E6DFD4] bg-white text-red-500 hover:bg-[#FEF2F2] transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {canEdit && (
+                          <button
+                            onClick={() => onEditFee(fee)}
+                            className="p-1.5 text-blue-600 hover:text-blue-700 transition-colors"
+                            title="Edit"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                        )}
+                        {canDelete && (
+                          <button
+                            onClick={() => handleDelete(fee._id)}
+                            className="p-1.5 text-red-500 hover:text-red-600 transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -225,14 +236,14 @@ export default function FeeListPage({ onNavigate, onEditFee }) {
           <div className="mt-6 flex justify-between items-center text-sm">
             <span className="text-brand-medium">Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredFees.length)} of {filteredFees.length} entries</span>
             <div className="flex gap-2">
-              <button 
+              <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 className="px-3 py-1 border border-[#E6DFD4] rounded-lg disabled:opacity-50 hover:bg-brand-light transition-colors"
               >
                 Previous
               </button>
-              <button 
+              <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 className="px-3 py-1 border border-[#E6DFD4] rounded-lg disabled:opacity-50 hover:bg-brand-light transition-colors"

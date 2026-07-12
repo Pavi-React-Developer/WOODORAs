@@ -23,7 +23,7 @@ exports.createNavbar = asyncHandler(async (req, res) => {
 });
 
 exports.updateNavbar = asyncHandler(async (req, res) => {
-  const navbar = await CmsNavbar.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+  const navbar = await CmsNavbar.findByIdAndUpdate(req.params.id, req.body, { returnDocument: 'after', runValidators: true });
   res.json({ success: true, data: navbar });
 });
 
@@ -44,7 +44,7 @@ exports.createHeroBanner = asyncHandler(async (req, res) => {
 });
 
 exports.updateHeroBanner = asyncHandler(async (req, res) => {
-  const banner = await CmsHeroBanner.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+  const banner = await CmsHeroBanner.findByIdAndUpdate(req.params.id, req.body, { returnDocument: 'after', runValidators: true });
   res.json({ success: true, data: banner });
 });
 
@@ -65,7 +65,7 @@ exports.createThirdBanner = asyncHandler(async (req, res) => {
 });
 
 exports.updateThirdBanner = asyncHandler(async (req, res) => {
-  const banner = await CmsThirdBanner.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+  const banner = await CmsThirdBanner.findByIdAndUpdate(req.params.id, req.body, { returnDocument: 'after', runValidators: true });
   res.json({ success: true, data: banner });
 });
 
@@ -125,7 +125,7 @@ exports.createProductGrid = asyncHandler(async (req, res) => {
 });
 
 exports.updateProductGrid = asyncHandler(async (req, res) => {
-  const grid = await CmsProductGrid.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true }).populate('products');
+  const grid = await CmsProductGrid.findByIdAndUpdate(req.params.id, req.body, { returnDocument: 'after', runValidators: true }).populate('products');
   res.json({ success: true, data: grid });
 });
 
@@ -181,7 +181,7 @@ exports.createCategoryGrid = asyncHandler(async (req, res) => {
 });
 
 exports.updateCategoryGrid = asyncHandler(async (req, res) => {
-  const grid = await CmsCategoryGrid.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true }).populate('category').populate('products');
+  const grid = await CmsCategoryGrid.findByIdAndUpdate(req.params.id, req.body, { returnDocument: 'after', runValidators: true }).populate('category').populate('products');
   res.json({ success: true, data: grid });
 });
 
@@ -204,7 +204,7 @@ exports.updateFooter = asyncHandler(async (req, res) => {
   if (!footer) {
     footer = await CmsFooter.create(req.body);
   } else {
-    footer = await CmsFooter.findByIdAndUpdate(footer._id, req.body, { new: true, runValidators: true });
+    footer = await CmsFooter.findByIdAndUpdate(footer._id, req.body, { returnDocument: 'after', runValidators: true });
   }
   res.json({ success: true, data: footer });
 });

@@ -20,6 +20,37 @@ import CartOffcanvas from './components/CartOffcanvas';
 import WishlistOffcanvas from './components/WishlistOffcanvas';
 import useCartStore from './store/useCartStore';
 
+// Error Boundary to prevent blank page on runtime errors
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, info) {
+    console.error('React Error Boundary caught:', error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-10 text-center">
+          <h1 className="text-2xl font-bold text-red-600">Something went wrong</h1>
+          <p className="text-gray-600 mt-4">{this.state.error?.message || 'An unexpected error occurred.'}</p>
+          <button
+            onClick={() => { this.setState({ hasError: false, error: null }); window.location.href = '/admin'; }}
+            className="mt-6 px-6 py-2 bg-[#8B5E3C] text-white rounded-xl font-bold hover:bg-[#7a5234]"
+          >
+            Go to Dashboard
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 // Protected Route Wrapper
 function ProtectedRoute({ children, user, requiredRole }) {
   if (!user) {
@@ -35,6 +66,7 @@ function ProtectedRoute({ children, user, requiredRole }) {
   }
   return children;
 }
+
 
 // Layout component for pages with header/footer
 function LayoutWithHeader({ children, user, cartItems, wishlistItems, onOpenCart, onOpenWishlist, onLogout, onNavigate }) {
@@ -470,7 +502,9 @@ export default function App() {
           element={
             <ProtectedRoute user={user} requiredRole="admin">
               <AdminLayout>
-                <AdminDashboard user={user} onNavigate={handleNavigate} onLogout={handleLogout} />
+                <ErrorBoundary>
+                  <AdminDashboard user={user} onNavigate={handleNavigate} onLogout={handleLogout} />
+                </ErrorBoundary>
               </AdminLayout>
             </ProtectedRoute>
           }

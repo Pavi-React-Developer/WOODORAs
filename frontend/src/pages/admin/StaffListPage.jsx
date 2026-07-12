@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { staffAPI } from '../../api/staffService';
 import { roleAPI } from '../../api/roleService';
-import { Download } from 'lucide-react';
+import { Download, RefreshCw, Plus } from 'lucide-react';
 import { downloadExcelFile } from '../../utils/exportUtils';
 
 const Badge = ({ status }) => (
@@ -93,16 +93,18 @@ export default function StaffListPage({ onAddStaff, onEditStaff, onRoleAssign, c
           <h1 className="text-2xl font-bold text-gray-800">Staff List</h1>
         </div>
         <div className="flex items-center gap-3">
+          <button onClick={fetchStaff} className="admin-secondary-btn">
+            <RefreshCw size={16} /> Refresh
+          </button>
           <button onClick={exportStaffExcel} className="admin-export-btn">
             <Download size={16} /> Export Excel
           </button>
           {canCreate && (
           <button
             onClick={onAddStaff}
-            className="flex items-center gap-2 bg-[#8B5E3C] hover:bg-[#7a5234] text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-sm transition-colors"
+            className="admin-btn"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-            Add Staff
+            <Plus size={16} /> Add Staff
           </button>
           )}
         </div>

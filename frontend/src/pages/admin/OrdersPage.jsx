@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { orderService, ORDER_STATUS_OPTIONS } from '../../api/orderService';
-import { Package, Search, Calendar, MapPin, Eye, Trash2, X, Edit, Save, Download } from 'lucide-react';
+import { Package, Search, Calendar, MapPin, Eye, Trash2, X, Edit, Save, Download, RefreshCw } from 'lucide-react';
 import { downloadExcelFile } from '../../utils/exportUtils';
 import toast from 'react-hot-toast';
 
-export default function OrdersPage() {
+export default function OrdersPage({ canView = true, canEdit = true, canDelete = true }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -149,6 +149,19 @@ export default function OrdersPage() {
     }
   };
 
+  const handleDeleteOrder = async (orderId) => {
+    if (window.confirm('Are you sure you want to delete this order? This action cannot be undone.')) {
+      try {
+        await orderService.deleteOrder(orderId);
+        toast.success('Order deleted successfully');
+        fetchOrders();
+      } catch (error) {
+        toast.error(error.message || 'Failed to delete order');
+      }
+    }
+  };
+
+
   const filteredOrders = orders.filter(order => {
     const searchLower = searchTerm.toLowerCase();
     const matchId = order._id?.toLowerCase().includes(searchLower);
@@ -172,6 +185,14 @@ export default function OrdersPage() {
     return STATUS_PROGRESSION[currentStatus] || [];
   };
 
+  // Used in the Edit modal status dropdown to disable statuses that can't be set
+  const isStatusDisabled = (currentStatus, optionStatus) => {
+    if (currentStatus === optionStatus) return false; // always allow current
+    if (['Delivered', 'Cancelled'].includes(currentStatus)) return true; // final statuses - lock all
+    const validNext = STATUS_PROGRESSION[currentStatus] || [];
+    return !validNext.includes(optionStatus);
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'Paid': return 'bg-green-100 text-green-700';
@@ -193,12 +214,17 @@ export default function OrdersPage() {
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      {!(showViewModal || showEditModal) && (
+        <>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Orders Management</h1>
           <p className="text-sm text-gray-500">View and manage customer orders</p>
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
+          <button onClick={fetchOrders} className="admin-secondary-btn">
+            <RefreshCw size={16} /> Refresh
+          </button>
           <div className="relative w-full sm:w-64">
             <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input 
@@ -239,10 +265,10 @@ export default function OrdersPage() {
               ) : filteredOrders.map(order => (
                 <tr key={order._id} className="hover:bg-gray-50/50 transition-colors">
                   <td className="px-6 py-4">
-                    <div className="font-mono text-sm font-bold text-gray-900 mb-1">{order._id.substring(order._id.length - 8)}</div>
+                    <div className="font-mono text-sm font-bold text-gray-900 mb-1">{(order._id || '').substring((order._id || '').length - 8)}</div>
                     <div className="text-xs text-gray-500 flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
-                      {new Date(order.createdAt).toLocaleDateString()}
+                      {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -253,8 +279,8 @@ export default function OrdersPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="font-bold text-gray-900">₹{order.totalPrice.toLocaleString()}</div>
-                    <div className="text-xs text-gray-500">{order.orderItems.reduce((acc, item) => acc + item.qty, 0)} items</div>
+                    <div className="font-bold text-gray-900">₹{(order.totalPrice || 0).toLocaleString()}</div>
+                    <div className="text-xs text-gray-500">{(order.orderItems || []).reduce((acc, item) => acc + (item.qty || 0), 0)} items</div>
                   </td>
                   <td className="px-6 py-4">
                     {order.paymentMethod === 'COD' ? (
@@ -264,7 +290,7 @@ export default function OrdersPage() {
                         </span>
                         {order.codAdvance > 0 && (
                           <div className="text-xs text-gray-500 space-y-0.5">
-                            <div>Paid online: ₹{order.codAdvance.toLocaleString()}</div>
+                            <div>Paid online: ₹{(order.codAdvance || 0).toLocaleString()}</div>
                             <div>Balance due: ₹{(order.balanceAmount ?? 0).toLocaleString()}</div>
                           </div>
                         )}
@@ -306,27 +332,33 @@ export default function OrdersPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-right flex justify-end gap-2">
-                    <button
-                      onClick={() => handleViewOrder(order)}
-                      className="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-[#E6DFD4] bg-white text-gray-700 hover:bg-[#f9fafb] transition-colors"
-                      title="View"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleEditOrder(order)}
-                      className="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-[#E6DFD4] bg-white text-gray-700 hover:bg-[#f9fafb] transition-colors"
-                      title="Edit"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => toast('Delete action selected')}
-                      className="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-[#E6DFD4] bg-white text-gray-700 hover:bg-[#f9fafb] transition-colors"
-                      title="Delete"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {canView && (
+                      <button
+                        onClick={() => handleViewOrder(order)}
+                        className="p-1.5 text-teal-600 hover:text-teal-700 transition-colors"
+                        title="View"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                    )}
+                    {canEdit && (
+                      <button
+                        onClick={() => handleEditOrder(order)}
+                        className="p-1.5 text-blue-600 hover:text-blue-700 transition-colors"
+                        title="Edit"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                    )}
+                    {canDelete && (
+                      <button
+                        onClick={() => handleDeleteOrder(order._id)}
+                        className="p-1.5 text-red-500 hover:text-red-600 transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -334,21 +366,28 @@ export default function OrdersPage() {
           </table>
         </div>
       </div>
+      </>
+      )}
+
 
       {showViewModal && selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-2xl rounded-3xl bg-white shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[#E6DFD4]">
-              <h2 className="text-lg font-bold text-gray-900">Order Details</h2>
-              <button onClick={closeViewModal} className="text-gray-500 hover:text-gray-900">
-                <X className="w-5 h-5" />
-              </button>
+        <div>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Order Details</h1>
+              <p className="text-sm text-gray-500">View information for order #{(selectedOrder._id || '').substring((selectedOrder._id || '').length - 8)}</p>
             </div>
+            <button onClick={closeViewModal} className="flex items-center gap-2 px-4 py-2 rounded-xl text-gray-700 bg-white border border-[#E6DFD4] hover:bg-gray-50 transition-colors font-semibold text-sm">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+              Back to Orders
+            </button>
+          </div>
+          <div className="w-full rounded-3xl bg-white shadow-sm border border-[#E6DFD4] overflow-hidden">
             <div className="p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <p className="text-xs uppercase tracking-widest text-gray-500">Order ID</p>
-                  <p className="font-semibold text-gray-900">{selectedOrder._id.substring(selectedOrder._id.length - 8)}</p>
+                  <p className="font-semibold text-gray-900">{(selectedOrder._id || '').substring((selectedOrder._id || '').length - 8)}</p>
                 </div>
                 <div>
                   <p className="text-xs uppercase tracking-widest text-gray-500">Customer</p>
@@ -387,11 +426,11 @@ export default function OrdersPage() {
                         <p className="font-semibold text-gray-900">{item.name}</p>
                         <p className="text-sm text-gray-500">Qty: {item.qty}</p>
                         {(item.weight && item.weight !== '0' && item.weight !== 0) ? <p className="text-sm text-gray-500">Weight: {item.weight}</p> : null}
-                        <p className="text-sm text-gray-500">Subtotal: ₹{(item.price * item.qty).toLocaleString()}</p>
+                        <p className="text-sm text-gray-500">Subtotal: ₹{((item.price || 0) * (item.qty || 0)).toLocaleString()}</p>
                       </div>
                       <div className="text-right">
                         <p className="text-sm text-gray-500">Unit Price</p>
-                        <p className="font-semibold text-gray-900">₹{item.price.toLocaleString()}</p>
+                        <p className="font-semibold text-gray-900">₹{(item.price || 0).toLocaleString()}</p>
                       </div>
                     </div>
                   ))}
@@ -402,13 +441,13 @@ export default function OrdersPage() {
                   <div className="space-y-3 text-sm mb-6 border-b border-[#E6DFD4] pb-6">
                     <div className="flex justify-between text-gray-600">
                       <span>Subtotal</span>
-                      <span className="text-gray-900 font-medium">₹{selectedOrder.itemsPrice?.toLocaleString() ?? (selectedOrder.totalPrice - (selectedOrder.shippingPrice||0)).toLocaleString()}</span>
+                      <span className="text-gray-900 font-medium">₹{selectedOrder.itemsPrice?.toLocaleString() ?? ((selectedOrder.totalPrice || 0) - (selectedOrder.shippingPrice||0)).toLocaleString()}</span>
                     </div>
 
                     {selectedOrder.shippingPrice > 0 && !selectedOrder.fees?.some(f => f.isWeightFee) && (
                       <div className="flex justify-between text-gray-600">
                         <span>Weight Charge ({(selectedOrder.orderItems?.reduce((acc, item) => acc + (parseFloat(item.weight) || 0) * (parseInt(item.qty) || 1), 0)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 3 })} kg)</span>
-                        <span className="text-gray-900 font-medium">₹{selectedOrder.shippingPrice.toLocaleString()}</span>
+                        <span className="text-gray-900 font-medium">₹{(selectedOrder.shippingPrice || 0).toLocaleString()}</span>
                       </div>
                     )}
 
@@ -418,14 +457,14 @@ export default function OrdersPage() {
                         .map((fee, idx) => (
                           <div key={idx} className="flex justify-between text-gray-600">
                             <span>{fee.name} {fee.isWeightFee ? `(${(selectedOrder.orderItems?.reduce((acc, item) => acc + (parseFloat(item.weight) || 0) * (parseInt(item.qty) || 1), 0)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 3 })} kg)` : ''}</span>
-                            <span className="text-gray-900 font-medium">₹{fee.amount.toLocaleString()}</span>
+                            <span className="text-gray-900 font-medium">₹{(fee.amount || 0).toLocaleString()}</span>
                           </div>
                         ))
                     )}
 
                     <div className="flex justify-between font-bold text-gray-800 pt-2 border-t border-[#E6DFD4]/50">
                       <span>Order Total</span>
-                      <span>₹{selectedOrder.totalPrice.toLocaleString()}</span>
+                      <span>₹{(selectedOrder.totalPrice || 0).toLocaleString()}</span>
                     </div>
                   </div>
 
@@ -447,7 +486,7 @@ export default function OrdersPage() {
                   ) : (
                     <div className="flex justify-between items-end">
                       <span className="text-lg font-bold text-gray-900">Total Paid</span>
-                      <span className="text-2xl font-black text-[#8B5E3C]">₹{selectedOrder.totalPrice.toLocaleString()}</span>
+                      <span className="text-2xl font-black text-[#8B5E3C]">₹{(selectedOrder.totalPrice || 0).toLocaleString()}</span>
                     </div>
                   )}
                 </div>
@@ -489,21 +528,25 @@ export default function OrdersPage() {
       )}
 
       {showEditModal && selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-2xl rounded-3xl bg-white shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[#E6DFD4]">
-              <h2 className="text-lg font-bold text-gray-900">Edit Order Details</h2>
-              <button onClick={closeEditModal} className="text-gray-500 hover:text-gray-900">
-                <X className="w-5 h-5" />
-              </button>
+        <div className="flex flex-col min-h-[calc(100vh-8rem)]">
+          <div className="flex items-center justify-between mb-6 shrink-0">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Edit Order Details</h1>
+              <p className="text-sm text-gray-500">Update information for order #{(selectedOrder._id || '').substring((selectedOrder._id || '').length - 8)}</p>
             </div>
+            <button onClick={closeEditModal} className="flex items-center gap-2 px-4 py-2 rounded-xl text-gray-700 bg-white border border-[#E6DFD4] hover:bg-gray-50 transition-colors font-semibold text-sm">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+              Back to Orders
+            </button>
+          </div>
+          <div className="w-full rounded-3xl bg-white shadow-sm border border-[#E6DFD4] overflow-hidden flex flex-col flex-1">
             
             <div className="p-6 overflow-y-auto space-y-6 flex-1">
               {/* Top Read-Only Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs uppercase tracking-widest text-gray-500">Order ID</p>
-                  <p className="font-semibold text-gray-900">{selectedOrder._id.substring(selectedOrder._id.length - 8)}</p>
+                  <p className="font-semibold text-gray-900">{(selectedOrder._id || '').substring((selectedOrder._id || '').length - 8)}</p>
                 </div>
                 <div>
                   <p className="text-xs uppercase tracking-widest text-gray-500">Customer</p>
@@ -585,7 +628,7 @@ export default function OrdersPage() {
               <div>
                 <p className="text-xs uppercase tracking-widest text-gray-500 mb-3">Order Items</p>
                 <div className="space-y-4">
-                  {selectedOrder.orderItems.map((item, index) => (
+                  {(selectedOrder.orderItems || []).map((item, index) => (
                     <div key={index} className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-4 rounded-3xl border border-[#E6DFD4] p-4 items-center">
                       <div className="h-16 w-16 rounded-3xl overflow-hidden bg-gray-100 flex items-center justify-center">
                         {item.image ? (
@@ -600,7 +643,7 @@ export default function OrdersPage() {
                       </div>
                       <div className="text-right">
                         <p className="text-sm text-gray-500">Unit Price</p>
-                        <p className="font-semibold text-gray-900">₹{item.price.toLocaleString()}</p>
+                        <p className="font-semibold text-gray-900">₹{(item.price || 0).toLocaleString()}</p>
                       </div>
                     </div>
                   ))}
@@ -620,14 +663,14 @@ export default function OrdersPage() {
                     .map((fee, idx) => (
                       <div key={idx} className="min-w-[120px]">
                         <p className="text-xs uppercase tracking-widest text-gray-500">{fee.name}</p>
-                        <p className="mt-2 font-semibold text-gray-900">₹{fee.amount.toLocaleString()}</p>
+                        <p className="mt-2 font-semibold text-gray-900">₹{(fee.amount || 0).toLocaleString()}</p>
                       </div>
                     ))
                 ) : (
                   selectedOrder.shippingPrice > 0 && (
                     <div className="min-w-[120px]">
                       <p className="text-xs uppercase tracking-widest text-gray-500">Weight Charge</p>
-                      <p className="mt-2 font-semibold text-gray-900">₹{selectedOrder.shippingPrice.toLocaleString()}</p>
+                      <p className="mt-2 font-semibold text-gray-900">₹{(selectedOrder.shippingPrice || 0).toLocaleString()}</p>
                     </div>
                   )
                 )}

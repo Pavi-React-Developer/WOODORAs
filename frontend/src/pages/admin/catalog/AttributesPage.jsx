@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Tag, ChevronDown, Check, X, Download } from 'lucide-react';
+import { Plus, Edit2, Trash2, Tag, ChevronDown, Check, X, Download, RefreshCw } from 'lucide-react';
 import { attributeV2API, categoryV2API, subCategoryV2API } from '../../../api/catalogV2Service';
 import { downloadExcelFile } from '../../../utils/exportUtils';
 import { SearchBar, Button, Badge, Card } from '../../../components/admin/CommonComponents';
 import ConfirmDialog from '../../../components/admin/ConfirmDialog';
 
-export const AttributesPage = () => {
+export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = true }) => {
     const [attributes, setAttributes] = useState([]);
     const [categories, setCategories] = useState([]);
     const [subCategories, setSubCategories] = useState([]);
@@ -278,16 +278,23 @@ export const AttributesPage = () => {
 
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-6">
-            {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Attributes</h1>
                     <p className="text-gray-500 mt-1">Configure specification formats and dropdown selection elements.</p>
                 </div>
-                <Button onClick={() => handleOpenForm()} className="shadow-lg hover:shadow-xl transition-all">
-                    <Plus size={20} />
-                    Add Attribute
-                </Button>
+                <div className="flex items-center gap-3">
+                    <button onClick={fetchAttributes} className="admin-secondary-btn">
+                        <RefreshCw size={16} /> Refresh
+                    </button>
+                    <button onClick={exportAttributesExcel} className="admin-export-btn">
+                        <Download size={16} /> Export Excel
+                    </button>
+                    <Button onClick={() => handleOpenForm()} className="shadow-lg hover:shadow-xl transition-all">
+                        <Plus size={20} />
+                        Add Attribute
+                    </Button>
+                </div>
             </div>
 
             {/* Filter */}
@@ -401,20 +408,24 @@ export const AttributesPage = () => {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-right flex justify-end gap-2">
+                                            {canEdit && (
                                             <button
                                                 onClick={() => handleOpenForm(attr)}
-                                                className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-amber-700 transition-colors"
+                                                className="p-1.5 text-blue-600 hover:text-blue-700 transition-colors"
                                                 title="Edit"
                                             >
                                                 <Edit2 size={16} />
                                             </button>
+                                            )}
+                                            {canDelete && (
                                             <button
                                                 onClick={() => handleDeleteClick(attr._id)}
-                                                className="p-1.5 hover:bg-red-50 rounded-lg text-gray-600 hover:text-red-600 transition-colors"
+                                                className="p-1.5 text-red-600 hover:text-red-700 transition-colors"
                                                 title="Delete"
                                             >
                                                 <Trash2 size={16} />
                                             </button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))

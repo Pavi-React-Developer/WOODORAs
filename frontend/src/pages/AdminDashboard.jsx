@@ -117,7 +117,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
     return !!perm?.[action];
   };
 
-  const canAccessCatalog = canView('catalog');
+  // canAccessCatalog: show catalog/products section if staff has either 'catalog' or 'products' permission
+  const canAccessCatalog = canView('catalog') || canView('products');
   const canAccessDashboard = canView('dashboard');
   const canAccessStaff = canView('staff_management');
 
@@ -573,7 +574,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
       <aside className="w-[260px] bg-white border-r border-[#E6DFD4] flex flex-col justify-between shrink-0 h-full overflow-y-auto">
         <div>
           {/* Logo */}
-          <div className="pt-8 pb-6 px-8">
+          <div className="pt-8 pb-6 px-8 border-b border-[#E6DFD4]/50">
             <h1 className="font-bold text-xl tracking-widest text-brand-dark leading-tight">WOODENTOYS</h1>
             <p className="text-[10px] font-bold text-brand-medium uppercase tracking-widest mt-0.5">Admin Portal</p>
           </div>
@@ -581,389 +582,388 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
           {/* Nav Links */}
           <nav className="px-4 space-y-1 mt-4">
             {canAccessDashboard && (
-            <div className="pt-4 border-t border-[#E6DFD4]/50">
-              <button 
-                onClick={() => openAdminTab('dashboard')}
-                className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-xl transition-colors ${currentTab === 'dashboard' ? 'bg-[#E6DFD4] text-brand-dark' : 'text-brand-medium hover:bg-brand-light hover:text-brand-dark'}`}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-                Dashboard
-              </button>
-            </div>
+              <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
+                <button 
+                  onClick={() => openAdminTab('dashboard')}
+                  className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-xl transition-colors text-left ${currentTab === 'dashboard' ? 'bg-[#E6DFD4] text-brand-dark' : 'text-brand-medium hover:bg-brand-light hover:text-brand-dark'}`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                  Dashboard
+                </button>
+              </div>
             )}
 
-            <div className="pt-2">
-              <div className="pt-4 border-t border-[#E6DFD4]/50">
-
-              {/* Staff Management - only shown if user has staff_management view permission */}
-              {canView('staff_management') && (
-                <div>
-                  <button
-                    onClick={() => setStaffMenuOpen(o => !o)}
-                    className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 ${
-                      currentTab === 'staff' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-                      Staff Management
-                    </span>
-                    <svg className={`w-3.5 h-3.5 transition-transform ${staffMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                  </button>
-                  {staffMenuOpen && (
-                    <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
+            {/* Staff Management - only shown if user has staff_management view permission */}
+            {canView('staff_management') && (
+              <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
+                <button
+                  onClick={() => setStaffMenuOpen(o => !o)}
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${
+                    currentTab === 'staff' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                  }`}
+                >
+                  <span className="flex items-center gap-2.5">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                    Staff Management
+                  </span>
+                  <svg className={`w-3.5 h-3.5 transition-transform ${staffMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                </button>
+                {staffMenuOpen && (
+                  <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
+                    <button
+                      onClick={() => openAdminTab('staff', { staffSubTab: 'list', staffMenuOpen: true, path: '/admin/staff' })}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
+                        currentTab === 'staff' && staffSubTab === 'list' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                      }`}
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                      Staff List
+                    </button>
+                    
+                    {hasPermission('staff_management', 'create') && (
                       <button
-                        onClick={() => openAdminTab('staff', { staffSubTab: 'list', staffMenuOpen: true, path: '/admin/staff' })}
-                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors ${
-                          currentTab === 'staff' && staffSubTab === 'list' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                        onClick={() => openAdminTab('staff', { staffSubTab: 'add', staffMenuOpen: true, editingStaff: null, path: '/admin/staff/add' })}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
+                          currentTab === 'staff' && staffSubTab === 'add' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
                         }`}
                       >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
-                        Staff List
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
+                        Add Staff
                       </button>
-                      
-                      {hasPermission('staff_management', 'create') && (
-                        <button
-                          onClick={() => openAdminTab('staff', { staffSubTab: 'add', staffMenuOpen: true, editingStaff: null, path: '/admin/staff/add' })}
-                          className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors ${
-                            currentTab === 'staff' && staffSubTab === 'add' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
-                          }`}
-                        >
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
-                          Add Staff
-                        </button>
-                      )}
-                      
-                      {hasPermission('staff_management', 'edit') && (
-                        <button
-                          onClick={() => openAdminTab('staff', { staffSubTab: 'role-assign', staffMenuOpen: true, roleAssignStaff: null, path: '/admin/staff/roles' })}
-                          className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors ${
-                            currentTab === 'staff' && staffSubTab === 'role-assign' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
-                          }`}
-                        >
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-                          Role Assign
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Catalog Dropdown - only shown if user has catalog view permission */}
-              {(isAdmin || canView('catalog')) && (
-                <div className="pt-2 border-t border-[#E6DFD4]/50">
-                  <button
-                    onClick={() => setCatalogMenuOpen(o => !o)}
-                    className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors ${
-                      currentTab.startsWith('v2-') ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
-                      Catalog Management
-                    </span>
-                    <svg className={`w-3.5 h-3.5 transition-transform ${catalogMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                  </button>
-
-                  {catalogMenuOpen && (
-                    <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
-                      {canAccessCatalog && (
-                        <button
-                          onClick={() => openAdminTab('v2-categories', { catalogMenuOpen: true })}
-                          className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors ${
-                            currentTab === 'v2-categories' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
-                          }`}
-                        >
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>
-                          Categories
-                        </button>
-                      )}
-                      {canAccessCatalog && (
-                        <button
-                          onClick={() => openAdminTab('v2-subcategories', { catalogMenuOpen: true })}
-                          className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors ${
-                            currentTab === 'v2-subcategories' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
-                          }`}
-                        >
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
-                          Sub Categories
-                        </button>
-                      )}
-                      {canAccessCatalog && (
-                        <button
-                          onClick={() => openAdminTab('v2-attributes', { catalogMenuOpen: true })}
-                          className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors ${
-                            currentTab === 'v2-attributes' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
-                          }`}
-                        >
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
-                          Attributes
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-              </div>{/* close pt-4 */}
-
-              {/* Products */}
-              {canAccessCatalog && (
-                <div className="pt-2 border-t border-[#E6DFD4]/50 mt-2">
-                  <button
-                    onClick={() => {
-                      const newProductMenuOpen = !productMenuOpen;
-                      setProductMenuOpen(newProductMenuOpen);
-                      openAdminTab('v2-products', { productSubTab: newProductMenuOpen ? 'list' : productSubTab, productMenuOpen: newProductMenuOpen, path: '/admin/products' });
-                      if (newProductMenuOpen) setProductSubTab('list');
-                    }}
-                    className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 ${
-                      currentTab === 'v2-products' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
-                      Products Management
-                    </span>
-                    <svg className={`w-3.5 h-3.5 transition-transform ${productMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                  </button>
-                  {productMenuOpen && (
-                    <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
+                    )}
+                    
+                    {hasPermission('staff_management', 'edit') && (
                       <button
-                        onClick={() => openAdminTab('v2-products', { productSubTab: 'list', productMenuOpen: true, path: '/admin/products' })}
-                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors ${
-                          currentTab === 'v2-products' && productSubTab === 'list' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                        onClick={() => openAdminTab('staff', { staffSubTab: 'role-assign', staffMenuOpen: true, roleAssignStaff: null, path: '/admin/staff/roles' })}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
+                          currentTab === 'staff' && staffSubTab === 'role-assign' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
                         }`}
                       >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
-                        Product List
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                        Role Assign
                       </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Catalog Dropdown - only shown if user has catalog view permission */}
+            {(isAdmin || canView('catalog')) && (
+              <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
+                <button
+                  onClick={() => setCatalogMenuOpen(o => !o)}
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors text-left ${
+                    currentTab.startsWith('v2-') ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                  }`}
+                >
+                  <span className="flex items-center gap-2.5">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+                    Catalog Management
+                  </span>
+                  <svg className={`w-3.5 h-3.5 transition-transform ${catalogMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                </button>
+
+                {catalogMenuOpen && (
+                  <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
+                    {canAccessCatalog && (
                       <button
-                        onClick={() => openAdminTab('v2-products', { productSubTab: 'add', productMenuOpen: true, path: '/admin/products/add' })}
-                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors ${
-                          currentTab === 'v2-products' && productSubTab === 'add' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                        onClick={() => openAdminTab('v2-categories', { catalogMenuOpen: true })}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
+                          currentTab === 'v2-categories' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
                         }`}
                       >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                        Add Product
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>
+                        Categories
                       </button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Orders Management */}
-              {(isAdmin || canView('orders')) && (
-                <div className="pt-2 border-t border-[#E6DFD4]/50 mt-2">
-                  <button
-                    onClick={() => openAdminTab('orders')}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 ${
-                      currentTab === 'orders' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
-                      Orders Management
-                    </span>
-                  </button>
-                </div>
-              )}
-
-              {/* Inventory Management */}
-              {(isAdmin || canView('inventory')) && (
-                <div className="pt-2 border-t border-[#E6DFD4]/50 mt-2">
-                  <button
-                    onClick={() => setInventoryMenuOpen(o => !o)}
-                    className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 ${
-                      currentTab === 'inventory' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
-                      Inventory Management
-                    </span>
-                    <svg className={`w-3.5 h-3.5 transition-transform ${inventoryMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                  </button>
-                  {inventoryMenuOpen && (
-                    <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
+                    )}
+                    {canAccessCatalog && (
                       <button
-                        onClick={() => openAdminTab('inventory', { inventoryMenuOpen: true })}
-                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors ${
-                          currentTab === 'inventory' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                        onClick={() => openAdminTab('v2-subcategories', { catalogMenuOpen: true })}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
+                          currentTab === 'v2-subcategories' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
                         }`}
                       >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
-                        Inventory List
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                        Sub Categories
                       </button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Customer Management */}
-              {isAdmin && (
-                <div className="pt-2 border-t border-[#E6DFD4]/50 mt-2">
-                  <button
-                    onClick={() => setCustomerMenuOpen(o => !o)}
-                    className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 ${
-                      currentTab === 'customers' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                      Customer Management
-                    </span>
-                    <svg className={`w-3.5 h-3.5 transition-transform ${customerMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                  </button>
-                  {customerMenuOpen && (
-                    <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
+                    )}
+                    {canAccessCatalog && (
                       <button
-                        onClick={() => openAdminTab('customers', { customerMenuOpen: true })}
-                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors ${
-                          currentTab === 'customers' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                        onClick={() => openAdminTab('v2-attributes', { catalogMenuOpen: true })}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
+                          currentTab === 'v2-attributes' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
                         }`}
                       >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
-                        Customer List
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
+                        Attributes
                       </button>
-                    </div>
-                  )}
-                </div>
-              )}
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
-              {/* CMS Management */}
-              {isAdmin && (
-                <div className="pt-2 border-t border-[#E6DFD4]/50 mt-2">
-                  <button
-                    onClick={() => openAdminTab('cms')}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 ${
-                      currentTab === 'cms' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
-                    }`}
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg>
-                    CMS Management
-                  </button>
-                </div>
-              )}
+            {/* Products */}
+            {canAccessCatalog && (
+              <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
+                <button
+                  onClick={() => {
+                    const newProductMenuOpen = !productMenuOpen;
+                    setProductMenuOpen(newProductMenuOpen);
+                    openAdminTab('v2-products', { productSubTab: newProductMenuOpen ? 'list' : productSubTab, productMenuOpen: newProductMenuOpen, path: '/admin/products' });
+                    if (newProductMenuOpen) setProductSubTab('list');
+                  }}
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${
+                    currentTab === 'v2-products' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                  }`}
+                >
+                  <span className="flex items-center gap-2.5">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+                    Products Management
+                  </span>
+                  <svg className={`w-3.5 h-3.5 transition-transform ${productMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                </button>
+                {productMenuOpen && (
+                  <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
+                    <button
+                      onClick={() => openAdminTab('v2-products', { productSubTab: 'list', productMenuOpen: true, path: '/admin/products' })}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
+                        currentTab === 'v2-products' && productSubTab === 'list' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                      }`}
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                      Product List
+                    </button>
+                    {(isAdmin || hasPermission('products', 'create') || hasPermission('catalog', 'create')) && (
+                    <button
+                      onClick={() => openAdminTab('v2-products', { productSubTab: 'add', productMenuOpen: true, path: '/admin/products/add' })}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
+                        currentTab === 'v2-products' && productSubTab === 'add' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                      }`}
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                      Add Product
+                    </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
-              {/* Coupons & Offers */}
-              {isAdmin && (
-                <div className="pt-2 border-t border-[#E6DFD4]/50 mt-2">
-                  <button
-                    onClick={() => openAdminTab('coupons')}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 ${
-                      currentTab === 'coupons' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
-                    }`}
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2H5zm0 10a2 2 0 00-2 2v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 00-2-2H5z" /></svg>
-                    Coupons & Offers
-                  </button>
-                </div>
-              )}
+            {/* Orders Management */}
+            {(isAdmin || canView('orders')) && (
+              <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
+                <button
+                  onClick={() => openAdminTab('orders')}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${
+                    currentTab === 'orders' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                  }`}
+                >
+                  <span className="flex items-center gap-2.5">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
+                    Orders Management
+                  </span>
+                </button>
+              </div>
+            )}
 
-              {/* Rating Management */}
-              {isAdmin && (
-                <div className="pt-2 border-t border-[#E6DFD4]/50 mt-2">
-                  <button
-                    onClick={() => openAdminTab('reviews')}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 ${
-                      currentTab === 'reviews' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
-                    }`}
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
-                    Rating Management
-                  </button>
-                </div>
-              )}
+            {/* Inventory Management */}
+            {(isAdmin || canView('inventory')) && (
+              <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
+                <button
+                  onClick={() => setInventoryMenuOpen(o => !o)}
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${
+                    currentTab === 'inventory' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                  }`}
+                >
+                  <span className="flex items-center gap-2.5">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+                    Inventory Management
+                  </span>
+                  <svg className={`w-3.5 h-3.5 transition-transform ${inventoryMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                </button>
+                {inventoryMenuOpen && (
+                  <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
+                    <button
+                      onClick={() => openAdminTab('inventory', { inventoryMenuOpen: true })}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
+                        currentTab === 'inventory' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                      }`}
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                      Inventory List
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
-              {(isAdmin || canView('fees')) && (
-                <div className="pt-2 border-t border-[#E6DFD4]/50 mt-2">
-                  <button
-                    onClick={() => setFeeMenuOpen(o => !o)}
-                    className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 ${
-                      currentTab === 'fees' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      Fee Management
-                    </span>
-                    <svg className={`w-3.5 h-3.5 transition-transform ${feeMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                  </button>
-                  {feeMenuOpen && (
-                    <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
-                      <button
-                        onClick={() => openAdminTab('fees', { feeSubTab: 'list', feeMenuOpen: true, path: '/admin/fees' })}
-                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors ${
-                          currentTab === 'fees' && feeSubTab === 'list' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
-                        }`}
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
-                        Fee List
-                      </button>
-                      <button
-                        onClick={() => openAdminTab('fees', { feeSubTab: 'add', feeMenuOpen: true, editingFee: null, path: '/admin/fees/add' })}
-                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors ${
-                          currentTab === 'fees' && feeSubTab === 'add' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
-                        }`}
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                        Add New Fee
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
+            {/* Customer Management */}
+            {(isAdmin || canView('customers')) && (
+              <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
+                <button
+                  onClick={() => setCustomerMenuOpen(o => !o)}
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${
+                    currentTab === 'customers' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                  }`}
+                >
+                  <span className="flex items-center gap-2.5">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                    Customer Management
+                  </span>
+                  <svg className={`w-3.5 h-3.5 transition-transform ${customerMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                </button>
+                {customerMenuOpen && (
+                  <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
+                    <button
+                      onClick={() => openAdminTab('customers', { customerMenuOpen: true })}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
+                        currentTab === 'customers' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                      }`}
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                      Customer List
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
-              {/* Cancellation Management */}
-              {(isAdmin || canView('cancellation')) && (
-                <div className="pt-2 border-t border-[#E6DFD4]/50 mt-2">
-                  <button
-                    onClick={() => openAdminTab('cancellation')}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 ${
-                      currentTab === 'cancellation' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                      Cancellation Management
-                    </span>
-                  </button>
-                </div>
-              )}
+            {/* CMS Management */}
+            {isAdmin && (
+              <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
+                <button
+                  onClick={() => openAdminTab('cms')}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${
+                    currentTab === 'cms' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                  }`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg>
+                  CMS Management
+                </button>
+              </div>
+            )}
 
-              {/* Refund Management */}
-              {(isAdmin || canView('refund')) && (
-                <div className="pt-2 border-t border-[#E6DFD4]/50 mt-2">
-                  <button
-                    onClick={() => setRefundMenuOpen(o => !o)}
-                    className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 ${
-                      currentTab === 'refund' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
-                      Refund Management
-                    </span>
-                    <svg className={`w-3.5 h-3.5 transition-transform ${refundMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                  </button>
-                  {refundMenuOpen && (
-                    <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
-                      <button
-                        onClick={() => openAdminTab('refund', { refundSubTab: 'list', refundMenuOpen: true })}
-                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors ${
-                          currentTab === 'refund' && refundSubTab === 'list' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
-                        }`}
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
-                        Refund List
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
+            {/* Coupons & Offers */}
+            {(isAdmin || canView('coupons')) && (
+              <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
+                <button
+                  onClick={() => openAdminTab('coupons')}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${
+                    currentTab === 'coupons' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                  }`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2H5zm0 10a2 2 0 00-2 2v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 00-2-2H5z" /></svg>
+                  Coupons & Offers
+                </button>
+              </div>
+            )}
 
-            </div>{/* close pt-2 */}
+            {/* Rating Management */}
+            {(isAdmin || canView('reviews')) && (
+              <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
+                <button
+                  onClick={() => openAdminTab('reviews')}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${
+                    currentTab === 'reviews' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                  }`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
+                  Rating Management
+                </button>
+              </div>
+            )}
+
+            {/* Fee Management */}
+            {(isAdmin || canView('fees')) && (
+              <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
+                <button
+                  onClick={() => setFeeMenuOpen(o => !o)}
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${
+                    currentTab === 'fees' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                  }`}
+                >
+                  <span className="flex items-center gap-2.5">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0a9 9 0 0118 0z" /></svg>
+                    Fee Management
+                  </span>
+                  <svg className={`w-3.5 h-3.5 transition-transform ${feeMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                </button>
+                {feeMenuOpen && (
+                  <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
+                    <button
+                      onClick={() => openAdminTab('fees', { feeSubTab: 'list', feeMenuOpen: true, path: '/admin/fees' })}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
+                        currentTab === 'fees' && feeSubTab === 'list' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                      }`}
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                      Fee List
+                    </button>
+                    {(isAdmin || hasPermission('fees', 'create')) && (
+                    <button
+                      onClick={() => openAdminTab('fees', { feeSubTab: 'add', feeMenuOpen: true, editingFee: null, path: '/admin/fees/add' })}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
+                        currentTab === 'fees' && feeSubTab === 'add' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                      }`}
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                      Add New Fee
+                    </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Cancellation Management */}
+            {(isAdmin || canView('cancellation')) && (
+              <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
+                <button
+                  onClick={() => openAdminTab('cancellation')}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${
+                    currentTab === 'cancellation' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                  }`}
+                >
+                  <span className="flex items-center gap-2.5">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                    Cancellation Management
+                  </span>
+                </button>
+              </div>
+            )}
+
+            {/* Refund Management */}
+            {(isAdmin || canView('refund')) && (
+              <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
+                <button
+                  onClick={() => setRefundMenuOpen(o => !o)}
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${
+                    currentTab === 'refund' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                  }`}
+                >
+                  <span className="flex items-center gap-2.5">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+                    Refund Management
+                  </span>
+                  <svg className={`w-3.5 h-3.5 transition-transform ${refundMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                </button>
+                {refundMenuOpen && (
+                  <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
+                    <button
+                      onClick={() => openAdminTab('refund', { refundSubTab: 'list', refundMenuOpen: true })}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
+                        currentTab === 'refund' && refundSubTab === 'list' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                      }`}
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                      Refund List
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </nav>
         </div>
 
@@ -1024,7 +1024,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                     <option>Last 7 Days</option>
                     <option>All Time</option>
                   </select>
-                  <button className="bg-brand-dark hover:bg-black text-white text-sm font-medium px-5 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm">
+                  <button className="admin-export-btn flex items-center gap-2">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                     Export CSV
                   </button>
@@ -2002,10 +2002,10 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
             </div>
           )}
 
-          {canAccessCatalog && currentTab === 'v2-categories' && <CategoriesPage />}
-          {canAccessCatalog && currentTab === 'v2-subcategories' && <SubCategoriesPage />}
-          {canAccessCatalog && currentTab === 'v2-attributes' && <AttributesPage />}
-          {canAccessCatalog && currentTab === 'v2-products' && <ProductsPage />}
+          {canAccessCatalog && currentTab === 'v2-categories' && <CategoriesPage canCreate={hasPermission('catalog', 'create')} canEdit={hasPermission('catalog', 'edit')} canDelete={hasPermission('catalog', 'delete')} />}
+          {canAccessCatalog && currentTab === 'v2-subcategories' && <SubCategoriesPage canCreate={hasPermission('catalog', 'create')} canEdit={hasPermission('catalog', 'edit')} canDelete={hasPermission('catalog', 'delete')} />}
+          {canAccessCatalog && currentTab === 'v2-attributes' && <AttributesPage canCreate={hasPermission('catalog', 'create')} canEdit={hasPermission('catalog', 'edit')} canDelete={hasPermission('catalog', 'delete')} />}
+          {canAccessCatalog && currentTab === 'v2-products' && <ProductsPage canCreate={hasPermission('products', 'create') || hasPermission('catalog', 'create')} canEdit={hasPermission('products', 'edit') || hasPermission('catalog', 'edit')} canDelete={hasPermission('products', 'delete') || hasPermission('catalog', 'delete')} />}
 
           {/* ── STAFF MANAGEMENT ── */}
           {canAccessStaff && currentTab === 'staff' && staffSubTab === 'list' && (
@@ -2039,12 +2039,18 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
 
           {/* ── ORDERS MANAGEMENT ── */}
           {(isAdmin || canView('orders')) && currentTab === 'orders' && (
-            <OrdersPage />
+            <OrdersPage
+              canView={hasPermission('orders', 'view')}
+              canEdit={hasPermission('orders', 'edit')}
+              canDelete={hasPermission('orders', 'delete')}
+            />
           )}
 
           {/* ── FEE MANAGEMENT ── */}
           {(isAdmin || canView('fees')) && currentTab === 'fees' && feeSubTab === 'list' && (
             <FeeListPage 
+              canEdit={hasPermission('fees', 'edit')}
+              canDelete={hasPermission('fees', 'delete')}
               onNavigate={(tab, fee) => {
                 setEditingFee(fee || null);
                 setFeeSubTab(tab);
@@ -2070,18 +2076,28 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
           )}
 
           {/* ── CUSTOMER MANAGEMENT ── */}
-          {isAdmin && currentTab === 'customers' && (
-            <CustomerManagementPage />
+          {(isAdmin || canView('customers')) && currentTab === 'customers' && (
+            <CustomerManagementPage
+              canEdit={hasPermission('customers', 'edit')}
+              canDelete={hasPermission('customers', 'delete')}
+            />
           )}
 
           {/* ── COUPONS & OFFERS MANAGEMENT ── */}
-          {isAdmin && currentTab === 'coupons' && (
-            <CouponManagementPage />
+          {(isAdmin || canView('coupons')) && currentTab === 'coupons' && (
+            <CouponManagementPage
+              canCreate={hasPermission('coupons', 'create')}
+              canEdit={hasPermission('coupons', 'edit')}
+              canDelete={hasPermission('coupons', 'delete')}
+            />
           )}
 
           {/* ── RATING & REVIEW MANAGEMENT ── */}
-          {isAdmin && currentTab === 'reviews' && (
-            <ReviewManagementPage />
+          {(isAdmin || canView('reviews')) && currentTab === 'reviews' && (
+            <ReviewManagementPage
+              canEdit={hasPermission('reviews', 'edit')}
+              canDelete={hasPermission('reviews', 'delete')}
+            />
           )}
 
           {/* ── CMS MANAGEMENT ── */}

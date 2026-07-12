@@ -1,6 +1,82 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { staffAPI } from '../../api/staffService';
 import { roleAPI } from '../../api/roleService';
+import { ADMIN_MODULES } from '../../config/adminModules';
+
+const ACTIONS = ['view', 'create', 'edit', 'delete'];
+
+const initPerms = (modules) =>
+  (modules || []).reduce((acc, mod) => {
+    const key = mod.key || mod;
+    acc[key] = { view: false, create: false, edit: false, delete: false };
+    return acc;
+  }, {});
+
+const permsToMap = (permissionsArr, modules) => {
+  const map = initPerms(modules);
+  (permissionsArr || []).forEach(p => {
+    if (map[p.module] !== undefined) {
+      map[p.module] = { view: !!p.view, create: !!p.create, edit: !!p.edit, delete: !!p.delete };
+    }
+  });
+  return map;
+};
+
+const mapToPerms = (map) =>
+  Object.entries(map).map(([module, actions]) => ({ module, ...actions }));
+
+const PermissionTable = ({ modules, permissions, onToggle, onToggleRow, onToggleColumn, onSelectAll, onClearAll }) => (
+  <div className="overflow-x-auto">
+    <div className="flex justify-end gap-2 mb-3">
+      <button onClick={onSelectAll} type="button" className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-[#F8F4EC] text-gray-600 transition-colors">Select All</button>
+      <button onClick={onClearAll} type="button" className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-[#F8F4EC] text-gray-600 transition-colors">Clear All</button>
+    </div>
+    <table className="w-full text-sm border border-[#E6DFD4] rounded-xl overflow-hidden">
+      <thead className="bg-[#F8F4EC]">
+        <tr>
+          <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 w-48">Module</th>
+          {ACTIONS.map(action => (
+            <th key={action} className="px-5 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-gray-500">
+              <button onClick={() => onToggleColumn(action)} type="button" className="hover:text-[#8B5E3C] transition-colors capitalize">{action}</button>
+            </th>
+          ))}
+          <th className="px-5 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-gray-500">All</th>
+        </tr>
+      </thead>
+      <tbody>
+        {modules.map((mod, idx) => {
+          const perm = permissions[mod.key] || {};
+          const allOn = ACTIONS.every(a => perm[a]);
+          return (
+            <tr key={mod.key} className={`border-b border-[#F0EAE2] hover:bg-[#FDF9F5] transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
+              <td className="px-5 py-3.5 font-semibold text-gray-700">
+                <span className="mr-2">{mod.icon}</span>{mod.label}
+              </td>
+              {ACTIONS.map(action => (
+                <td key={action} className="px-5 py-3.5 text-center">
+                  <input
+                    type="checkbox"
+                    checked={!!perm[action]}
+                    onChange={() => onToggle(mod.key, action)}
+                    className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                  />
+                </td>
+              ))}
+              <td className="px-5 py-3.5 text-center">
+                <input
+                  type="checkbox"
+                  checked={allOn}
+                  onChange={() => onToggleRow(mod.key)}
+                  className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                />
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  </div>
+);
 
 const InputField = ({ label, error, required, children }) => (
   <div>
@@ -29,8 +105,32 @@ export default function AddStaffPage({ onBack, onSuccess, editingStaff }) {
   const [successStaff, setSuccessStaff] = useState(null);
   const [dynamicRoles, setDynamicRoles] = useState([]);
 
+  const [permissionModules, setPermissionModules] = useState(ADMIN_MODULES);
+  const [staffPerms, setStaffPerms] = useState(initPerms(ADMIN_MODULES));
+  const [loadingPerms, setLoadingPerms] = useState(false);
+
   useEffect(() => {
     roleAPI.getAll().then(roles => setDynamicRoles(roles)).catch(() => setDynamicRoles([]));
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    staffAPI.getModules()
+      .then(res => {
+        if (!mounted) return;
+        if (res && Array.isArray(res.modules) && res.modules.length > 0) {
+          const filtered = res.modules.filter(m => m.key !== 'users' && m.key !== 'brands');
+          // enrich with icons from the frontend ADMIN_MODULES config
+          const enriched = filtered.map(m => {
+            const local = ADMIN_MODULES.find(a => a.key === m.key);
+            return { ...m, icon: local?.icon || m.icon || '' };
+          });
+          setPermissionModules(enriched);
+          setStaffPerms(initPerms(enriched));
+        }
+      })
+      .catch(() => {});
+    return () => { mounted = false; };
   }, []);
 
   useEffect(() => {
@@ -43,8 +143,38 @@ export default function AddStaffPage({ onBack, onSuccess, editingStaff }) {
         role: editingStaff.role || '',
         status: editingStaff.status || 'active',
       });
+      
+      setLoadingPerms(true);
+      staffAPI.getById(editingStaff._id)
+        .then(data => {
+          setStaffPerms(permsToMap(data.staff?.permissions || [], permissionModules));
+        })
+        .catch(console.error)
+        .finally(() => setLoadingPerms(false));
     }
-  }, [editingStaff]);
+  }, [editingStaff, permissionModules]);
+
+  const toggleStaffPerm = (moduleKey, action) => {
+    setStaffPerms(prev => ({ ...prev, [moduleKey]: { ...prev[moduleKey], [action]: !prev[moduleKey][action] } }));
+  };
+  const toggleStaffRow = (moduleKey) => {
+    const allOn = ACTIONS.every(a => staffPerms[moduleKey][a]);
+    setStaffPerms(prev => ({ ...prev, [moduleKey]: { view: !allOn, create: !allOn, edit: !allOn, delete: !allOn } }));
+  };
+  const toggleStaffColumn = (action) => {
+    const allOn = permissionModules.every(m => staffPerms[m.key][action]);
+    setStaffPerms(prev => {
+      const next = { ...prev };
+      permissionModules.forEach(m => { next[m.key] = { ...next[m.key], [action]: !allOn }; });
+      return next;
+    });
+  };
+  const staffSelectAll = () => {
+    const map = {};
+    permissionModules.forEach(m => { map[m.key] = { view: true, create: true, edit: true, delete: true }; });
+    setStaffPerms(map);
+  };
+  const staffClearAll = () => setStaffPerms(initPerms(permissionModules));
 
   const validate = () => {
     const e = {};
@@ -75,44 +205,17 @@ export default function AddStaffPage({ onBack, onSuccess, editingStaff }) {
       let result;
       if (isEdit) {
         result = await staffAPI.update(editingStaff._id, payload);
+        await staffAPI.updatePermissions(editingStaff._id, mapToPerms(staffPerms));
       } else {
         result = await staffAPI.create(payload);
       }
-      setSuccessStaff(result.staff);
+      onBack();
     } catch (err) {
       setErrors({ submit: err.message });
     } finally {
       setLoading(false);
     }
   };
-
-  if (successStaff) {
-    return (
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm p-10 text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-          </div>
-          <h2 className="text-xl font-bold text-gray-800 mb-2">{isEdit ? 'Staff Updated!' : 'Staff Created!'}</h2>
-          <p className="text-gray-500 mb-6 text-sm">
-            <strong>{successStaff.fullName}</strong> ({successStaff.role}) has been {isEdit ? 'updated' : 'added'} successfully.
-          </p>
-          <div className="flex gap-3 justify-center">
-            <button onClick={onBack} className="px-5 py-2.5 border border-[#E6DFD4] rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50">
-              Back to List
-            </button>
-            <button
-              onClick={() => onSuccess(successStaff)}
-              className="px-5 py-2.5 bg-[#8B5E3C] hover:bg-[#7a5234] text-white rounded-xl text-sm font-semibold flex items-center gap-2 transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-              Edit Permissions
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -197,6 +300,30 @@ export default function AddStaffPage({ onBack, onSuccess, editingStaff }) {
               </select>
             </InputField>
           </div>
+          
+          {isEdit && (
+            <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm p-6 md:p-8 space-y-5 mt-6">
+              <div className="flex items-center gap-2 mb-2 pb-4 border-b border-[#F0EAE2]">
+                <div className="w-8 h-8 bg-[#F8F4EC] rounded-lg flex items-center justify-center">
+                  <span className="text-[#8B5E3C] text-sm">👥</span>
+                </div>
+                <h2 className="font-bold text-gray-700">Assign Permissions</h2>
+              </div>
+              {loadingPerms ? (
+                <div className="text-center py-6 text-gray-400">Loading permissions...</div>
+              ) : (
+                <PermissionTable
+                  modules={permissionModules}
+                  permissions={staffPerms}
+                  onToggle={toggleStaffPerm}
+                  onToggleRow={toggleStaffRow}
+                  onToggleColumn={toggleStaffColumn}
+                  onSelectAll={staffSelectAll}
+                  onClearAll={staffClearAll}
+                />
+              )}
+            </div>
+          )}
         </div>
 
         <div className="flex items-center justify-end gap-3 mt-6">

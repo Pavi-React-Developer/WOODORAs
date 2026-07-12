@@ -190,7 +190,7 @@ function ReviewDetailModal({ review, onClose, onStatusChange, onDelete }) {
 /* ══════════════════════════════════════════════════
    MAIN PAGE
 ══════════════════════════════════════════════════ */
-export default function ReviewManagementPage() {
+export default function ReviewManagementPage({ canEdit = true, canDelete = true }) {
   const [reviews,   setReviews]   = useState([]);
   const [stats,     setStats]     = useState(null);
   const [loading,   setLoading]   = useState(true);
@@ -302,8 +302,7 @@ export default function ReviewManagementPage() {
             <p className="text-sm text-gray-500 mt-0.5">Moderate, approve, and analyze customer reviews</p>
           </div>
           <div className="flex items-center gap-3">
-            <button onClick={() => { fetchReviews(); fetchStats(); }}
-              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl text-sm font-semibold hover:bg-gray-50 shadow-sm transition">
+            <button onClick={() => { fetchReviews(); fetchStats(); }} className="admin-secondary-btn">
               <RefreshCw size={14} /> Refresh
             </button>
             <button onClick={exportReviewsExcel} className="admin-export-btn">
@@ -458,22 +457,24 @@ export default function ReviewManagementPage() {
                             className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-indigo-100 hover:text-indigo-600 flex items-center justify-center transition">
                             <Eye size={14}/>
                           </button>
-                          {r.status !== "approved" && (
+                          {canEdit && r.status !== "approved" && (
                             <button onClick={() => handleStatusChange(r._id, "approved")} title="Approve"
                               className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-emerald-100 hover:text-emerald-600 flex items-center justify-center transition">
                               <Check size={14}/>
                             </button>
                           )}
-                          {r.status !== "rejected" && (
+                          {canEdit && r.status !== "rejected" && (
                             <button onClick={() => handleStatusChange(r._id, "rejected")} title="Reject"
                               className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-red-100 hover:text-red-500 flex items-center justify-center transition">
                               <X size={14}/>
                             </button>
                           )}
+                          {canDelete && (
                           <button onClick={() => setConfirm({ id: r._id })} title="Delete"
                             className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-red-100 hover:text-red-500 flex items-center justify-center transition">
                             <Trash2 size={14}/>
                           </button>
+                          )}
                         </div>
                       </td>
                     </tr>

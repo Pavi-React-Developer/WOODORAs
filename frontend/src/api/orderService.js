@@ -110,4 +110,11 @@ export const orderService = {
       'Failed to fetch cancellation preview'
     );
   },
+
+  deleteOrder: async (id) => {
+    return withAuthRetry(
+      (config) => axios.delete(`${API_URL}/${id}`, config),
+      'Failed to delete order'
+    );
+  },
 };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { categoryV2API } from '../../../api/catalogV2Service';
-import { Download } from 'lucide-react';
+import { Download, RefreshCw, Plus } from 'lucide-react';
 import { downloadExcelFile } from '../../../utils/exportUtils';
 
 // ─── Reusable Badge ───────────────────────────────────────────────────────────
@@ -25,7 +25,7 @@ const Field = ({ label, required, children }) => (
 
 const inputCls = 'w-full px-4 py-2.5 text-sm border border-[#E6DFD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-colors';
 
-export const CategoriesPage = () => {
+export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = true }) => {
   // ─── State ────────────────────────────────────────────────────────────────
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -189,15 +189,17 @@ export const CategoriesPage = () => {
           <p className="text-sm text-gray-400 mt-0.5">Manage product categories, SEO settings, and wood preferences.</p>
         </div>
         <div className="flex items-center gap-3">
+          <button onClick={fetchCategories} className="admin-secondary-btn">
+            <RefreshCw size={16} /> Refresh
+          </button>
           <button onClick={exportCategoriesExcel} className="admin-export-btn">
             <Download size={16} /> Export Excel
           </button>
           <button
             onClick={() => openForm()}
-            className="flex items-center gap-2 bg-[#8B5E3C] hover:bg-[#7a5234] text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-sm transition-colors"
+            className="admin-btn"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-            Add Category
+            <Plus size={16} /> Add Category
           </button>
         </div>
       </div>
@@ -313,7 +315,8 @@ export const CategoriesPage = () => {
                       {new Date(cat.createdAt).toLocaleDateString('en-IN')}
                     </td>
                     <td className="px-4 py-3.5">
-                      <div className="flex items-center gap-1">
+                      <div className="flex gap-2 justify-end">
+                        {canEdit && (
                         <button
                           onClick={() => openForm(cat)}
                           className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
@@ -321,6 +324,8 @@ export const CategoriesPage = () => {
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                         </button>
+                        )}
+                        {canDelete && (
                         <button
                           onClick={() => setDeleteTarget(cat._id)}
                           className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
@@ -328,6 +333,7 @@ export const CategoriesPage = () => {
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                         </button>
+                        )}
                       </div>
                     </td>
                   </tr>

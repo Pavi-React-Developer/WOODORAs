@@ -174,18 +174,14 @@ const deleteSubCategory = async (id, auditContext) => {
     }
 
     const beforeState = subCategory.toObject();
-
-    subCategory.isDeleted = true;
-    subCategory.deletedAt = new Date();
-    subCategory.updatedBy = auditContext.userId;
-    await subCategory.save();
+    await SubCategory.deleteOne({ _id: id });
 
     await auditService.logAction(auditContext, {
         entityType: 'SubCategory',
         entityId: subCategory._id,
         action: 'DELETE',
         before: beforeState,
-        after: subCategory.toObject(),
+        after: null,
     });
 
     return subCategory;
@@ -221,16 +217,7 @@ const bulkUpdateStatus = async (ids, isActive, auditContext) => {
 const bulkDelete = async (ids, auditContext) => {
     const subsBefore = await SubCategory.find({ _id: { $in: ids }, isDeleted: false });
 
-    await SubCategory.updateMany(
-        { _id: { $in: ids }, isDeleted: false },
-        { 
-            $set: { 
-                isDeleted: true, 
-                deletedAt: new Date(),
-                updatedBy: auditContext.userId 
-            } 
-        }
-    );
+    await SubCategory.deleteMany({ _id: { $in: ids }, isDeleted: false });
 
     for (const sub of subsBefore) {
         await auditService.logAction(auditContext, {
@@ -238,7 +225,7 @@ const bulkDelete = async (ids, auditContext) => {
             entityId: sub._id,
             action: 'DELETE',
             before: sub.toObject(),
-            after: { ...sub.toObject(), isDeleted: true, deletedAt: new Date() },
+            after: null,
         });
     }
 

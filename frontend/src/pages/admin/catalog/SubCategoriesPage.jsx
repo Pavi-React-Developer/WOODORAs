@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Settings, ToggleLeft, ToggleRight, List, Columns, ShieldAlert, Download } from 'lucide-react';
+import { Plus, Edit2, Trash2, Settings, ToggleLeft, ToggleRight, List, Columns, ShieldAlert, Download, RefreshCw } from 'lucide-react';
 import { subCategoryV2API, categoryV2API, attributeV2API } from '../../../api/catalogV2Service';
 import { downloadExcelFile } from '../../../utils/exportUtils';
 import { SearchBar, Button, Badge, Card } from '../../../components/admin/CommonComponents';
 import ConfirmDialog from '../../../components/admin/ConfirmDialog';
 import BulkActions from '../../../components/admin/BulkActions';
 
-export const SubCategoriesPage = () => {
+export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete = true }) => {
     // Lists
     const [subCategories, setSubCategories] = useState([]);
     const [categories, setCategories] = useState([]);
@@ -299,6 +299,9 @@ export const SubCategoriesPage = () => {
                     <p className="text-gray-500 mt-1">Manage subcategories and map fields or specifications to them.</p>
                 </div>
                 <div className="flex flex-col sm:flex-row items-center gap-3">
+                    <button onClick={fetchSubCategories} className="admin-secondary-btn">
+                        <RefreshCw size={16} /> Refresh
+                    </button>
                     <button onClick={exportSubCategoriesExcel} className="admin-export-btn flex items-center gap-2">
                         <Download size={16} /> Export Excel
                     </button>
@@ -404,20 +407,24 @@ export const SubCategoriesPage = () => {
                                             >
                                                 <Settings size={16} />
                                             </button>
+                                            {canEdit && (
                                             <button
                                                 onClick={() => handleOpenForm(sub)}
-                                                className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-amber-700 transition-colors"
+                                                className="p-1.5 text-blue-600 hover:text-blue-700 transition-colors"
                                                 title="Edit"
                                             >
                                                 <Edit2 size={16} />
                                             </button>
+                                            )}
+                                            {canDelete && (
                                             <button
                                                 onClick={() => handleDeleteClick(sub._id)}
-                                                className="p-1.5 hover:bg-red-50 rounded-lg text-gray-600 hover:text-red-600 transition-colors"
+                                                className="p-1.5 text-red-600 hover:text-red-700 transition-colors"
                                                 title="Delete"
                                             >
                                                 <Trash2 size={16} />
                                             </button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))
