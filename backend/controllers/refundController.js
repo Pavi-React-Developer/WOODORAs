@@ -80,7 +80,8 @@ const approveRefund = async (req, res) => {
     refund.status = 'Refund Approved';
     refund.refundActionStatus = 'Refunded';
 
-    if (refund.orderRef) {
+    // If refundDestination is explicitly 'WALLET', credit user's wallet on approval
+    if (refund.orderRef && String(refund.refundDestination || '').toUpperCase() === 'WALLET') {
       const order = await require('../models/Order').findById(refund.orderRef);
       if (order?.user) {
         const user = await User.findById(order.user);

@@ -40,6 +40,7 @@ import { orderService } from '../api/orderService';
 import { uploadAPI } from '../api/catalogAdminService';
 import { reviewService } from '../api/reviewService';
 import { walletService } from '../api/walletService';
+import { refundService } from '../api/refundService';
 import useCartStore from '../store/useCartStore';
 import WriteReviewModal from '../components/WriteReviewModal';
 
@@ -55,6 +56,7 @@ const modules = [
   { id: 'rewards', label: 'Loyalty Rewards', icon: Star },
   { id: 'password', label: 'Change Password', icon: LockKeyhole },
   { id: 'notifications', label: 'Notifications', icon: Bell },
+  { id: 'refunds', label: 'Refunds', icon: ExternalLink },
 ];
 
 const profileModulePaths = {
@@ -64,6 +66,7 @@ const profileModulePaths = {
   addresses: '/profile/addresses',
   cart: '/profile/cart',
   wallet: '/profile/wallet',
+  refunds: '/profile/refunds',
   wishlist: '/profile/wishlist',
   saved: '/profile/saved-products',
   rewards: '/profile/loyalty-rewards',
@@ -137,6 +140,8 @@ export default function CustomerProfilePage({
   });
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
+  const [refunds, setRefunds] = useState([]);
+  const [refundsLoading, setRefundsLoading] = useState(false);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [cancelOrderTarget, setCancelOrderTarget] = useState(null);
@@ -144,6 +149,7 @@ export default function CustomerProfilePage({
   const [cancelLoading, setCancelLoading] = useState(false);
   const [showRefundDestinationModal, setShowRefundDestinationModal] = useState(false);
   const [refundDestinationInput, setRefundDestinationInput] = useState('');
+  const [refundMethod, setRefundMethod] = useState('upi'); // 'upi' or 'wallet'
   const [reviewModalProduct, setReviewModalProduct] = useState(null);
   const [productRatings, setProductRatings] = useState({}); // { productId: avgRating }
   const [userReviews, setUserReviews] = useState({});       // { "orderId:orderItemId": userRating | null }
@@ -212,6 +218,12 @@ export default function CustomerProfilePage({
         }
       };
       loadWallet();
+    }
+  }, [activeModule]);
+
+  useEffect(() => {
+    if (activeModule === 'refunds') {
+      fetchMyRefunds();
     }
   }, [activeModule]);
 
@@ -316,6 +328,41 @@ export default function CustomerProfilePage({
       })
     );
   }, [orders, userReviews]);
+
+  const renderRefunds = () => (
+    <section className="px-5 py-7 lg:px-7">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-bold text-[#141225]">Refunds</h2>
+          <p className="mt-1 text-sm text-[#6D625C]">Your refund requests and statuses.</p>
+        </div>
+        <span className="rounded-full bg-[#F2E3D1] px-3 py-1 text-xs font-bold text-[#8B5E3C]">{refunds.length} Items</span>
+      </div>
+
+      {refundsLoading ? (
+        <p className="mt-8 text-sm text-[#6D625C]">Loading refunds...</p>
+      ) : refunds.length === 0 ? (
+        <EmptyState icon={ExternalLink} title="No refunds yet" text="Any approved refunds will appear here." />
+      ) : (
+        <div className="mt-6 space-y-4">
+          {refunds.map((refund) => (
+            <div key={refund._id} className="rounded-[14px] border border-[#E9DED3] bg-white p-4 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-bold text-[#141225]">Order {refund.orderId}</p>
+                  <p className="mt-1 text-sm text-[#6D625C]">Amount: ₹{(refund.amount || 0).toFixed(2)} • Method: {refund.refundDestination === 'WALLET' ? 'Wallet' : (refund.refundDestination || 'UPI/Phone')}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-semibold">{refund.status}</p>
+                  <p className="text-xs text-[#8A817C]">{new Date(refund.createdAt).toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
 
   const updateAddress = (index, field, value) => {
     setForm((current) => ({
@@ -464,17 +511,32 @@ export default function CustomerProfilePage({
     if (!cancelOrderTarget) return;
     try {
       setCancelLoading(true);
-      await orderService.cancelOrder(cancelOrderTarget._id, { refundDestination: refundDestinationInput });
+      const dest = refundMethod === 'wallet' ? 'WALLET' : refundDestinationInput;
+      await orderService.cancelOrder(cancelOrderTarget._id, { refundDestination: dest });
       toast.success('Cancellation requested, refund pending');
       setOrders(orders.map(o => o._id === cancelOrderTarget._id ? { ...o, status: 'Cancelled' } : o));
       setIsCancelModalOpen(false);
       setShowRefundDestinationModal(false);
       setCancelOrderTarget(null);
       setCancellationPreviewData(null);
+      // Refresh refunds list if user is viewing refunds
+      if (activeModule === 'refunds') fetchMyRefunds();
     } catch (e) {
       toast.error(e.message || 'Failed to cancel order');
     } finally {
       setCancelLoading(false);
+    }
+  };
+
+  const fetchMyRefunds = async () => {
+    try {
+      setRefundsLoading(true);
+      const data = await refundService.getMyRefunds();
+      setRefunds(data);
+    } catch (err) {
+      console.error('Failed to fetch refunds', err);
+    } finally {
+      setRefundsLoading(false);
     }
   };
 
@@ -1499,6 +1561,7 @@ export default function CustomerProfilePage({
           {activeModule === 'saved' && renderSavedProducts()}
           {activeModule === 'rewards' && renderRewards()}
           {activeModule === 'wallet' && renderWallet()}
+          {activeModule === 'refunds' && renderRefunds()}
           {activeModule === 'password' && renderChangePassword()}
           {activeModule === 'notifications' && renderNotifications()}
         </div>
@@ -1762,20 +1825,33 @@ export default function CustomerProfilePage({
 
             {/* Modal Body */}
             <div className="px-5 pb-5">
-              <p className="text-sm text-[#4A403B] mb-5">
-                Please provide the Phone Number or UPI ID where you would like to receive your refund of <span className="font-bold text-[#141225]">₹{cancellationPreviewData.estimatedRefund.toFixed(2)}</span>.
+              <p className="text-sm text-[#4A403B] mb-4">
+                Please choose where you'd like to receive your refund of <span className="font-bold text-[#141225]">₹{cancellationPreviewData.estimatedRefund.toFixed(2)}</span>.
               </p>
 
-              <label className="block mb-6">
-                <span className="text-xs font-bold text-[#6D625C] uppercase tracking-wider mb-2 block">Phone Number / UPI ID</span>
-                <input
-                  type="text"
-                  value={refundDestinationInput}
-                  onChange={(e) => setRefundDestinationInput(e.target.value)}
-                  placeholder="e.g. 9080773897 or name@upi"
-                  className="w-full rounded-[10px] border border-[#E6D9CE] px-4 py-3 outline-none focus:border-[#9A6031] bg-white text-[#141225] font-medium"
-                />
-              </label>
+              <div className="mb-4">
+                <label className="inline-flex items-center mr-4">
+                  <input type="radio" name="refundMethod" value="upi" checked={refundMethod === 'upi'} onChange={() => { setRefundMethod('upi'); setRefundDestinationInput(cancelOrderTarget?.shippingAddress?.phone || profile?.phone || ''); }} className="h-4 w-4" />
+                  <span className="ml-2 text-sm">Phone / UPI</span>
+                </label>
+                <label className="inline-flex items-center">
+                  <input type="radio" name="refundMethod" value="wallet" checked={refundMethod === 'wallet'} onChange={() => { setRefundMethod('wallet'); setRefundDestinationInput('WALLET'); }} className="h-4 w-4" />
+                  <span className="ml-2 text-sm">Wallet</span>
+                </label>
+              </div>
+
+              {refundMethod === 'upi' && (
+                <label className="block mb-6">
+                  <span className="text-xs font-bold text-[#6D625C] uppercase tracking-wider mb-2 block">Phone Number / UPI ID</span>
+                  <input
+                    type="text"
+                    value={refundDestinationInput}
+                    onChange={(e) => setRefundDestinationInput(e.target.value)}
+                    placeholder="e.g. 9080773897 or name@upi"
+                    className="w-full rounded-[10px] border border-[#E6D9CE] px-4 py-3 outline-none focus:border-[#9A6031] bg-white text-[#141225] font-medium"
+                  />
+                </label>
+              )}
 
               {/* Action Buttons */}
               <div className="flex gap-3">
