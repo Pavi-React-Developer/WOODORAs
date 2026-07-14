@@ -435,6 +435,39 @@ const bulkCreateCategory = async (req, res) => {
     }
 };
 
+// @desc    Get shop categories (main categories for homepage display)
+// @route   GET /api/catalog/shop-categories
+// @access  Public
+const getShopCategories = async (req, res) => {
+    try {
+        // Fetch main categories with type 'Main' that are active and have no parent
+        const categories = await Category.find({
+            isActive: true,
+            parentCategory: null,
+            type: 'Main'
+        })
+            .sort({ displayOrder: 1 })
+            .select('_id name slug image displayOrder description');
+
+        // Format response to match frontend expectations
+        const formattedCategories = categories.map(cat => ({
+            _id: cat._id,
+            title: cat.name,
+            subtitle: cat.description || 'View All',
+            image: cat.image || '/wood-placeholder.png',
+            slug: cat.slug,
+            displayOrder: cat.displayOrder
+        }));
+
+        res.json({
+            success: true,
+            data: formattedCategories,
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 module.exports = {
     createCategory,
     bulkCreateCategory,
@@ -444,4 +477,5 @@ module.exports = {
     updateCategory,
     deleteCategory,
     toggleCategoryStatus,
+    getShopCategories,
 };

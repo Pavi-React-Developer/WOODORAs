@@ -3,7 +3,6 @@ const mongoose = require('mongoose');
 const heroBannerSchema = new mongoose.Schema({
   title: {
     type: String,
-    required: true,
   },
   subtitle: {
     type: String,

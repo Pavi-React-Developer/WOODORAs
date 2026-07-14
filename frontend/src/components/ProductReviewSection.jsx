@@ -488,6 +488,19 @@ export default function ProductReviewSection({ product, user }) {
   return (
     <div className="py-12 px-4">
       <div className="max-w-7xl mx-auto space-y-10">
+        <div className="flex items-center justify-center gap-4 mb-12">
+          <svg width="40" height="20" viewBox="0 0 40 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#D4C3A3] shrink-0">
+            <path d="M2 10C10 10 18 5 28 10C32 12 36 12 38 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8"/>
+            <path d="M24 8C21 2 15 2 15 10C21 10 24 8 24 8Z" fill="currentColor" opacity="0.5"/>
+          </svg>
+          <h2 className="text-3xl font-serif text-[#4A5441] tracking-wide text-center">Customer Reviews</h2>
+          <svg width="40" height="20" viewBox="0 0 40 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#D4C3A3] transform scale-x-[-1] shrink-0">
+            <path d="M2 10C10 10 18 5 28 10C32 12 36 12 38 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8"/>
+            <path d="M24 8C21 2 15 2 15 10C21 10 24 8 24 8Z" fill="currentColor" opacity="0.5"/>
+          </svg>
+        </div>
         <div className="grid items-stretch gap-8 xl:grid-cols-[420px_minmax(0,1fr)]">
 
         {/* ── RATING SUMMARY ── */}
@@ -521,10 +534,7 @@ export default function ProductReviewSection({ product, user }) {
 
         {/* ── CUSTOMER REVIEWS ── */}
         <div className="flex h-full flex-col">
-          <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-            <h2 className="text-xl font-bold text-[#141225] flex items-center gap-2">
-              <MessageSquare size={18} className="text-[#9A6031]" /> Customer Reviews
-            </h2>
+          <div className="flex items-center justify-end mb-4 flex-wrap gap-3">
             <div className="flex items-center gap-2">
               {hasReviewSlider && (
                 <div className="flex items-center gap-2">

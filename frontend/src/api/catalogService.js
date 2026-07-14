@@ -260,4 +260,27 @@ export const catalogService = {
       throw error;
     }
   },
+
+  // Get shop categories (main categories for homepage display)
+  getShopCategories: async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/shop-categories`, {
+        method: 'GET',
+        cache: 'no-store',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to fetch shop categories');
+      }
+
+      return data.data ? { data: data.data } : { data: data };
+    } catch (error) {
+      console.error('Shop Categories API Error:', error);
+      throw error;
+    }
+  },
 };

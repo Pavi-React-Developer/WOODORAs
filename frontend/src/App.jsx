@@ -15,6 +15,7 @@ import OrderHistoryPage from './pages/OrderHistoryPage';
 import CashfreeCallbackPage from './pages/CashfreeCallbackPage';
 import CustomerProfilePage from './pages/CustomerProfilePage';
 import WishlistPage from './pages/WishlistPage';
+import ShopPage from './pages/ShopPage';
 import { authService } from './api/authService';
 import CartOffcanvas from './components/CartOffcanvas';
 import WishlistOffcanvas from './components/WishlistOffcanvas';
@@ -277,6 +278,29 @@ export default function App() {
               onNavigate={handleNavigate}
             >
               <Home
+                user={user}
+                onNavigate={handleNavigate}
+                onAddToCart={handleAddToCart}
+                onAddToWishlist={handleAddToWishlist}
+              />
+            </LayoutWithHeader>
+          }
+        />
+
+        {/* Shop */}
+        <Route
+          path="/shop"
+          element={
+            <LayoutWithHeader
+              user={user}
+              cartItems={cartItems}
+              wishlistItems={wishlistItems}
+              onOpenCart={() => setIsCartOpen(true)}
+              onOpenWishlist={() => setIsWishlistOpen(true)}
+              onLogout={handleLogout}
+              onNavigate={handleNavigate}
+            >
+              <ShopPage
                 user={user}
                 onNavigate={handleNavigate}
                 onAddToCart={handleAddToCart}

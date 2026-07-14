@@ -71,7 +71,7 @@ const getCategoryById = async (id) => {
  * Create new category
  */
 const createCategory = async (data, auditContext) => {
-    const { name, description, slug, availableWoodTypes, seoTitle, seoDescription, seoKeywords, banner, icon, displayOrder, isActive } = data;
+    const { name, description, slug, availableWoodTypes, seoTitle, seoDescription, seoKeywords, banner, icon, image, displayOrder, isActive } = data;
 
     const generatedSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
 
@@ -91,6 +91,7 @@ const createCategory = async (data, auditContext) => {
         seoKeywords: seoKeywords || [],
         banner,
         icon,
+        image,
         displayOrder: displayOrder || 1,
         isActive: isActive !== undefined ? isActive : true,
         createdBy: auditContext.userId,
@@ -121,7 +122,7 @@ const updateCategory = async (id, data, auditContext) => {
     const fields = [
         'name', 'description', 'slug', 'availableWoodTypes',
         'seoTitle', 'seoDescription', 'seoKeywords', 'banner',
-        'icon', 'displayOrder', 'isActive', 'isArchived'
+        'icon', 'image', 'displayOrder', 'isActive', 'isArchived'
     ];
 
     fields.forEach(field => {

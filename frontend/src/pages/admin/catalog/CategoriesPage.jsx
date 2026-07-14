@@ -41,7 +41,10 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
   const [formData, setFormData] = useState({
     name: '', slug: '', description: '', displayOrder: 1, isActive: true,
     seoTitle: '', seoDescription: '', seoKeywords: '', availableWoodTypes: '',
+    image: '', // Category image URL
   });
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -75,6 +78,7 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
   const openForm = (cat = null) => {
     setErrorMsg('');
     setSuccessMsg('');
+    setImageFile(null);
     if (cat) {
       setEditId(cat._id);
       setFormData({
@@ -83,10 +87,13 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
         seoTitle: cat.seoTitle || '', seoDescription: cat.seoDescription || '',
         seoKeywords: Array.isArray(cat.seoKeywords) ? cat.seoKeywords.join(', ') : '',
         availableWoodTypes: Array.isArray(cat.availableWoodTypes) ? cat.availableWoodTypes.join(', ') : '',
+        image: cat.image || '',
       });
+      setImagePreview(cat.image || null);
     } else {
       setEditId(null);
-      setFormData({ name: '', slug: '', description: '', displayOrder: 1, isActive: true, seoTitle: '', seoDescription: '', seoKeywords: '', availableWoodTypes: '' });
+      setFormData({ name: '', slug: '', description: '', displayOrder: 1, isActive: true, seoTitle: '', seoDescription: '', seoKeywords: '', availableWoodTypes: '', image: '' });
+      setImagePreview(null);
     }
     setIsFormOpen(true);
   };
@@ -97,8 +104,16 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
     setFormLoading(true);
     setErrorMsg('');
     try {
+      let imageUrl = formData.image;
+
+      // Upload image if a new file was selected
+      if (imageFile) {
+        imageUrl = await uploadImage(imageFile);
+      }
+
       const payload = {
         ...formData,
+        image: imageUrl,
         displayOrder: Number(formData.displayOrder),
         seoKeywords: formData.seoKeywords.split(',').map(s => s.trim()).filter(Boolean),
         availableWoodTypes: formData.availableWoodTypes.split(',').map(s => s.trim()).filter(Boolean),
@@ -111,6 +126,8 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
         setSuccessMsg('Category created!');
       }
       setIsFormOpen(false);
+      setImageFile(null);
+      setImagePreview(null);
       fetchCategories();
     } catch (err) {
       setErrorMsg(err.message || 'Failed to save category.');
@@ -175,6 +192,56 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
 
   const setField = (key) => (e) =>
     setFormData(prev => ({ ...prev, [key]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }));
+
+  // ─── Image Upload Handler ────────────────────────────────────────────────
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      setErrorMsg('Only image files are allowed (jpg, png, webp, gif)');
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setErrorMsg('Image size must be less than 10MB');
+      return;
+    }
+
+    setImageFile(file);
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => setImagePreview(e.target.result);
+    reader.readAsDataURL(file);
+    setErrorMsg('');
+  };
+
+  const uploadImage = async (file) => {
+    const formDataUpload = new FormData();
+    formDataUpload.append('images', file);
+
+    const token = localStorage.getItem('token');
+    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const uploadUrl = `${API_BASE_URL.replace(/\/api$/, '')}/api/catalog/upload`;
+
+    const response = await fetch(uploadUrl, {
+      method: 'POST',
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      body: formDataUpload,
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      console.error('Upload error:', result);
+      throw new Error(result.message || 'Failed to upload image');
+    }
+
+    console.log('Image uploaded successfully:', result.data.urls[0]);
+    return result.data.urls[0]; // Return the first URL
+  };
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
@@ -398,6 +465,47 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
                 <Field label="Description">
                   <textarea rows={3} value={formData.description} onChange={setField('description')} placeholder="Brief description of this category..." className={inputCls} />
                 </Field>
+
+                {/* Image Upload Field */}
+                <Field label="Category Image">
+                  <div className="space-y-3">
+                    {/* Image Preview */}
+                    {imagePreview && (
+                      <div className="relative w-full h-40 rounded-xl overflow-hidden bg-[#F8F4EC] border border-[#E6DFD4]">
+                        <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setImagePreview(null);
+                            setImageFile(null);
+                            setFormData(prev => ({ ...prev, image: '' }));
+                          }}
+                          className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg transition-colors"
+                          title="Remove image"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                      </div>
+                    )}
+                    {/* File Input */}
+                    <label className={`flex items-center justify-center px-4 py-6 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
+                      imagePreview ? 'border-[#E6DFD4] bg-[#FAFAFA]' : 'border-[#E6DFD4] hover:border-[#8B5E3C] hover:bg-[#F8F4EC]'
+                    }`}>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        className="hidden"
+                      />
+                      <div className="text-center">
+                        <svg className="w-8 h-8 text-[#8B5E3C] mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        <p className="text-sm font-semibold text-gray-700">{imagePreview ? 'Change Image' : 'Click to upload image'}</p>
+                        <p className="text-xs text-gray-500 mt-1">PNG, JPG, WebP, GIF (max 10MB)</p>
+                      </div>
+                    </label>
+                  </div>
+                </Field>
+
                 <div className="grid grid-cols-2 gap-4">
                   <Field label="Display Order">
                     <input type="number" min={1} value={formData.displayOrder} onChange={setField('displayOrder')} className={inputCls} />

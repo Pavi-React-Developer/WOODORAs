@@ -81,8 +81,8 @@ export default function HeroBannerAdmin() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.items || form.items.length === 0) {
-      return alert('Please add at least one media item.');
+    if (!form.items || form.items.length === 0 || !form.items.some(i => i.desktopUrl || i.mobileUrl)) {
+      return alert('Please upload at least one image or video for the media items.');
     }
     setSaving(true);
     try {
@@ -135,7 +135,7 @@ export default function HeroBannerAdmin() {
           <h4 className="font-semibold text-brand-dark mb-5">{editId ? 'Edit Banner' : 'New Hero Banner'}</h4>
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {[['Title *', 'title', true], ['Subtitle', 'subtitle', false], ['Button Text', 'buttonText', false], ['CTA URL', 'ctaURL', false]].map(([label, key, req]) => (
+              {[['Title', 'title', false], ['Subtitle', 'subtitle', false], ['Button Text', 'buttonText', false], ['CTA URL', 'ctaURL', false]].map(([label, key, req]) => (
                 <div key={key}>
                   <label className="text-xs font-semibold text-brand-medium uppercase tracking-wider block mb-1">{label}</label>
                   <input required={req} value={form[key]} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}

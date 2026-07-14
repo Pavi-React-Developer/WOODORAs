@@ -11,6 +11,8 @@ const categorySchema = {
     description: { type: 'string', required: false },
     slug: { type: 'string', required: false },
     displayOrder: { type: 'number', required: false },
+    image: { type: 'string', required: false },
+    banner: { type: 'string', required: false },
 };
 
 const subCategorySchema = {

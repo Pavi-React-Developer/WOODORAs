@@ -14,6 +14,7 @@ const uploadController = require('../controllers/uploadController');
 // ==========================================
 // CATEGORY ROUTES
 // ==========================================
+router.get('/shop-categories', categoryController.getShopCategories);
 router.post('/categories', categoryController.createCategory);
 router.post('/categories/bulk', categoryController.bulkCreateCategory);
 router.get('/categories', categoryController.getCategories);
