@@ -1,4 +1,4 @@
-const BASE = 'http://localhost:5000/api/cms';
+const BASE = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/cms`;
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');
@@ -61,6 +61,7 @@ export const cmsService = {
   uploadImages: (files) => {
     const formData = new FormData();
     files.forEach((f) => formData.append('images', f));
-    return requestForm('http://localhost:5000/api/catalog/upload', formData);
+    const uploadUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/catalog/upload`;
+    return requestForm(uploadUrl, formData);
   },
 };
