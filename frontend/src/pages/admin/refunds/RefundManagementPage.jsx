@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { adminService } from '../../../api/adminService';
 import { downloadExcelFile } from '../../../utils/exportUtils';
 
-export default function RefundManagementPage() {
+export default function RefundManagementPage({ canEdit = true, canDelete = true }) {
   const [refunds, setRefunds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeRefund, setActiveRefund] = useState(null);
@@ -369,11 +369,11 @@ export default function RefundManagementPage() {
                     <td className="px-6 py-4 text-center">
                       <button
                         onClick={() => {
-                          if (refund.status === 'Approval Pending' || refund.status === 'Pending') {
+                          if (canEdit && (refund.status === 'Approval Pending' || refund.status === 'Pending')) {
                             openProcessModal(refund);
                           }
                         }}
-                        disabled={!(refund.status === 'Approval Pending' || refund.status === 'Pending')}
+                        disabled={!canEdit || !(refund.status === 'Approval Pending' || refund.status === 'Pending')}
                         className={`inline-block px-4 py-1.5 rounded-lg text-[10px] font-bold shadow-sm transition-opacity ${refund.status === 'Approval Pending' || refund.status === 'Pending' ? 'cursor-pointer hover:opacity-80' : 'cursor-default opacity-90'} ${getActionStyle(refund.refundActionStatus)}`}
                       >
                         {refund.refundActionStatus}

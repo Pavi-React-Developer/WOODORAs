@@ -305,10 +305,12 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                     <button onClick={exportSubCategoriesExcel} className="admin-export-btn flex items-center gap-2">
                         <Download size={16} /> Export Excel
                     </button>
+                    {canCreate && (
                     <Button onClick={() => handleOpenForm()} className="shadow-lg hover:shadow-xl transition-all">
                         <Plus size={20} />
                         Add Sub-Category
                     </Button>
+                    )}
                 </div>
             </div>
 
@@ -332,11 +334,13 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                 </select>
             </Card>
 
+            {(canEdit || canDelete) && (
             <BulkActions
                 selectedIds={selectedIds}
-                onBulkDelete={handleBulkDelete}
-                onBulkStatusChange={handleBulkStatus}
+                onBulkDelete={canDelete ? handleBulkDelete : undefined}
+                onBulkStatusChange={canEdit ? handleBulkStatus : undefined}
             />
+            )}
 
             {/* Table */}
             <Card className="overflow-hidden">
@@ -388,18 +392,27 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                                         <td className="px-6 py-4 text-amber-800 font-semibold">{sub.category?.name || 'Unknown'}</td>
                                         <td className="px-6 py-4 text-gray-500 font-mono text-xs">{sub.slug}</td>
                                         <td className="px-6 py-4">
-                                            <button
-                                                onClick={() => handleToggleStatus(sub)}
-                                                className="focus:outline-none hover:opacity-80 transition-opacity"
-                                            >
-                                                {sub.isActive ? (
+                                            {canEdit ? (
+                                                <button
+                                                    onClick={() => handleToggleStatus(sub)}
+                                                    className="focus:outline-none hover:opacity-80 transition-opacity"
+                                                >
+                                                    {sub.isActive ? (
+                                                        <Badge variant="green">Active</Badge>
+                                                    ) : (
+                                                        <Badge variant="gray">Inactive</Badge>
+                                                    )}
+                                                </button>
+                                            ) : (
+                                                sub.isActive ? (
                                                     <Badge variant="green">Active</Badge>
                                                 ) : (
                                                     <Badge variant="gray">Inactive</Badge>
-                                                )}
-                                            </button>
+                                                )
+                                            )}
                                         </td>
                                         <td className="px-6 py-4 text-right flex justify-end gap-2">
+                                            {canEdit && (
                                             <button
                                                 onClick={() => handleOpenMapping(sub)}
                                                 className="p-1.5 hover:bg-amber-50 rounded-lg text-amber-700 hover:text-amber-800 transition-colors"
@@ -407,6 +420,7 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                                             >
                                                 <Settings size={16} />
                                             </button>
+                                            )}
                                             {canEdit && (
                                             <button
                                                 onClick={() => handleOpenForm(sub)}

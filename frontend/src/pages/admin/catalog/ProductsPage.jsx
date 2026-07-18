@@ -248,7 +248,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                         shippingWeight: prod.shippingWeight || 0,
                         shippingClass: prod.shippingClass || '',
                         dimensions: prod.dimensions || { length: 0, width: 0, height: 0 },
-                        lowStockAlert: prod.lowStockAlert || 5,
+                        lowStockAlert: prod.lowStockAlert !== undefined ? prod.lowStockAlert : 5,
                         isActive: prod.isActive !== undefined ? prod.isActive : true,
                         seoTitle: prod.seoTitle || '',
                         seoDescription: prod.seoDescription || '',
@@ -462,10 +462,12 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                     <button onClick={exportProductsExcel} className="admin-export-btn">
                         <Download size={16} /> Export Excel
                     </button>
+                    {canCreate && (
                     <Button onClick={() => handleOpenForm()} className="shadow-lg hover:shadow-xl transition-all">
                         <Plus size={20} />
                         Add Product
                     </Button>
+                    )}
                 </div>
             </div>
 
@@ -613,23 +615,31 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                             </td>
                                             <td className="px-6 py-4 font-semibold text-amber-900">₹{(prod.price || 0).toFixed(2)}</td>
                                             <td className="px-6 py-4">
-                                                {prod.totalStock <= prod.lowStockAlert ? (
+                                                {prod.isLowStock ? (
                                                     <Badge variant="red">{prod.totalStock} low</Badge>
                                                 ) : (
                                                     <Badge variant="green">{prod.totalStock} in stock</Badge>
                                                 )}
                                             </td>
                                             <td className="px-6 py-4">
-                                                <button
-                                                    onClick={() => handleToggleStatus(prod)}
-                                                    className="focus:outline-none hover:opacity-80 transition-opacity"
-                                                >
-                                                    {prod.isActive ? (
+                                                {canEdit ? (
+                                                    <button
+                                                        onClick={() => handleToggleStatus(prod)}
+                                                        className="focus:outline-none hover:opacity-80 transition-opacity"
+                                                    >
+                                                        {prod.isActive ? (
+                                                            <Badge variant="green">Active</Badge>
+                                                        ) : (
+                                                            <Badge variant="gray">Inactive</Badge>
+                                                        )}
+                                                    </button>
+                                                ) : (
+                                                    prod.isActive ? (
                                                         <Badge variant="green">Active</Badge>
                                                     ) : (
                                                         <Badge variant="gray">Inactive</Badge>
-                                                    )}
-                                                </button>
+                                                    )
+                                                )}
                                             </td>
                                             <td className="px-6 py-4 text-right flex justify-end gap-2 mt-2">
                                                 {canEdit && (

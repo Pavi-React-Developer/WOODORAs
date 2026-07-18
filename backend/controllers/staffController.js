@@ -154,6 +154,7 @@ const deleteStaff = async (req, res) => {
 const updatePermissions = async (req, res) => {
   try {
     const { permissions } = req.body;
+    console.log("UPDATE PERMISSIONS RECEIVED PAYLOAD:", JSON.stringify(permissions, null, 2));
     const staff = await Staff.findById(req.params.id);
     if (!staff) return res.status(404).json({ success: false, message: 'Staff not found' });
 

@@ -242,6 +242,28 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
       .catch(err => console.error("Failed to load dashboard stats", err));
   };
 
+  const handleExportCSV = () => {
+    if (!revenueAnalytics || revenueAnalytics.length === 0) {
+      alert("No data available to export.");
+      return;
+    }
+    const headers = ['Date', 'Revenue'];
+    const csvContent = [
+      headers.join(','),
+      ...revenueAnalytics.map(item => `${item.date},${item.revenue}`)
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'dashboard_revenue.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   useEffect(() => {
     loadData();
   }, []);
@@ -1024,7 +1046,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                     <option>Last 7 Days</option>
                     <option>All Time</option>
                   </select>
-                  <button className="admin-export-btn flex items-center gap-2">
+                  <button onClick={handleExportCSV} className="admin-export-btn flex items-center gap-2">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                     Export CSV
                   </button>
@@ -1416,12 +1438,14 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                   >
                     View Sub Categories
                   </button>
+                  {hasPermission('catalog', 'create') && (
                   <button 
                     onClick={() => setSubCategorySubTab('add')}
                     className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all ${subCategorySubTab === 'add' ? 'bg-brand-dark text-white shadow-md' : 'bg-white border border-[#E6DFD4] text-brand-medium hover:text-brand-dark'}`}
                   >
                     + Add Sub Category
                   </button>
+                  )}
                 </div>
               </div>
 
@@ -1455,8 +1479,12 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                                 {subCat.slug || '-'}
                               </td>
                               <td className="py-4 px-6 text-right space-x-3">
+                                {hasPermission('catalog', 'edit') && (
                                 <button className="text-brand-dark hover:text-black font-bold text-xs">Edit</button>
+                                )}
+                                {hasPermission('catalog', 'delete') && (
                                 <button className="text-red-600 hover:text-red-800 font-bold text-xs">Delete</button>
+                                )}
                               </td>
                             </tr>
                           ))
@@ -1577,12 +1605,14 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                   >
                     Product List
                   </button>
+                  {(hasPermission('products', 'create') || hasPermission('catalog', 'create')) && (
                   <button 
                     onClick={() => setProductSubTab('add')}
                     className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all ${productSubTab === 'add' ? 'bg-brand-dark text-white shadow-md' : 'bg-white border border-[#E6DFD4] text-brand-medium hover:text-brand-dark'}`}
                   >
                     + Add Product
                   </button>
+                  )}
                 </div>
               </div>
 
@@ -1594,12 +1624,14 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                       <svg className="w-12 h-12 text-brand-medium mx-auto opacity-40 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
                       <h4 className="font-serif text-lg font-bold text-brand-dark">No Products Found</h4>
                       <p className="text-xs text-brand-medium mt-1">Get started by creating your first wooden toy.</p>
+                      {(hasPermission('products', 'create') || hasPermission('catalog', 'create')) && (
                       <button 
                         onClick={() => setProductSubTab('add')}
                         className="bg-brand-dark text-white text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-xl mt-4 hover:bg-black transition-colors"
                       >
                         Create Product
                       </button>
+                      )}
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
@@ -1650,12 +1682,14 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                                 )}
                               </td>
                               <td className="py-4 px-6 text-right">
+                                {(hasPermission('products', 'delete') || hasPermission('catalog', 'delete')) && (
                                 <button 
                                   onClick={() => handleDeleteProduct(prod._id)}
                                   className="text-red-600 hover:text-red-800 font-bold text-xs"
                                 >
                                   Delete
                                 </button>
+                                )}
                               </td>
                             </tr>
                           ))}
@@ -2038,7 +2072,10 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
 
           {/* ── INVENTORY MANAGEMENT ── */}
           {(isAdmin || canView('inventory')) && currentTab === 'inventory' && (
-            <InventoryManagement />
+            <InventoryManagement 
+              canEdit={hasPermission('inventory', 'edit')}
+              canDelete={hasPermission('inventory', 'delete')}
+            />
           )}
 
           {/* ── ORDERS MANAGEMENT ── */}
@@ -2071,12 +2108,18 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
 
           {/* ── CANCELLATION MANAGEMENT ── */}
           {(isAdmin || canView('cancellation')) && currentTab === 'cancellation' && (
-            <CancellationManagementPage />
+            <CancellationManagementPage 
+              canEdit={hasPermission('cancellation', 'edit')}
+              canDelete={hasPermission('cancellation', 'delete')}
+            />
           )}
 
           {/* ── REFUND MANAGEMENT ── */}
           {(isAdmin || canView('refund')) && currentTab === 'refund' && (
-            <RefundManagementPage />
+            <RefundManagementPage 
+              canEdit={hasPermission('refund', 'edit')}
+              canDelete={hasPermission('refund', 'delete')}
+            />
           )}
 
           {/* ── CUSTOMER MANAGEMENT ── */}

@@ -78,7 +78,7 @@ const KpiCard = ({ label, value, icon: Icon, iconBg, badge, badgeColor, sub, loa
 );
 
 /* ── Detail Modal ─────────────────────────────────── */
-function ReviewDetailModal({ review, onClose, onStatusChange, onDelete }) {
+function ReviewDetailModal({ review, onClose, onStatusChange, onDelete, canEdit, canDelete }) {
   const [note, setNote] = useState("");
   if (!review) return null;
   const p = review.product || {};
@@ -168,18 +168,24 @@ function ReviewDetailModal({ review, onClose, onStatusChange, onDelete }) {
               className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-300" />
           </div>
           <div className="flex gap-3 pt-2">
+            {canEdit && (
             <button onClick={() => onStatusChange(review._id, "approved")}
               className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold text-sm transition">
               <Check size={15}/> Approve
             </button>
+            )}
+            {canEdit && (
             <button onClick={() => onStatusChange(review._id, "rejected")}
               className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold text-sm transition">
               <X size={15}/> Reject
             </button>
+            )}
+            {canDelete && (
             <button onClick={() => onDelete(review._id)}
               className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold text-sm transition flex items-center gap-2">
               <Trash2 size={15}/> Delete
             </button>
+            )}
           </div>
         </div>
       </div>
@@ -548,7 +554,8 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
       {/* Detail Modal */}
       {detailReview && (
         <ReviewDetailModal review={detailReview} onClose={() => setDetail(null)}
-          onStatusChange={handleStatusChange} onDelete={id => setConfirm({ id })} />
+          onStatusChange={handleStatusChange} onDelete={id => setConfirm({ id })} 
+          canEdit={canEdit} canDelete={canDelete} />
       )}
 
       {/* Confirm Delete Dialog */}

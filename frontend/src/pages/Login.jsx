@@ -110,7 +110,7 @@ export default function Login({ onAuthSuccess, onNavigate }) {
         {/* Left Image Section */}
         <div className="hidden md:flex md:w-1/2 relative bg-brand-light">
           <img 
-            src="/log_cabin_blocks.png" 
+            src="/hero1.jpeg" 
             alt="Children playing" 
             className="w-full h-full object-cover"
             onError={(e) => {

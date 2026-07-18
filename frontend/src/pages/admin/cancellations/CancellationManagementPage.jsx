@@ -5,7 +5,7 @@ import { downloadExcelFile } from '../../../utils/exportUtils';
 
 import { adminService } from '../../../api/adminService';
 
-export default function CancellationManagementPage() {
+export default function CancellationManagementPage({ canEdit = true, canDelete = true }) {
   const [activeTab, setActiveTab] = useState('COD');
   const [rules, setRules] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -185,6 +185,7 @@ export default function CancellationManagementPage() {
               <Download size={16} />
               Export Excel
             </button>
+            {canEdit && (
             <button 
               onClick={() => {
                 setEditingId(null);
@@ -196,6 +197,7 @@ export default function CancellationManagementPage() {
               <Plus size={16} />
               Add Rule
             </button>
+            )}
           </div>
         </div>
 
@@ -293,10 +295,10 @@ export default function CancellationManagementPage() {
                         </td>
                         <td className="px-6 py-4 text-center">
                           <button
-                            onClick={() => rule.status !== 'Locked' && handleToggleAllowed(rule)}
-                            disabled={rule.status === 'Locked'}
+                            onClick={() => handleToggleAllowed(rule)}
+                            disabled={!canEdit || rule.status === 'Locked'}
                             className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${
-                              rule.status === 'Locked' ? 'bg-gray-200 cursor-not-allowed opacity-50' :
+                              rule.status === 'Locked' || !canEdit ? 'bg-gray-200 cursor-not-allowed opacity-50' :
                               rule.isAllowed ? 'bg-emerald-500' : 'bg-gray-300'
                             }`}
                           >
@@ -319,12 +321,16 @@ export default function CancellationManagementPage() {
                         <td className="px-6 py-4 text-right">
                           {rule.status !== 'Locked' ? (
                             <div className="flex items-center justify-end gap-2">
+                              {canEdit && (
                               <button onClick={() => handleEditRule(rule)} className="p-1.5 text-[#6D625C] hover:text-[#9A6031] hover:bg-[#F2E3D1] rounded transition-colors border border-[#E9DED3]">
                                 <Pencil size={14} />
                               </button>
+                              )}
+                              {canDelete && (
                               <button onClick={() => handleDeleteRule(rule._id)} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors border border-[#E9DED3]">
                                 <Trash2 size={14} />
                               </button>
+                              )}
                             </div>
                           ) : (
                             <span className="text-[#8A817C] text-xl font-bold pr-4">-</span>

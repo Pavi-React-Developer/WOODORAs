@@ -276,7 +276,7 @@ export const VariantManagement = ({
                                                                 <div className="flex flex-col gap-1"><span className="text-xs text-gray-500">Length (cm)</span><input type="number" value={variant.length || ''} onChange={e => handleFieldChange(idx, 'length', e.target.value)} className="p-2 border rounded text-sm"/></div>
                                                                 <div className="flex flex-col gap-1"><span className="text-xs text-gray-500">Width (cm)</span><input type="number" value={variant.width || ''} onChange={e => handleFieldChange(idx, 'width', e.target.value)} className="p-2 border rounded text-sm"/></div>
                                                                 <div className="flex flex-col gap-1"><span className="text-xs text-gray-500">Height (cm)</span><input type="number" value={variant.height || ''} onChange={e => handleFieldChange(idx, 'height', e.target.value)} className="p-2 border rounded text-sm"/></div>
-                                                                <div className="flex flex-col gap-1"><span className="text-xs text-gray-500">Low Stock Alert</span><input type="number" value={variant.lowStockAlert || ''} onChange={e => handleFieldChange(idx, 'lowStockAlert', e.target.value)} className="p-2 border rounded text-sm"/></div>
+                                                                <div className="flex flex-col gap-1"><span className="text-xs text-gray-500">Low Stock Alert</span><input type="number" value={variant.lowStockAlert !== undefined ? variant.lowStockAlert : ''} onChange={e => handleFieldChange(idx, 'lowStockAlert', e.target.value)} className="p-2 border rounded text-sm"/></div>
                                                             </div>
                                                         </div>
                                                         <div className="space-y-4">
@@ -339,7 +339,7 @@ export const VariantManagement = ({
                                         </div>
                                         <div className="flex flex-col gap-1">
                                             <label className="text-xs text-gray-500">Low Stock Alert</label>
-                                            <input type="number" value={variant.lowStockAlert || ''} onChange={e => handleFieldChange(idx, 'lowStockAlert', e.target.value)} className="p-2 border rounded text-sm focus:ring-1 focus:ring-amber-500 focus:outline-none"/>
+                                            <input type="number" value={variant.lowStockAlert !== undefined ? variant.lowStockAlert : ''} onChange={e => handleFieldChange(idx, 'lowStockAlert', e.target.value)} className="p-2 border rounded text-sm focus:ring-1 focus:ring-amber-500 focus:outline-none"/>
                                         </div>
                                         <div className="flex flex-col gap-1">
                                             <label className="text-xs text-gray-500">SKU</label>

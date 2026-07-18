@@ -123,6 +123,13 @@ const buildProductPricing = (product = {}, variants = [], images = [], inventory
         ? variants.reduce((sum, v) => sum + Math.max(0, (v.inventory || 0) - (v.reserveStock || 0)), 0)
         : (inventory ? (inventory.stockQuantity || 0) : 0);
 
+    let isLowStock = false;
+    if (Array.isArray(variants) && variants.length > 0) {
+        isLowStock = variants.some(v => Math.max(0, (v.inventory || 0) - (v.reserveStock || 0)) <= (v.lowStockAlert !== undefined ? v.lowStockAlert : 5));
+    } else {
+        isLowStock = totalStock <= (product.lowStockAlert !== undefined ? product.lowStockAlert : 5);
+    }
+
     return {
         effectivePrice,
         basePrice,
@@ -130,6 +137,7 @@ const buildProductPricing = (product = {}, variants = [], images = [], inventory
         compareAtPrice,
         images: effectiveImages,
         totalStock,
+        isLowStock,
     };
 };
 
@@ -507,6 +515,7 @@ const createProduct = async (data, auditContext) => {
                 length: v.length === '' || v.length === undefined ? undefined : toFiniteNumber(v.length),
                 width: v.width === '' || v.width === undefined ? undefined : toFiniteNumber(v.width),
                 height: v.height === '' || v.height === undefined ? undefined : toFiniteNumber(v.height),
+                lowStockAlert: v.lowStockAlert === '' || v.lowStockAlert === undefined ? 5 : toFiniteNumber(v.lowStockAlert),
                 images: v.images ? v.images.map(img => img.url || img) : [],
                 isActive: v.isActive !== undefined ? v.isActive : true,
                 isPrimary: v.isPrimary || false,
@@ -644,6 +653,7 @@ const updateProduct = async (id, data, auditContext) => {
                 length: v.length === '' || v.length === undefined ? undefined : toFiniteNumber(v.length),
                 width: v.width === '' || v.width === undefined ? undefined : toFiniteNumber(v.width),
                 height: v.height === '' || v.height === undefined ? undefined : toFiniteNumber(v.height),
+                lowStockAlert: v.lowStockAlert === '' || v.lowStockAlert === undefined ? 5 : toFiniteNumber(v.lowStockAlert),
                 images: v.images ? v.images.map(img => img.url || img) : [],
                 isActive: v.isActive !== undefined ? v.isActive : true,
                 isPrimary: v.isPrimary || false,

@@ -262,12 +262,14 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
           <button onClick={exportCategoriesExcel} className="admin-export-btn">
             <Download size={16} /> Export Excel
           </button>
+          {canCreate && (
           <button
             onClick={() => openForm()}
             className="admin-btn"
           >
             <Plus size={16} /> Add Category
           </button>
+          )}
         </div>
       </div>
 
@@ -302,9 +304,15 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
         <div className="bg-[#F8F4EC] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3 flex-wrap">
           <span className="text-sm font-semibold text-[#8B5E3C]">{selectedIds.length} selected</span>
           <div className="flex gap-2 ml-auto">
-            <button onClick={() => handleBulkStatus(true)} className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">Set Active</button>
-            <button onClick={() => handleBulkStatus(false)} className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">Set Inactive</button>
+            {canEdit && (
+              <>
+                <button onClick={() => handleBulkStatus(true)} className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">Set Active</button>
+                <button onClick={() => handleBulkStatus(false)} className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">Set Inactive</button>
+              </>
+            )}
+            {canDelete && (
             <button onClick={handleBulkDelete} className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">Delete Selected</button>
+            )}
             <button onClick={() => setSelectedIds([])} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-white transition-colors text-gray-500">Clear</button>
           </div>
         </div>
@@ -342,7 +350,9 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
                   <div className="flex flex-col items-center gap-3">
                     <div className="w-12 h-12 bg-[#F8F4EC] rounded-full flex items-center justify-center text-2xl">🗂️</div>
                     <p className="font-medium">No categories found.</p>
+                    {canCreate && (
                     <button onClick={() => openForm()} className="text-[#8B5E3C] text-sm font-semibold hover:underline">+ Add your first category</button>
+                    )}
                   </div>
                 </td></tr>
               ) : (
@@ -374,9 +384,13 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
                       </span>
                     </td>
                     <td className="px-4 py-3.5">
-                      <button onClick={() => handleToggleStatus(cat)} title="Click to toggle">
+                      {canEdit ? (
+                        <button onClick={() => handleToggleStatus(cat)} title="Click to toggle">
+                          <StatusBadge active={cat.isActive} />
+                        </button>
+                      ) : (
                         <StatusBadge active={cat.isActive} />
-                      </button>
+                      )}
                     </td>
                     <td className="px-4 py-3.5 text-gray-500 text-xs whitespace-nowrap">
                       {new Date(cat.createdAt).toLocaleDateString('en-IN')}

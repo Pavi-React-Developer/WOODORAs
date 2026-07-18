@@ -290,10 +290,12 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                     <button onClick={exportAttributesExcel} className="admin-export-btn">
                         <Download size={16} /> Export Excel
                     </button>
+                    {canCreate && (
                     <Button onClick={() => handleOpenForm()} className="shadow-lg hover:shadow-xl transition-all">
                         <Plus size={20} />
                         Add Attribute
                     </Button>
+                    )}
                 </div>
             </div>
 

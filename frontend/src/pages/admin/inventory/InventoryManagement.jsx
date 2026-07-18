@@ -25,7 +25,7 @@ function ProductThumbnail({ src, alt, className = 'product-thumb' }) {
   );
 }
 
-export default function InventoryManagement() {
+export default function InventoryManagement({ canEdit = true, canDelete = true }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [products, setProducts] = useState([]);
   const [variants, setVariants] = useState([]);
@@ -316,7 +316,7 @@ export default function InventoryManagement() {
     }
 
     totalStock += pStock;
-    if (pStock <= 5 && pStock > 0) lowStockCount++;
+    if (p.isLowStock && pStock > 0) lowStockCount++;
     if (pStock === 0) outOfStockCount++;
   });
 
@@ -478,12 +478,16 @@ export default function InventoryManagement() {
                       </div>
 
                       <div className="variant-card-actions">
+                        {canEdit && (
                         <button className="variant-action-btn" title="Add Stock" onClick={() => openAddStockModal(v, 'variant')}>
                           <Plus size={14}/> Add
                         </button>
+                        )}
+                        {canEdit && (
                         <button className="variant-action-btn secondary" title="Edit Stock" onClick={() => openEditModal(v, 'variant')}>
                           <Edit2 size={14}/> Edit
                         </button>
+                        )}
                       </div>
                     </div>
                   );
@@ -529,7 +533,7 @@ export default function InventoryManagement() {
                         const currentStock = productVariants.length > 0
                           ? productVariants.reduce((acc, v) => acc + Math.max(0, (v.inventory || 0) - (v.reserveStock || 0)), 0)
                           : (item.inventory?.stockQuantity || 0);
-                        const status = getStatus(currentStock, 5);
+                        const status = currentStock === 0 ? { label: 'Out of Stock', class: 'status-out-of-stock' } : (item.isLowStock ? { label: 'Low Stock', class: 'status-low-stock' } : { label: 'In Stock', class: 'status-in-stock' });
 
                         return (
                           <React.Fragment key={item._id}>
@@ -550,11 +554,15 @@ export default function InventoryManagement() {
                               </td>
                               <td>
                                 <div className="action-buttons">
+                                  {canEdit && (
                                   <button className="p-1.5 text-indigo-600 hover:text-indigo-700 transition-colors" title="Add Stock" onClick={() => openAddStockModal(item, 'product')}>
                                     <Plus size={16}/>
                                   </button>
+                                  )}
                                   <button className="p-1.5 text-teal-600 hover:text-teal-700 transition-colors" title="View" onClick={() => openViewModal(item)}><Eye size={16}/></button>
+                                  {canEdit && (
                                   <button className="p-1.5 text-blue-600 hover:text-blue-700 transition-colors" title="Edit Stock" onClick={() => openEditModal(item, 'product')}><Edit2 size={16}/></button>
+                                  )}
                                 </div>
                               </td>
                             </tr>

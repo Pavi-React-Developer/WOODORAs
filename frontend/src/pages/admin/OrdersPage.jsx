@@ -341,7 +341,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                   <td className="px-6 py-4">
                     <div className="inline-flex items-center rounded-full border border-[#E6DFD4] bg-white shadow-sm">
                       <select
-                        className={`appearance-none bg-transparent px-4 py-2 text-sm font-semibold text-gray-900 rounded-full focus:outline-none ${normalizeOrderStatus(order.status) === 'Delivered' ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                        className={`appearance-none bg-transparent px-4 py-2 text-sm font-semibold text-gray-900 rounded-full focus:outline-none ${!canEdit || normalizeOrderStatus(order.status) === 'Delivered' ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                         value={normalizeOrderStatus(order.status)}
                         onChange={(e) => {
                           const val = e.target.value;
@@ -349,7 +349,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                             handleStatusSelectChange(order, val);
                           }
                         }}
-                        disabled={normalizeOrderStatus(order.status) === 'Delivered' || normalizeOrderStatus(order.status) === 'Cancelled'}
+                        disabled={!canEdit || normalizeOrderStatus(order.status) === 'Delivered' || normalizeOrderStatus(order.status) === 'Cancelled'}
                       >
                         {getOrderStatusSelectOptions(order.status).map((statusOption) => (
                           <option key={statusOption} value={statusOption}>

@@ -247,13 +247,13 @@ exports.toggleCouponVisibility = async (req, res) => {
 
 exports.deleteCoupon = async (req, res) => {
   try {
-    const coupon = await Coupon.findOne({ _id: req.params.id, deleted: false });
+    console.log('deleteCoupon called for ID:', req.params.id);
+    const coupon = await Coupon.findByIdAndDelete(req.params.id);
+    console.log('Deleted coupon:', coupon);
     if (!coupon) return res.status(404).json({ message: 'Coupon not found' });
-    coupon.deleted = true;
-    coupon.deletedAt = new Date();
-    await coupon.save();
     res.json({ message: 'Coupon deleted successfully' });
   } catch (error) {
+    console.error('Error in deleteCoupon:', error);
     res.status(500).json({ message: error.message });
   }
 };

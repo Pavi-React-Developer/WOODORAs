@@ -50,6 +50,11 @@ const productVariantSchema = new mongoose.Schema({
         default: 0,
         min: 0,
     },
+    lowStockAlert: {
+        type: Number,
+        default: 5,
+        min: 0,
+    },
     // Physical dimensions
     weight: {
         type: Number,

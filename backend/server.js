@@ -63,19 +63,21 @@ mongoose.connection.once('open', async () => {
     await Review.syncIndexes();
     console.log('Connected to DB. Valid order statuses:', Order.VALID_STATUSES.join(', '));
     try {
-        const count = await Module.countDocuments();
-        if (count === 0) {
-            const initial = (StaffModel.PERMISSION_MODULES || []).map((k, i) => ({
+        const existingModules = await Module.find({});
+        const existingKeys = existingModules.map(m => m.key);
+        const missingKeys = (StaffModel.PERMISSION_MODULES || []).filter(k => !existingKeys.includes(k));
+
+        if (missingKeys.length > 0) {
+            const maxOrder = existingModules.length > 0 ? Math.max(...existingModules.map(m => m.displayOrder || 0)) : -1;
+            const initial = missingKeys.map((k, i) => ({
                 key: k,
                 label: k.split('_').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' '),
                 icon: '',
                 isActive: true,
-                displayOrder: i,
+                displayOrder: maxOrder + 1 + i,
             }));
-            if (initial.length > 0) {
-                await Module.insertMany(initial);
-                console.log('Seeded Module collection with default admin modules');
-            }
+            await Module.insertMany(initial);
+            console.log(`Seeded missing modules: ${missingKeys.join(', ')}`);
         }
     } catch (err) {
         console.warn('Could not seed Module collection:', err.message);
@@ -88,7 +90,14 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    origin: function (origin, callback) {
+        const allowedOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',').map(s => s.trim()) : ['http://localhost:5173'];
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(null, false);
+        }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']

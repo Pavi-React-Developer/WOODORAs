@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const PERMISSION_MODULES = [
   'dashboard', 'staff_management', 'catalog', 'users', 'products', 'categories',
   'brands', 'orders', 'inventory', 'coupons', 'reviews', 'customers',
-  'reports', 'settings', 'fees'
+  'reports', 'settings', 'fees', 'cancellation', 'refund'
 ];
 
 const permissionSchema = new mongoose.Schema({
