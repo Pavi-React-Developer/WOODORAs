@@ -6,6 +6,7 @@ const CmsCategoryGrid = require('../models/CmsCategoryGrid');
 const CmsFooter = require('../models/CmsFooter');
 const ProductVariant = require('../models/ProductVariant');
 const productService = require('../services/productService');
+const { deleteFromCloudinary } = require('../services/uploadService');
 
 // Utility to wrap async functions
 const asyncHandler = (fn) => (req, res, next) =>
@@ -38,18 +39,53 @@ exports.getHeroBanners = asyncHandler(async (req, res) => {
   res.json({ success: true, data: banners });
 });
 
+const processMediaFields = (body) => {
+  const cloned = { ...body };
+  const unsetFields = {};
+  const fields = ['bannerImage', 'mobileBanner', 'desktopVideo', 'mobileVideo', 'ctaImage', 'logo'];
+  fields.forEach(field => {
+    if (cloned[field] === "" || cloned[field] === null) {
+      delete cloned[field];
+      unsetFields[field] = 1;
+    }
+  });
+
+  if (Array.isArray(cloned.items)) {
+    cloned.items = cloned.items.map(item => {
+      if (item.desktopUrl === "" || item.desktopUrl === null) delete item.desktopUrl;
+      if (item.mobileUrl === "" || item.mobileUrl === null) delete item.mobileUrl;
+      return item;
+    });
+  }
+  
+  // If there are fields to unset, wrap the update in $set and $unset
+  if (Object.keys(unsetFields).length > 0) {
+    return { $set: cloned, $unset: unsetFields };
+  }
+  return cloned;
+};
+
 exports.createHeroBanner = asyncHandler(async (req, res) => {
-  const banner = await CmsHeroBanner.create(req.body);
+  const banner = await CmsHeroBanner.create(processMediaFields(req.body).$set || processMediaFields(req.body));
   res.status(201).json({ success: true, data: banner });
 });
 
 exports.updateHeroBanner = asyncHandler(async (req, res) => {
-  const banner = await CmsHeroBanner.findByIdAndUpdate(req.params.id, req.body, { returnDocument: 'after', runValidators: true });
+  const updateData = processMediaFields(req.body);
+  const banner = await CmsHeroBanner.findByIdAndUpdate(req.params.id, updateData, { returnDocument: 'after', runValidators: true });
   res.json({ success: true, data: banner });
 });
 
 exports.deleteHeroBanner = asyncHandler(async (req, res) => {
-  await CmsHeroBanner.findByIdAndDelete(req.params.id);
+  const banner = await CmsHeroBanner.findById(req.params.id);
+  if (banner) {
+    if (banner.bannerImage?.public_id) await deleteFromCloudinary(banner.bannerImage.public_id, 'image').catch(console.error);
+    if (banner.mobileBanner?.public_id) await deleteFromCloudinary(banner.mobileBanner.public_id, 'image').catch(console.error);
+    if (banner.desktopVideo?.public_id) await deleteFromCloudinary(banner.desktopVideo.public_id, 'video').catch(console.error);
+    if (banner.mobileVideo?.public_id) await deleteFromCloudinary(banner.mobileVideo.public_id, 'video').catch(console.error);
+    if (banner.ctaImage?.public_id) await deleteFromCloudinary(banner.ctaImage.public_id, 'image').catch(console.error);
+    await banner.deleteOne();
+  }
   res.json({ success: true, message: 'Banner deleted' });
 });
 
@@ -70,7 +106,16 @@ exports.updateThirdBanner = asyncHandler(async (req, res) => {
 });
 
 exports.deleteThirdBanner = asyncHandler(async (req, res) => {
-  await CmsThirdBanner.findByIdAndDelete(req.params.id);
+  const banner = await CmsThirdBanner.findById(req.params.id);
+  if (banner) {
+    for (let img of (banner.leftImages || [])) {
+      if (img.public_id) await deleteFromCloudinary(img.public_id, img.resource_type || 'image').catch(console.error);
+    }
+    for (let img of (banner.rightImages || [])) {
+      if (img.public_id) await deleteFromCloudinary(img.public_id, img.resource_type || 'image').catch(console.error);
+    }
+    await banner.deleteOne();
+  }
   res.json({ success: true, message: 'Banner deleted' });
 });
 
@@ -186,7 +231,13 @@ exports.updateCategoryGrid = asyncHandler(async (req, res) => {
 });
 
 exports.deleteCategoryGrid = asyncHandler(async (req, res) => {
-  await CmsCategoryGrid.findByIdAndDelete(req.params.id);
+  const grid = await CmsCategoryGrid.findById(req.params.id);
+  if (grid) {
+    for (let img of (grid.images || [])) {
+      if (img.public_id) await deleteFromCloudinary(img.public_id, img.resource_type || 'image').catch(console.error);
+    }
+    await grid.deleteOne();
+  }
   res.json({ success: true, message: 'Category grid deleted' });
 });
 
@@ -201,10 +252,12 @@ exports.getFooter = asyncHandler(async (req, res) => {
 
 exports.updateFooter = asyncHandler(async (req, res) => {
   let footer = await CmsFooter.findOne();
+  const updateData = processMediaFields(req.body);
+  
   if (!footer) {
-    footer = await CmsFooter.create(req.body);
+    footer = await CmsFooter.create(updateData.$set || updateData);
   } else {
-    footer = await CmsFooter.findByIdAndUpdate(footer._id, req.body, { returnDocument: 'after', runValidators: true });
+    footer = await CmsFooter.findByIdAndUpdate(footer._id, updateData, { returnDocument: 'after', runValidators: true });
   }
   res.json({ success: true, data: footer });
 });

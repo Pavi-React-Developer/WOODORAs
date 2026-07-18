@@ -36,10 +36,7 @@ const userSchema = new mongoose.Schema({
         enum: ['', 'Female', 'Male', 'Other', 'Prefer not to say'],
         default: '',
     },
-    profileImage: {
-        type: String,
-        default: '',
-    },
+    profileImage: require('./CloudinaryAsset'),
     addresses: [{
         label: { type: String, default: 'Home', trim: true },
         fullName: { type: String, trim: true },

@@ -73,10 +73,7 @@ const productVariantSchema = new mongoose.Schema({
         min: 0,
     },
     // Images for this variant
-    images: [{
-        type: String,
-        trim: true,
-    }],
+    images: [require('./CloudinaryAsset')],
     // Mark as primary variant for the product
     isPrimary: {
         type: Boolean,

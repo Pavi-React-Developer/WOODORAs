@@ -562,25 +562,14 @@ const cancelOrder = async (req, res) => {
 
     await newRefund.save();
 
-    // Release stock based on whether it was delivered or just reserved
+    // Release reserve stock only — actual inventory restoration happens when admin approves the refund
     for (const item of order.orderItems) {
       if (item.variant) {
-        if (order.isDelivered) {
-          // If for some reason it was delivered and cancelled, add back to inventory
-          await updateVariantStock(item.variant, item.qty, 'refund');
-        } else {
-          // It was just placed/packed, release reserved stock
-          await updateVariantStock(item.variant, item.qty, 'cancel');
-        }
-      } else if (item.product) {
         try {
-          const productToUpdate = await Product.findById(item.product);
-          if (productToUpdate && productToUpdate.inventory) {
-            productToUpdate.inventory.stockQuantity = (productToUpdate.inventory.stockQuantity || 0) + item.qty;
-            await productToUpdate.save();
-          }
+          // Only release the reserve (reduce reserveStock). Inventory itself is restored on admin approval.
+          await updateVariantStock(item.variant, item.qty, 'cancel');
         } catch (err) {
-          console.error('Failed to update product stock on cancellation', err);
+          console.error('Failed to release reserved stock on cancellation', err);
         }
       }
     }

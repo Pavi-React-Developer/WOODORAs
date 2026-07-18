@@ -1,6 +1,8 @@
 const Category = require('../models/Category');
 const SubCategory = require('../models/SubCategory');
 const Attribute = require('../models/Attribute');
+
+const { deleteFromCloudinary } = require('../services/uploadService');
 const AttributeValue = require('../models/AttributeValue');
 
 // ==========================================
@@ -291,6 +293,16 @@ const deleteCategory = async (req, res) => {
                 success: false,
                 message: `Cannot delete category that is parent of ${childCount} other categories.`,
             });
+        }
+
+        if (category.image?.public_id) {
+            await deleteFromCloudinary(category.image.public_id, category.image.resource_type || 'image').catch(console.error);
+        }
+        if (category.banner?.public_id) {
+            await deleteFromCloudinary(category.banner.public_id, category.banner.resource_type || 'image').catch(console.error);
+        }
+        if (category.icon?.public_id) {
+            await deleteFromCloudinary(category.icon.public_id, category.icon.resource_type || 'image').catch(console.error);
         }
 
         await Category.findByIdAndDelete(req.params.id);

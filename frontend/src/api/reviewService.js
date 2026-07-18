@@ -38,17 +38,19 @@ export const reviewService = {
     return res.data;
   },
 
-  createReview: async (productId, formData) => {
+  createReview: async (productId, formData, onUploadProgress) => {
     const res = await axios.post(`${API_URL}/${productId}`, formData, {
       headers: { ...getAuthHeaders(), 'Content-Type': 'multipart/form-data' },
+      onUploadProgress,
     });
     return res.data;
   },
 
   // Update current user's existing review
-  updateReview: async (productId, formData) => {
+  updateReview: async (productId, formData, onUploadProgress) => {
     const res = await axios.put(`${API_URL}/${productId}/my-review`, formData, {
       headers: { ...getAuthHeaders(), 'Content-Type': 'multipart/form-data' },
+      onUploadProgress,
     });
     return res.data;
   },

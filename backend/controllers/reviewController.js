@@ -2,28 +2,9 @@ const Review = require('../models/Review');
 const Product = require('../models/Product');
 const ProductImage = require('../models/catalog/ProductImage');
 const Order   = require('../models/Order');
-const multer  = require('multer');
-const path    = require('path');
-const fs      = require('fs');
-
-/* ── multer for review media ──────────────────────── */
-const uploadsDir = path.join(__dirname, '../uploads');
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
-
-const storage = multer.diskStorage({
-  destination: (_, __, cb) => cb(null, uploadsDir),
-  filename:    (_, file, cb) => {
-    const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, `review-${unique}${path.extname(file.originalname).toLowerCase()}`);
-  },
-});
-
-const fileFilter = (_, file, cb) => {
-  const allowed = ['image/jpeg','image/jpg','image/png','image/webp','video/mp4','video/quicktime'];
-  cb(null, allowed.includes(file.mimetype));
-};
-
-const upload = multer({ storage, fileFilter, limits: { fileSize: 50 * 1024 * 1024 } });
+const { uploadToCloudinary, deleteFromCloudinary } = require('../services/uploadService');
+const { getCloudinaryFolder, getImageOptimizationParams, getVideoOptimizationParams } = require('../utils/cloudinaryHelper');
+const upload = require('../middlewares/upload');
 
 /* ── helpers ──────────────────────────────────────── */
 const findReviewForOrderItem = async ({ userId, productId, orderId, orderItemId }) => {
@@ -123,7 +104,7 @@ const getGallery = async (req, res) => {
       { product: req.params.productId, status: 'approved', images: { $exists: true, $not: { $size: 0 } } },
       { images: 1, user: 1 }
     ).populate('user', 'name').lean();
-    const gallery = reviews.flatMap(r => r.images.map(img => ({ url: img, userName: r.user?.name })));
+    const gallery = reviews.flatMap(r => r.images.map(img => ({ url: img.url, userName: r.user?.name })));
     res.json(gallery);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -150,9 +131,30 @@ const createReview = [
       });
       if (existing) return res.status(400).json({ message: 'You have already reviewed this item.' });
 
-      const baseUrl   = `${req.protocol}://${req.get('host')}`;
-      const imageUrls = (req.files?.images || []).map(f => `${baseUrl}/uploads/${f.filename}`);
-      const videoUrls = (req.files?.videos || []).map(f => `${baseUrl}/uploads/${f.filename}`);
+      const cloudinaryFolder = getCloudinaryFolder('review');
+      
+      const imageUploadPromises = (req.files?.images || []).map(file => {
+        return uploadToCloudinary(file.buffer, cloudinaryFolder, 'image', getImageOptimizationParams());
+      });
+      const videoUploadPromises = (req.files?.videos || []).map(file => {
+        return uploadToCloudinary(file.buffer, cloudinaryFolder, 'video', getVideoOptimizationParams());
+      });
+
+      const [imageResults, videoResults] = await Promise.all([
+        Promise.all(imageUploadPromises),
+        Promise.all(videoUploadPromises)
+      ]);
+
+      const mapToSchema = (result) => ({
+        url: result.secure_url,
+        public_id: result.public_id,
+        width: result.width || 0,
+        height: result.height || 0,
+        format: result.format,
+        resource_type: result.resource_type,
+        bytes: result.bytes,
+        created_at: result.created_at
+      });
 
       const purchasedItem = orderId && orderItemId
         ? await Order.findOne({
@@ -176,8 +178,8 @@ const createReview = [
         rating: Number(rating),
         title: title || '',
         description: description || '',
-        images: imageUrls,
-        videos: videoUrls,
+        images: imageResults.map(mapToSchema),
+        videos: videoResults.map(mapToSchema),
         isVerifiedPurchase: !!purchasedItem,
       });
 
@@ -253,9 +255,39 @@ const updateMyReview = [
       });
       if (!existing) return res.status(404).json({ message: 'No review found to update.' });
 
-      const baseUrl   = `${req.protocol}://${req.get('host')}`;
-      const newImages = (req.files?.images || []).map(f => `${baseUrl}/uploads/${f.filename}`);
-      const newVideos = (req.files?.videos || []).map(f => `${baseUrl}/uploads/${f.filename}`);
+      const cloudinaryFolder = getCloudinaryFolder('review');
+      
+      let newImages = [];
+      if (req.files?.images?.length > 0) {
+        const imageUploadPromises = req.files.images.map(file => uploadToCloudinary(file.buffer, cloudinaryFolder, 'image', getImageOptimizationParams()));
+        const imageResults = await Promise.all(imageUploadPromises);
+        newImages = imageResults.map(result => ({
+          url: result.secure_url,
+          public_id: result.public_id,
+          width: result.width || 0,
+          height: result.height || 0,
+          format: result.format,
+          resource_type: result.resource_type,
+          bytes: result.bytes,
+          created_at: result.created_at
+        }));
+      }
+
+      let newVideos = [];
+      if (req.files?.videos?.length > 0) {
+        const videoUploadPromises = req.files.videos.map(file => uploadToCloudinary(file.buffer, cloudinaryFolder, 'video', getVideoOptimizationParams()));
+        const videoResults = await Promise.all(videoUploadPromises);
+        newVideos = videoResults.map(result => ({
+          url: result.secure_url,
+          public_id: result.public_id,
+          width: result.width || 0,
+          height: result.height || 0,
+          format: result.format,
+          resource_type: result.resource_type,
+          bytes: result.bytes,
+          created_at: result.created_at
+        }));
+      }
 
       existing.rating      = Number(rating);
       existing.title       = title || '';
@@ -263,8 +295,20 @@ const updateMyReview = [
       existing.orderId     = orderId || existing.orderId;
       existing.orderItemId = orderItemId || existing.orderItemId;
       existing.status      = 'pending'; // reset to pending for re-moderation
-      if (newImages.length > 0) existing.images = newImages;
-      if (newVideos.length > 0) existing.videos = newVideos;
+      
+      // Ideally delete old images from Cloudinary here before replacing
+      if (newImages.length > 0) {
+        for (let oldImg of existing.images) {
+           if (oldImg.public_id) deleteFromCloudinary(oldImg.public_id, 'image').catch(console.error);
+        }
+        existing.images = newImages;
+      }
+      if (newVideos.length > 0) {
+        for (let oldVid of existing.videos) {
+           if (oldVid.public_id) deleteFromCloudinary(oldVid.public_id, 'video').catch(console.error);
+        }
+        existing.videos = newVideos;
+      }
 
       await existing.save();
       const populated = await existing.populate('user', 'name profileImage');
@@ -328,6 +372,15 @@ const deleteReview = async (req, res) => {
     const isOwner = String(review.user) === String(req.user._id);
     const isAdmin = req.user.role === 'admin';
     if (!isOwner && !isAdmin) return res.status(403).json({ message: 'Not authorized' });
+    
+    // Delete Cloudinary media
+    for (let img of (review.images || [])) {
+       if (img.public_id) deleteFromCloudinary(img.public_id, 'image').catch(console.error);
+    }
+    for (let vid of (review.videos || [])) {
+       if (vid.public_id) deleteFromCloudinary(vid.public_id, 'video').catch(console.error);
+    }
+
     await review.deleteOne();
     res.json({ message: 'Review deleted' });
   } catch (err) {

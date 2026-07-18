@@ -10,26 +10,16 @@ const heroBannerSchema = new mongoose.Schema({
   description: {
     type: String,
   },
-  bannerImage: {
-    type: String, // URL of the desktop image
-  },
-  mobileBanner: {
-    type: String, // URL of the mobile image
-  },
-  desktopVideo: {
-    type: String, // URL of the desktop video
-  },
-  mobileVideo: {
-    type: String, // URL of the mobile video
-  },
+  bannerImage: require('./CloudinaryAsset'),
+  mobileBanner: require('./CloudinaryAsset'),
+  desktopVideo: require('./CloudinaryAsset'),
+  mobileVideo: require('./CloudinaryAsset'),
   items: [{
     mediaType: { type: String, enum: ['image', 'video'], default: 'image' },
-    desktopUrl: { type: String },
-    mobileUrl: { type: String }
+    desktopUrl: require('./CloudinaryAsset'),
+    mobileUrl: require('./CloudinaryAsset')
   }],
-  ctaImage: {
-    type: String,
-  },
+  ctaImage: require('./CloudinaryAsset'),
   ctaURL: {
     type: String,
   },

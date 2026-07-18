@@ -4,12 +4,8 @@ const thirdBannerSchema = new mongoose.Schema({
   title: {
     type: String,
   },
-  leftImages: [{
-    type: String, // URLs
-  }],
-  rightImages: [{
-    type: String, // URLs
-  }],
+  leftImages: [require('./CloudinaryAsset')],
+  rightImages: [require('./CloudinaryAsset')],
   leftCtaUrl: {
     type: String,
     default: 'all-products'

@@ -7,6 +7,7 @@ const Inventory = require('../models/Inventory');
 const ProductImage = require('../models/catalog/ProductImage');
 const ProductVariant = require('../models/ProductVariant');
 const ProductVariantOption = require('../models/ProductVariantOption');
+const { deleteFromCloudinary } = require('../services/uploadService');
 
 // ==========================================
 // PRODUCT CONTROLLERS (ENHANCED)
@@ -295,8 +296,26 @@ const deleteProduct = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Product not found' });
         }
 
-        const variants = await ProductVariant.find({ product: product._id }).select('_id');
+        const variants = await ProductVariant.find({ product: product._id });
         const variantIds = variants.map(v => v._id);
+        
+        // Delete variant images from Cloudinary
+        for (const variant of variants) {
+            for (const img of (variant.images || [])) {
+                if (img.public_id) await deleteFromCloudinary(img.public_id, img.resource_type || 'image').catch(console.error);
+            }
+        }
+
+        // Delete product images from Cloudinary
+        for (const img of (product.images || [])) {
+            if (img.public_id) await deleteFromCloudinary(img.public_id, img.resource_type || 'image').catch(console.error);
+        }
+        
+        // Delete from ProductImage collection (which might also have unique images)
+        const productImages = await ProductImage.find({ product: product._id });
+        for (const pImg of productImages) {
+             if (pImg.public_id) await deleteFromCloudinary(pImg.public_id, pImg.resource_type || 'image').catch(console.error);
+        }
 
         await ProductVariantOption.deleteMany({ variant: { $in: variantIds } });
         await ProductVariant.deleteMany({ product: product._id });

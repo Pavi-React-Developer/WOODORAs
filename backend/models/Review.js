@@ -27,8 +27,8 @@ const reviewSchema = new mongoose.Schema({
     trim: true,
     default: '',
   },
-  images: [{ type: String }],   // uploaded image URLs
-  videos: [{ type: String }],   // uploaded video URLs
+  images: [require('./CloudinaryAsset')],   // uploaded image objects
+  videos: [require('./CloudinaryAsset')],   // uploaded video objects
   isVerifiedPurchase: {
     type: Boolean,
     default: false,

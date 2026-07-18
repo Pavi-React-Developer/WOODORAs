@@ -1,5 +1,6 @@
 const SubCategory = require('../models/SubCategory');
 const Category = require('../models/Category');
+const { deleteFromCloudinary } = require('../services/uploadService');
 const Attribute = require('../models/Attribute');
 
 // ==========================================
@@ -205,6 +206,10 @@ const deleteSubCategory = async (req, res) => {
                 success: false,
                 message: `Cannot delete subcategory with ${productCount} products. Delete products first.`,
             });
+        }
+
+        if (subCategory.image?.public_id) {
+            await deleteFromCloudinary(subCategory.image.public_id, subCategory.image.resource_type || 'image').catch(console.error);
         }
 
         await SubCategory.findByIdAndDelete(req.params.id);

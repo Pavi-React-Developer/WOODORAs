@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { ChevronDown, Heart, Search, ShoppingCart, User, X, Loader2, Menu } from 'lucide-react';
 import { catalogService } from '../api/catalogService';
 import { cmsService } from '../api/cmsService';
-import { productV2API } from '../api/catalogV2Service';
+import { productV2API, categoryV2API } from '../api/catalogV2Service';
 
 export default function Header({
   user,
@@ -20,6 +20,7 @@ export default function Header({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
+  const [categoryResults, setCategoryResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const searchInputRef = useRef(null);
 
@@ -57,17 +58,24 @@ export default function Header({
   useEffect(() => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
+      setCategoryResults([]);
       return;
     }
     const timer = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const res = await productV2API.getAll({ search: searchQuery, limit: 5 });
-        if (res.success && res.data) {
-          setSearchResults(res.data);
+        const [prodRes, catRes] = await Promise.all([
+          productV2API.getAll({ search: searchQuery, limit: 4 }),
+          categoryV2API.getAll({ search: searchQuery, limit: 3 })
+        ]);
+        if (prodRes.success && prodRes.products) {
+          setSearchResults(prodRes.products);
+        }
+        if (catRes.success && catRes.categories) {
+          setCategoryResults(catRes.categories);
         }
       } catch (err) {
-        console.error('Failed to search products', err);
+        console.error('Failed to search products/categories', err);
       } finally {
         setIsSearching(false);
       }
@@ -219,37 +227,69 @@ export default function Header({
             {/* Search Results Dropdown */}
             {searchQuery.trim() && (
               <div className="absolute top-full left-0 right-0 mt-4 bg-white border border-[#E9DED3] rounded-xl shadow-xl overflow-hidden">
-                {searchResults.length > 0 ? (
+                {(searchResults.length > 0 || categoryResults.length > 0) ? (
                   <div className="py-2">
-                    {searchResults.map((product) => (
-                      <button 
-                        key={product._id} 
-                        onClick={() => {
-                          onNavigate(`/product/${product.slug || product._id}`);
-                          setIsSearchOpen(false);
-                        }}
-                        className="flex items-center gap-4 w-full p-4 hover:bg-[#FAF4EF] transition"
-                      >
-                        <div className="w-12 h-12 rounded-md overflow-hidden bg-gray-100 shrink-0">
-                          {product.images && product.images[0] ? (
-                            <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full bg-[#E9DED3]" />
-                          )}
-                        </div>
-                        <div className="text-left flex-1">
-                          <p className="text-sm font-bold text-[#4A3326] line-clamp-1">{product.name}</p>
-                          <p className="text-xs text-[#7C7370]">{product.category?.name || 'Category'}</p>
-                        </div>
-                        <p className="text-sm font-bold text-[#9C755A]">${product.price}</p>
-                      </button>
-                    ))}
+                    
+                    {/* Category Results */}
+                    {categoryResults.length > 0 && (
+                      <div className="mb-2 border-b border-[#E9DED3] pb-2">
+                        <p className="px-4 py-1 text-[10px] font-bold text-[#8A817C] uppercase tracking-wider">Categories</p>
+                        {categoryResults.map((cat) => (
+                          <button 
+                            key={`cat-${cat._id}`} 
+                            onClick={() => {
+                              onNavigate(`/shop?category=${cat._id}`);
+                              setIsSearchOpen(false);
+                            }}
+                            className="flex items-center gap-3 w-full p-3 px-4 hover:bg-[#FAF4EF] transition"
+                          >
+                            <div className="w-8 h-8 rounded-full bg-[#E9DED3] flex items-center justify-center shrink-0">
+                              <Search className="h-4 w-4 text-[#9C755A]" />
+                            </div>
+                            <div className="text-left flex-1">
+                              <p className="text-sm font-bold text-[#4A3326]">{cat.name}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Product Results */}
+                    {searchResults.length > 0 && (
+                      <div>
+                        <p className="px-4 py-1 text-[10px] font-bold text-[#8A817C] uppercase tracking-wider">Products</p>
+                        {searchResults.map((product) => (
+                          <button 
+                            key={product._id} 
+                            onClick={() => {
+                              onNavigate(`/product/${product.slug || product._id}`);
+                              setIsSearchOpen(false);
+                            }}
+                            className="flex items-center gap-4 w-full p-4 hover:bg-[#FAF4EF] transition"
+                          >
+                            <div className="w-12 h-12 rounded-md overflow-hidden bg-gray-100 shrink-0">
+                              {product.images && product.images[0] ? (
+                                <img src={product.images[0].url || product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full bg-[#E9DED3]" />
+                              )}
+                            </div>
+                            <div className="text-left flex-1">
+                              <p className="text-sm font-bold text-[#4A3326] line-clamp-1">{product.name}</p>
+                              <p className="text-xs text-[#7C7370]">{product.category?.name || 'Category'}</p>
+                            </div>
+                            <p className="text-sm font-bold text-[#9C755A]">${product.price}</p>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
                     <button 
                       onClick={() => {
                          onNavigate(`/search?q=${searchQuery}`);
                          setIsSearchOpen(false);
                       }}
-                      className="w-full text-center py-3 text-sm font-bold text-[#9C755A] hover:bg-[#FAF4EF] border-t border-[#E9DED3]"
+                      className="w-full p-4 text-sm font-bold text-[#9C755A] hover:bg-[#FAF4EF] transition border-t border-[#E9DED3] mt-2"
                     >
                       View All Results
                     </button>

@@ -52,13 +52,22 @@ const refundSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Approved Refund', 'Approval Pending', 'Refund Approved', 'Pending', 'Processing', 'Failed', 'Completed'],
+    enum: ['Approved Refund', 'Approval Pending', 'Refund Approved', 'Refunded', 'Pending', 'Processing', 'Failed', 'Completed'],
     default: 'Approval Pending',
+  },
+  refundMethod: {
+    type: String,
+    enum: ['Wallet', 'UPI', 'Bank Transfer', ''],
+    default: '',
   },
   refundActionStatus: {
     type: String,
     enum: ['Refunded', 'Refund', 'Processing', 'Failed'],
     default: 'Refund',
+  },
+  stockRestored: {
+    type: Boolean,
+    default: false,
   }
 }, {
   timestamps: true,

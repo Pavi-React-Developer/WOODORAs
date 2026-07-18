@@ -8,11 +8,17 @@ import { downloadExcelFile } from '../../../utils/exportUtils';
 export default function RefundManagementPage({ canEdit = true, canDelete = true }) {
   const [refunds, setRefunds] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeRefund, setActiveRefund] = useState(null);
-  const [isProcessModalOpen, setIsProcessModalOpen] = useState(false);
-  const [processLoading, setProcessLoading] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [activeViewRefund, setActiveViewRefund] = useState(null);
+
+  // Step 2: Approve modal
+  const [approveRefund, setApproveRefund] = useState(null);
+  const [approveLoading, setApproveLoading] = useState(false);
+
+  // Step 3: Process Refund modal (wallet/UPI/bank)
+  const [processRefund, setProcessRefund] = useState(null);
+  const [processLoading, setProcessLoading] = useState(false);
+  const [refundMethod, setRefundMethod] = useState('Wallet');
 
   const [paymentTypeFilter, setPaymentTypeFilter] = useState('All Payment Types');
   const [statusFilter, setStatusFilter] = useState('All Statuses');
@@ -48,27 +54,39 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
     }
   };
 
-  const openProcessModal = (refund) => {
-    setActiveRefund(refund);
-    setIsProcessModalOpen(true);
-  };
-
   const openViewModal = (refund) => {
     setActiveViewRefund(refund);
     setIsViewModalOpen(true);
   };
 
-  const handleConfirmRefund = async () => {
-    if (!activeRefund) return;
+  // Step 2: Admin approves the cancellation
+  const handleApprove = async () => {
+    if (!approveRefund) return;
     try {
-      setProcessLoading(true);
-      await adminService.approveRefund(activeRefund._id);
-      toast.success('Refund Approved');
-      setIsProcessModalOpen(false);
-      setActiveRefund(null);
+      setApproveLoading(true);
+      await adminService.approveRefund(approveRefund._id);
+      toast.success('Refund request approved! User will see "Refund Accepted" status.');
+      setApproveRefund(null);
       fetchRefunds();
     } catch (e) {
       toast.error(e.message || 'Failed to approve refund');
+    } finally {
+      setApproveLoading(false);
+    }
+  };
+
+  // Step 3: Admin processes the actual refund payment
+  const handleProcessRefund = async () => {
+    if (!processRefund) return;
+    try {
+      setProcessLoading(true);
+      await adminService.processRefund(processRefund._id, refundMethod);
+      toast.success(`Refund processed via ${refundMethod}! Stock has been restored.`);
+      setProcessRefund(null);
+      setRefundMethod('Wallet');
+      fetchRefunds();
+    } catch (e) {
+      toast.error(e.message || 'Failed to process refund');
     } finally {
       setProcessLoading(false);
     }
@@ -99,7 +117,8 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
   const totalRefunds = refunds.length;
   const totalAmount = refunds.reduce((sum, r) => sum + (r.amount || 0), 0);
   const pendingRefunds = refunds.filter(r => r.status === 'Pending' || r.status === 'Approval Pending').length;
-  const successfulRefunds = refunds.filter(r => r.status === 'Completed' || r.status === 'Approved Refund' || r.status === 'Refund Approved').length;
+  const approvedRefunds = refunds.filter(r => r.status === 'Refund Approved').length;
+  const successfulRefunds = refunds.filter(r => r.status === 'Refunded' || r.status === 'Completed' || r.status === 'Approved Refund').length;
   const processingRefunds = refunds.filter(r => r.status === 'Processing').length;
   const failedRefunds = refunds.filter(r => r.status === 'Failed').length;
 
@@ -121,12 +140,13 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
 
   const getStatusStyle = (status) => {
     switch (status) {
+      case 'Refunded':
       case 'Approved Refund':
-      case 'Refund Approved':
       case 'Completed': return 'bg-emerald-100 text-emerald-700';
+      case 'Refund Approved': return 'bg-blue-100 text-blue-700';
       case 'Approval Pending':
       case 'Pending': return 'bg-orange-100 text-orange-700';
-      case 'Processing': return 'bg-blue-100 text-blue-700';
+      case 'Processing': return 'bg-yellow-100 text-yellow-700';
       case 'Failed': return 'bg-red-100 text-red-700';
       default: return 'bg-gray-100 text-gray-700';
     }
@@ -367,17 +387,30 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <button
-                        onClick={() => {
-                          if (canEdit && (refund.status === 'Approval Pending' || refund.status === 'Pending')) {
-                            openProcessModal(refund);
-                          }
-                        }}
-                        disabled={!canEdit || !(refund.status === 'Approval Pending' || refund.status === 'Pending')}
-                        className={`inline-block px-4 py-1.5 rounded-lg text-[10px] font-bold shadow-sm transition-opacity ${refund.status === 'Approval Pending' || refund.status === 'Pending' ? 'cursor-pointer hover:opacity-80' : 'cursor-default opacity-90'} ${getActionStyle(refund.refundActionStatus)}`}
-                      >
-                        {refund.refundActionStatus}
-                      </button>
+                      {/* Step 2: Approve button (only for Approval Pending) */}
+                      {(refund.status === 'Approval Pending' || refund.status === 'Pending') && canEdit && (
+                        <button
+                          onClick={() => setApproveRefund(refund)}
+                          className="inline-block px-4 py-1.5 rounded-lg text-[10px] font-bold shadow-sm bg-[#8B5E3C] text-white cursor-pointer hover:opacity-80 transition-opacity"
+                        >
+                          Approve
+                        </button>
+                      )}
+                      {/* Step 3: Refund button (only for Refund Approved) */}
+                      {refund.status === 'Refund Approved' && canEdit && (
+                        <button
+                          onClick={() => { setProcessRefund(refund); setRefundMethod('Wallet'); }}
+                          className="inline-block px-4 py-1.5 rounded-lg text-[10px] font-bold shadow-sm bg-[#647C5E] text-white cursor-pointer hover:opacity-80 transition-opacity"
+                        >
+                          Refund
+                        </button>
+                      )}
+                      {/* Final state: Refunded */}
+                      {(refund.status === 'Refunded' || refund.status === 'Completed' || refund.status === 'Approved Refund') && (
+                        <span className="inline-block px-4 py-1.5 rounded-lg text-[10px] font-bold bg-emerald-500 text-white opacity-90">
+                          Refunded
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-center">
                       <button onClick={() => openViewModal(refund)} className="text-gray-400 hover:text-gray-600 transition-colors">
@@ -444,74 +477,105 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
 
       </div>
 
-      {/* Process Refund Modal */}
-      {isProcessModalOpen && activeRefund && (
+      {/* STEP 2: Approve Cancellation Request Modal */}
+      {approveRefund && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="bg-[#FAF8F5] rounded-2xl shadow-xl w-full max-w-[420px] border border-[#E9DED3] overflow-hidden">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-5 pb-4 bg-[#647C5E] text-white">
-              <h2 className="text-lg font-bold">Process Refund</h2>
-              <button
-                onClick={() => setIsProcessModalOpen(false)}
-                className="text-white/80 hover:text-white transition-colors"
-                disabled={processLoading}
-              >
+            <div className="flex items-center justify-between p-5 pb-4 bg-[#8B5E3C] text-white">
+              <h2 className="text-lg font-bold">Approve Refund Request</h2>
+              <button onClick={() => setApproveRefund(null)} className="text-white/80 hover:text-white" disabled={approveLoading}>
                 <X size={20} />
               </button>
             </div>
-
-            {/* Modal Body */}
             <div className="p-6">
-
-              <div className="mb-5">
-                <span className="text-[11px] font-bold text-[#8A817C] uppercase tracking-wider mb-1 block">Customer Details</span>
-                <p className="font-bold text-[#141225] text-base">{activeRefund.customerName}</p>
-                <div className="inline-block mt-1 bg-white border border-[#E9DED3] rounded text-[#6D625C] px-2 py-1 text-xs font-semibold">
-                  {activeRefund.customerPhone || 'N/A'}
-                </div>
-                <p className="text-xs text-[#8A817C] mt-1">{activeRefund.customerEmail || 'N/A'}</p>
+              <div className="mb-4">
+                <p className="text-[11px] font-bold text-[#8A817C] uppercase tracking-wider mb-1">Order</p>
+                <p className="font-bold text-[#141225] text-base">{approveRefund.orderId}</p>
               </div>
-
-              <div className="mb-6">
-                <span className="text-[11px] font-bold text-[#8A817C] uppercase tracking-wider mb-1 block">User's Refund Destination (UPI / Phone)</span>
-                <div className="inline-block bg-blue-50 border border-blue-100 rounded text-blue-600 px-3 py-1.5 text-sm font-bold tracking-wide">
-                  {activeRefund.refundDestination || activeRefund.customerPhone || 'Not provided'}
-                </div>
+              <div className="mb-4">
+                <p className="text-[11px] font-bold text-[#8A817C] uppercase tracking-wider mb-1">Customer</p>
+                <p className="font-bold text-[#141225]">{approveRefund.customerName}</p>
+                <p className="text-xs text-[#8A817C]">{approveRefund.customerEmail || approveRefund.customerPhone || 'N/A'}</p>
               </div>
-
-              <div className="flex justify-between items-center bg-[#F4EBE2]/50 rounded-xl p-4 mb-6 border border-[#E9DED3]">
+              <div className="flex justify-between items-center bg-[#F4EBE2]/50 rounded-xl p-4 mb-4 border border-[#E9DED3]">
                 <span className="text-sm font-bold text-[#6D625C]">Refund Amount</span>
-                <span className="text-xl font-black text-[#A7632E]">
-                  ₹{activeRefund.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                </span>
+                <span className="text-xl font-black text-[#A7632E]">₹{approveRefund.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
               </div>
-
               <p className="text-xs text-center text-[#8A817C] mb-5 px-2">
-                Please confirm you have manually processed the refund to the customer's highlighted phone number or account.
+                Approving this request will notify the user that their cancellation has been accepted. You will then process the actual refund payment separately.
               </p>
-
-              {/* Action Buttons */}
               <div className="flex gap-3">
-                <button
-                  onClick={() => setIsProcessModalOpen(false)}
-                  className="flex-1 py-3 bg-white border border-[#E9DED3] text-[#4A403B] rounded-xl font-bold text-sm shadow-sm hover:bg-gray-50 transition-colors"
-                  disabled={processLoading}
-                >
+                <button onClick={() => setApproveRefund(null)} disabled={approveLoading}
+                  className="flex-1 py-3 bg-white border border-[#E9DED3] text-[#4A403B] rounded-xl font-bold text-sm shadow-sm hover:bg-gray-50 transition-colors">
                   Cancel
                 </button>
-                <button
-                  onClick={handleConfirmRefund}
-                  disabled={processLoading}
-                  className="flex-[1.5] flex justify-center items-center gap-2 py-3 bg-[#647C5E] text-white rounded-xl font-bold text-sm shadow-sm hover:bg-[#52664d] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {processLoading ? 'Processing...' : (
-                    <>
-                      Confirm Refund
-                    </>
-                  )}
+                <button onClick={handleApprove} disabled={approveLoading}
+                  className="flex-[1.5] py-3 bg-[#8B5E3C] text-white rounded-xl font-bold text-sm shadow-sm hover:bg-[#7a5235] transition-colors disabled:opacity-50">
+                  {approveLoading ? 'Approving...' : 'Approve Request'}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
 
+      {/* STEP 3: Process Refund Payment Modal */}
+      {processRefund && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-[#FAF8F5] rounded-2xl shadow-xl w-full max-w-[420px] border border-[#E9DED3] overflow-hidden">
+            <div className="flex items-center justify-between p-5 pb-4 bg-[#647C5E] text-white">
+              <h2 className="text-lg font-bold">Process Refund Payment</h2>
+              <button onClick={() => setProcessRefund(null)} className="text-white/80 hover:text-white" disabled={processLoading}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6">
+              <div className="mb-4">
+                <p className="text-[11px] font-bold text-[#8A817C] uppercase tracking-wider mb-1">Customer</p>
+                <p className="font-bold text-[#141225]">{processRefund.customerName}</p>
+                <p className="text-xs text-[#8A817C]">{processRefund.customerEmail || processRefund.customerPhone || 'N/A'}</p>
+              </div>
+              {processRefund.refundDestination && (
+                <div className="mb-4">
+                  <p className="text-[11px] font-bold text-[#8A817C] uppercase tracking-wider mb-1">Customer UPI / Phone</p>
+                  <div className="inline-block bg-blue-50 border border-blue-100 rounded text-blue-600 px-3 py-1.5 text-sm font-bold tracking-wide">
+                    {processRefund.refundDestination}
+                  </div>
+                </div>
+              )}
+              <div className="flex justify-between items-center bg-[#F4EBE2]/50 rounded-xl p-4 mb-5 border border-[#E9DED3]">
+                <span className="text-sm font-bold text-[#6D625C]">Refund Amount</span>
+                <span className="text-xl font-black text-[#A7632E]">₹{processRefund.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+              </div>
+              <div className="mb-5">
+                <p className="text-[11px] font-bold text-[#8A817C] uppercase tracking-wider mb-2">Select Refund Method</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {['Wallet', 'UPI', 'Bank Transfer'].map((method) => (
+                    <button key={method}
+                      onClick={() => setRefundMethod(method)}
+                      className={`py-2.5 rounded-xl text-xs font-bold border-2 transition-colors ${
+                        refundMethod === method
+                          ? 'border-[#647C5E] bg-[#647C5E] text-white'
+                          : 'border-[#E9DED3] bg-white text-[#4A403B] hover:border-[#647C5E]'
+                      }`}>
+                      {method}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <p className="text-xs text-center text-[#8A817C] mb-5 px-2">
+                After clicking Refund, the stock will be automatically restored to inventory and the customer status will update to <strong>Refunded</strong>.
+              </p>
+              <div className="flex gap-3">
+                <button onClick={() => setProcessRefund(null)} disabled={processLoading}
+                  className="flex-1 py-3 bg-white border border-[#E9DED3] text-[#4A403B] rounded-xl font-bold text-sm shadow-sm hover:bg-gray-50 transition-colors">
+                  Cancel
+                </button>
+                <button onClick={handleProcessRefund} disabled={processLoading}
+                  className="flex-[1.5] py-3 bg-[#647C5E] text-white rounded-xl font-bold text-sm shadow-sm hover:bg-[#52664d] transition-colors disabled:opacity-50">
+                  {processLoading ? 'Processing...' : `Refund via ${refundMethod}`}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -549,22 +613,42 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
                 </div>
               </div>
 
-              {activeViewRefund.orderRef?.orderItems?.map((item, idx) => (
-                <div key={idx} className="flex gap-4 items-center bg-[#F3E7D7]/30 p-3 rounded-xl border border-[#E9DED3]/50 mb-4">
-                  <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0">
-                    <img src={item.product?.image || '/animal_balance_maze.png'} alt={item.name} className="w-full h-full object-cover" />
+              {activeViewRefund.orderRef?.orderItems?.map((item, idx) => {
+                const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+                const rawImage = item.image || '';
+                const imageUrl = rawImage.startsWith('http')
+                  ? rawImage
+                  : rawImage
+                    ? `${API_BASE}${rawImage.startsWith('/') ? '' : '/'}${rawImage}`
+                    : null;
+
+                return (
+                  <div key={idx} className="flex gap-4 items-center bg-[#F3E7D7]/30 p-3 rounded-xl border border-[#E9DED3]/50 mb-4">
+                    <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 bg-[#F3E7D7] flex items-center justify-center">
+                      {imageUrl ? (
+                        <img
+                          src={imageUrl}
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                        />
+                      ) : null}
+                      <div className="w-full h-full items-center justify-center text-[10px] text-[#8A817C] font-bold" style={{ display: imageUrl ? 'none' : 'flex' }}>
+                        IMG
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-bold text-[#141225] line-clamp-1">{item.name}</h4>
+                      <p className="text-[11px] text-[#8A817C] mt-1">
+                        Qty: {item.qty}{item.weight ? ` • ${item.weight}` : ''}
+                      </p>
+                    </div>
+                    <div className="text-sm font-bold text-[#141225]">
+                      ₹{(item.price * item.qty).toFixed(2)}
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <h4 className="text-sm font-bold text-[#141225] line-clamp-1">{item.name}</h4>
-                    <p className="text-[11px] text-[#8A817C] mt-1">
-                      Qty: {item.qty} &bull; {item.weight || '700g'} &bull; 3month &bull; red
-                    </p>
-                  </div>
-                  <div className="text-sm font-bold text-[#141225]">
-                    ₹{(item.price * item.qty).toFixed(2)}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
 
               <div className="bg-[#F4EBE2]/50 rounded-xl p-4 border border-[#E9DED3] mb-4 space-y-3">
                 <div className="flex justify-between text-xs">

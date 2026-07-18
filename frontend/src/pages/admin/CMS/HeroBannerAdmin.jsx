@@ -19,23 +19,31 @@ function MediaUploader({ label, value, onChange, accept = "image/*,video/mp4,vid
     setUploading(true);
     try {
       const res = await cmsService.uploadImages([file]);
-      onChange(res.data.urls[0]);
+      onChange(res.data[0]); // Pass the entire Cloudinary object
     } catch (err) { alert(err.message); }
     finally { setUploading(false); }
   };
+
+  const getMediaUrl = (val) => {
+    if (!val) return '';
+    if (typeof val === 'string') return val;
+    return val.url || '';
+  };
+
+  const url = getMediaUrl(value);
 
   return (
     <div>
       <label className="text-xs font-semibold text-brand-medium uppercase tracking-wider block mb-1">{label}</label>
       <div className="border-2 border-dashed border-[#E6DFD4] rounded-xl p-3 flex flex-col items-center gap-2 relative bg-[#F7F3EE]">
-        {value ? (
+        {url ? (
           <div className="relative w-full">
-            {value && value.match(/\.(mp4|webm)$/i) ? (
-              <video src={value} className="w-full h-36 object-cover rounded-lg" controls />
+            {url && url.match(/\.(mp4|webm)$/i) ? (
+              <video src={url} className="w-full h-36 object-cover rounded-lg" controls />
             ) : (
-              <img src={value} alt="preview" className="w-full h-36 object-cover rounded-lg" />
+              <img src={url} alt="preview" className="w-full h-36 object-cover rounded-lg" />
             )}
-            <button type="button" onClick={() => onChange('')}
+            <button type="button" onClick={() => onChange(null)}
               className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5"><X className="w-3 h-3" /></button>
           </div>
         ) : (
@@ -50,9 +58,9 @@ function MediaUploader({ label, value, onChange, accept = "image/*,video/mp4,vid
             className="text-xs text-brand-dark underline">{uploading ? 'Uploading...' : 'Browse file'}</button>
         )}
       </div>
-      {value && <input type="text" value={value} onChange={e => onChange(e.target.value)}
+      {url && <input type="text" value={url} onChange={e => onChange(e.target.value)}
         className="mt-1 w-full border border-[#E6DFD4] rounded-lg px-3 py-1.5 text-xs text-brand-medium" placeholder="Or paste image URL" />}
-      {!value && <input type="text" onChange={e => onChange(e.target.value)}
+      {!url && <input type="text" onChange={e => onChange(e.target.value)}
         className="mt-1 w-full border border-[#E6DFD4] rounded-lg px-3 py-1.5 text-xs text-brand-medium" placeholder="Or paste image URL" />}
     </div>
   );

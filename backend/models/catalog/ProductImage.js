@@ -11,6 +11,9 @@ const productImageSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    public_id: {
+        type: String,
+    },
     altText: {
         type: String,
         default: '',
@@ -28,6 +31,13 @@ const productImageSchema = new mongoose.Schema({
     },
     mimeType: {
         type: String,
+    },
+    format: {
+        type: String,
+    },
+    resource_type: {
+        type: String,
+        default: 'image'
     },
     width: {
         type: Number,

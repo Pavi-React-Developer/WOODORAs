@@ -30,9 +30,7 @@ const productSchema = new mongoose.Schema({
         type: Number,
         min: 0,
     },
-    images: [{
-        type: String, // Array of image URLs
-    }],
+    images: [require('./CloudinaryAsset')],
     variants: [{
         variantKey: String,
         ageGroup: String,

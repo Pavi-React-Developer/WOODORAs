@@ -20,9 +20,7 @@ const subCategorySchema = new mongoose.Schema({
     description: {
         type: String,
     },
-    image: {
-        type: String, // URL to the subcategory image
-    },
+    image: require('./CloudinaryAsset'),
     displayOrder: {
         type: Number,
         default: 1,

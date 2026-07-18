@@ -68,7 +68,7 @@ router.get('/sku/generate', productController.generateSKU);
 // IMAGE UPLOAD ROUTES
 // ==========================================
 router.post('/upload', uploadController.uploadImages);
-router.delete('/upload/:filename', uploadController.deleteImage);
+router.delete('/upload', uploadController.deleteImage);
 
 // ==========================================
 // PRODUCT ROUTES

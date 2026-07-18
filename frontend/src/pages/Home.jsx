@@ -12,6 +12,7 @@ import { cmsService } from '../api/cmsService';
 import { productV2API } from '../api/catalogV2Service';
 import { catalogService } from '../api/catalogService';
 import { reviewService } from '../api/reviewService';
+import { getImageSrc } from '../utils/imageUtils';
 
 // ── Fallback static data (used if CMS returns no content) ───────────────────
 const FALLBACK_HERO = [
@@ -558,19 +559,19 @@ export default function Home({ user, onNavigate, onAddToCart, onAddToWishlist })
           
           // Legacy check
           if (banner.desktopVideo || banner.mobileVideo) {
-            mediaSlides.push({ ...banner, itemType: 'video', desktopUrl: banner.desktopVideo, mobileUrl: banner.mobileVideo });
+            mediaSlides.push({ ...banner, itemType: 'video', desktopUrl: getImageSrc(banner.desktopVideo), mobileUrl: getImageSrc(banner.mobileVideo) });
           } else if (banner.bannerImage || banner.mobileBanner) {
-            mediaSlides.push({ ...banner, itemType: 'image', desktopUrl: banner.bannerImage, mobileUrl: banner.mobileBanner });
+            mediaSlides.push({ ...banner, itemType: 'image', desktopUrl: getImageSrc(banner.bannerImage), mobileUrl: getImageSrc(banner.mobileBanner) });
           }
 
           // New dynamic items
           if (banner.items && banner.items.length > 0) {
             banner.items.forEach(item => {
-              mediaSlides.push({ ...banner, itemType: item.mediaType || 'image', desktopUrl: item.desktopUrl, mobileUrl: item.mobileUrl });
+              mediaSlides.push({ ...banner, itemType: item.mediaType || 'image', desktopUrl: getImageSrc(item.desktopUrl), mobileUrl: getImageSrc(item.mobileUrl) });
             });
           }
 
-          return mediaSlides.length > 0 ? mediaSlides : [banner];
+          return mediaSlides.length > 0 ? mediaSlides : [{ ...banner, desktopUrl: getImageSrc(banner.bannerImage), mobileUrl: getImageSrc(banner.mobileBanner) }];
         });
 
         setHeroSlides(flattened.length > 0 ? flattened : FALLBACK_HERO);

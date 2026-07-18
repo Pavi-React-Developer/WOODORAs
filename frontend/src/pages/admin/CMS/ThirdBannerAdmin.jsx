@@ -12,7 +12,7 @@ function MultiImageUploader({ label, images, onChange }) {
     setUploading(true);
     try {
       const res = await cmsService.uploadImages(files);
-      onChange([...images, ...res.data.urls]);
+      onChange([...images, ...res.data]); // res.data contains Cloudinary objects
     } catch (err) { alert(err.message); }
     finally { setUploading(false); }
   };
@@ -21,13 +21,19 @@ function MultiImageUploader({ label, images, onChange }) {
     onChange(images.filter((_, i) => i !== idx));
   };
 
+  const getMediaUrl = (val) => {
+    if (!val) return '';
+    if (typeof val === 'string') return val;
+    return val.url || '';
+  };
+
   return (
     <div>
       <label className="text-xs font-semibold text-brand-medium uppercase tracking-wider block mb-2">{label}</label>
       <div className="grid grid-cols-3 gap-2 mb-2">
-        {images.map((url, i) => (
+        {images.map((img, i) => (
           <div key={i} className="relative aspect-square">
-            <img src={url} alt="" className="w-full h-full object-cover rounded-lg" />
+            <img src={getMediaUrl(img)} alt="" className="w-full h-full object-cover rounded-lg" />
             <button type="button" onClick={() => removeImage(i)}
               className="absolute top-0.5 right-0.5 bg-red-500 text-white rounded-full p-0.5">
               <X className="w-3 h-3" />

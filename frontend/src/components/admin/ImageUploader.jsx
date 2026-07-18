@@ -29,26 +29,19 @@ export const ImageUploader = ({
 
         setUploading(true);
 
-        // Upload files to the backend to get permanent, persistent URLs
-        const formData = new FormData();
-        validImages.forEach(file => formData.append('images', file));
-
         try {
-            const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-            const uploadUrl = `${API_BASE.replace(/\/api$/, '')}/api/catalog/upload`;
-            const token = localStorage.getItem('token');
-
-            const res = await fetch(uploadUrl, {
-                method: 'POST',
-                headers: token ? { Authorization: `Bearer ${token}` } : {},
-                body: formData,
+            const { uploadAPI } = await import('../../api/catalogAdminService');
+            
+            const res = await uploadAPI.uploadImages(validImages, 'product', (progressEvent) => {
+                // If you want to use progress: const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
             });
 
-            const data = await res.json();
+            // uploadAPI returns response wrapped by axios
+            const data = res.data;
             if (!data.success) throw new Error(data.message || 'Upload failed');
 
-            const newImages = (data.data?.urls || []).map((url, idx) => ({
-                url,
+            const newImages = (data.data || []).map((imgObj, idx) => ({
+                ...imgObj, // include url, public_id, width, height, format, resource_type, bytes
                 altText: validImages[idx]?.name?.split('.')[0] || '',
                 isThumbnail: images.length === 0 && idx === 0, // first image is thumbnail
                 displayOrder: images.length + idx + 1,
@@ -58,7 +51,7 @@ export const ImageUploader = ({
             onChange(updated);
         } catch (err) {
             console.error('Image upload failed:', err);
-            alert('Image upload failed: ' + err.message);
+            alert('Image upload failed: ' + (err.response?.data?.message || err.message));
         } finally {
             setUploading(false);
         }

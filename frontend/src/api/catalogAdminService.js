@@ -108,14 +108,16 @@ export const variantAPI = {
 // UPLOAD API
 // ==========================================
 export const uploadAPI = {
-    uploadImages: (files) => {
+    uploadImages: (files, folder = 'misc', onUploadProgress) => {
         const formData = new FormData();
         files.forEach((file) => formData.append('images', file));
+        formData.append('folder', folder);
         return apiClient.post('/catalog/upload', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
+            onUploadProgress,
         });
     },
-    deleteImage: (filename) => apiClient.delete(`/catalog/upload/${filename}`),
+    deleteImage: (public_id, resource_type = 'image') => apiClient.delete('/catalog/upload', { data: { public_id, resource_type } }),
 };
 
 export default apiClient;

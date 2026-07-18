@@ -1,8 +1,25 @@
 const Refund = require('../models/Refund');
 const User = require('../models/User');
+const Order = require('../models/Order');
+const ProductVariant = require('../models/ProductVariant');
 const { addWalletCredit } = require('./walletController');
 
-// @desc    Get all refunds
+// Helper: restore inventory for cancelled order items
+const restoreVariantStock = async (variantId, qty) => {
+  if (!variantId) return;
+  try {
+    const variant = await ProductVariant.findById(variantId);
+    if (!variant) return;
+    variant.inventory = (variant.inventory || 0) + qty;
+    variant.currentStock = Math.max(0, (variant.inventory || 0) - (variant.reserveStock || 0));
+    await variant.save();
+    console.log(`Stock restored: +${qty} to variant ${variantId}. New inventory: ${variant.inventory}`);
+  } catch (err) {
+    console.error('Failed to restore variant stock on refund processing', err);
+  }
+};
+
+// @desc    Get all refunds (Admin)
 // @route   GET /api/refunds
 // @access  Private/Admin
 const getRefunds = async (req, res) => {
@@ -32,33 +49,11 @@ const seedRefunds = async (req, res) => {
     if (count > 0) {
       return res.status(400).json({ message: 'Refunds already seeded' });
     }
-
     const sampleRefunds = [
-      { orderId: '#WT10021', customerName: 'Suguna M', amount: 1880.00, paymentType: 'Cashfree', slaTimeline: '24 Hours', status: 'Approved Refund', refundActionStatus: 'Refunded' },
-      { orderId: '#WT10020', customerName: 'Ramesh K', amount: 750.00, paymentType: 'COD', slaTimeline: '48 Hours', status: 'Pending', refundActionStatus: 'Refund' },
-      { orderId: '#WT10019', customerName: 'Kavya S', amount: 1250.00, paymentType: 'Cashfree', slaTimeline: '3 Days', status: 'Processing', refundActionStatus: 'Processing' },
-      { orderId: '#WT10018', customerName: 'Manoj T', amount: 560.00, paymentType: 'COD', slaTimeline: '7 Days', status: 'Failed', refundActionStatus: 'Failed' },
-      { orderId: '#WT10017', customerName: 'Priya R', amount: 2300.00, paymentType: 'Cashfree', slaTimeline: '-', status: 'Completed', refundActionStatus: 'Refunded' },
-      // Generate some extra random ones to total 20 as in the design
+      { orderId: '#WT10021', customerName: 'Suguna M', amount: 1880.00, paymentType: 'Cashfree', slaTimeline: '24 Hours', status: 'Refunded', refundActionStatus: 'Refunded' },
+      { orderId: '#WT10020', customerName: 'Ramesh K', amount: 750.00, paymentType: 'COD', slaTimeline: '48 Hours', status: 'Approval Pending', refundActionStatus: 'Refund' },
+      { orderId: '#WT10019', customerName: 'Kavya S', amount: 1250.00, paymentType: 'Cashfree', slaTimeline: '3 Days', status: 'Refund Approved', refundActionStatus: 'Refund' },
     ];
-
-    // Pad with 15 more generic refunds to reach the 20 total refunds seen in the UI
-    for (let i = 1; i <= 15; i++) {
-      const isApproved = Math.random() > 0.3;
-      sampleRefunds.push({
-        orderId: `#WT100${16 - i < 10 ? '0' + (16 - i) : 16 - i}`,
-        customerName: `Customer ${i}`,
-        amount: Math.floor(Math.random() * 3000) + 500,
-        paymentType: Math.random() > 0.4 ? 'Cashfree' : 'COD',
-        slaTimeline: '-',
-        status: isApproved ? 'Completed' : 'Pending',
-        refundActionStatus: isApproved ? 'Refunded' : 'Refund',
-        originalStatus: 'Placed',
-        cancellationFee: 20,
-        amountPaid: amount + 20,
-      });
-    }
-
     const created = await Refund.insertMany(sampleRefunds);
     res.status(201).json(created);
   } catch (error) {
@@ -66,23 +61,61 @@ const seedRefunds = async (req, res) => {
   }
 };
 
-// @desc    Approve a refund
+// @desc    STEP 2 - Admin approves the cancellation request
 // @route   PUT /api/refunds/:id/approve
 // @access  Private/Admin
+// Result:  status -> "Refund Approved". User sees "Refund Accepted" in their dashboard.
+//          NO stock change happens here.
 const approveRefund = async (req, res) => {
   try {
     const refund = await Refund.findById(req.params.id);
-
-    if (!refund) {
-      return res.status(404).json({ message: 'Refund not found' });
-    }
+    if (!refund) return res.status(404).json({ message: 'Refund not found' });
 
     refund.status = 'Refund Approved';
-    refund.refundActionStatus = 'Refunded';
+    // refundActionStatus stays 'Refund' so admin can still click the Refund button
 
-    // If refundDestination is explicitly 'WALLET', credit user's wallet on approval
-    if (refund.orderRef && String(refund.refundDestination || '').toUpperCase() === 'WALLET') {
-      const order = await require('../models/Order').findById(refund.orderRef);
+    const updatedRefund = await refund.save();
+    res.json(updatedRefund);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    STEP 3 - Admin processes the actual payment refund
+// @route   PUT /api/refunds/:id/process
+// @access  Private/Admin
+// Result:  status -> "Refunded". Stock is restored. Wallet credited if method = Wallet.
+const processRefund = async (req, res) => {
+  try {
+    const { refundMethod } = req.body; // 'Wallet', 'UPI', or 'Bank Transfer'
+    const refund = await Refund.findById(req.params.id);
+    if (!refund) return res.status(404).json({ message: 'Refund not found' });
+
+    if (refund.status === 'Refunded') {
+      return res.status(400).json({ message: 'Refund has already been processed' });
+    }
+
+    refund.status = 'Refunded';
+    refund.refundActionStatus = 'Refunded';
+    refund.refundMethod = refundMethod || '';
+
+    // Restore inventory stock ONLY at this step
+    if (!refund.stockRestored && refund.orderRef) {
+      const order = await Order.findById(refund.orderRef);
+      if (order && Array.isArray(order.orderItems)) {
+        for (const item of order.orderItems) {
+          if (item.variant) {
+            await restoreVariantStock(item.variant, item.qty);
+          }
+        }
+        refund.stockRestored = true;
+        console.log(`Inventory restored for refund ${refund._id} (order ${refund.orderId})`);
+      }
+    }
+
+    // If Wallet was chosen, credit the user's wallet
+    if (refundMethod === 'Wallet' && refund.orderRef) {
+      const order = await Order.findById(refund.orderRef);
       if (order?.user) {
         const user = await User.findById(order.user);
         if (user) {
@@ -94,7 +127,7 @@ const approveRefund = async (req, res) => {
             metadata: {
               refundId: refund._id.toString(),
               orderId: refund.orderId,
-              source: 'refund-approval',
+              source: 'refund-processing',
             },
           });
         }
@@ -112,4 +145,5 @@ module.exports = {
   getRefunds,
   seedRefunds,
   approveRefund,
+  processRefund,
 };

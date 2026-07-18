@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { cmsService } from '../../../api/cmsService';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, Plus, Trash } from 'lucide-react';
 
 function LogoUploader({ value, onChange }) {
   const [uploading, setUploading] = useState(false);
@@ -12,19 +12,27 @@ function LogoUploader({ value, onChange }) {
     setUploading(true);
     try {
       const res = await cmsService.uploadImages([file]);
-      onChange(res.data.urls[0]);
+      onChange(res.data[0]); // pass object
     } catch (err) { alert(err.message); }
     finally { setUploading(false); }
   };
+
+  const getMediaUrl = (val) => {
+    if (!val) return '';
+    if (typeof val === 'string') return val;
+    return val.url || '';
+  };
+
+  const url = getMediaUrl(value);
 
   return (
     <div>
       <label className="text-xs font-semibold text-brand-medium uppercase tracking-wider block mb-1">Footer Logo</label>
       <div className="flex items-center gap-3">
-        {value ? (
+        {url ? (
           <div className="relative">
-            <img src={value} alt="logo" className="h-12 object-contain rounded" />
-            <button type="button" onClick={() => onChange('')}
+            <img src={url} alt="logo" className="h-12 object-contain rounded" />
+            <button type="button" onClick={() => onChange(null)}
               className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5"><X className="w-3 h-3" /></button>
           </div>
         ) : (
@@ -42,14 +50,14 @@ function LogoUploader({ value, onChange }) {
 export default function FooterAdmin() {
   const [form, setForm] = useState({
     logo: '', description: '', email: '', phone: '',
-    facebook: '', instagram: '', youtube: '', twitter: '', copyright: '',
+    facebook: '', instagram: '', youtube: '', twitter: '', copyright: '', columns: [],
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     cmsService.getFooter().then(res => {
-      if (res.data) setForm({ logo: res.data.logo || '', description: res.data.description || '', email: res.data.email || '', phone: res.data.phone || '', facebook: res.data.facebook || '', instagram: res.data.instagram || '', youtube: res.data.youtube || '', twitter: res.data.twitter || '', copyright: res.data.copyright || '' });
+      if (res.data) setForm({ logo: res.data.logo || '', description: res.data.description || '', email: res.data.email || '', phone: res.data.phone || '', facebook: res.data.facebook || '', instagram: res.data.instagram || '', youtube: res.data.youtube || '', twitter: res.data.twitter || '', copyright: res.data.copyright || '', columns: res.data.columns || [] });
     }).catch(console.error).finally(() => setLoading(false));
   }, []);
 
@@ -102,6 +110,71 @@ export default function FooterAdmin() {
             {field('Instagram URL', 'instagram', 'https://instagram.com/')}
             {field('YouTube URL', 'youtube', 'https://youtube.com/')}
             {field('Twitter / X URL', 'twitter', 'https://twitter.com/')}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-[#E6DFD4] p-6 shadow-sm space-y-4">
+          <div className="flex justify-between items-center">
+            <h4 className="font-semibold text-brand-dark">Footer Columns</h4>
+            <button type="button" onClick={() => setForm(f => ({ ...f, columns: [...(f.columns || []), { title: '', links: [] }] }))} className="text-xs font-semibold text-brand-dark bg-[#F7F3EE] px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-[#E6DFD4]">
+              <Plus className="w-3 h-3" /> Add Column
+            </button>
+          </div>
+          
+          <div className="space-y-6">
+            {form.columns?.map((col, cIdx) => (
+              <div key={cIdx} className="border border-[#E6DFD4] p-4 rounded-xl space-y-4 bg-gray-50">
+                <div className="flex justify-between gap-4">
+                  <div className="flex-1">
+                    <label className="text-xs font-semibold text-brand-medium uppercase tracking-wider block mb-1">Column Title</label>
+                    <input type="text" value={col.title} onChange={e => {
+                      const newCols = [...form.columns];
+                      newCols[cIdx].title = e.target.value;
+                      setForm(f => ({ ...f, columns: newCols }));
+                    }} placeholder="e.g. Shop, Support, Policies" className="w-full border border-[#E6DFD4] rounded-lg px-3 py-2 text-sm bg-white" />
+                  </div>
+                  <button type="button" onClick={() => {
+                    const newCols = form.columns.filter((_, i) => i !== cIdx);
+                    setForm(f => ({ ...f, columns: newCols }));
+                  }} className="mt-6 text-red-500 p-2 hover:bg-red-50 rounded-lg">
+                    <Trash className="w-4 h-4" />
+                  </button>
+                </div>
+                
+                <div className="pl-4 border-l-2 border-[#E6DFD4] space-y-3">
+                  <label className="text-xs font-semibold text-brand-medium uppercase tracking-wider block mb-1">Links</label>
+                  {col.links.map((link, lIdx) => (
+                    <div key={lIdx} className="flex gap-2 items-center">
+                      <input type="text" value={link.label} onChange={e => {
+                        const newCols = [...form.columns];
+                        newCols[cIdx].links[lIdx].label = e.target.value;
+                        setForm(f => ({ ...f, columns: newCols }));
+                      }} placeholder="Label (e.g. New Arrivals)" className="flex-1 border border-[#E6DFD4] rounded-lg px-3 py-1.5 text-sm bg-white" />
+                      <input type="text" value={link.url} onChange={e => {
+                        const newCols = [...form.columns];
+                        newCols[cIdx].links[lIdx].url = e.target.value;
+                        setForm(f => ({ ...f, columns: newCols }));
+                      }} placeholder="URL (e.g. /shop?sort=newest)" className="flex-1 border border-[#E6DFD4] rounded-lg px-3 py-1.5 text-sm bg-white" />
+                      <button type="button" onClick={() => {
+                        const newCols = [...form.columns];
+                        newCols[cIdx].links = newCols[cIdx].links.filter((_, i) => i !== lIdx);
+                        setForm(f => ({ ...f, columns: newCols }));
+                      }} className="text-red-500 p-1.5 hover:bg-red-50 rounded">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                  <button type="button" onClick={() => {
+                    const newCols = [...form.columns];
+                    newCols[cIdx].links.push({ label: '', url: '' });
+                    setForm(f => ({ ...f, columns: newCols }));
+                  }} className="text-xs font-semibold text-brand-medium flex items-center gap-1 hover:text-brand-dark">
+                    <Plus className="w-3 h-3" /> Add Link
+                  </button>
+                </div>
+              </div>
+            ))}
+            {(form.columns?.length === 0 || !form.columns) && <p className="text-sm text-brand-medium italic">No dynamic columns added.</p>}
           </div>
         </div>
 

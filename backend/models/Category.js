@@ -30,9 +30,7 @@ const categorySchema = new mongoose.Schema({
     description: {
         type: String,
     },
-    image: {
-        type: String, // URL to the category image
-    },
+    image: require('./CloudinaryAsset'),
     displayOrder: {
         type: Number,
         default: 1,
@@ -73,12 +71,8 @@ const categorySchema = new mongoose.Schema({
         type: [String],
         default: [],
     },
-    banner: {
-        type: String, // URL to category banner image
-    },
-    icon: {
-        type: String, // URL to category icon
-    },
+    banner: require('./CloudinaryAsset'),
+    icon: require('./CloudinaryAsset'),
     isArchived: {
         type: Boolean,
         default: false,
