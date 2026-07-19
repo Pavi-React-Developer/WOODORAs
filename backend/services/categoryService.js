@@ -75,10 +75,10 @@ const createCategory = async (data, auditContext) => {
 
     const generatedSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
 
-    // Check slug uniqueness
-    const existing = await Category.findOne({ slug: generatedSlug, isDeleted: false });
+    // Check slug uniqueness — only among active (non-deleted) categories
+    const existing = await Category.findOne({ slug: generatedSlug, isDeleted: { $ne: true } });
     if (existing) {
-        throw new Error('Category with this slug/name already exists');
+        throw new Error(`Category with slug '${generatedSlug}' already exists`);
     }
 
     const category = await Category.create({

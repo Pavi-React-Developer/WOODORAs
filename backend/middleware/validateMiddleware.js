@@ -38,11 +38,14 @@ const validate = (schema) => {
                 errors.push(`Field '${field}' must be a boolean`);
             } else if (rules.type === 'array' && !Array.isArray(val)) {
                 errors.push(`Field '${field}' must be an array`);
+            } else if (rules.type === 'object' && (typeof val !== 'object' || Array.isArray(val))) {
+                errors.push(`Field '${field}' must be an object`);
             }
         }
 
         if (errors.length > 0) {
-            return res.status(400).json({ success: false, errors });
+            console.error('[validate] Validation failed. Body:', JSON.stringify(source), '| Errors:', errors);
+            return res.status(400).json({ success: false, message: errors.join(', '), errors });
         }
 
         next();

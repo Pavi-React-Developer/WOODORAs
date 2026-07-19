@@ -15,7 +15,12 @@ const getHeaders = () => {
 const handleResponse = async (response) => {
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        // Validate middleware returns { errors: [...] }, service errors return { message: '...' }
+        const msg = errorData.message
+            || (Array.isArray(errorData.errors) ? errorData.errors.join(', ') : null)
+            || `HTTP error! status: ${response.status}`;
+        console.error('[API Error]', response.status, errorData);
+        throw new Error(msg);
     }
     return response.json();
 };

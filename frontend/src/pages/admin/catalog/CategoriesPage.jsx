@@ -41,7 +41,7 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
   const [formData, setFormData] = useState({
     name: '', slug: '', description: '', displayOrder: 1, isActive: true,
     seoTitle: '', seoDescription: '', seoKeywords: '', availableWoodTypes: '',
-    image: '', // Category image URL
+    image: null, // Category image (CloudinaryAsset object or null)
   });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -87,12 +87,12 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
         seoTitle: cat.seoTitle || '', seoDescription: cat.seoDescription || '',
         seoKeywords: Array.isArray(cat.seoKeywords) ? cat.seoKeywords.join(', ') : '',
         availableWoodTypes: Array.isArray(cat.availableWoodTypes) ? cat.availableWoodTypes.join(', ') : '',
-        image: cat.image || '',
+        image: cat.image || null, // CloudinaryAsset object
       });
-      setImagePreview(cat.image || null);
+      setImagePreview((typeof cat.image === 'object' ? cat.image?.url : cat.image) || null);
     } else {
       setEditId(null);
-      setFormData({ name: '', slug: '', description: '', displayOrder: 1, isActive: true, seoTitle: '', seoDescription: '', seoKeywords: '', availableWoodTypes: '', image: '' });
+      setFormData({ name: '', slug: '', description: '', displayOrder: 1, isActive: true, seoTitle: '', seoDescription: '', seoKeywords: '', availableWoodTypes: '', image: null });
       setImagePreview(null);
     }
     setIsFormOpen(true);
@@ -104,16 +104,16 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
     setFormLoading(true);
     setErrorMsg('');
     try {
-      let imageUrl = formData.image;
+      let imageAsset = formData.image; // CloudinaryAsset object or null
 
       // Upload image if a new file was selected
       if (imageFile) {
-        imageUrl = await uploadImage(imageFile);
+        imageAsset = await uploadImage(imageFile); // returns full asset object
       }
 
       const payload = {
         ...formData,
-        image: imageUrl,
+        image: imageAsset || undefined, // pass CloudinaryAsset object or omit
         displayOrder: Number(formData.displayOrder),
         seoKeywords: formData.seoKeywords.split(',').map(s => s.trim()).filter(Boolean),
         availableWoodTypes: formData.availableWoodTypes.split(',').map(s => s.trim()).filter(Boolean),
@@ -239,8 +239,13 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
       throw new Error(result.message || 'Failed to upload image');
     }
 
-    console.log('Image uploaded successfully:', result.data.urls[0]);
-    return result.data.urls[0]; // Return the first URL
+    // Backend returns: { success: true, data: [{ url, public_id, width, height, format, resource_type, bytes, created_at }] }
+    const asset = Array.isArray(result.data) ? result.data[0] : result.data;
+    if (!asset || !asset.url) {
+      throw new Error('Upload succeeded but no asset URL was returned');
+    }
+    console.log('Image uploaded successfully:', asset.url);
+    return asset; // Return the full CloudinaryAsset object
   };
 
   // ─── Render ───────────────────────────────────────────────────────────────
@@ -492,7 +497,7 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
                           onClick={() => {
                             setImagePreview(null);
                             setImageFile(null);
-                            setFormData(prev => ({ ...prev, image: '' }));
+                            setFormData(prev => ({ ...prev, image: null }));
                           }}
                           className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg transition-colors"
                           title="Remove image"

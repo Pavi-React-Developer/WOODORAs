@@ -27,8 +27,8 @@ export default function ProductCard({ product, onNavigate, onAddToCart, onAddToW
     else onAddToWishlist?.(p);
   };
 
-  let imgSrc = product.images?.find(img => img.isThumbnail)?.url || product.images?.[0]?.url || (typeof product.images?.[0] === 'string' ? product.images[0] : null) || product.image || null;
-  if (imgSrc && imgSrc.startsWith('/uploads')) imgSrc = `http://localhost:5000${imgSrc}`;
+  let imgSrc = product.images?.find(img => img.isThumbnail)?.url || product.images?.[0]?.url || (typeof product.images?.[0] === 'string' ? product.images[0] : null) || (typeof product.image === 'object' ? product.image?.url : product.image) || null;
+  if (imgSrc && typeof imgSrc === 'string' && imgSrc.startsWith('/uploads')) imgSrc = `http://localhost:5000${imgSrc}`;
   
   const pricing = getPricingInfo(product);
 

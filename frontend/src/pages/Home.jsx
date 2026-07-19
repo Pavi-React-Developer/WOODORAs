@@ -320,8 +320,8 @@ function ProductGridSection({ grid, onNavigate, onAddToCart, onAddToWishlist, us
                     >
                       <div className="aspect-square bg-[#F7F3EE] p-4 relative overflow-hidden">
                         {(() => {
-                          let imgSrc = p.images?.find(img => img.isThumbnail)?.url || p.images?.[0]?.url || (typeof p.images?.[0] === 'string' ? p.images[0] : null) || p.image || null;
-                          if (imgSrc && imgSrc.startsWith('/uploads')) imgSrc = `http://localhost:5000${imgSrc}`;
+                          let imgSrc = p.images?.find(img => img.isThumbnail)?.url || p.images?.[0]?.url || (typeof p.images?.[0] === 'string' ? p.images[0] : null) || (typeof p.image === 'object' ? p.image?.url : p.image) || null;
+                          if (imgSrc && typeof imgSrc === 'string' && imgSrc.startsWith('/uploads')) imgSrc = `http://localhost:5000${imgSrc}`;
                           
                           return imgSrc ? (
                             <motion.img
@@ -768,7 +768,7 @@ export default function Home({ user, onNavigate, onAddToCart, onAddToWishlist })
                   >
                     <div className="aspect-square w-full overflow-hidden">
                       <img
-                        src={cat.image || cat.imageUrl}
+                        src={(typeof cat.image === 'object' ? cat.image?.url : cat.image) || (typeof cat.imageUrl === 'object' ? cat.imageUrl?.url : cat.imageUrl)}
                         alt={cat.title || cat.name}
                         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                         onError={e => { e.target.src = '/wood-placeholder.png'; }}
@@ -859,8 +859,8 @@ export default function Home({ user, onNavigate, onAddToCart, onAddToWishlist })
                         {/* Image area */}
                         <div className="aspect-square relative overflow-hidden">
                           {(() => {
-                            let imgSrc = p.images?.find(img => img.isThumbnail)?.url || p.images?.[0]?.url || (typeof p.images?.[0] === 'string' ? p.images[0] : null) || p.image || '/wooden_train_set.png';
-                            if (imgSrc && imgSrc.startsWith('/uploads')) imgSrc = `http://localhost:5000${imgSrc}`;
+                            let imgSrc = p.images?.find(img => img.isThumbnail)?.url || p.images?.[0]?.url || (typeof p.images?.[0] === 'string' ? p.images[0] : null) || (typeof p.image === 'object' ? p.image?.url : p.image) || null;
+                            if (imgSrc && typeof imgSrc === 'string' && imgSrc.startsWith('/uploads')) imgSrc = `http://localhost:5000${imgSrc}`;
                             return (
                               <motion.img
                                 src={imgSrc}

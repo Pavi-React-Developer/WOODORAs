@@ -281,8 +281,8 @@ export default function ProductGridAdmin() {
               <div className="flex gap-1">
                 {(item.products || []).slice(0,4).map((p, i) => {
                   const populated = typeof p === 'object' ? p : allProducts.find(x => x._id === p);
-                  let src = populated?.images?.[0]?.url || populated?.images?.[0] || populated?.image || null;
-                  if (src && src.startsWith('/uploads')) {
+                  let src = populated?.images?.[0]?.url || populated?.images?.[0] || (typeof populated?.image === 'object' ? populated?.image?.url : populated?.image) || null;
+                  if (src && typeof src === 'string' && src.startsWith('/uploads')) {
                     src = `http://localhost:5000${src}`;
                   }
                   if (!src) return <div key={i} className="w-10 h-10 rounded-lg border border-[#E6DFD4] bg-[#F7F3EE]" />;

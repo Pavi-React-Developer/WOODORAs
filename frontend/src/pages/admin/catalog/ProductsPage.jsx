@@ -258,12 +258,15 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                         images: prod.images || [],
                         variants: (prod.variants || []).map(v => ({
                             ...v,
-                            images: Array.isArray(v.images) ? v.images.map((imgStr, idx) => ({
-                                url: imgStr,
-                                altText: `Variant Image ${idx + 1}`,
-                                isThumbnail: idx === 0,
-                                displayOrder: idx + 1
-                            })) : []
+                            images: Array.isArray(v.images) ? v.images.map((img, idx) => {
+                                const obj = typeof img === 'string' ? { url: img } : { ...img };
+                                return {
+                                    ...obj,
+                                    altText: obj.altText || `Variant Image ${idx + 1}`,
+                                    isThumbnail: obj.isThumbnail !== undefined ? obj.isThumbnail : idx === 0,
+                                    displayOrder: obj.displayOrder !== undefined ? obj.displayOrder : idx + 1
+                                };
+                            }) : []
                         })),
                         attributeValues: attrVals,
                     });

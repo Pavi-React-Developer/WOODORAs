@@ -37,6 +37,7 @@ const createCategory = async (req, res) => {
         const category = await categoryService.createCategory(req.body, getAuditContext(req));
         res.status(201).json({ success: true, message: 'Category created successfully', category });
     } catch (err) {
+        console.error('[createCategory] Error:', err.message, '| Body:', JSON.stringify(req.body));
         res.status(400).json({ success: false, message: err.message });
     }
 };

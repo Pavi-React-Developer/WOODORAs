@@ -113,7 +113,7 @@ const buildProductPricing = (product = {}, variants = [], images = [], inventory
         compareAtPrice = (compareAtPrice > 0 ? compareAtPrice : normalizedBase);
 
         if (effectiveImages.length === 0 && Array.isArray(primary.images) && primary.images.length > 0) {
-            effectiveImages = primary.images.map((url, idx) => ({ url, displayOrder: idx + 1 }));
+            effectiveImages = primary.images.map((img, idx) => ({ url: typeof img === 'object' ? img.url || img : img, displayOrder: idx + 1 }));
         }
     } else {
         compareAtPrice = (compareAtPrice > 0 ? compareAtPrice : basePrice);
@@ -335,7 +335,7 @@ const getProductById = async (id) => {
         const primary = variants.find(v => v.isPrimary) || variants[0];
         effectivePrice = primary.basePrice || primary.price || product.price;
         if (effectiveImages.length === 0 && primary.images && primary.images.length > 0) {
-            effectiveImages = primary.images.map((url, idx) => ({ url, displayOrder: idx + 1 }));
+            effectiveImages = primary.images.map((img, idx) => ({ url: typeof img === 'object' ? img.url || img : img, displayOrder: idx + 1 }));
         }
     }
 
@@ -516,7 +516,7 @@ const createProduct = async (data, auditContext) => {
                 width: v.width === '' || v.width === undefined ? undefined : toFiniteNumber(v.width),
                 height: v.height === '' || v.height === undefined ? undefined : toFiniteNumber(v.height),
                 lowStockAlert: v.lowStockAlert === '' || v.lowStockAlert === undefined ? 5 : toFiniteNumber(v.lowStockAlert),
-                images: v.images ? v.images.map(img => img.url || img) : [],
+                images: v.images || [],
                 isActive: v.isActive !== undefined ? v.isActive : true,
                 isPrimary: v.isPrimary || false,
                 variantCombination: v.variantCombination,
@@ -654,7 +654,7 @@ const updateProduct = async (id, data, auditContext) => {
                 width: v.width === '' || v.width === undefined ? undefined : toFiniteNumber(v.width),
                 height: v.height === '' || v.height === undefined ? undefined : toFiniteNumber(v.height),
                 lowStockAlert: v.lowStockAlert === '' || v.lowStockAlert === undefined ? 5 : toFiniteNumber(v.lowStockAlert),
-                images: v.images ? v.images.map(img => img.url || img) : [],
+                images: v.images || [],
                 isActive: v.isActive !== undefined ? v.isActive : true,
                 isPrimary: v.isPrimary || false,
                 variantCombination: v.variantCombination,
