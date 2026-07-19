@@ -97,25 +97,17 @@ export default function Header({
     <header className="sticky top-0 z-50 border-b border-[#E9DED3] bg-white/95 shadow-[0_6px_28px_rgba(62,39,35,0.06)] backdrop-blur font-sans">
       <div className="mx-auto flex min-h-[88px] max-w-[1500px] items-center justify-between gap-2 sm:gap-4 px-3 sm:px-6 lg:px-10">
         <div className="flex items-center gap-2 sm:gap-4">
-          <button 
-            type="button" 
-            className="xl:hidden text-[#4A3326] hover:text-[#9C755A]"
-            onClick={() => setIsMobileMenuOpen(true)}
-          >
-            <Menu className="h-6 w-6" strokeWidth={1.5} />
-          </button>
           
           <button
             type="button"
             onClick={() => onNavigate('/')}
-            className="shrink-0 flex flex-col items-start"
+            className="shrink-0 flex items-center"
           >
-            <span className="font-['Poppins'] text-[24px] sm:text-[40px] font-extrabold tracking-tight text-[#4A3326] leading-none">
-              Woodora
-            </span>
-            <span className="text-[10px] sm:text-[11px] font-medium tracking-wide text-[#6C5B52] mt-1 hidden sm:block">
-              Crafted with Love, Made for Play
-            </span>
+            <img 
+              src="/woodora-logo.png" 
+              alt="Woodora Logo" 
+              className="h-20 sm:h-24 md:h-28 w-auto object-contain scale-110 origin-left" 
+            />
           </button>
         </div>
 
@@ -307,7 +299,7 @@ export default function Header({
         <div className="flex shrink-0 items-center gap-3 sm:gap-6 text-[#4A3326] relative z-20">
           <button 
             type="button" 
-            className={`transition hover:text-[#9C755A] ${isSearchOpen ? 'hidden md:block opacity-0 pointer-events-none' : 'opacity-100'}`}
+            className={`transition hover:text-[#9C755A] hidden sm:block ${isSearchOpen ? 'md:block opacity-0 pointer-events-none' : 'opacity-100'}`}
             aria-label="Search"
             onClick={() => setIsSearchOpen(true)}
           >
@@ -371,6 +363,16 @@ export default function Header({
                 {cartCount}
               </span>
             )}
+          </button>
+
+          {/* Mobile Menu Toggle */}
+          <button
+            type="button"
+            className="xl:hidden transition hover:text-[#9C755A] ml-1 sm:ml-2"
+            aria-label="Open menu"
+            onClick={() => setIsMobileMenuOpen(true)}
+          >
+            <Menu className="h-[24px] w-[24px] sm:h-[26px] sm:w-[26px]" strokeWidth={1.5} />
           </button>
         </div>
       </div>

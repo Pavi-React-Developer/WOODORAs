@@ -154,7 +154,6 @@ function DualBannerSection({ bannerData, onNavigate }) {
 
   const leftCtaLabel = bannerData.leftButtonText || 'Explore Here';
   const rightCtaLabel = bannerData.rightButtonText || 'Explore Here';
-  const containerHeight = { height: '70vh', minHeight: 400, maxHeight: 600 };
 
   return (
     <section className="py-16 bg-[#FDF9F1]">
@@ -164,10 +163,10 @@ function DualBannerSection({ bannerData, onNavigate }) {
             className="text-center text-3xl font-serif text-brand-dark mb-12 tracking-wide">{bannerData.title}</motion.h2>
         )}
         <div className="relative">
-          <div className="grid grid-cols-2 gap-4 md:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
 
             {/* LEFT CONTAINER */}
-            <div className="overflow-hidden rounded-2xl shadow-sm relative group" style={containerHeight}>
+            <div className="overflow-hidden rounded-2xl shadow-sm relative group h-[30vh] md:h-[70vh] min-h-[220px] md:min-h-[400px] max-h-[600px]">
               <Swiper
                 modules={[Autoplay, Pagination, Controller, EffectFade, EffectCreative]}
                 effect={currentEffect}
@@ -179,7 +178,6 @@ function DualBannerSection({ bannerData, onNavigate }) {
                 direction={swiperDirection}
                 pagination={{ clickable: true, el: '.dual-banner-pagination' }}
                 className="w-full h-full"
-                style={containerHeight}
               >
                 {bannerData.leftImages.map((img, i) => (
                   <SwiperSlide key={i}>
@@ -200,7 +198,7 @@ function DualBannerSection({ bannerData, onNavigate }) {
             </div>
 
             {/* RIGHT CONTAINER */}
-            <div className="overflow-hidden rounded-2xl shadow-sm relative group" style={containerHeight}>
+            <div className="overflow-hidden rounded-2xl shadow-sm relative group h-[30vh] md:h-[70vh] min-h-[220px] md:min-h-[400px] max-h-[600px]">
               <Swiper
                 modules={[Controller, EffectFade, EffectCreative]}
                 effect={currentEffect}
@@ -211,7 +209,6 @@ function DualBannerSection({ bannerData, onNavigate }) {
                 direction={swiperDirection}
                 allowTouchMove={false}
                 className="w-full h-full"
-                style={containerHeight}
               >
                 {bannerData.rightImages?.map((img, i) => (
                   <SwiperSlide key={i}>
@@ -233,10 +230,17 @@ function DualBannerSection({ bannerData, onNavigate }) {
 
           </div>
 
-          {/* Center Pagination Dots */}
-          <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 flex flex-col items-center justify-center z-30 pointer-events-none">
+          {/* Center Pagination Dots (Desktop) */}
+          <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center justify-center z-30 pointer-events-none">
             <div
               className="dual-banner-pagination flex flex-col justify-center gap-3 pointer-events-auto"
+              style={{ position: 'relative', top: 'auto', bottom: 'auto', left: 'auto', right: 'auto', transform: 'none', width: 'auto', height: 'auto' }}
+            />
+          </div>
+          {/* Bottom Pagination Dots (Mobile) */}
+          <div className="absolute bottom-4 left-0 right-0 flex md:hidden items-center justify-center z-30 pointer-events-none">
+            <div
+              className="dual-banner-pagination flex justify-center gap-3 pointer-events-auto"
               style={{ position: 'relative', top: 'auto', bottom: 'auto', left: 'auto', right: 'auto', transform: 'none', width: 'auto', height: 'auto' }}
             />
           </div>
@@ -536,7 +540,7 @@ export default function Home({ user, onNavigate, onAddToCart, onAddToWishlist })
       cmsService.getThirdBanners(),
       cmsService.getProductGrids(),
       cmsService.getFooter(),
-      productV2API.getAll({ limit: 4, isActive: 'true' }),
+      productV2API.getAll({ limit: 10, isActive: 'true' }),
       reviewService.getFeaturedReviews(),
     ]).then(([heroRes, categoriesRes, thirdRes, gridRes, footerRes, prodRes, reviewRes]) => {
       // Hero banners — filter by date scheduling and status
@@ -625,7 +629,7 @@ export default function Home({ user, onNavigate, onAddToCart, onAddToWishlist })
     <div className="bg-[#FDF9F1] font-sans text-brand-dark">
 
       {/* ── HERO BANNER SLIDER ── */}
-      <section className="relative w-full h-[90vh] min-h-150 overflow-hidden bg-brand-dark group">
+      <section className="relative w-full h-[50vh] md:h-[70vh] lg:h-[90vh] min-h-[350px] md:min-h-[450px] lg:min-h-150 overflow-hidden bg-brand-dark group">
         <Swiper
           modules={[Autoplay, Pagination, EffectFade, EffectCreative, Navigation]}
           effect="fade"
@@ -741,12 +745,12 @@ export default function Home({ user, onNavigate, onAddToCart, onAddToWishlist })
               modules={[Navigation]}
               navigation={{ nextEl: '.cat-next', prevEl: '.cat-prev' }}
               spaceBetween={24}
-              slidesPerView={1.2}
+              slidesPerView={1}
               breakpoints={{
                 480: { slidesPerView: 2 },
                 768: { slidesPerView: 3 },
                 1024: { slidesPerView: 4 },
-                1280: { slidesPerView: 4.5 },
+                1280: { slidesPerView: 4 },
               }}
             >
               {shopCategories.map((cat, i) => (
@@ -764,7 +768,7 @@ export default function Home({ user, onNavigate, onAddToCart, onAddToWishlist })
                         onNavigate(`/shop`);
                       }
                     }}
-                    className="group cursor-pointer flex flex-col rounded-[24px] border border-[#E9DED3] bg-white overflow-hidden shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
+                    className="group cursor-pointer flex flex-col rounded-[24px] border border-[#E9DED3] bg-white overflow-hidden shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md max-w-[260px] mx-auto sm:max-w-none"
                   >
                     <div className="aspect-square w-full overflow-hidden">
                       <img
@@ -822,7 +826,7 @@ export default function Home({ user, onNavigate, onAddToCart, onAddToWishlist })
 
             {/* Slider - slides in from right with stagger */}
             <motion.div
-              className="relative group px-2 md:px-10 mt-4"
+              className="relative group px-10 md:px-14 mt-4"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: false, amount: 0.15 }}
@@ -835,7 +839,7 @@ export default function Home({ user, onNavigate, onAddToCart, onAddToWishlist })
                 modules={[Navigation]}
                 navigation={{ nextEl: '.bs-next', prevEl: '.bs-prev' }}
                 spaceBetween={28}
-                slidesPerView={1.2}
+                slidesPerView={1}
                 breakpoints={{
                   480: { slidesPerView: 2 },
                   768: { slidesPerView: 2.5 },
@@ -853,7 +857,7 @@ export default function Home({ user, onNavigate, onAddToCart, onAddToWishlist })
                           visible: { opacity: 1, x: 0, transition: { duration: 0.55, ease: 'easeOut' } }
                         }}
                         whileHover={{ y: -4 }}
-                        className="group relative cursor-pointer bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md border border-[#F0E6D8] transition-shadow duration-300 h-full flex flex-col"
+                        className="group relative cursor-pointer bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md border border-[#F0E6D8] transition-shadow duration-300 h-full flex flex-col max-w-[280px] mx-auto sm:max-w-none"
                         onClick={() => onNavigate(`/product/${p._id}`)}
                       >
                         {/* Image area */}
@@ -902,10 +906,10 @@ export default function Home({ user, onNavigate, onAddToCart, onAddToWishlist })
                 }
               </Swiper>
               {/* Slider Arrows */}
-              <button type="button" className="bs-prev absolute top-[40%] left-0 z-10 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-white hover:bg-[#F9F9F9] text-[#333333] border border-[#E6DFD4] rounded-full transition-colors shadow-sm disabled:opacity-50 hidden md:flex">
+              <button type="button" className="bs-prev absolute top-1/2 left-0 z-10 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-[#767676] hover:bg-[#555555] text-white rounded-full transition-colors shadow-md disabled:opacity-50">
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <button type="button" className="bs-next absolute top-[40%] right-0 z-10 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-white hover:bg-[#F9F9F9] text-[#333333] border border-[#E6DFD4] rounded-full transition-colors shadow-sm disabled:opacity-50 hidden md:flex">
+              <button type="button" className="bs-next absolute top-1/2 right-0 z-10 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-[#767676] hover:bg-[#555555] text-white rounded-full transition-colors shadow-md disabled:opacity-50">
                 <ChevronRight className="w-5 h-5" />
               </button>
             </motion.div>
@@ -914,7 +918,7 @@ export default function Home({ user, onNavigate, onAddToCart, onAddToWishlist })
             {/* View All Button */}
             <div className="flex justify-center mt-6 mb-12">
               <button 
-                onClick={() => onNavigate('/')}
+                onClick={() => onNavigate('/shop')}
                 className="bg-[#8B5E3C] text-white px-8 py-3 rounded-full text-sm font-medium hover:bg-[#4A5441] transition-colors inline-flex items-center gap-2"
               >
                 View All Products <span>→</span>
@@ -998,7 +1002,7 @@ export default function Home({ user, onNavigate, onAddToCart, onAddToWishlist })
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {featuredReviews.map((t, i) => (
                 <motion.div key={i} variants={scaleUp} whileHover={{ scale: 1.02 }}
-                  className="bg-white border border-gray-100 p-8 flex flex-col justify-between rounded-2xl shadow-md hover:shadow-lg transition-all duration-300">
+                  className="bg-white border border-gray-100 p-8 flex flex-col justify-between rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 max-w-[320px] mx-auto sm:max-w-none">
                   <div>
                     <div className="mb-4"><Stars rating={t.rating || 5} /></div>
                     <p className="text-sm italic text-brand-dark leading-relaxed">"{t.description || t.title || t.quote}"</p>

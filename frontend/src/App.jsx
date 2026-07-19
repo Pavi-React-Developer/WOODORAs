@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -20,6 +20,14 @@ import { authService } from './api/authService';
 import CartOffcanvas from './components/CartOffcanvas';
 import WishlistOffcanvas from './components/WishlistOffcanvas';
 import useCartStore from './store/useCartStore';
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
 
 // Error Boundary to prevent blank page on runtime errors
 class ErrorBoundary extends React.Component {
@@ -261,6 +269,8 @@ export default function App() {
         onRemove={handleRemoveFromWishlist}
         onMoveToCart={handleMoveToCart}
       />
+
+      <ScrollToTop />
 
       {/* Routes */}
       <Routes>

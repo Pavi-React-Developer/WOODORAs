@@ -45,12 +45,12 @@ export default function WishlistOffcanvas({ isOpen, onClose, wishlistItems, onRe
     <>
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 transition-opacity"
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] transition-opacity"
         onClick={onClose}
       />
       
       {/* Offcanvas Panel */}
-      <div className="fixed inset-y-0 right-0 w-full max-w-sm bg-white shadow-2xl z-50 flex flex-col transform transition-transform duration-300">
+      <div className="fixed inset-y-0 right-0 w-full max-w-sm bg-white shadow-2xl z-[60] flex flex-col transform transition-transform duration-300">
         
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-brand-medium/20">

@@ -627,7 +627,7 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
           <div className="grid gap-10 lg:grid-cols-[1.35fr_0.9fr] items-start">
 
             {/* LEFT COLUMN: IMAGES */}
-            <div className="space-y-6">
+            <div className="space-y-6 min-w-0 w-full">
               <div className="overflow-hidden rounded-[2rem] bg-white shadow-sm flex items-center justify-center">
                 {selectedImage && selectedImage.trim() !== '' ? (
                   <img
@@ -641,7 +641,7 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                 )}
               </div>
 
-              <div className="flex gap-4">
+              <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 scrollbar-hide snap-x">
                 {images.slice(0, 4).map((src, index) => {
                   const isSelected = selectedImage === src;
                   return (
@@ -649,7 +649,7 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                       key={`${src}-${index}`}
                       type="button"
                       onClick={() => setSelectedImage(src)}
-                      className={`overflow-hidden rounded-[1.5rem] border-[3px] transition shrink-0 w-24 h-24 sm:w-32 sm:h-32 bg-white ${isSelected ? 'border-slate-800' : 'border-transparent hover:border-slate-300 shadow-sm'
+                      className={`overflow-hidden rounded-[1.5rem] border-[3px] transition shrink-0 w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 bg-white snap-start ${isSelected ? 'border-slate-800' : 'border-transparent hover:border-slate-300 shadow-sm'
                         }`}
                     >
                       <img
@@ -665,7 +665,7 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
             </div>
 
             {/* RIGHT COLUMN: CONTENT */}
-            <div className="rounded-[2.5rem] bg-white p-8 md:p-10 shadow-sm border border-slate-100 relative h-fit">
+            <div className="rounded-[2.5rem] bg-white p-6 sm:p-8 md:p-10 shadow-sm border border-slate-100 relative h-fit min-w-0 w-full">
 
               {/* Wishlist and Share absolute top right */}
               <div className="absolute top-10 right-10 flex gap-3">
