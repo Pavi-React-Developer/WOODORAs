@@ -87,11 +87,11 @@ export default function CartPage({ onNavigate }) {
                       <Minus className="w-4 h-4" />
                     </button>
                     <span className="w-10 text-center font-bold text-gray-800">{item.qty}</span>
-                    <button
-                      onClick={() => handleQtyChange(item.product, item.qty + 1, item.variant, item.maxStock)}
-                      className="w-8 h-8 flex items-center justify-center bg-white rounded-lg text-gray-600 hover:text-[#8B5E3C] shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      disabled={item.maxStock !== undefined && item.qty >= item.maxStock}
-                    >
+                      <button
+                        onClick={() => handleQtyChange(item.product, item.qty + 1, item.variant, item.maxStock)}
+                        className="w-8 h-8 flex items-center justify-center bg-white rounded-lg text-gray-600 hover:text-[#8B5E3C] shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        disabled={item.maxStock !== undefined && item.qty >= item.maxStock}
+                      >
                       <Plus className="w-4 h-4" />
                     </button>
                   </div>

@@ -2,6 +2,11 @@ const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 const ProductVariant = require('../models/ProductVariant');
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Normalize a cart item from request body into a consistent shape.
+ */
 const normalizeItem = (item = {}) => ({
   product: item.product,
   variant: item.variant || null,
@@ -14,6 +19,9 @@ const normalizeItem = (item = {}) => ({
   variantOptions: item.variantOptions || null,
 });
 
+/**
+ * Get or create the cart document for a given user.
+ */
 const getOrCreateCart = async (userId) => {
   let cart = await Cart.findOne({ user: userId });
   if (!cart) {
@@ -22,9 +30,22 @@ const getOrCreateCart = async (userId) => {
   return cart;
 };
 
-// @desc    Get logged-in user's cart (with live prices from MongoDB)
-// @route   GET /api/cart
-// @access  Private
+/**
+ * Calculate live effective stock for a ProductVariant document.
+ */
+const getLiveStock = (variantDoc) => {
+  const total = variantDoc.inventory ?? variantDoc.currentStock ?? 0;
+  const reserved = variantDoc.reserveStock ?? 0;
+  return Math.max(0, total - reserved);
+};
+
+// ─── Controllers ──────────────────────────────────────────────────────────────
+
+/**
+ * @desc    Get logged-in user's cart (enriched with live prices)
+ * @route   GET /api/cart
+ * @access  Private
+ */
 const getCart = async (req, res) => {
   try {
     const cart = await getOrCreateCart(req.user._id);
@@ -35,23 +56,20 @@ const getCart = async (req, res) => {
         try {
           const obj = item.toObject ? item.toObject() : { ...item };
           if (item.variant) {
-            // Has a variant — get live variant price
             const variant = await ProductVariant.findById(item.variant).lean();
             if (variant) {
-              obj.price = variant.basePrice ?? variant.price ?? item.price;
-              obj.name = obj.name; // Keep existing name
+              obj.price = variant.discountPrice ?? variant.basePrice ?? item.price;
+              obj.maxStock = getLiveStock(variant);
             }
-          } else {
-            // Base product — get live product price and name
+          } else if (item.product) {
             const product = await Product.findById(item.product).lean();
             if (product) {
-              obj.price = product.price ?? item.price;
+              obj.price = product.discountPrice ?? product.price ?? item.price;
               obj.name = product.name ?? item.name;
             }
           }
           return obj;
-        } catch (e) {
-          // If enrichment fails, return the original item unchanged
+        } catch {
           return item.toObject ? item.toObject() : { ...item };
         }
       })
@@ -63,15 +81,55 @@ const getCart = async (req, res) => {
   }
 };
 
-// @desc    Replace logged-in user's cart
-// @route   PUT /api/cart
-// @access  Private
+/**
+ * @desc    Replace logged-in user's entire cart (used for sync from frontend)
+ * @route   PUT /api/cart
+ * @access  Private
+ */
 const replaceCart = async (req, res) => {
   try {
-    const items = Array.isArray(req.body?.items) ? req.body.items.map(normalizeItem).filter(item => item.product && item.name) : [];
+    const rawItems = Array.isArray(req.body?.items) ? req.body.items : [];
+    const validItems = [];
+
+    // Strictly validate every item against live database stock
+    for (const item of rawItems) {
+      const normalized = normalizeItem(item);
+      if (!normalized.product || !normalized.name) continue;
+
+      let liveMaxStock = 0;
+      let isValid = false;
+
+      if (normalized.variant) {
+        const variantDoc = await ProductVariant.findById(normalized.variant).lean();
+        if (variantDoc && variantDoc.isActive) {
+          liveMaxStock = getLiveStock(variantDoc);
+          isValid = true;
+        }
+      } else {
+        const productDoc = await Product.findById(normalized.product).lean();
+        if (productDoc) {
+          // If the product ACTUALLY expects variants, but the item has no variant, REJECT IT.
+          const variantCount = await ProductVariant.countDocuments({ product: productDoc._id });
+          if (variantCount > 0) {
+            isValid = false; // Corrupt item: product has variants but item didn't specify one
+          } else {
+            liveMaxStock = normalized.maxStock;
+            isValid = true;
+          }
+        }
+      }
+
+      if (isValid) {
+        // Clamp quantity to max stock to correct old illegal amounts
+        normalized.maxStock = liveMaxStock;
+        normalized.qty = Math.min(normalized.qty, liveMaxStock > 0 ? liveMaxStock : normalized.qty);
+        validItems.push(normalized);
+      }
+    }
+
     const cart = await Cart.findOneAndUpdate(
       { user: req.user._id },
-      { user: req.user._id, items },
+      { user: req.user._id, items: validItems },
       { returnDocument: 'after', upsert: true, runValidators: true }
     );
     res.json(cart);
@@ -80,25 +138,65 @@ const replaceCart = async (req, res) => {
   }
 };
 
-// @desc    Add item to cart
-// @route   POST /api/cart/items
-// @access  Private
+/**
+ * @desc    Add single item to cart with live stock validation
+ * @route   POST /api/cart/items
+ * @access  Private
+ */
 const addCartItem = async (req, res) => {
   try {
+    console.log('[API addCartItem] Incoming body:', req.body);
     const incoming = normalizeItem(req.body);
+    console.log('[API addCartItem] Normalized item:', incoming);
     if (!incoming.product || !incoming.name) {
-      return res.status(400).json({ message: 'Product and name are required' });
+      return res.status(400).json({ success: false, message: 'Product and name are required' });
     }
 
+    // ── Live stock validation ─────────────────────────────────────────────
+    let liveMaxStock = 999;
+
+    if (incoming.variant) {
+      const variantDoc = await ProductVariant.findById(incoming.variant).lean();
+      if (!variantDoc) {
+        return res.status(404).json({ success: false, message: 'Variant not found' });
+      }
+      if (!variantDoc.isActive) {
+        return res.status(400).json({ success: false, message: 'Variant is no longer available' });
+      }
+      liveMaxStock = getLiveStock(variantDoc);
+    } else {
+      const productDoc = await Product.findById(incoming.product).lean();
+      if (!productDoc) {
+        return res.status(404).json({ success: false, message: 'Product not found' });
+      }
+      liveMaxStock = incoming.maxStock; // Use frontend maxStock for non-variant products
+    }
+
+    // ── Get current cart and find existing item ───────────────────────────
     const cart = await getOrCreateCart(req.user._id);
     const existingItem = cart.items.find(
-      item => item.product.toString() === incoming.product.toString() && String(item.variant || '') === String(incoming.variant || '')
+      (item) =>
+        item.product.toString() === String(incoming.product) &&
+        String(item.variant || '') === String(incoming.variant || '')
     );
 
+    const currentQty = existingItem ? existingItem.qty : 0;
+    const totalDesiredQty = currentQty + incoming.qty;
+
+    if (totalDesiredQty > liveMaxStock) {
+      return res.status(400).json({
+        success: false,
+        message: 'OUT_OF_STOCK',
+        availableStock: liveMaxStock,
+        currentCartQty: currentQty,
+      });
+    }
+
+    // ── Apply update ──────────────────────────────────────────────────────
     if (existingItem) {
-      existingItem.qty += incoming.qty;
+      existingItem.qty = totalDesiredQty;
     } else {
-      cart.items.push(incoming);
+      cart.items.push({ ...incoming, maxStock: liveMaxStock });
     }
 
     await cart.save();
@@ -108,23 +206,47 @@ const addCartItem = async (req, res) => {
   }
 };
 
-// @desc    Update a cart item quantity
-// @route   PUT /api/cart/items/:productId
-// @access  Private
+/**
+ * @desc    Update a cart item quantity with live stock validation
+ * @route   PUT /api/cart/items/:productId
+ * @access  Private
+ */
 const updateCartItem = async (req, res) => {
   try {
     const cart = await getOrCreateCart(req.user._id);
-    const variant = req.body?.variant || null;
+    const variantId = req.body?.variant || null;
     const qty = Math.max(1, Number(req.body?.qty) || 1);
+
     const item = cart.items.find(
-      cartItem => cartItem.product.toString() === req.params.productId && String(cartItem.variant || '') === String(variant || '')
+      (cartItem) =>
+        cartItem.product.toString() === req.params.productId &&
+        String(cartItem.variant || '') === String(variantId || '')
     );
 
     if (!item) {
-      return res.status(404).json({ message: 'Cart item not found' });
+      return res.status(404).json({ success: false, message: 'Cart item not found' });
+    }
+
+    // ── Live stock validation ─────────────────────────────────────────────
+    let liveMaxStock = item.maxStock || 999;
+
+    if (variantId) {
+      const variantDoc = await ProductVariant.findById(variantId).lean();
+      if (variantDoc) {
+        liveMaxStock = getLiveStock(variantDoc);
+      }
+    }
+
+    if (qty > liveMaxStock) {
+      return res.status(400).json({
+        success: false,
+        message: 'OUT_OF_STOCK',
+        availableStock: liveMaxStock,
+      });
     }
 
     item.qty = qty;
+    item.maxStock = liveMaxStock; // Keep maxStock fresh
     await cart.save();
     res.json(cart);
   } catch (error) {
@@ -132,16 +254,24 @@ const updateCartItem = async (req, res) => {
   }
 };
 
-// @desc    Remove cart item
-// @route   DELETE /api/cart/items/:productId
-// @access  Private
+/**
+ * @desc    Remove a specific cart item
+ * @route   DELETE /api/cart/items/:productId
+ * @access  Private
+ */
 const removeCartItem = async (req, res) => {
   try {
     const cart = await getOrCreateCart(req.user._id);
-    const variant = req.query?.variant || null;
+    const variantId = req.query?.variant || null;
+
     cart.items = cart.items.filter(
-      item => !(item.product.toString() === req.params.productId && String(item.variant || '') === String(variant || ''))
+      (item) =>
+        !(
+          item.product.toString() === req.params.productId &&
+          String(item.variant || '') === String(variantId || '')
+        )
     );
+
     await cart.save();
     res.json(cart);
   } catch (error) {
@@ -149,9 +279,11 @@ const removeCartItem = async (req, res) => {
   }
 };
 
-// @desc    Clear cart
-// @route   DELETE /api/cart
-// @access  Private
+/**
+ * @desc    Clear entire cart
+ * @route   DELETE /api/cart
+ * @access  Private
+ */
 const clearCart = async (req, res) => {
   try {
     const cart = await getOrCreateCart(req.user._id);

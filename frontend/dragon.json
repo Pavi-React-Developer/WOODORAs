@@ -1,0 +1,289 @@
+{
+  "success": true,
+  "product": {
+    "dimensions": {
+      "length": 0,
+      "width": 0,
+      "height": 0
+    },
+    "_id": "6a5d9dad711099e370f40884",
+    "name": "Dragon",
+    "slug": "dragon",
+    "description": "qwertyui",
+    "category": {
+      "_id": "6a5d9cd6711099e370f40875",
+      "name": "dragon",
+      "slug": "dragon"
+    },
+    "price": 400,
+    "compareAtPrice": 400,
+    "subCategory": "6a5d9d03711099e370f40879",
+    "sku": "DW001",
+    "ageGroup": [],
+    "toyType": [],
+    "skillDevelopment": [],
+    "theme": [],
+    "seoTitle": "",
+    "seoDescription": "",
+    "isActive": true,
+    "barcode": "",
+    "shortDescription": "",
+    "costPrice": 0,
+    "taxPercent": 0,
+    "hsnCode": "",
+    "shippingWeight": 0,
+    "shippingClass": "",
+    "minOrderQty": 1,
+    "lowStockAlert": 5,
+    "isFeatured": false,
+    "isBestSeller": false,
+    "isNewArrival": false,
+    "isRecommended": false,
+    "additionalInfo": [],
+    "metaKeywords": [],
+    "tags": [],
+    "relatedProducts": [],
+    "crossSellProducts": [],
+    "upSellProducts": [],
+    "isArchived": false,
+    "isDeleted": false,
+    "createdBy": "6a5af6ef5f4320a18f2fe4e0",
+    "images": [
+      {
+        "_id": "6a5da4c533cfe18be1851c04",
+        "product": "6a5d9dad711099e370f40884",
+        "url": "https://res.cloudinary.com/wcu2rrfb/image/upload/v1784520074/products/images/c30af9nfuwrvc2ezrnhp.jpg",
+        "altText": "",
+        "displayOrder": 1,
+        "isThumbnail": false,
+        "resource_type": "image",
+        "__v": 0,
+        "createdAt": "2026-07-20T04:32:05.696Z",
+        "updatedAt": "2026-07-20T04:32:05.696Z"
+      },
+      {
+        "_id": "6a5da4c533cfe18be1851c05",
+        "product": "6a5d9dad711099e370f40884",
+        "url": "https://res.cloudinary.com/wcu2rrfb/image/upload/v1784520094/products/images/engkb993pgp72hvshgij.jpg",
+        "altText": "",
+        "displayOrder": 2,
+        "isThumbnail": false,
+        "resource_type": "image",
+        "__v": 0,
+        "createdAt": "2026-07-20T04:32:05.696Z",
+        "updatedAt": "2026-07-20T04:32:05.696Z"
+      },
+      {
+        "_id": "6a5da4c533cfe18be1851c06",
+        "product": "6a5d9dad711099e370f40884",
+        "url": "https://res.cloudinary.com/wcu2rrfb/image/upload/v1784520095/products/images/lzydnu7dibqq6yk7q8oi.jpg",
+        "altText": "",
+        "displayOrder": 3,
+        "isThumbnail": false,
+        "resource_type": "image",
+        "__v": 0,
+        "createdAt": "2026-07-20T04:32:05.696Z",
+        "updatedAt": "2026-07-20T04:32:05.696Z"
+      },
+      {
+        "_id": "6a5da4c533cfe18be1851c07",
+        "product": "6a5d9dad711099e370f40884",
+        "url": "https://res.cloudinary.com/wcu2rrfb/image/upload/v1784520094/products/images/hmmazdroygvpojov7qlz.jpg",
+        "altText": "",
+        "displayOrder": 4,
+        "isThumbnail": false,
+        "resource_type": "image",
+        "__v": 0,
+        "createdAt": "2026-07-20T04:32:05.696Z",
+        "updatedAt": "2026-07-20T04:32:05.696Z"
+      }
+    ],
+    "variants": [
+      {
+        "_id": "6a5da4c533cfe18be1851c08",
+        "product": "6a5d9dad711099e370f40884",
+        "sku": "DW001-6+MO",
+        "barcode": "345667",
+        "basePrice": 400,
+        "discountPrice": 280,
+        "costPrice": 0,
+        "inventory": 2,
+        "currentStock": 2,
+        "reserveStock": 0,
+        "lowStockAlert": 1,
+        "weight": 0.045,
+        "length": 0,
+        "width": 0,
+        "height": 0,
+        "images": [
+          {
+            "url": "https://res.cloudinary.com/wcu2rrfb/image/upload/v1784520074/products/images/c30af9nfuwrvc2ezrnhp.jpg",
+            "public_id": "products/images/c30af9nfuwrvc2ezrnhp",
+            "width": 1024,
+            "height": 679,
+            "format": "jpg",
+            "resource_type": "image",
+            "bytes": 49505,
+            "created_at": "2026-07-20T04:01:14.000Z"
+          },
+          {
+            "url": "https://res.cloudinary.com/wcu2rrfb/image/upload/v1784520094/products/images/engkb993pgp72hvshgij.jpg",
+            "public_id": "products/images/engkb993pgp72hvshgij",
+            "width": 1255,
+            "height": 832,
+            "format": "jpg",
+            "resource_type": "image",
+            "bytes": 44821,
+            "created_at": "2026-07-20T04:01:34.000Z"
+          },
+          {
+            "url": "https://res.cloudinary.com/wcu2rrfb/image/upload/v1784520095/products/images/lzydnu7dibqq6yk7q8oi.jpg",
+            "public_id": "products/images/lzydnu7dibqq6yk7q8oi",
+            "width": 1255,
+            "height": 832,
+            "format": "jpg",
+            "resource_type": "image",
+            "bytes": 53292,
+            "created_at": "2026-07-20T04:01:35.000Z"
+          },
+          {
+            "url": "https://res.cloudinary.com/wcu2rrfb/image/upload/v1784520094/products/images/hmmazdroygvpojov7qlz.jpg",
+            "public_id": "products/images/hmmazdroygvpojov7qlz",
+            "width": 1255,
+            "height": 832,
+            "format": "jpg",
+            "resource_type": "image",
+            "bytes": 50863,
+            "created_at": "2026-07-20T04:01:34.000Z"
+          }
+        ],
+        "isPrimary": true,
+        "isActive": true,
+        "variantCombination": "6+months",
+        "createdBy": "6a5af6ef5f4320a18f2fe4e0",
+        "createdAt": "2026-07-20T04:32:05.923Z",
+        "updatedAt": "2026-07-20T04:32:05.923Z",
+        "__v": 0,
+        "options": [
+          {
+            "_id": "6a5da4c533cfe18be1851c09",
+            "variant": "6a5da4c533cfe18be1851c08",
+            "attribute": {
+              "_id": "6a5d9d59711099e370f40880",
+              "name": "age",
+              "slug": "age"
+            },
+            "value": "6+months",
+            "__v": 0,
+            "createdAt": "2026-07-20T04:32:05.984Z",
+            "updatedAt": "2026-07-20T04:32:05.984Z",
+            "attributeName": "age"
+          }
+        ]
+      },
+      {
+        "_id": "6a5da4c633cfe18be1851c0a",
+        "product": "6a5d9dad711099e370f40884",
+        "sku": "DW001-8+MO",
+        "barcode": "",
+        "basePrice": 400,
+        "discountPrice": 100,
+        "costPrice": 0,
+        "inventory": 2,
+        "currentStock": 2,
+        "reserveStock": 0,
+        "lowStockAlert": 1,
+        "weight": 0.4999,
+        "length": 0,
+        "width": 0,
+        "height": 0,
+        "images": [
+          {
+            "url": "https://res.cloudinary.com/wcu2rrfb/image/upload/v1784521896/products/images/waavhrda0wmzesexmvl7.jpg",
+            "public_id": "products/images/waavhrda0wmzesexmvl7",
+            "width": 1024,
+            "height": 559,
+            "format": "jpg",
+            "resource_type": "image",
+            "bytes": 42856,
+            "created_at": "2026-07-20T04:31:36.000Z"
+          }
+        ],
+        "isPrimary": false,
+        "isActive": true,
+        "variantCombination": "8+months",
+        "createdBy": "6a5af6ef5f4320a18f2fe4e0",
+        "createdAt": "2026-07-20T04:32:06.045Z",
+        "updatedAt": "2026-07-20T04:32:06.045Z",
+        "__v": 0,
+        "options": [
+          {
+            "_id": "6a5da4c633cfe18be1851c0b",
+            "variant": "6a5da4c633cfe18be1851c0a",
+            "attribute": {
+              "_id": "6a5d9d59711099e370f40880",
+              "name": "age",
+              "slug": "age"
+            },
+            "value": "8+months",
+            "__v": 0,
+            "createdAt": "2026-07-20T04:32:06.105Z",
+            "updatedAt": "2026-07-20T04:32:06.105Z",
+            "attributeName": "age"
+          }
+        ]
+      }
+    ],
+    "ageColors": [],
+    "createdAt": "2026-07-20T04:01:49.732Z",
+    "updatedAt": "2026-07-20T04:31:42.428Z",
+    "__v": 0,
+    "updatedBy": "6a5af6ef5f4320a18f2fe4e0",
+    "effectivePrice": 400,
+    "basePrice": 400,
+    "discountPrice": 280,
+    "totalStock": 4,
+    "isLowStock": false,
+    "attributeValues": [
+      {
+        "_id": "6a5da4c533cfe18be1851c03",
+        "product": "6a5d9dad711099e370f40884",
+        "attribute": {
+          "_id": "6a5d9d59711099e370f40880",
+          "name": "age",
+          "slug": "age",
+          "category": "6a5d9cd6711099e370f40875",
+          "subCategory": "6a5d9d03711099e370f40879",
+          "type": "Checkbox",
+          "description": "qwertyu",
+          "isActive": true,
+          "displayOrder": 1,
+          "code": "AGE_2",
+          "isRequired": false,
+          "isSearchable": false,
+          "isFilterable": false,
+          "isComparable": false,
+          "isVariant": true,
+          "visibleOnProduct": true,
+          "visibleOnWebsite": true,
+          "isArchived": false,
+          "isDeleted": false,
+          "createdBy": "6a5af6ef5f4320a18f2fe4e0",
+          "createdAt": "2026-07-20T04:00:25.185Z",
+          "updatedAt": "2026-07-20T04:00:25.185Z",
+          "__v": 0
+        },
+        "values": [
+          "6+months",
+          "8+months"
+        ],
+        "__v": 0,
+        "createdAt": "2026-07-20T04:32:05.571Z",
+        "updatedAt": "2026-07-20T04:32:05.571Z"
+      }
+    ],
+    "inventory": null,
+    "averageRating": 0,
+    "reviewCount": 0
+  }
+}

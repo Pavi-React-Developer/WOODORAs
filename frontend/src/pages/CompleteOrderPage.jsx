@@ -10,8 +10,9 @@ import { createCashfreeSession } from '../api/cashfreeService';
 import { calculateOrderFees } from '../utils/feeCalculator';
 import { getImageSrc } from '../utils/imageUtils';
 import CouponSection from '../components/CouponSection';
+import LoginModal from '../components/LoginModal';
 
-export default function CompleteOrderPage({ onNavigate }) {
+export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
   const { cartItems, getSubtotal, clearCart, updateQuantity } = useCartStore();
 
   const handleQtyChange = (productId, newQty, variant = null, maxStock = 999) => {
@@ -31,8 +32,9 @@ export default function CompleteOrderPage({ onNavigate }) {
   const [cityError, setCityError] = useState('');
   const [discountAmount, setDiscountAmount] = useState(0);
   const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
-  const currentUser = authService.getCurrentUser();
+  const currentUser = user || authService.getCurrentUser();
 
   // Form state
   const [formData, setFormData] = useState({
@@ -250,6 +252,11 @@ export default function CompleteOrderPage({ onNavigate }) {
   };
 
   const handlePlaceOrder = async () => {
+    if (!currentUser) {
+      setIsLoginModalOpen(true);
+      return;
+    }
+
     if (savedAddresses.length === 0 && !isAddingAddress) {
       return toast.error('Please add a shipping address');
     }
@@ -657,6 +664,14 @@ export default function CompleteOrderPage({ onNavigate }) {
 
         </div>
       </div>
+      
+      <LoginModal 
+        isOpen={isLoginModalOpen} 
+        onClose={() => setIsLoginModalOpen(false)} 
+        onAuthSuccess={(data) => {
+          onAuthSuccess(data, true);
+        }} 
+      />
     </div>
   );
 }

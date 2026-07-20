@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 
 export default function ProductCard({ product, onNavigate, onAddToCart, onAddToWishlist, user }) {
+  const [isAdding, setIsAdding] = useState(false);
+
   const getPricingInfo = (p) => {
     let listPrice = 0, salePrice = 0;
     if (p.hasVariants && p.variants && p.variants.length > 0) {
@@ -16,15 +18,19 @@ export default function ProductCard({ product, onNavigate, onAddToCart, onAddToW
     return { listPrice, salePrice, hasDiscount, discountPercent };
   };
 
-  const handleAction = (type, p, e) => {
+  const handleAction = async (type, p, e) => {
     e.stopPropagation();
-    if (!user) {
-      alert(`Please sign in to add to ${type.toLowerCase()}.`);
-      onNavigate('/login');
-      return;
+    if (type === 'Cart') {
+      if (isAdding) return;
+      setIsAdding(true);
+      try {
+        await onAddToCart?.(p);
+      } finally {
+        setIsAdding(false);
+      }
+    } else {
+      onAddToWishlist?.(p);
     }
-    if (type === 'Cart') onAddToCart?.(p);
-    else onAddToWishlist?.(p);
   };
 
   let imgSrc = product.images?.find(img => img.isThumbnail)?.url || product.images?.[0]?.url || (typeof product.images?.[0] === 'string' ? product.images[0] : null) || (typeof product.image === 'object' ? product.image?.url : product.image) || null;
@@ -62,7 +68,7 @@ export default function ProductCard({ product, onNavigate, onAddToCart, onAddToW
         )}
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-end justify-center pb-3 gap-2 opacity-0 group-hover:opacity-100">
           <button
-            onClick={(e) => handleAction('Cart', product, e)}
+            onClick={(e) => { e.stopPropagation(); handleAction('Cart', product, e); }}
             className="bg-brand-dark text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 hover:bg-black transition-colors"
           >
             Add to Cart
@@ -79,7 +85,7 @@ export default function ProductCard({ product, onNavigate, onAddToCart, onAddToW
             )}
           </div>
           {pricing.hasDiscount && (
-            <span className="inline-flex items-center self-start rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+            <span className="inline-flex items-center self-start rounded-full bg-[#B1621F]/15 px-2 py-0.5 text-[10px] font-semibold text-[#B1621F]">
               -{pricing.discountPercent}%
             </span>
           )}

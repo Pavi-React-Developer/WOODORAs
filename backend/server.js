@@ -89,6 +89,8 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+const passport = require('./config/passport');
+app.use(passport.initialize());
 app.use(cors({
     origin: function (origin, callback) {
         const allowedOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',').map(s => s.trim()) : ['http://localhost:5173'];

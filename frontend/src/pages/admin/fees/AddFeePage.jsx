@@ -61,9 +61,9 @@ export default function AddFeePage({ onNavigate, editingFee }) {
         const pmName = editingFee.paymentMethod?.name || editingFee.paymentMethod;
         if (pmName && typeof pmName === 'string') {
           const normalized = pmName.toLowerCase();
-          if (normalized.includes('cod')) pmValue = 'cod';
+          if (normalized.includes('both')) pmValue = 'both';
+          else if (normalized.includes('cod')) pmValue = 'cod';
           else if (normalized.includes('cashfree')) pmValue = 'cashfree';
-          else if (normalized.includes('both')) pmValue = 'both';
         }
       }
       setPaymentMethod(pmValue);

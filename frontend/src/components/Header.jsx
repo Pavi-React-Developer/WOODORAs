@@ -10,6 +10,8 @@ export default function Header({
   onNavigate,
   cartCount,
   wishlistCount,
+  onOpenCart,
+  onOpenWishlist,
 }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [categories, setCategories] = useState([]);
@@ -112,7 +114,7 @@ export default function Header({
         </div>
 
         <nav className="hidden flex-1 items-center justify-center gap-8 xl:flex">
-          <button type="button" onClick={() => onNavigate('/')} className="text-[15px] font-medium text-[#9C755A] border-b-2 border-[#9C755A] pb-0.5">
+          <button type="button" onClick={() => onNavigate('/')} className="text-[15px] font-medium text-[#B0611C] border-b-2 border-[#B0611C] pb-0.5">
             Home
           </button>
           
@@ -121,7 +123,7 @@ export default function Header({
             onMouseEnter={() => setActiveMenu('shop')}
             onMouseLeave={() => setActiveMenu(null)}
           >
-            <button type="button" className="flex items-center gap-1 text-[15px] font-medium text-[#4A3326] hover:text-[#9C755A]">
+            <button type="button" className="flex items-center gap-1 text-[15px] font-medium text-[#B0611C] hover:opacity-80">
               Shop <ChevronDown className="h-4 w-4" strokeWidth={1.5} />
             </button>
             {activeMenu === 'shop' && (
@@ -144,7 +146,7 @@ export default function Header({
             onMouseEnter={() => setActiveMenu('categories')}
             onMouseLeave={() => setActiveMenu(null)}
           >
-            <button type="button" className="flex items-center gap-1 text-[15px] font-medium text-[#4A3326] hover:text-[#9C755A]">
+            <button type="button" className="flex items-center gap-1 text-[15px] font-medium text-[#B0611C] hover:opacity-80">
               Categories <ChevronDown className="h-4 w-4" strokeWidth={1.5} />
             </button>
             {activeMenu === 'categories' && (
@@ -177,13 +179,13 @@ export default function Header({
             )}
           </div>
 
-          <button type="button" onClick={() => onNavigate('/about')} className="text-[15px] font-medium text-[#4A3326] hover:text-[#9C755A]">
+          <button type="button" onClick={() => onNavigate('/about')} className="text-[15px] font-medium text-[#B0611C] hover:opacity-80">
             About Us
           </button>
-          <button type="button" onClick={() => onNavigate('/blog')} className="text-[15px] font-medium text-[#4A3326] hover:text-[#9C755A]">
+          <button type="button" onClick={() => onNavigate('/blog')} className="text-[15px] font-medium text-[#B0611C] hover:opacity-80">
             Blog
           </button>
-          <button type="button" onClick={() => onNavigate('/contact')} className="text-[15px] font-medium text-[#4A3326] hover:text-[#9C755A]">
+          <button type="button" onClick={() => onNavigate('/contact')} className="text-[15px] font-medium text-[#B0611C] hover:opacity-80">
             Contact
           </button>
         </nav>
@@ -296,10 +298,10 @@ export default function Header({
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-3 sm:gap-6 text-[#4A3326] relative z-20">
+        <div className="flex shrink-0 items-center gap-3 sm:gap-6 text-[#B0611C] relative z-20">
           <button 
             type="button" 
-            className={`transition hover:text-[#9C755A] hidden sm:block ${isSearchOpen ? 'md:block opacity-0 pointer-events-none' : 'opacity-100'}`}
+            className={`transition hover:opacity-80 hidden sm:block ${isSearchOpen ? 'md:block opacity-0 pointer-events-none' : 'opacity-100'}`}
             aria-label="Search"
             onClick={() => setIsSearchOpen(true)}
           >
@@ -310,10 +312,14 @@ export default function Header({
             <button
               type="button"
               onClick={() => (user ? setDropdownOpen((open) => !open) : onNavigate('/login'))}
-              className="transition hover:text-[#9C755A]"
+              className="transition hover:opacity-80 flex items-center justify-center rounded-full"
               aria-label="Account"
             >
-              <User className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px]" strokeWidth={1.5} />
+              {(user?.profileImage?.url || user?.avatar) ? (
+                <img src={user.profileImage?.url || user.avatar} alt={user.name} className="h-[22px] w-[22px] sm:h-[26px] sm:w-[26px] rounded-full object-cover" />
+              ) : (
+                <User className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px]" strokeWidth={1.5} />
+              )}
             </button>
 
             {dropdownOpen && user && (
@@ -339,8 +345,8 @@ export default function Header({
 
           <button
             type="button"
-            onClick={() => onNavigate('/wishlist')}
-            className="relative transition hover:text-[#9C755A]"
+            onClick={() => onOpenWishlist?.()}
+            className="relative transition hover:opacity-80"
             aria-label="Wishlist"
           >
             <Heart className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px]" strokeWidth={1.5} />
@@ -353,8 +359,8 @@ export default function Header({
 
           <button
             type="button"
-            onClick={() => onNavigate('/cart')}
-            className="relative transition hover:text-[#9C755A]"
+            onClick={() => onOpenCart?.()}
+            className="relative transition hover:opacity-80"
             aria-label="Cart"
           >
             <ShoppingCart className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px]" strokeWidth={1.5} />
@@ -368,7 +374,7 @@ export default function Header({
           {/* Mobile Menu Toggle */}
           <button
             type="button"
-            className="xl:hidden transition hover:text-[#9C755A] ml-1 sm:ml-2"
+            className="xl:hidden transition hover:opacity-80 ml-1 sm:ml-2"
             aria-label="Open menu"
             onClick={() => setIsMobileMenuOpen(true)}
           >
@@ -384,6 +390,9 @@ export default function Header({
             type="search"
             placeholder="Search for toys, gift sets & more..."
             className="w-full bg-transparent text-sm text-[#2E2E2E] outline-none placeholder:text-[#7C7370]"
+            value={searchQuery}
+            onFocus={() => setIsSearchOpen(true)}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </label>
       </div>

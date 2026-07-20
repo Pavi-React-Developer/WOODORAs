@@ -1,0 +1,10 @@
+{
+  "success": true,
+  "products": [],
+  "pagination": {
+    "page": 1,
+    "limit": 4,
+    "total": 0,
+    "pages": 0
+  }
+}

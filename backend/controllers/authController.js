@@ -220,7 +220,7 @@ const updateProfile = async (req, res) => {
         if (phone !== undefined) user.phone = String(phone).trim();
         if (dateOfBirth !== undefined) user.dateOfBirth = dateOfBirth ? new Date(dateOfBirth) : undefined;
         if (gender !== undefined) user.gender = gender || '';
-        if (profileImage !== undefined) user.profileImage = String(profileImage).trim();
+        if (profileImage !== undefined) user.profileImage = profileImage;
         if (addresses !== undefined) user.addresses = normalizeAddresses(addresses);
         if (preferences !== undefined) {
             user.preferences = {
@@ -309,4 +309,27 @@ const getCustomerOrders = async (req, res) => {
     }
 };
 
-module.exports = { registerUser, loginUser, refreshToken, forgotPassword, getProfile, updateProfile, getCustomers, getCustomerOrders };
+// @desc    OAuth success callback to generate tokens and redirect
+// @route   GET /api/auth/:provider/callback
+// @access  Public
+const oauthSuccessCallback = (req, res) => {
+    try {
+        if (!req.user) {
+            return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=OAuthFailed`);
+        }
+
+        const token = generateAccessToken(req.user._id);
+        const refreshToken = generateRefreshToken(req.user._id);
+        
+        // Redirect to frontend OAuthCallback page with tokens
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const redirectUrl = `${frontendUrl}/oauth-success?token=${token}&refreshToken=${refreshToken}`;
+        
+        res.redirect(redirectUrl);
+    } catch (error) {
+        console.error('OAuth Callback Error:', error);
+        res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=OAuthCallbackError`);
+    }
+};
+
+module.exports = { registerUser, loginUser, refreshToken, forgotPassword, getProfile, updateProfile, getCustomers, getCustomerOrders, oauthSuccessCallback };

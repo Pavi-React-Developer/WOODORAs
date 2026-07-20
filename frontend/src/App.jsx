@@ -16,6 +16,7 @@ import CashfreeCallbackPage from './pages/CashfreeCallbackPage';
 import CustomerProfilePage from './pages/CustomerProfilePage';
 import WishlistPage from './pages/WishlistPage';
 import ShopPage from './pages/ShopPage';
+import OAuthCallback from './pages/OAuthCallback';
 import { authService } from './api/authService';
 import CartOffcanvas from './components/CartOffcanvas';
 import WishlistOffcanvas from './components/WishlistOffcanvas';
@@ -147,7 +148,7 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleAuthSuccess = (data) => {
+  const handleAuthSuccess = (data, skipNavigate = false) => {
     setUser({
       id: data._id,
       name: data.name,
@@ -155,7 +156,9 @@ export default function App() {
       role: data.role,
       isStaff: data.isStaff
     });
-    navigate('/');
+    if (!skipNavigate) {
+      navigate('/');
+    }
   };
 
   const handleLogout = () => {
@@ -239,6 +242,8 @@ export default function App() {
       name: updatedUser.name || current?.name,
       email: updatedUser.email || current?.email,
       role: updatedUser.role || current?.role,
+      avatar: updatedUser.avatar ?? current?.avatar,
+      profileImage: updatedUser.profileImage ?? current?.profileImage,
       isStaff: updatedUser.isStaff ?? current?.isStaff,
     }));
     setProfileData((current) => ({
@@ -354,23 +359,31 @@ export default function App() {
           }
         />
 
+        {/* OAuth Callback */}
+        <Route
+          path="/oauth-success"
+          element={
+            <LoginLayout>
+              <OAuthCallback onAuthSuccess={handleAuthSuccess} />
+            </LoginLayout>
+          }
+        />
+
         {/* Cart */}
         <Route
           path="/cart"
           element={
-            <ProtectedRoute user={user}>
-              <LayoutWithHeader
-                user={user}
-                cartItems={cartItems}
-                wishlistItems={wishlistItems}
-                onOpenCart={() => setIsCartOpen(true)}
-                onOpenWishlist={() => setIsWishlistOpen(true)}
-                onLogout={handleLogout}
-                onNavigate={handleNavigate}
-              >
-                <CartPage onNavigate={handleNavigate} />
-              </LayoutWithHeader>
-            </ProtectedRoute>
+            <LayoutWithHeader
+              user={user}
+              cartItems={cartItems}
+              wishlistItems={wishlistItems}
+              onOpenCart={() => setIsCartOpen(true)}
+              onOpenWishlist={() => setIsWishlistOpen(true)}
+              onLogout={handleLogout}
+              onNavigate={handleNavigate}
+            >
+              <CartPage onNavigate={handleNavigate} />
+            </LayoutWithHeader>
           }
         />
 
@@ -378,19 +391,17 @@ export default function App() {
         <Route
           path="/review-order"
           element={
-            <ProtectedRoute user={user}>
-              <LayoutWithHeader
-                user={user}
-                cartItems={cartItems}
-                wishlistItems={wishlistItems}
-                onOpenCart={() => setIsCartOpen(true)}
-                onOpenWishlist={() => setIsWishlistOpen(true)}
-                onLogout={handleLogout}
-                onNavigate={handleNavigate}
-              >
-                <ReviewOrderPage onNavigate={handleNavigate} />
-              </LayoutWithHeader>
-            </ProtectedRoute>
+            <LayoutWithHeader
+              user={user}
+              cartItems={cartItems}
+              wishlistItems={wishlistItems}
+              onOpenCart={() => setIsCartOpen(true)}
+              onOpenWishlist={() => setIsWishlistOpen(true)}
+              onLogout={handleLogout}
+              onNavigate={handleNavigate}
+            >
+              <ReviewOrderPage onNavigate={handleNavigate} />
+            </LayoutWithHeader>
           }
         />
 
@@ -398,19 +409,17 @@ export default function App() {
         <Route
           path="/complete-order"
           element={
-            <ProtectedRoute user={user}>
-              <LayoutWithHeader
-                user={user}
-                cartItems={cartItems}
-                wishlistItems={wishlistItems}
-                onOpenCart={() => setIsCartOpen(true)}
-                onOpenWishlist={() => setIsWishlistOpen(true)}
-                onLogout={handleLogout}
-                onNavigate={handleNavigate}
-              >
-                <CompleteOrderPage onNavigate={handleNavigate} />
-              </LayoutWithHeader>
-            </ProtectedRoute>
+            <LayoutWithHeader
+              user={user}
+              cartItems={cartItems}
+              wishlistItems={wishlistItems}
+              onOpenCart={() => setIsCartOpen(true)}
+              onOpenWishlist={() => setIsWishlistOpen(true)}
+              onLogout={handleLogout}
+              onNavigate={handleNavigate}
+            >
+              <CompleteOrderPage onNavigate={handleNavigate} user={user} onAuthSuccess={handleAuthSuccess} />
+            </LayoutWithHeader>
           }
         />
 
@@ -489,24 +498,22 @@ export default function App() {
         <Route
           path="/wishlist"
           element={
-            <ProtectedRoute user={user}>
-              <LayoutWithHeader
-                user={user}
-                cartItems={cartItems}
+            <LayoutWithHeader
+              user={user}
+              cartItems={cartItems}
+              wishlistItems={wishlistItems}
+              onOpenCart={() => setIsCartOpen(true)}
+              onOpenWishlist={() => setIsWishlistOpen(true)}
+              onLogout={handleLogout}
+              onNavigate={handleNavigate}
+            >
+              <WishlistPage
                 wishlistItems={wishlistItems}
-                onOpenCart={() => setIsCartOpen(true)}
-                onOpenWishlist={() => setIsWishlistOpen(true)}
-                onLogout={handleLogout}
+                onRemove={handleRemoveFromWishlist}
+                onMoveToCart={handleMoveToCart}
                 onNavigate={handleNavigate}
-              >
-                <WishlistPage
-                  wishlistItems={wishlistItems}
-                  onRemove={handleRemoveFromWishlist}
-                  onMoveToCart={handleMoveToCart}
-                  onNavigate={handleNavigate}
-                />
-              </LayoutWithHeader>
-            </ProtectedRoute>
+              />
+            </LayoutWithHeader>
           }
         />
 

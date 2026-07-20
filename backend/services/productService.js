@@ -9,6 +9,7 @@ const Inventory = require('../models/Inventory');
 const ProductImage = require('../models/catalog/ProductImage');
 const CategoryAttributeMapping = require('../models/catalog/CategoryAttributeMapping');
 const auditService = require('./auditService');
+const Review = require('../models/Review');
 
 const hasAttributeValue = (payload = {}) => {
     if (payload.value !== undefined && payload.value !== null && String(payload.value).trim() !== '') return true;
@@ -273,12 +274,21 @@ const getProducts = async (query = {}) => {
         const inventory = await Inventory.findOne({ product: prod._id });
         const pricing = buildProductPricing(prod.toObject(), variants, images.map(img => img.toObject()), inventory);
 
+        const ratingAgg = await Review.aggregate([
+            { $match: { product: prod._id, status: 'approved' } },
+            { $group: { _id: null, avg: { $avg: '$rating' }, count: { $sum: 1 } } }
+        ]);
+        const averageRating = ratingAgg[0]?.avg ? Math.round(ratingAgg[0].avg * 10) / 10 : 0;
+        const reviewCount = ratingAgg[0]?.count || 0;
+
         result.push({
             ...prod.toObject(),
             ...pricing,
             variantsCount: variants.length,
             totalStock: pricing.totalStock,
             inventory: inventory ? { sku: inventory.sku, stockQuantity: inventory.stockQuantity } : null,
+            averageRating,
+            reviewCount,
         });
     }
 
@@ -297,7 +307,9 @@ const getProducts = async (query = {}) => {
  * Get full details of a single product
  */
 const getProductById = async (id) => {
-    const product = await Product.findOne({ _id: id, isDeleted: false })
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(id);
+    const query = isObjectId ? { _id: id } : { slug: id };
+    const product = await Product.findOne({ ...query, isDeleted: false })
         .populate('category', 'name slug')
         .populate('subCategory', 'name slug category')
         .populate('relatedProducts', 'name slug price')
@@ -308,10 +320,12 @@ const getProductById = async (id) => {
         throw new Error('Product not found');
     }
 
-    const variants = await ProductVariant.find({ product: id });
+    const productId = product._id;
+
+    const variants = await ProductVariant.find({ product: productId });
     const variantOptions = await ProductVariantOption.find({ variant: { $in: variants.map(v => v._id) } }).populate('attribute', 'name slug');
-    const images = await ProductImage.find({ product: id }).sort({ displayOrder: 1 });
-    const attributeValues = await ProductAttributeValue.find({ product: id }).populate('attribute');
+    const images = await ProductImage.find({ product: productId }).sort({ displayOrder: 1 });
+    const attributeValues = await ProductAttributeValue.find({ product: productId }).populate('attribute');
 
     const mappedVariants = variants.map(v => {
         const vObj = v.toObject();
@@ -339,11 +353,18 @@ const getProductById = async (id) => {
         }
     }
 
-    const inventory = await Inventory.findOne({ product: id });
+    const inventory = await Inventory.findOne({ product: productId });
     const pricing = buildProductPricing(product.toObject(), variants, images.map(img => img.toObject()), inventory);
     const relatedProducts = await enrichRelatedProducts(product.relatedProducts);
     const crossSellProducts = await enrichRelatedProducts(product.crossSellProducts);
     const upSellProducts = await enrichRelatedProducts(product.upSellProducts);
+
+    const ratingAgg = await Review.aggregate([
+        { $match: { product: productId, status: 'approved' } },
+        { $group: { _id: null, avg: { $avg: '$rating' }, count: { $sum: 1 } } }
+    ]);
+    const averageRating = ratingAgg[0]?.avg ? Math.round(ratingAgg[0].avg * 10) / 10 : 0;
+    const reviewCount = ratingAgg[0]?.count || 0;
 
     return {
         ...product.toObject(),
@@ -356,6 +377,8 @@ const getProductById = async (id) => {
         crossSellProducts,
         upSellProducts,
         inventory: inventory ? { sku: inventory.sku, stockQuantity: inventory.stockQuantity } : null,
+        averageRating,
+        reviewCount,
     };
 };
 

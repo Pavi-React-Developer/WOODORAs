@@ -32,7 +32,6 @@ const getVideoOptimizationParams = () => {
     resource_type: 'video',
     fetch_format: 'auto',
     quality: 'auto',
-    streaming_profile: 'hd', // Adaptive bitrate
   };
 };
 

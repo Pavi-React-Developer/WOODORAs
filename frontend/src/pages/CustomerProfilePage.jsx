@@ -300,7 +300,14 @@ export default function CustomerProfilePage({
   const displayName = profile.name || 'Customer';
   const displayEmail = profile.email || user?.email || '';
   const displayPhone = profile.phone || 'Not added';
-  const profileImage = form.profileImage || profile.profileImage || '/animal_balance_maze.png';
+  const resolveImage = (img) => {
+    if (!img) return null;
+    if (typeof img === 'string' && img !== '[object Object]') return img;
+    if (typeof img === 'object' && img.url) return img.url;
+    return null;
+  };
+
+  const profileImage = resolveImage(form.profileImage) || resolveImage(profile.profileImage) || profile.avatar || '/animal_balance_maze.png';
 
   const getImageUrl = (image) => {
     if (!image) return '/animal_balance_maze.png';
@@ -405,7 +412,9 @@ export default function CustomerProfilePage({
         phone: form.phone.trim(),
         dateOfBirth: form.dateOfBirth || null,
         gender: form.gender,
-        profileImage: form.profileImage.trim(),
+        profileImage: typeof form.profileImage === 'string' 
+          ? (form.profileImage.includes('[object Object]') ? undefined : { url: form.profileImage.trim(), public_id: 'legacy' }) 
+          : form.profileImage,
         addresses: form.addresses,
         preferences: {
           preferredAgeGroup: form.preferredAgeGroup,
@@ -1636,8 +1645,8 @@ export default function CustomerProfilePage({
               <div className="md:col-span-2">
                 <label className="block text-sm font-bold text-[#4A403B] mb-2">Profile Image</label>
                 <div className="flex items-center gap-4">
-                  {form.profileImage ? (
-                    <img src={form.profileImage} alt="Profile preview" className="w-16 h-16 rounded-full object-cover border border-[#E9DED3]" />
+                  {(resolveImage(form.profileImage) || profile.avatar) ? (
+                    <img src={resolveImage(form.profileImage) || profile.avatar} alt="Profile preview" className="w-16 h-16 rounded-full object-cover border border-[#E9DED3]" />
                   ) : (
                     <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#FAF4EF] text-[#8B5E3C]">
                       <User size={32} />
@@ -1653,8 +1662,8 @@ export default function CustomerProfilePage({
                         try {
                           toast.loading('Uploading image...', { id: 'upload-image' });
                           const response = await uploadAPI.uploadImages([file]);
-                          if (response?.data?.success && response.data.data.urls?.length > 0) {
-                            setForm(current => ({ ...current, profileImage: response.data.data.urls[0] }));
+                          if (response?.data?.success && response.data.data?.length > 0) {
+                            setForm(current => ({ ...current, profileImage: response.data.data[0] }));
                             toast.success('Image uploaded successfully!', { id: 'upload-image' });
                           } else {
                              toast.error('Upload failed or no URL returned', { id: 'upload-image' });

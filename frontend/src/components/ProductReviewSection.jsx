@@ -15,6 +15,11 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const normalizeMediaUrl = (url) => {
   if (!url) return '';
+  if (typeof url !== 'string') {
+    if (url.url && typeof url.url === 'string') url = url.url;
+    else if (url.path && typeof url.path === 'string') url = url.path;
+    else return '';
+  }
   if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
   const clean = url.startsWith('/') ? url : `/${url}`;
   return `${API_BASE_URL}${clean}`;
@@ -494,7 +499,7 @@ export default function ProductReviewSection({ product, user }) {
             <path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8"/>
             <path d="M24 8C21 2 15 2 15 10C21 10 24 8 24 8Z" fill="currentColor" opacity="0.5"/>
           </svg>
-          <h2 className="text-3xl font-serif text-[#4A5441] tracking-wide text-center">Customer Reviews</h2>
+          <h2 className="text-3xl font-serif text-[#B0611C] tracking-wide text-center">Customer Reviews</h2>
           <svg width="40" height="20" viewBox="0 0 40 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#D4C3A3] transform scale-x-[-1] shrink-0">
             <path d="M2 10C10 10 18 5 28 10C32 12 36 12 38 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             <path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8"/>

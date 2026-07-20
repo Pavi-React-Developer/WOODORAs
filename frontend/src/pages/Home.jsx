@@ -6,7 +6,7 @@ import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/effect-fade';
 import 'swiper/css/navigation';
-import { ChevronLeft, ChevronRight, Leaf, Sun, Truck, Package, ShieldCheck, Banknote } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Leaf, Sun, Truck, Package, ShieldCheck, Banknote, Heart, ShoppingCart } from 'lucide-react';
 
 import { cmsService } from '../api/cmsService';
 import { productV2API } from '../api/catalogV2Service';
@@ -257,7 +257,6 @@ function ProductGridSection({ grid, onNavigate, onAddToCart, onAddToWishlist, us
   if (!safeProducts.length) return null;
   const handleAction = (type, product, e) => {
     e.stopPropagation();
-    if (!user) { alert(`Please sign in to add to ${type.toLowerCase()}.`); onNavigate('/login'); return; }
     if (type === 'Cart') onAddToCart?.(product);
     else onAddToWishlist?.(product);
   };
@@ -411,7 +410,7 @@ function CategoryProductsSection({ onNavigate, onAddToCart, user }) {
               <h2 className="text-xl font-bold tracking-tight text-brand-dark">Shop by Category</h2>
               <p className="text-xs text-brand-medium mt-1">Tap a category to explore.</p>
             </div>
-            <button onClick={() => onNavigate('/')} className="text-[10px] font-bold uppercase tracking-widest text-brand-medium hover:text-brand-dark">View All &gt;</button>
+            <button onClick={() => onNavigate('/shop')} className="text-[10px] font-bold uppercase tracking-widest text-brand-medium hover:text-brand-dark">View All &gt;</button>
           </motion.div>
 
           <div className="grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] gap-6">
@@ -479,30 +478,32 @@ function CategoryProductsSection({ onNavigate, onAddToCart, user }) {
                       <p className="text-xs text-brand-medium">{activeProducts.length} products in this collection</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-3 sm:gap-4">
                     {activeProducts.length ? activeProducts.slice(0, 4).map((product) => (
                       <div key={product._id} className="group cursor-pointer" onClick={() => onNavigate(`/product/${product._id}`)}>
-                        <div className="aspect-square bg-white rounded-xl overflow-hidden mb-2 relative border border-[#E6DFD4]">
+                        <div className="aspect-square bg-white rounded-xl overflow-hidden mb-2 relative ring-1 ring-black/5">
                           <img src={product.images?.find((image) => image.isThumbnail)?.url || product.images?.[0]?.url || (product.image && product.image.trim() !== '' ? product.image : '') || '/wood-placeholder.png'} alt={product.name} className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500" onError={(e) => { e.target.src = '/wood-placeholder.png'; }} />
                           <div className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-end justify-center pb-3 transition-opacity">
-                            <button onClick={(e) => { e.stopPropagation(); if (!user) { onNavigate('/login'); return; } onAddToCart?.(product); }} className="bg-brand-dark text-white text-[9px] uppercase tracking-widest font-bold px-3 py-1.5">Add to Cart</button>
+                            <button onClick={(e) => { e.stopPropagation(); onAddToCart?.(product); }} className="bg-brand-dark text-white text-[9px] uppercase tracking-widest font-bold px-3 py-1.5">Add to Cart</button>
                           </div>
                         </div>
                         <h3 className="text-sm font-medium text-brand-dark truncate">{product.name}</h3>
                         {(() => {
                           const pricing = getPricingInfo(product);
                           return (
-                            <div className="flex flex-col gap-2">
+                            <div className="flex flex-col gap-1.5 mt-1">
                               <div className="flex items-center gap-2">
-                                <p className="text-xs text-brand-medium">₹{pricing.salePrice.toFixed(2)}</p>
+                                <p className="text-[13px] font-medium text-brand-dark">₹{pricing.salePrice.toFixed(2)}</p>
                                 {pricing.hasDiscount && (
                                   <p className="text-[10px] text-brand-medium line-through">₹{pricing.listPrice.toFixed(2)}</p>
                                 )}
                               </div>
                               {pricing.hasDiscount && (
-                                <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-semibold text-emerald-700">
-                                  -{pricing.discountPercent}%
-                                </span>
+                                <div className="flex">
+                                  <span className="inline-flex items-center rounded-sm bg-[#5C4D43] px-1.5 py-0.5 text-[9px] font-bold text-white tracking-widest uppercase">
+                                    {pricing.discountPercent}% OFF
+                                  </span>
+                                </div>
                               )}
                             </div>
                           );
@@ -620,7 +621,6 @@ export default function Home({ user, onNavigate, onAddToCart, onAddToWishlist })
   }, []);
 
   const handleAction = (type, product) => {
-    if (!user) { alert(`Please sign in to add to ${type.toLowerCase()}.`); onNavigate('/login'); return; }
     if (type === 'Cart') onAddToCart?.(product);
     else onAddToWishlist?.(product);
   };
@@ -722,7 +722,7 @@ export default function Home({ user, onNavigate, onAddToCart, onAddToWishlist })
               <path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8"/>
               <path d="M24 8C21 2 15 2 15 10C21 10 24 8 24 8Z" fill="currentColor" opacity="0.5"/>
             </svg>
-            <h2 className="text-3xl font-serif text-[#4A5441] tracking-wide">Shop by Categories</h2>
+            <h2 className="text-3xl font-serif text-[#B0611C] tracking-wide">Shop by Categories</h2>
             <svg width="40" height="20" viewBox="0 0 40 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#D4C3A3] transform scale-x-[-1]">
               <path d="M2 10C10 10 18 5 28 10C32 12 36 12 38 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               <path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8"/>
@@ -816,7 +816,7 @@ export default function Home({ user, onNavigate, onAddToCart, onAddToWishlist })
                 <path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8"/>
                 <path d="M24 8C21 2 15 2 15 10C21 10 24 8 24 8Z" fill="currentColor" opacity="0.5"/>
               </svg>
-              <h2 className="text-3xl font-serif text-[#4A5441] tracking-wide">Best Sellers</h2>
+              <h2 className="text-3xl font-serif text-[#B0611C] tracking-wide">Best Sellers</h2>
               <svg width="40" height="20" viewBox="0 0 40 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#D4C3A3] transform scale-x-[-1]">
                 <path d="M2 10C10 10 18 5 28 10C32 12 36 12 38 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                 <path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8"/>
@@ -876,19 +876,44 @@ export default function Home({ user, onNavigate, onAddToCart, onAddToWishlist })
                               />
                             );
                           })()}
+
+                          {/* Quick Action Buttons */}
+                          <div className="absolute top-2 right-2 md:top-3 md:right-3 flex flex-col gap-2 z-20 xl:opacity-0 xl:group-hover:opacity-100 transition-opacity duration-300">
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); handleAction('Wishlist', p); }}
+                              className="w-8 h-8 md:w-9 md:h-9 bg-white/95 rounded-xl shadow-sm flex items-center justify-center text-[#333] hover:bg-[#8B5E3C] hover:text-white transition-colors"
+                              title="Add to Wishlist"
+                            >
+                              <Heart className="w-4 h-4 md:w-5 md:h-5" strokeWidth={1.5} />
+                            </button>
+                            {/* <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); handleAction('Cart', p); }}
+                              className="w-8 h-8 md:w-9 md:h-9 bg-white/95 rounded-xl shadow-sm flex items-center justify-center text-[#333] hover:bg-[#8B5E3C] hover:text-white transition-colors"
+                              title="Add to Cart"
+                            >
+                              <ShoppingCart className="w-4 h-4 md:w-5 md:h-5" strokeWidth={1.5} />
+                            </button> */}
+                          </div>
                         </div>
                         
                         {/* Content area */}
                         <div className="p-4 flex flex-col flex-1 bg-white">
-                          <h3 className="text-sm font-semibold text-[#333333] mb-2 line-clamp-1">{p.name}</h3>
+                          <h3 className="text-sm font-semibold text-[#B0611C] mb-2 line-clamp-1">{p.name}</h3>
                           
                           {(() => {
                             const pricing = getPricingInfo(p);
                             return (
-                              <div className="flex items-center gap-2 mb-3">
+                              <div className="flex items-center gap-2 mb-3 flex-wrap">
                                 <span className="text-sm font-bold text-[#333333]">₹{pricing.salePrice.toLocaleString()}</span>
                                 {pricing.hasDiscount && (
-                                  <span className="text-[11px] text-[#999999] line-through">₹{pricing.listPrice.toLocaleString()}</span>
+                                  <>
+                                    <span className="text-[11px] text-[#999999] line-through">₹{pricing.listPrice.toLocaleString()}</span>
+                                    <span className="inline-flex items-center self-start rounded-full bg-[#B1621F]/15 px-2 py-0.5 text-[10px] font-semibold text-[#B1621F]">
+                                      -{pricing.discountPercent}%
+                                    </span>
+                                  </>
                                 )}
                               </div>
                             );
@@ -897,7 +922,7 @@ export default function Home({ user, onNavigate, onAddToCart, onAddToWishlist })
                           {/* Rating */}
                           <div className="flex items-center gap-1 mt-auto">
                             <svg className="w-3.5 h-3.5 text-[#F5C518]" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                            <span className="text-[11px] font-medium text-[#666666]">4.9 <span className="text-[#999999] font-normal">(98)</span></span>
+                            <span className="text-[11px] font-medium text-[#666666]">{p.averageRating !== undefined ? p.averageRating : 0} <span className="text-[#999999] font-normal">({p.reviewCount !== undefined ? p.reviewCount : 0})</span></span>
                           </div>
                         </div>
                       </motion.div>
@@ -992,7 +1017,7 @@ export default function Home({ user, onNavigate, onAddToCart, onAddToWishlist })
                 <path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8"/>
                 <path d="M24 8C21 2 15 2 15 10C21 10 24 8 24 8Z" fill="currentColor" opacity="0.5"/>
               </svg>
-              <h2 className="text-3xl font-serif text-[#4A5441] tracking-wide">What Parents Love</h2>
+              <h2 className="text-3xl font-serif text-[#B0611C] tracking-wide">What Parents Love</h2>
               <svg width="40" height="20" viewBox="0 0 40 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#D4C3A3] transform scale-x-[-1]">
                 <path d="M2 10C10 10 18 5 28 10C32 12 36 12 38 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                 <path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8"/>

@@ -81,7 +81,7 @@ export default function ShopPage({ onNavigate, onAddToCart, onAddToWishlist, use
     const sort = searchParams.get('sort');
 
     const fetchParams = { isActive: 'true' };
-    if (category && !selectedCategory) fetchParams.categoryId = category;
+    if (category && !selectedCategory) fetchParams.category = category;
 
     setLoading(true);
     productV2API.getAll(fetchParams)
@@ -380,11 +380,9 @@ export default function ShopPage({ onNavigate, onAddToCart, onAddToWishlist, use
                 product={product}
                 onNavigate={onNavigate}
                 onAddToCart={(p) => {
-                  if (!user) { alert('Please sign in'); onNavigate('/login'); return; }
                   onAddToCart?.(p);
                 }}
                 onAddToWishlist={(p) => {
-                  if (!user) { alert('Please sign in'); onNavigate('/login'); return; }
                   onAddToWishlist?.(p);
                 }}
                 user={user}

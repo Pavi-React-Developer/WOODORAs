@@ -3,6 +3,11 @@ import { useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { productV2API } from '../api/catalogV2Service';
 import ProductReviewSection from '../components/ProductReviewSection';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const finishOptions = ['Natural Maple', 'Oak Tint'];
 const featureBullets = [
@@ -551,11 +556,6 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
   const productFieldKeys = useMemo(() => buildProductFieldKeys(product), [product]);
 
   const handleAction = (type) => {
-    if (!user) {
-      alert(`Please sign in to add to ${type.toLowerCase()}.`);
-      onNavigate('/login');
-      return;
-    }
 
     // Warn user if attributes are required but not selected
     const totalAttributes = Object.keys(variantAttributeOptions).length;
@@ -695,7 +695,7 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
 
               {/* Title & Starting From */}
               <div className="pr-32">
-                <p className="text-[11px] font-medium uppercase tracking-[0.25em] text-slate-500 mb-4">{product.name}</p>
+                <p className="text-[11px] font-medium uppercase tracking-[0.25em] text-[#B0611C] mb-4">{product.name}</p>
 
                 <div className="flex flex-col gap-2 mb-8">
                   {(() => {
@@ -908,7 +908,7 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                 <div className="py-8 text-sm md:text-base leading-relaxed text-slate-600 max-w-4xl mx-auto">
                   {activeTab === 'Description' && (
                     <div className="whitespace-pre-line">
-                      <h3 className="font-bold text-slate-900 mb-4 text-lg md:text-xl md:text-left">About {product.name}</h3>
+                      <h3 className="font-bold text-[#B0611C] mb-4 text-lg md:text-xl md:text-left">About {product.name}</h3>
                       <p className="text-slate-600 leading-relaxed">{descriptionText}</p>
                     </div>
                   )}
@@ -917,28 +917,28 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                   {displayFields.map((field) => (
                     activeTab === field.key && (
                       <div key={field.key} className="whitespace-pre-line">
-                        <h3 className="font-bold text-slate-900 mb-4 text-lg md:text-xl md:text-left">{field.key}</h3>
+                        <h3 className="font-bold text-[#B0611C] mb-4 text-lg md:text-xl md:text-left">{field.key}</h3>
                         <p className="text-slate-600 leading-relaxed">{field.value}</p>
                       </div>
                     )
                   ))}
                   {activeTab === 'Why Play' && (
                     <div className="whitespace-pre-line">
-                      <h3 className="font-bold text-slate-900 mb-4 text-lg md:text-xl md:text-left">Why {product.name}?</h3>
+                      <h3 className="font-bold text-[#B0611C] mb-4 text-lg md:text-xl md:text-left">Why {product.name}?</h3>
                       {product.additionalInfo?.find(info => info.key.toLowerCase() === 'why play')?.value ||
                         "• Engages children and aids in their developmental milestones.\n• Made with non-toxic, child-safe materials.\n• Encourages open-ended, imaginative play."}
                     </div>
                   )}
                   {activeTab === 'How Play' && (
                     <div className="whitespace-pre-line">
-                      <h3 className="font-bold text-slate-900 mb-4 text-lg md:text-xl md:text-left">How to Play</h3>
+                      <h3 className="font-bold text-[#B0611C] mb-4 text-lg md:text-xl md:text-left">How to Play</h3>
                       {product.additionalInfo?.find(info => info.key.toLowerCase() === 'how play')?.value ||
                         "• Let your child explore the textures and shapes.\n• Demonstrate once, then step back and let their imagination take over.\n• Perfect for independent play or guided activities."}
                     </div>
                   )}
                   {activeTab === 'Details' && (
                     <div className="space-y-3">
-                      <h3 className="font-bold text-slate-900 mb-4 text-lg md:text-xl md:text-left">Product Details</h3>
+                      <h3 className="font-bold text-[#B0611C] mb-4 text-lg md:text-xl md:text-left">Product Details</h3>
                       {product.dimensions && (product.dimensions.length || product.dimensions.width || product.dimensions.height) && (
                         <p><strong>Dimensions:</strong> {product.dimensions.length || 0} x {product.dimensions.width || 0} x {product.dimensions.height || 0} cm</p>
                       )}
@@ -953,7 +953,7 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                   )}
                   {activeTab === 'Return & Exchange' && (
                     <div className="whitespace-pre-line">
-                      <h3 className="font-bold text-slate-900 mb-4 text-lg md:text-xl md:text-left">Return & Exchange Policy</h3>
+                      <h3 className="font-bold text-[#B0611C] mb-4 text-lg md:text-xl md:text-left">Return & Exchange Policy</h3>
                       {product.returnPolicy || "• 7-day easy returns on unused items in original packaging.\n• Exchanges available for defective or damaged products.\n• Please contact our support team to initiate a request."}
                     </div>
                   )}
@@ -968,7 +968,7 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onClick={() => setShowSharePopup(false)}>
             <div className="w-full max-w-md rounded-[2rem] bg-white p-6 md:p-8 shadow-2xl" onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-slate-900 font-serif">Share this product</h3>
+                <h3 className="text-xl font-bold text-[#B0611C] font-serif">Share this product</h3>
                 <button onClick={() => setShowSharePopup(false)} className="text-slate-400 hover:text-slate-900 p-2 rounded-full hover:bg-slate-100 transition-colors">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
@@ -1009,43 +1009,67 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                 <path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8"/>
                 <path d="M24 8C21 2 15 2 15 10C21 10 24 8 24 8Z" fill="currentColor" opacity="0.5"/>
               </svg>
-              <h2 className="text-3xl font-serif text-[#4A5441] tracking-wide text-center">You May Also Like</h2>
+              <h2 className="text-3xl font-serif text-[#B0611C] tracking-wide text-center">You May Also Like</h2>
               <svg width="40" height="20" viewBox="0 0 40 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#D4C3A3] transform scale-x-[-1] shrink-0">
                 <path d="M2 10C10 10 18 5 28 10C32 12 36 12 38 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                 <path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8"/>
                 <path d="M24 8C21 2 15 2 15 10C21 10 24 8 24 8Z" fill="currentColor" opacity="0.5"/>
               </svg>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {recommendedProducts.map((p) => {
-                const recPricing = getPricingInfo(p);
-                return (
-                  <div key={p._id} className="group cursor-pointer" onClick={() => onNavigate(`/product/${p._id}`)}>
-                    <div className="aspect-square bg-slate-100 rounded-2xl overflow-hidden mb-4 border border-slate-200">
-                      <img
-                        src={p.images?.find(img => img.isThumbnail)?.url || p.images?.[0]?.url || (p.image && p.image.trim() !== '' ? p.image : '/wood-placeholder.png') || '/wood-placeholder.png'}
-                        alt={p.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        onError={(e) => { e.target.src = '/wood-placeholder.png'; }}
-                      />
-                    </div>
-                    <h3 className="font-semibold text-slate-900 text-sm mb-1 truncate">{p.name}</h3>
-                    <div className="flex flex-col gap-2">
-                      <div className="flex items-center gap-2">
-                        <p className="text-slate-600 text-sm font-bold">₹{recPricing.salePrice.toFixed(2)}</p>
-                        {recPricing.hasDiscount && (
-                          <p className="text-[10px] text-slate-500 line-through">₹{recPricing.listPrice.toFixed(2)}</p>
-                        )}
+            <div className="relative group/slider px-2 md:px-6">
+              <Swiper
+                modules={[Navigation]}
+                navigation={{
+                  prevEl: '.rec-prev',
+                  nextEl: '.rec-next',
+                }}
+                spaceBetween={16}
+                slidesPerView={1}
+                breakpoints={{
+                  480: { slidesPerView: 2, spaceBetween: 16 },
+                  768: { slidesPerView: 3, spaceBetween: 24 },
+                  1024: { slidesPerView: 4, spaceBetween: 24 }
+                }}
+                className="w-full"
+              >
+                {recommendedProducts.map((p) => {
+                  const recPricing = getPricingInfo(p);
+                  return (
+                    <SwiperSlide key={p._id}>
+                      <div className="group cursor-pointer" onClick={() => onNavigate(`/product/${p._id}`)}>
+                        <div className="aspect-square bg-slate-100 rounded-2xl overflow-hidden mb-4 border border-slate-200">
+                          <img
+                            src={p.images?.find(img => img.isThumbnail)?.url || p.images?.[0]?.url || (p.image && p.image.trim() !== '' ? p.image : '/wood-placeholder.png') || '/wood-placeholder.png'}
+                            alt={p.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            onError={(e) => { e.target.src = '/wood-placeholder.png'; }}
+                          />
+                        </div>
+                        <h3 className="font-semibold text-[#B0611C] text-sm mb-1 truncate">{p.name}</h3>
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center gap-2">
+                            <p className="text-slate-600 text-sm font-bold">₹{recPricing.salePrice.toFixed(2)}</p>
+                            {recPricing.hasDiscount && (
+                              <p className="text-[10px] text-slate-500 line-through">₹{recPricing.listPrice.toFixed(2)}</p>
+                            )}
+                          </div>
+                          {recPricing.hasDiscount && (
+                            <span className="inline-flex items-center w-fit rounded-full bg-[#B1621F]/15 px-2 py-1 text-[10px] font-semibold text-[#B1621F]">
+                              -{recPricing.discountPercent}%
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      {recPricing.hasDiscount && (
-                        <span className="inline-flex items-center w-fit rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-semibold text-emerald-700">
-                          -{recPricing.discountPercent}%
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+                    </SwiperSlide>
+                  );
+                })}
+              </Swiper>
+              <button type="button" className="rec-prev absolute top-1/3 -left-2 z-10 w-10 h-10 flex items-center justify-center bg-white shadow-md hover:bg-[#8B5E3C] hover:text-white text-slate-700 rounded-full transition-colors disabled:opacity-50 md:-left-4">
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button type="button" className="rec-next absolute top-1/3 -right-2 z-10 w-10 h-10 flex items-center justify-center bg-white shadow-md hover:bg-[#8B5E3C] hover:text-white text-slate-700 rounded-full transition-colors disabled:opacity-50 md:-right-4">
+                <ChevronRight className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </div>

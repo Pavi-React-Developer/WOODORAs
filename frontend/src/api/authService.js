@@ -210,6 +210,8 @@ export const authService = {
       name: updates.name ?? currentUser.name,
       email: updates.email ?? currentUser.email,
       role: updates.role ?? currentUser.role,
+      avatar: updates.avatar ?? currentUser.avatar,
+      profileImage: updates.profileImage ?? currentUser.profileImage,
       isStaff: updates.isStaff ?? currentUser.isStaff,
     };
     localStorage.setItem('user', JSON.stringify(nextUser));

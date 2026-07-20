@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
+import { Toaster, toast } from 'react-hot-toast';
+import { productV2API } from './api/catalogV2Service';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -19,6 +20,8 @@ import { authService } from './api/authService';
 import CartOffcanvas from './components/CartOffcanvas';
 import WishlistOffcanvas from './components/WishlistOffcanvas';
 import useCartStore from './store/useCartStore';
+
+import OAuthCallback from './pages/OAuthCallback';
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children, user, requiredRole }) => {
@@ -39,7 +42,6 @@ const ProtectedRoute = ({ children, user, requiredRole }) => {
 // Layout Wrapper for hiding header/footer on certain pages
 const PageLayout = ({ children, hideHeaderFooter }) => (
   <div className="flex flex-col min-h-screen bg-brand-beige/10">
-    {!hideHeaderFooter && <Header />}
     <main className="flex-grow">
       {children}
     </main>
@@ -68,9 +70,21 @@ export default function AppRouter() {
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   // Wishlist state
-  const [wishlistItems, setWishlistItems] = useState([]);
+  const [wishlistItems, setWishlistItems] = useState(() => {
+    try {
+      const saved = localStorage.getItem('wooden_toys_wishlist');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+
+  // Sync wishlist to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('wooden_toys_wishlist', JSON.stringify(wishlistItems));
+  }, [wishlistItems]);
 
   // Navigation handler for backward compatibility
   const handleNavigate = (path, payload = null) => {
@@ -102,33 +116,71 @@ export default function AppRouter() {
     navigate('/');
   };
 
-  const handleAddToCart = (product) => {
-    const addedQuantity = product.quantity || 1;
-    addToCart(product, addedQuantity);
+  const resolveProductForCart = async (product) => {
+    let productToAdd = { ...product };
+
+    // Always fetch full details to ensure we have variants with stock info
+    if (!productToAdd.variants || productToAdd.variants.length === 0) {
+      try {
+        const res = await productV2API.getById(productToAdd._id || productToAdd.id);
+        const fullProduct = res.product || res;
+        productToAdd = { ...productToAdd, ...fullProduct };
+      } catch (err) {
+        console.error('[Cart] Failed to fetch full product details:', err);
+      }
+    }
+
+    // ── Product already has a pre-selected variant (from ProductDetails page) ──
+    if (productToAdd.selectedVariant) {
+      const sv = productToAdd.selectedVariant;
+      const availableStock = Math.max(
+        0,
+        (sv.inventory ?? sv.currentStock ?? sv.stock ?? 0) - (sv.reserveStock || 0)
+      );
+      if (availableStock <= 0) {
+        toast.error('This variant is out of stock!');
+        return null;
+      }
+    }
+
+    return productToAdd;
+  };
+
+  const handleAddToCart = async (product) => {
+    const resolved = await resolveProductForCart(product);
+    if (!resolved) return;
+    addToCart(resolved, 1);
     setIsCartOpen(true);
   };
 
-  const handleBuyNow = (product) => {
-    const addedQuantity = product.quantity || 1;
-    addToCart(product, addedQuantity);
+  const handleBuyNow = async (product) => {
+    const resolved = await resolveProductForCart(product);
+    if (!resolved) return;
+    addToCart(resolved, 1);
     navigate('/review-order');
   };
 
   const handleUpdateQuantity = (index, delta) => {
     const item = cartItems[index];
     if (!item) return;
-    const newQuantity = item.qty + delta;
-    if (newQuantity > 0) {
-      updateQuantity(item.product, newQuantity, item.variant);
+
+    const newQty = item.qty + delta;
+
+    if (newQty < 1) {
+      // Quantity going below 1 = remove item
+      removeFromCart(String(item.product), item.variant ? String(item.variant) : undefined);
+    } else if (item.maxStock != null && newQty > item.maxStock) {
+      // Cap at maxStock, don't remove
+      updateQuantity(String(item.product), item.maxStock, item.variant ? String(item.variant) : undefined);
     } else {
-      removeFromCart(item.product, item.variant);
+      updateQuantity(String(item.product), newQty, item.variant ? String(item.variant) : undefined);
     }
   };
 
   const handleRemoveFromCart = (index) => {
     const item = cartItems[index];
     if (item) {
-      removeFromCart(item.product, item.variant);
+      removeFromCart(String(item.product), item.variant ? String(item.variant) : undefined);
     }
   };
 
@@ -267,62 +319,65 @@ export default function AppRouter() {
         />
 
         <Route
+          path="/oauth-success"
+          element={
+            <PageLayout hideHeaderFooter={true}>
+              <OAuthCallback onAuthSuccess={handleAuthSuccess} />
+            </PageLayout>
+          }
+        />
+
+        <Route
           path="/cart"
           element={
-            <ProtectedRoute user={user}>
-              <PageLayout>
-                <Header
-                  user={user}
-                  onLogout={handleLogout}
-                  onNavigate={handleNavigate}
-                  cartCount={cartItems.reduce((acc, item) => acc + item.qty, 0)}
-                  onOpenCart={() => setIsCartOpen(true)}
-                  wishlistCount={wishlistItems.length}
-                  onOpenWishlist={() => setIsWishlistOpen(true)}
-                />
-                <CartPage onNavigate={handleNavigate} />
-              </PageLayout>
-            </ProtectedRoute>
+            <PageLayout>
+              <Header
+                user={user}
+                onLogout={handleLogout}
+                onNavigate={handleNavigate}
+                cartCount={cartItems.reduce((acc, item) => acc + item.qty, 0)}
+                onOpenCart={() => setIsCartOpen(true)}
+                wishlistCount={wishlistItems.length}
+                onOpenWishlist={() => setIsWishlistOpen(true)}
+              />
+              <CartPage onNavigate={handleNavigate} />
+            </PageLayout>
           }
         />
 
         <Route
           path="/review-order"
           element={
-            <ProtectedRoute user={user}>
-              <PageLayout>
-                <Header
-                  user={user}
-                  onLogout={handleLogout}
-                  onNavigate={handleNavigate}
-                  cartCount={cartItems.reduce((acc, item) => acc + item.qty, 0)}
-                  onOpenCart={() => setIsCartOpen(true)}
-                  wishlistCount={wishlistItems.length}
-                  onOpenWishlist={() => setIsWishlistOpen(true)}
-                />
-                <ReviewOrderPage onNavigate={handleNavigate} />
-              </PageLayout>
-            </ProtectedRoute>
+            <PageLayout>
+              <Header
+                user={user}
+                onLogout={handleLogout}
+                onNavigate={handleNavigate}
+                cartCount={cartItems.reduce((acc, item) => acc + item.qty, 0)}
+                onOpenCart={() => setIsCartOpen(true)}
+                wishlistCount={wishlistItems.length}
+                onOpenWishlist={() => setIsWishlistOpen(true)}
+              />
+              <ReviewOrderPage onNavigate={handleNavigate} />
+            </PageLayout>
           }
         />
 
         <Route
           path="/complete-order"
           element={
-            <ProtectedRoute user={user}>
-              <PageLayout>
-                <Header
-                  user={user}
-                  onLogout={handleLogout}
-                  onNavigate={handleNavigate}
-                  cartCount={cartItems.reduce((acc, item) => acc + item.qty, 0)}
-                  onOpenCart={() => setIsCartOpen(true)}
-                  wishlistCount={wishlistItems.length}
-                  onOpenWishlist={() => setIsWishlistOpen(true)}
-                />
-                <CompleteOrderPage onNavigate={handleNavigate} />
-              </PageLayout>
-            </ProtectedRoute>
+            <PageLayout>
+              <Header
+                user={user}
+                onLogout={handleLogout}
+                onNavigate={handleNavigate}
+                cartCount={cartItems.reduce((acc, item) => acc + item.qty, 0)}
+                onOpenCart={() => setIsCartOpen(true)}
+                wishlistCount={wishlistItems.length}
+                onOpenWishlist={() => setIsWishlistOpen(true)}
+              />
+              <CompleteOrderPage onNavigate={handleNavigate} user={user} onAuthSuccess={handleAuthSuccess} />
+            </PageLayout>
           }
         />
 
@@ -400,25 +455,23 @@ export default function AppRouter() {
         <Route
           path="/wishlist"
           element={
-            <ProtectedRoute user={user}>
-              <PageLayout>
-                <Header
-                  user={user}
-                  onLogout={handleLogout}
-                  onNavigate={handleNavigate}
-                  cartCount={cartItems.reduce((acc, item) => acc + item.qty, 0)}
-                  onOpenCart={() => setIsCartOpen(true)}
-                  wishlistCount={wishlistItems.length}
-                  onOpenWishlist={() => setIsWishlistOpen(true)}
-                />
-                <WishlistPage
-                  wishlistItems={wishlistItems}
-                  onRemove={handleRemoveFromWishlist}
-                  onMoveToCart={handleMoveToCart}
-                  onNavigate={handleNavigate}
-                />
-              </PageLayout>
-            </ProtectedRoute>
+            <PageLayout>
+              <Header
+                user={user}
+                onLogout={handleLogout}
+                onNavigate={handleNavigate}
+                cartCount={cartItems.reduce((acc, item) => acc + item.qty, 0)}
+                onOpenCart={() => setIsCartOpen(true)}
+                wishlistCount={wishlistItems.length}
+                onOpenWishlist={() => setIsWishlistOpen(true)}
+              />
+              <WishlistPage
+                wishlistItems={wishlistItems}
+                onRemove={handleRemoveFromWishlist}
+                onMoveToCart={handleMoveToCart}
+                onNavigate={handleNavigate}
+              />
+            </PageLayout>
           }
         />
 

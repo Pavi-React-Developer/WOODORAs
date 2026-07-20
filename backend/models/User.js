@@ -16,7 +16,7 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: true,
+        // Removed required: true to support OAuth-only users
     },
     role: {
         type: String,
@@ -37,6 +37,17 @@ const userSchema = new mongoose.Schema({
         default: '',
     },
     profileImage: require('./CloudinaryAsset'),
+    avatar: {
+        type: String,
+        default: '',
+    },
+    providers: [{
+        provider: { type: String, enum: ['google', 'facebook', 'apple', 'github', 'microsoft'] },
+        providerId: { type: String }
+    }],
+    lastLogin: {
+        type: Date,
+    },
     addresses: [{
         label: { type: String, default: 'Home', trim: true },
         fullName: { type: String, trim: true },
