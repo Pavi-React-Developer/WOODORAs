@@ -21,6 +21,7 @@ import CustomerManagementPage from './admin/customers/CustomerManagementPage';
 import ReviewManagementPage from './admin/reviews/ReviewManagementPage';
 import CouponManagementPage from './admin/coupons/CouponManagementPage';
 import HomePageCMS from './admin/CMS/HomePageCMS';
+import BulkOrdersAdminPage from './admin/BulkOrdersAdminPage';
 
 const adminRouteState = {
   '/admin': { tab: 'dashboard' },
@@ -42,7 +43,9 @@ const adminRouteState = {
   '/admin/fees': { tab: 'fees', feeSubTab: 'list', feeMenuOpen: true },
   '/admin/fees/add': { tab: 'fees', feeSubTab: 'add', feeMenuOpen: true },
   '/admin/cancellations': { tab: 'cancellation' },
+  '/admin/cancellations': { tab: 'cancellation' },
   '/admin/refunds': { tab: 'refund', refundSubTab: 'list', refundMenuOpen: true },
+  '/admin/bulk-orders': { tab: 'bulk-orders' },
 };
 
 const adminTabPaths = {
@@ -59,8 +62,10 @@ const adminTabPaths = {
   coupons: '/admin/coupons',
   reviews: '/admin/reviews',
   fees: '/admin/fees',
+  fees: '/admin/fees',
   cancellation: '/admin/cancellations',
   refund: '/admin/refunds',
+  'bulk-orders': '/admin/bulk-orders',
 };
 
 export default function AdminDashboard({ user, onNavigate, onLogout }) {
@@ -773,7 +778,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
               </div>
             )}
 
-            {/* Orders Management */}
+                {/* Orders Management */}
             {(isAdmin || canView('orders')) && (
               <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
                 <button
@@ -785,6 +790,17 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                   <span className="flex items-center gap-2.5">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
                     Orders Management
+                  </span>
+                </button>
+                <button
+                  onClick={() => openAdminTab('bulk-orders')}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${
+                    currentTab === 'bulk-orders' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                  }`}
+                >
+                  <span className="flex items-center gap-2.5">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+                    Bulk Orders
                   </span>
                 </button>
               </div>
@@ -2150,6 +2166,11 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
           {/* ── CMS MANAGEMENT ── */}
           {isAdmin && currentTab === 'cms' && (
             <HomePageCMS />
+          )}
+
+          {/* ── BULK ORDERS MANAGEMENT ── */}
+          {(isAdmin || canView('orders')) && currentTab === 'bulk-orders' && (
+            <BulkOrdersAdminPage />
           )}
 
         </div>

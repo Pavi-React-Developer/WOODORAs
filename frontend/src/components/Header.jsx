@@ -188,6 +188,9 @@ export default function Header({
           <button type="button" onClick={() => onNavigate('/contact')} className="text-[15px] font-medium text-[#B0611C] hover:opacity-80">
             Contact
           </button>
+          <button type="button" onClick={() => onNavigate('/bulk-orders')} className="text-[15px] font-medium text-[#B0611C] hover:opacity-80 whitespace-nowrap">
+            Bulk Orders
+          </button>
         </nav>
 
         {/* Animated Search Overlay */}
@@ -455,8 +458,11 @@ export default function Header({
           <button type="button" onClick={() => { onNavigate('/'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-lg font-medium text-[#4A3326]">
             Blog
           </button>
-          <button type="button" onClick={() => { onNavigate('/'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-lg font-medium text-[#4A3326]">
+          <button type="button" onClick={() => { onNavigate('/contact'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-lg font-medium text-[#4A3326]">
             Contact
+          </button>
+          <button type="button" onClick={() => { onNavigate('/bulk-orders'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-lg font-medium text-[#4A3326]">
+            Bulk Orders
           </button>
         </div>
       </div>

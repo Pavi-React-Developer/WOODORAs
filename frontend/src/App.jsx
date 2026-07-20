@@ -16,6 +16,7 @@ import CashfreeCallbackPage from './pages/CashfreeCallbackPage';
 import CustomerProfilePage from './pages/CustomerProfilePage';
 import WishlistPage from './pages/WishlistPage';
 import ShopPage from './pages/ShopPage';
+import BulkOrderPage from './pages/BulkOrderPage';
 import OAuthCallback from './pages/OAuthCallback';
 import { authService } from './api/authService';
 import CartOffcanvas from './components/CartOffcanvas';
@@ -321,6 +322,24 @@ export default function App() {
                 onAddToCart={handleAddToCart}
                 onAddToWishlist={handleAddToWishlist}
               />
+            </LayoutWithHeader>
+          }
+        />
+
+        {/* Bulk Orders */}
+        <Route
+          path="/bulk-orders"
+          element={
+            <LayoutWithHeader
+              user={user}
+              cartItems={cartItems}
+              wishlistItems={wishlistItems}
+              onOpenCart={() => setIsCartOpen(true)}
+              onOpenWishlist={() => setIsWishlistOpen(true)}
+              onLogout={handleLogout}
+              onNavigate={handleNavigate}
+            >
+              <BulkOrderPage />
             </LayoutWithHeader>
           }
         />

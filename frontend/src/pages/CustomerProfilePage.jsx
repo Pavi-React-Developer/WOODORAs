@@ -47,6 +47,7 @@ import WriteReviewModal from '../components/WriteReviewModal';
 const modules = [
   { id: 'profile', label: 'My Profile', icon: User },
   { id: 'orders', label: 'Order History', icon: Package },
+  { id: 'bulk-orders', label: 'Bulk Orders', icon: Package },
   { id: 'reviews', label: 'Reviews & Ratings', icon: Star },
   { id: 'addresses', label: 'Addresses', icon: MapPin },
   { id: 'cart', label: 'Cart', icon: ShoppingBag },
@@ -62,6 +63,7 @@ const modules = [
 const profileModulePaths = {
   profile: '/profile',
   orders: '/profile/order-history',
+  'bulk-orders': '/profile/bulk-orders',
   reviews: '/profile/reviews',
   addresses: '/profile/addresses',
   cart: '/profile/cart',
@@ -144,6 +146,8 @@ export default function CustomerProfilePage({
   });
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
+  const [bulkOrders, setBulkOrders] = useState([]);
+  const [bulkOrdersLoading, setBulkOrdersLoading] = useState(false);
   const [refunds, setRefunds] = useState([]);
   const [refundsLoading, setRefundsLoading] = useState(false);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
@@ -228,6 +232,31 @@ export default function CustomerProfilePage({
   useEffect(() => {
     if (activeModule === 'refunds') {
       fetchMyRefunds();
+    }
+  }, [activeModule]);
+
+  useEffect(() => {
+    if (activeModule === 'bulk-orders') {
+      const fetchBulkOrders = async () => {
+        try {
+          setBulkOrdersLoading(true);
+          const token = localStorage.getItem('token');
+          const res = await fetch('http://localhost:5000/api/bulk-orders/my-requests', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          const data = await res.json();
+          if (data.success) {
+            setBulkOrders(data.data);
+          }
+        } catch (err) {
+          toast.error('Failed to load bulk orders');
+        } finally {
+          setBulkOrdersLoading(false);
+        }
+      };
+      fetchBulkOrders();
     }
   }, [activeModule]);
 
@@ -846,6 +875,63 @@ export default function CustomerProfilePage({
               })}
             </tbody>
           </table>
+        </div>
+      )}
+    </section>
+  );
+
+  const renderBulkOrders = () => (
+    <section className="px-5 py-7 lg:px-7">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-bold text-[#141225]">Bulk Orders</h2>
+          <p className="mt-1 text-sm text-[#6D625C]">Track the status of your bulk order requests.</p>
+        </div>
+      </div>
+
+      {bulkOrdersLoading ? (
+        <p className="mt-8 text-sm text-[#6D625C]">Loading bulk orders...</p>
+      ) : bulkOrders.length === 0 ? (
+        <div className="mt-6 flex flex-col items-center justify-center rounded-[14px] border border-dashed border-[#E9DED3] bg-[#FAF8F5] py-12 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-[#C4B9B0] shadow-sm">
+            <Package className="h-8 w-8" strokeWidth={1.5} />
+          </div>
+          <h3 className="mt-4 text-base font-bold text-[#141225]">No Bulk Orders Yet</h3>
+          <p className="mt-2 max-w-sm text-sm text-[#6D625C]">You haven't placed any bulk order requests.</p>
+          <button type="button" onClick={() => onNavigate('/bulk-orders')} className="mt-6 rounded-[8px] bg-[#9A6031] px-6 py-2.5 text-sm font-bold text-white transition hover:bg-[#7E4B25]">
+            Request Bulk Order
+          </button>
+        </div>
+      ) : (
+        <div className="mt-6 space-y-4">
+          {bulkOrders.map((order) => (
+            <div key={order._id} className="rounded-[14px] border border-[#E9DED3] bg-white p-5 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+                <div>
+                  <h3 className="font-bold text-[#141225]">{order.companyName}</h3>
+                  <p className="text-sm text-[#6D625C]">Contact: {order.contactPerson} ({order.phone})</p>
+                  <p className="text-sm text-[#6D625C]">Estimated Quantity: {order.estimatedQuantity}</p>
+                  {order.customBranding && <p className="text-sm font-semibold text-[#8B5E3C] mt-1">✓ Custom Branding Requested</p>}
+                  <p className="text-xs text-[#8A817C] mt-2">Requested on: {formatDate(order.createdAt)}</p>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                  <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider ${
+                    order.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' :
+                    order.status === 'Rejected' ? 'bg-red-100 text-red-700' :
+                    'bg-[#F2E3D1] text-[#8B5E3C]'
+                  }`}>
+                    {order.status || 'Pending'}
+                  </span>
+                  {order.status === 'Rejected' && order.rejectionReason && (
+                    <div className="mt-2 max-w-xs text-right">
+                      <p className="text-xs font-bold text-red-600">Rejection Reason:</p>
+                      <p className="text-xs text-[#6D625C]">{order.rejectionReason}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </section>
@@ -1603,6 +1689,7 @@ export default function CustomerProfilePage({
 
           {activeModule === 'profile' && renderProfile()}
           {activeModule === 'orders' && renderOrders()}
+          {activeModule === 'bulk-orders' && renderBulkOrders()}
           {activeModule === 'reviews' && renderReviews()}
           {activeModule === 'order-details' && renderOrderDetails()}
           {activeModule === 'addresses' && renderAddresses()}

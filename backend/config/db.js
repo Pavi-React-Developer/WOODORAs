@@ -1,4 +1,8 @@
 const mongoose = require('mongoose');
+const dns = require('dns');
+
+// Force Google DNS to fix SRV resolution issues ('querySrv ECONNREFUSED') in Node.js
+dns.setServers(['8.8.8.8', '8.8.4.4']);
 
 const connectDB = async () => {
     // Primary: Atlas URI from env or hardcoded (comment out to use localhost directly)

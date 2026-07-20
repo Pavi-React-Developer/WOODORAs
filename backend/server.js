@@ -19,6 +19,7 @@ const paymentRoutes = require('./routes/paymentRoutes');
 const reviewRoutes  = require('./routes/reviewRoutes');
 const couponRoutes = require('./routes/couponRoutes');
 const cmsRoutes = require('./routes/cmsRoutes');
+const bulkOrderRoutes = require('./routes/bulkOrderRoutes');
 const seedAttributes = require('./seedAttributes');
 const Order = require('./models/Order');
 const Review = require('./models/Review');
@@ -130,6 +131,7 @@ app.use('/api/payment', paymentRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/coupons', couponRoutes);
 app.use('/api/cms', cmsRoutes);
+app.use('/api/bulk-orders', bulkOrderRoutes);
 
 app.get('/', (req, res) => {
     res.send('API is running...');
