@@ -331,9 +331,13 @@ export default function BulkOrdersAdminPage() {
                   {viewingOrder.product ? (
                     <div className="space-y-3">
                       <div className="w-full aspect-video bg-[#FAF8F5] rounded-lg overflow-hidden border border-[#E9DED3] flex items-center justify-center">
-                        {viewingOrder.product.images && viewingOrder.product.images[0] ? (
+                        {(viewingOrder.product.images && viewingOrder.product.images.length > 0) || viewingOrder.category?.image || viewingOrder.subCategory?.image ? (
                           <img 
-                            src={viewingOrder.product.images[0]?.url || viewingOrder.product.images[0]} 
+                            src={
+                              (viewingOrder.product.images && viewingOrder.product.images.length > 0)
+                                ? (viewingOrder.product.images[0]?.url || viewingOrder.product.images[0])
+                                : (viewingOrder.category?.image?.url || viewingOrder.subCategory?.image?.url)
+                            } 
                             alt={viewingOrder.product.name}
                             className="w-full h-full object-contain"
                           />

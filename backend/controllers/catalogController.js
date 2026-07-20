@@ -38,7 +38,7 @@ const createProduct = async (req, res) => {
 // @access  Public
 const getProducts = async (req, res) => {
     try {
-        const products = await Product.find({}).populate('category', 'name slug').populate('subCategory', 'name slug');
+        const products = await Product.find({}).populate('category', 'name slug image').populate('subCategory', 'name slug image');
         const inventories = await Inventory.find({});
         const productsWithInventory = products.map(p => {
             const inv = inventories.find(i => i.product.toString() === p._id.toString());
@@ -58,7 +58,7 @@ const getProducts = async (req, res) => {
 // @access  Public
 const getProductById = async (req, res) => {
     try {
-        const product = await Product.findById(req.params.id).populate('category', 'name slug');
+        const product = await Product.findById(req.params.id).populate('category', 'name slug image').populate('subCategory', 'name slug image');
         if (product) {
             res.json(product);
         } else {

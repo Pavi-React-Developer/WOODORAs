@@ -52,8 +52,8 @@ exports.getAllBulkOrders = async (req, res) => {
   try {
     const orders = await BulkOrder.find()
       .populate('user', 'name email')
-      .populate('category', 'name')
-      .populate('subCategory', 'name')
+      .populate('category')
+      .populate('subCategory')
       .populate('product', 'name images sku price')
       .sort('-createdAt');
     res.status(200).json({

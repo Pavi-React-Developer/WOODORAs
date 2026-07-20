@@ -125,8 +125,8 @@ const getProducts = async (req, res) => {
 
         const total = await Product.countDocuments(filter);
         const products = await Product.find(filter)
-            .populate('category', 'name slug')
-            .populate('subCategory', 'name slug')
+            .populate('category')
+            .populate('subCategory')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(parseInt(limit));

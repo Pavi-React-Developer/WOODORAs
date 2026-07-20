@@ -347,15 +347,26 @@ export default function BulkOrderPage() {
               <div className="bg-white p-6 rounded-2xl border border-[#E9DED3] shadow-md transition-all">
                 <h3 className="font-serif font-bold text-xl text-[#2E2E2E] mb-4">Selected Product</h3>
                 <div className="rounded-xl overflow-hidden mb-4 bg-[#FAF4EF] aspect-square flex items-center justify-center">
-                  {selectedProductDetails.images && selectedProductDetails.images[0] ? (
-                    <img 
-                      src={getImageUrl(selectedProductDetails.images)} 
-                      alt={selectedProductDetails.name} 
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-[#8A817C] font-medium">No Image Available</span>
-                  )}
+                  {(() => {
+                    let productImageUrl = null;
+                    if (selectedProductDetails.images && selectedProductDetails.images.length > 0) {
+                      productImageUrl = getImageUrl(selectedProductDetails.images);
+                    } else if (selectedProductDetails.category && selectedProductDetails.category.image?.url) {
+                      productImageUrl = selectedProductDetails.category.image.url;
+                    } else if (selectedProductDetails.subCategory && selectedProductDetails.subCategory.image?.url) {
+                      productImageUrl = selectedProductDetails.subCategory.image.url;
+                    }
+                    
+                    return productImageUrl ? (
+                      <img 
+                        src={productImageUrl} 
+                        alt={selectedProductDetails.name} 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-[#8A817C] font-medium">No Image Available</span>
+                    );
+                  })()}
                 </div>
                 <h4 className="font-bold text-[#4A3326] text-lg">{selectedProductDetails.name}</h4>
                 <p className="text-sm text-[#7C7370] mt-2 line-clamp-2">{selectedProductDetails.shortDescription || selectedProductDetails.description || 'Premium handcrafted wooden product.'}</p>
