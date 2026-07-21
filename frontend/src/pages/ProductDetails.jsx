@@ -705,20 +705,19 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
 
                     return (
                       <>
-                        {showStartingFrom && (
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">STARTING FROM</p>
-                        )}
-                        {!showStartingFrom && (
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">PRICE</p>
-                        )}
-                        <div className="flex items-center gap-3 mt-1">
-                          <p className="text-[2.5rem] font-medium tracking-tight text-slate-900 leading-none">
+                        <div className="flex items-center gap-4 mt-1">
+                          <p className="text-[2.5rem] font-medium tracking-tight text-[#333333] leading-none">
                             ₹{(pricing.salePrice * quantity).toFixed(2)}
                           </p>
                           {pricing.hasDiscount && (
-                            <span className="text-xl text-slate-400 line-through">
-                              ₹{(pricing.listPrice * quantity).toFixed(2)}
-                            </span>
+                            <>
+                              <span className="text-xl text-[#999999] line-through">
+                                ₹{(pricing.listPrice * quantity).toFixed(2)}
+                              </span>
+                              <span className="inline-flex items-center rounded-full bg-[#B1621F]/15 px-2.5 py-0.5 text-xs font-semibold text-[#B1621F]">
+                                -{pricing.discountPercent}%
+                              </span>
+                            </>
                           )}
                         </div>
                       </>
@@ -731,7 +730,6 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                 {/* Attributes */}
                 {productAttributes.length > 0 && (
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400 mb-5">ATTRIBUTES</p>
                     <div className="grid gap-6">
                       {productAttributes.map((attribute) => {
                         const label = attribute._isVariantDerived
@@ -741,12 +739,36 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                           ? attribute.values
                           : getAttributeValues(attribute);
                         const selectedValue = selectedAttributeValues[label];
+                        const isColorAttribute = label.toLowerCase() === 'color' || label.toLowerCase() === 'colour';
+
                         return (
                           <div key={attribute._id || label}>
                             <p className="text-[15px] font-semibold text-slate-800 mb-3 capitalize">{label}</p>
                             <div className="flex flex-wrap gap-3">
                               {values.map((value) => {
                                 const isSelected = selectedValue === value;
+                                
+                                if (isColorAttribute) {
+                                  return (
+                                    <button
+                                      type="button"
+                                      key={`${label}-${value}`}
+                                      onClick={() => handleToggleAttributeValue(label, value)}
+                                      title={value}
+                                      className={`w-10 h-10 rounded-full flex items-center justify-center transition p-0.5 ${
+                                        isSelected
+                                          ? 'border-2 border-[#8B5E3C] shadow-sm shadow-[#8B5E3C]/20'
+                                          : 'border-2 border-transparent hover:border-slate-300'
+                                      }`}
+                                    >
+                                      <div 
+                                        className="w-full h-full rounded-full border border-black/10" 
+                                        style={{ backgroundColor: value.toLowerCase().replace(/\s+/g, '') }} 
+                                      />
+                                    </button>
+                                  );
+                                }
+
                                 return (
                                   <button
                                     type="button"

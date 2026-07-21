@@ -106,8 +106,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
   // Dynamic permissions for sidebar
   const [userPermissions, setUserPermissions] = useState(null); // null = not loaded yet
 
-  // Admin users see everything; staff see only their permitted modules
-  const isAdmin = user?.role?.toLowerCase() === 'admin';
+  // True Super Admins (from User collection) see everything. Staff (even if role is named "admin") use permissions matrix.
+  const isAdmin = user?.role?.toLowerCase() === 'admin' && user?.isStaff !== true;
   const canView = (moduleKey) => {
     if (isAdmin) return true;
     if (!userPermissions) return false;
@@ -2106,6 +2106,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
           {/* ── FEE MANAGEMENT ── */}
           {(isAdmin || canView('fees')) && currentTab === 'fees' && feeSubTab === 'list' && (
             <FeeListPage 
+              canCreate={hasPermission('fees', 'create')}
               canEdit={hasPermission('fees', 'edit')}
               canDelete={hasPermission('fees', 'delete')}
               onNavigate={(tab, fee) => {

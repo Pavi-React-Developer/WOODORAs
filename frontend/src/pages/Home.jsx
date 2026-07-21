@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, EffectFade, EffectCreative, Navigation, Controller } from 'swiper/modules';
@@ -942,12 +943,13 @@ export default function Home({ user, onNavigate, onAddToCart, onAddToWishlist })
 
             {/* View All Button */}
             <div className="flex justify-center mt-6 mb-12">
-              <button 
+              <Link 
+                to="/shop"
                 onClick={() => onNavigate('/shop')}
                 className="bg-[#8B5E3C] text-white px-8 py-3 rounded-full text-sm font-medium hover:bg-[#4A5441] transition-colors inline-flex items-center gap-2"
               >
                 View All Products <span>→</span>
-              </button>
+              </Link>
             </div>
 
             {/* Trust Badges Strip */}

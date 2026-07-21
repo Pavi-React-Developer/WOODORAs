@@ -54,7 +54,7 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
     if (cartItems.length === 0) {
       onNavigate('/');
     }
-    
+
     // Load saved addresses
     const loadAddresses = async () => {
       let loadedAddresses = [];
@@ -69,11 +69,11 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
           console.error('Failed to load profile addresses', error);
         }
       }
-      
+
       if (loadedAddresses.length === 0) {
         loadedAddresses = JSON.parse(localStorage.getItem('wooden_toys_addresses') || '[]');
       }
-      
+
       setSavedAddresses(loadedAddresses);
       if (loadedAddresses.length === 0) {
         setIsAddingAddress(true);
@@ -81,7 +81,7 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
     };
 
     loadAddresses();
-    
+
     // Fetch fees
     const fetchFees = async () => {
       try {
@@ -95,9 +95,9 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
   }, [cartItems, onNavigate]);
 
   const subtotal = getSubtotal();
-  
-  const currentState = savedAddresses.length > 0 && !isAddingAddress 
-    ? savedAddresses[selectedAddressIndex]?.state 
+
+  const currentState = savedAddresses.length > 0 && !isAddingAddress
+    ? savedAddresses[selectedAddressIndex]?.state
     : formData.state;
 
   const feeSummary = calculateOrderFees({
@@ -153,18 +153,18 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
   const handleSaveAddress = (e) => {
     e.preventDefault();
     const finalCity = (formData.state === 'Tamil Nadu' && formData.city === 'Other') ? formData.customCity : formData.city;
-    
+
     let finalState = formData.state;
     if (formData.state === 'Other State') {
       if (!formData.customState || !formData.customState.trim()) {
         return toast.error('Please enter your state');
       }
       finalState = formData.customState.trim();
-      
+
       if (finalCity) {
         const userCity = finalCity.trim().toLowerCase().replace(/ district| dt| dist/g, '').trim();
         const tnDistrictsLower = (stateDistricts['Tamil Nadu'] || []).map(d => d.toLowerCase());
-        
+
         const isTnDistrict = tnDistrictsLower.some(d => {
           const cleanD = d.replace(/ \(.*\)/g, '').trim(); // Remove brackets like (Tuticorin)
           return cleanD === userCity || d === userCity || userCity.includes(cleanD);
@@ -191,10 +191,10 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
     } else {
       updatedAddresses = [...savedAddresses, addressToSave];
     }
-    
+
     setSavedAddresses(updatedAddresses);
     localStorage.setItem('wooden_toys_addresses', JSON.stringify(updatedAddresses));
-    
+
     // Sync with profile
     if (authService.isAuthenticated()) {
       authService.updateProfile({ addresses: updatedAddresses }).catch(err => console.error('Failed to sync address to profile:', err));
@@ -241,7 +241,7 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
     const updated = savedAddresses.filter((_, i) => i !== index);
     setSavedAddresses(updated);
     localStorage.setItem('wooden_toys_addresses', JSON.stringify(updated));
-    
+
     // Sync with profile
     if (authService.isAuthenticated()) {
       authService.updateProfile({ addresses: updated }).catch(err => console.error('Failed to sync address deletion to profile:', err));
@@ -329,7 +329,7 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
       toast.success('Order placed successfully!');
       clearCart();
       onNavigate(`/order-success/${order._id}`);
-      
+
     } catch (error) {
       toast.error(error.message || 'Failed to place order');
     } finally {
@@ -340,7 +340,7 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
   return (
     <div className="min-h-screen bg-[#F8F4EC] py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
-        
+
         {/* Progress Bar */}
         <div className="flex items-center justify-center mb-10 max-w-2xl mx-auto">
           <div className="flex items-center text-[#8B5E3C] font-bold">
@@ -367,10 +367,10 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
-          
+
           {/* Left Column */}
           <div className="lg:w-2/3 space-y-6">
-            
+
             {/* Shipping Details Card */}
             <div className="bg-white p-6 rounded-3xl shadow-sm border border-[#E6DFD4]">
               <div className="flex items-center gap-3 mb-6 border-b border-[#E6DFD4] pb-4">
@@ -396,14 +396,14 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
                         {addr.landmark && <p className="text-xs text-gray-500 mt-1">Landmark: {addr.landmark}</p>}
                       </div>
                       <div className="absolute bottom-4 right-4 flex gap-3">
-                        <button 
+                        <button
                           onClick={(e) => { e.stopPropagation(); handleEditAddress(idx); }}
                           className="text-gray-400 hover:text-blue-500 transition-colors"
                           title="Edit Address"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
-                        <button 
+                        <button
                           onClick={(e) => { e.stopPropagation(); handleDeleteAddress(idx); }}
                           className="text-gray-400 hover:text-red-500 transition-colors"
                           title="Delete Address"
@@ -493,8 +493,8 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
                   <div className="pt-2 flex gap-3">
                     {savedAddresses.length > 0 && (
                       <button type="button" onClick={() => { setIsAddingAddress(false); setEditingAddressIndex(null); }} className="w-full sm:w-auto px-6 py-3 rounded-2xl border border-gray-300 font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
-                      Cancel
-                    </button>
+                        Cancel
+                      </button>
                     )}
                     <button type="submit" className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-[#8B5E3C] font-semibold text-white hover:bg-[#7A5234] transition-colors">
                       {editingAddressIndex !== null ? 'Update Address' : 'Save Address'}
@@ -512,7 +512,7 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
                 </div>
                 <h2 className="text-xl font-bold text-gray-900">Payment Method</h2>
               </div>
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <label className={`relative p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-center gap-4 ${paymentMethod === 'COD' ? 'border-[#8B5E3C] bg-[#F8F4EC]/50' : 'border-[#E6DFD4] hover:border-[#8B5E3C]/50'}`}>
                   <input type="radio" name="paymentMethod" value="COD" checked={paymentMethod === 'COD'} onChange={(e) => setPaymentMethod(e.target.value)} className="w-4 h-4 text-[#8B5E3C] focus:ring-[#8B5E3C]" />
@@ -559,15 +559,15 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
           <div className="lg:w-1/3">
             <div className="bg-white p-6 rounded-3xl shadow-sm border border-[#E6DFD4] sticky top-8">
               <h2 className="text-xl font-bold text-gray-900 mb-6">Your Order</h2>
-              
+
               <div className="space-y-4 mb-6 border-b border-[#E6DFD4] pb-6 max-h-75 overflow-y-auto pr-2 custom-scrollbar">
                 {cartItems.map((item, idx) => (
                   <div key={idx} className="flex items-center gap-4">
                     <div className="w-16 h-16 bg-[#F8F4EC] rounded-xl overflow-hidden shrink-0 relative">
                       {item.image ? (
-                         <img src={getImageSrc(item.image)} alt={item.name} className="w-full h-full object-cover" />
+                        <img src={getImageSrc(item.image)} alt={item.name} className="w-full h-full object-cover" />
                       ) : (
-                         <div className="w-full h-full bg-gray-200"></div>
+                        <div className="w-full h-full bg-gray-200"></div>
                       )}
                       <span className="absolute -top-2 -right-2 w-5 h-5 bg-gray-500 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm">{item.qty}</span>
                     </div>
@@ -580,7 +580,7 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
                         <p className="text-xs text-gray-500">{(Number(item.weight) * item.qty)} kg</p>
                       )}
                       <div className="flex items-center gap-2 mt-2">
-                        <button 
+                        <button
                           onClick={() => handleQtyChange(item.product, item.qty - 1, item.variant)}
                           disabled={item.qty <= 1}
                           className="w-6 h-6 flex items-center justify-center rounded border border-[#E6DFD4] bg-white text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C] disabled:opacity-50 transition-colors"
@@ -588,7 +588,7 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
                           <Minus className="w-3 h-3" />
                         </button>
                         <span className="text-xs font-bold w-4 text-center">{item.qty}</span>
-                        <button 
+                        <button
                           onClick={() => handleQtyChange(item.product, item.qty + 1, item.variant, item.maxStock)}
                           disabled={item.maxStock !== undefined && item.qty >= item.maxStock}
                           className="w-6 h-6 flex items-center justify-center rounded border border-[#E6DFD4] bg-white text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -664,13 +664,13 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
 
         </div>
       </div>
-      
-      <LoginModal 
-        isOpen={isLoginModalOpen} 
-        onClose={() => setIsLoginModalOpen(false)} 
+
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
         onAuthSuccess={(data) => {
           onAuthSuccess(data, true);
-        }} 
+        }}
       />
     </div>
   );

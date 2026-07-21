@@ -316,9 +316,11 @@ export default function CouponManagementPage({ canCreate = true, canEdit = true,
           <button onClick={exportExcel} className="admin-export-btn">
             <FileDown size={16} /> Export Excel
           </button>
-          <button onClick={openAdd} className="inline-flex items-center gap-2 bg-[#8B5E3C] text-white px-4 py-2.5 rounded-xl font-semibold text-sm hover:bg-[#7A4E31]">
-            <Plus size={16} /> Add Coupon
-          </button>
+          {canCreate && (
+            <button onClick={openAdd} className="inline-flex items-center gap-2 bg-[#8B5E3C] text-white px-4 py-2.5 rounded-xl font-semibold text-sm hover:bg-[#7A4E31]">
+              <Plus size={16} /> Add Coupon
+            </button>
+          )}
         </div>
       </div>
 

@@ -232,6 +232,11 @@ export default function AddStaffPage({ onBack, onSuccess, editingStaff, currentU
         await staffAPI.updatePermissions(editingStaff._id, mapToPerms(staffPerms));
       } else {
         result = await staffAPI.create(payload);
+        // Save permissions for the newly created staff member
+        const newId = result?.staff?._id || result?._id;
+        if (newId) {
+          await staffAPI.updatePermissions(newId, mapToPerms(staffPerms));
+        }
       }
       onBack();
     } catch (err) {
@@ -325,30 +330,28 @@ export default function AddStaffPage({ onBack, onSuccess, editingStaff, currentU
             </InputField>
           </div>
           
-          {isEdit && (
-            <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm p-6 md:p-8 space-y-5 mt-6">
-              <div className="flex items-center gap-2 mb-2 pb-4 border-b border-[#F0EAE2]">
-                <div className="w-8 h-8 bg-[#F8F4EC] rounded-lg flex items-center justify-center">
-                  <span className="text-[#8B5E3C] text-sm">👥</span>
-                </div>
-                <h2 className="font-bold text-gray-700">Assign Permissions</h2>
+          <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm p-6 md:p-8 space-y-5 mt-6">
+            <div className="flex items-center gap-2 mb-2 pb-4 border-b border-[#F0EAE2]">
+              <div className="w-8 h-8 bg-[#F8F4EC] rounded-lg flex items-center justify-center">
+                <span className="text-[#8B5E3C] text-sm">👥</span>
               </div>
-              {loadingPerms ? (
-                <div className="text-center py-6 text-gray-400">Loading permissions...</div>
-              ) : (
-                <PermissionTable
-                  modules={visiblePermissionModules}
-                  permissions={staffPerms}
-                  onToggle={toggleStaffPerm}
-                  onToggleRow={toggleStaffRow}
-                  onToggleColumn={toggleStaffColumn}
-                  onSelectAll={staffSelectAll}
-                  onClearAll={staffClearAll}
-                  canToggleAction={(moduleKey, action) => canToggleAction(moduleKey, action, currentUserPermissions, isAdmin)}
-                />
-              )}
+              <h2 className="font-bold text-gray-700">Assign Permissions</h2>
             </div>
-          )}
+            {loadingPerms ? (
+              <div className="text-center py-6 text-gray-400">Loading permissions...</div>
+            ) : (
+              <PermissionTable
+                modules={visiblePermissionModules}
+                permissions={staffPerms}
+                onToggle={toggleStaffPerm}
+                onToggleRow={toggleStaffRow}
+                onToggleColumn={toggleStaffColumn}
+                onSelectAll={staffSelectAll}
+                onClearAll={staffClearAll}
+                canToggleAction={(moduleKey, action) => canToggleAction(moduleKey, action, currentUserPermissions, isAdmin)}
+              />
+            )}
+          </div>
         </div>
 
         <div className="flex items-center justify-end gap-3 mt-6">

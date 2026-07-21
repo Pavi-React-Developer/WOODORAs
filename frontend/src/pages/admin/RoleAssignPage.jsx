@@ -320,6 +320,76 @@ export default function RoleAssignPage({ onBack, targetStaff, currentUserPermiss
         </div>
       </div>
 
+      {/* ── Assign Staff Permissions Card ── */}
+      <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm p-6 mb-6">
+        <h2 className="font-bold text-gray-800 text-base mb-5 flex items-center gap-2">
+          <span className="w-7 h-7 bg-[#F8F4EC] rounded-lg flex items-center justify-center text-[#8B5E3C] text-sm font-bold">👤</span>
+          Assign Staff Permissions
+        </h2>
+
+        {/* Staff Selector */}
+        <div className="mb-5">
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Select Staff Member <span className="text-red-500">*</span></label>
+          <select
+            value={selectedStaff?._id || ''}
+            onChange={e => {
+              const staff = staffList.find(s => s._id === e.target.value) || null;
+              setSelectedStaff(staff);
+              setSaved(false);
+            }}
+            className="w-full md:w-96 px-4 py-2.5 text-sm border border-[#E6DFD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C]"
+          >
+            <option value="">Select staff...</option>
+            {staffList.map(s => (
+              <option key={s._id} value={s._id}>{s.fullName} ({s.role || 'No Role'})</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Permission Matrix for Staff */}
+        {selectedStaff && (
+          <div className="mb-5">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Permission Matrix</h3>
+            {loadingPerms ? (
+              <div className="text-center py-6 text-gray-400">Loading permissions...</div>
+            ) : (
+              <PermissionTable
+                modules={visiblePermissionModules}
+                permissions={staffPerms}
+                onToggle={toggleStaffPerm}
+                onToggleRow={toggleStaffRow}
+                onToggleColumn={toggleStaffColumn}
+                onSelectAll={staffSelectAll}
+                onClearAll={staffClearAll}
+                canToggleAction={(moduleKey, action) => canToggleAction(moduleKey, action, currentUserPermissions, isAdmin)}
+              />
+            )}
+          </div>
+        )}
+
+        {/* Save feedback */}
+        {saved && (
+          <p className="flex items-center gap-1.5 text-sm text-green-600 font-semibold mb-3">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+            Permissions saved successfully!
+          </p>
+        )}
+
+        {/* Save Button */}
+        {selectedStaff && (
+          <div className="flex justify-end">
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex items-center gap-2 bg-[#8B5E3C] hover:bg-[#7a5234] disabled:opacity-50 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+              {saving ? 'Saving...' : 'Save Permissions'}
+            </button>
+          </div>
+        )}
+      </div>
+
     </div>
   );
 }

@@ -22,6 +22,13 @@ export default function ShopPage({ onNavigate, onAddToCart, onAddToWishlist, use
   const [selectedAttributes, setSelectedAttributes] = useState({});
 
   const [priceRange, setPriceRange] = useState(0);
+  const [sortBy, setSortBy] = useState('Most Popular');
+  const [viewMode, setViewMode] = useState('grid');
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory, selectedSubCategory, priceRange, selectedAttributes, sortBy]);
 
   // Fetch initial categories
   useEffect(() => {
@@ -130,7 +137,69 @@ export default function ShopPage({ onNavigate, onAddToCart, onAddToWishlist, use
     return true;
   });
 
+  const getProductPrice = (p) => {
+    if (p.hasVariants && p.variants && p.variants.length > 0) {
+      return Math.min(...p.variants.map((v) => v.discountPrice || v.salePrice || v.basePrice || v.price || 0));
+    }
+    return p.discountPrice || p.salePrice || p.basePrice || p.price || 0;
+  };
+
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    switch(sortBy) {
+      case 'Newest':
+        return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+      case 'Price: Low to High':
+        return getProductPrice(a) - getProductPrice(b);
+      case 'Price: High to Low':
+        return getProductPrice(b) - getProductPrice(a);
+      case 'Most Popular':
+      default:
+        return (b.averageRating || 0) - (a.averageRating || 0);
+    }
+  });
+
   const hasActiveFilters = selectedCategory || selectedSubCategory || priceRange > 0 || Object.values(selectedAttributes).some(v => v.length > 0);
+
+  const itemsPerPage = 12;
+  const totalPages = Math.ceil(sortedProducts.length / itemsPerPage);
+  const paginatedProducts = sortedProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const renderPaginationButtons = () => {
+    let pages = [];
+    if (totalPages <= 5) {
+      pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+    } else {
+      if (currentPage <= 3) {
+        pages = [1, 2, 3, 4, '...', totalPages];
+      } else if (currentPage >= totalPages - 2) {
+        pages = [1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+      } else {
+        pages = [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+      }
+    }
+
+    return pages.map((page, index) => {
+      if (page === '...') {
+        return <span key={`ellipsis-${index}`} className="text-gray-400 px-1">...</span>;
+      }
+      return (
+        <button
+          key={page}
+          onClick={() => {
+            setCurrentPage(page);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium transition-colors ${
+            currentPage === page
+              ? 'bg-[#8B5E3C] text-white'
+              : 'hover:bg-[#8B5E3C]/10 hover:text-[#8B5E3C] text-gray-600'
+          }`}
+        >
+          {page}
+        </button>
+      );
+    });
+  };
 
   // Filter content — used inside the drawer
   const FilterContent = () => (
@@ -319,7 +388,11 @@ export default function ShopPage({ onNavigate, onAddToCart, onAddToWishlist, use
             {/* Sort */}
             <div className="flex items-center gap-2 text-sm">
               <span className="text-gray-500">Sort by:</span>
-              <select className="border-none bg-transparent font-medium focus:ring-0 cursor-pointer pr-8 text-gray-900 outline-none">
+              <select 
+                value={sortBy} 
+                onChange={(e) => setSortBy(e.target.value)}
+                className="border-none bg-transparent font-medium focus:ring-0 cursor-pointer pr-8 text-gray-900 outline-none"
+              >
                 <option>Most Popular</option>
                 <option>Newest</option>
                 <option>Price: Low to High</option>
@@ -329,8 +402,18 @@ export default function ShopPage({ onNavigate, onAddToCart, onAddToWishlist, use
 
             {/* Grid / List toggles */}
             <div className="flex items-center gap-2 border-l border-gray-200 pl-3">
-              <button className="p-1.5 bg-[#8B5E3C] text-white rounded"><Grid size={16} /></button>
-              <button className="p-1.5 text-gray-400 hover:text-[#8B5E3C]"><List size={16} /></button>
+              <button 
+                onClick={() => setViewMode('grid')} 
+                className={`flex items-center justify-center p-1.5 rounded transition-colors ${viewMode === 'grid' ? 'bg-[#8B5E3C] text-white' : 'text-gray-400 hover:text-[#8B5E3C]'}`}
+              >
+                <Grid size={16} />
+              </button>
+              <button 
+                onClick={() => setViewMode('list')} 
+                className={`flex items-center justify-center p-1.5 rounded transition-colors ${viewMode === 'list' ? 'bg-[#8B5E3C] text-white' : 'text-gray-400 hover:text-[#8B5E3C]'}`}
+              >
+                <List size={16} />
+              </button>
             </div>
           </div>
         </div>
@@ -372,12 +455,13 @@ export default function ShopPage({ onNavigate, onAddToCart, onAddToWishlist, use
               <div key={n} className="animate-pulse bg-white rounded-2xl h-80 border border-gray-100 shadow-sm" />
             ))}
           </div>
-        ) : filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
-            {filteredProducts.map(product => (
+        ) : paginatedProducts.length > 0 ? (
+          <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12" : "flex flex-col gap-6 mb-12"}>
+            {paginatedProducts.map(product => (
               <ProductCard
                 key={product._id}
                 product={product}
+                viewMode={viewMode}
                 onNavigate={onNavigate}
                 onAddToCart={(p) => {
                   onAddToCart?.(p);
@@ -406,15 +490,31 @@ export default function ShopPage({ onNavigate, onAddToCart, onAddToWishlist, use
         )}
 
         {/* Pagination */}
-        {filteredProducts.length > 0 && (
+        {totalPages > 1 && (
           <div className="flex items-center justify-center gap-2 mt-12 border-t border-gray-200 pt-8">
-            <button className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-[#8B5E3C]"><ChevronLeft size={16} /></button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#8B5E3C] text-white font-medium text-sm">1</button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#8B5E3C]/10 hover:text-[#8B5E3C] text-gray-600 font-medium text-sm transition-colors">2</button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#8B5E3C]/10 hover:text-[#8B5E3C] text-gray-600 font-medium text-sm transition-colors">3</button>
-            <span className="text-gray-400 px-1">...</span>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#8B5E3C]/10 hover:text-[#8B5E3C] text-gray-600 font-medium text-sm transition-colors">12</button>
-            <button className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-[#8B5E3C]"><ChevronRight size={16} /></button>
+            <button 
+              onClick={() => {
+                setCurrentPage(p => Math.max(1, p - 1));
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              disabled={currentPage === 1}
+              className={`w-8 h-8 flex items-center justify-center transition-colors ${currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-400 hover:text-[#8B5E3C]'}`}
+            >
+              <ChevronLeft size={16} />
+            </button>
+            
+            {renderPaginationButtons()}
+
+            <button 
+              onClick={() => {
+                setCurrentPage(p => Math.min(totalPages, p + 1));
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              disabled={currentPage === totalPages}
+              className={`w-8 h-8 flex items-center justify-center transition-colors ${currentPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'text-gray-400 hover:text-[#8B5E3C]'}`}
+            >
+              <ChevronRight size={16} />
+            </button>
           </div>
         )}
 

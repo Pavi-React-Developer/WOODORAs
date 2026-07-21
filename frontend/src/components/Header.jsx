@@ -114,83 +114,179 @@ export default function Header({
         </div>
 
         <nav className="hidden flex-1 items-center justify-center gap-8 xl:flex">
-          <button type="button" onClick={() => onNavigate('/')} className="text-[15px] font-medium text-[#B0611C] border-b-2 border-[#B0611C] pb-0.5">
-            Home
-          </button>
-          
-          <div
-            className="relative flex h-[88px] items-center"
-            onMouseEnter={() => setActiveMenu('shop')}
-            onMouseLeave={() => setActiveMenu(null)}
-          >
-            <button type="button" className="flex items-center gap-1 text-[15px] font-medium text-[#B0611C] hover:opacity-80">
-              Shop <ChevronDown className="h-4 w-4" strokeWidth={1.5} />
-            </button>
-            {activeMenu === 'shop' && (
-              <div className="absolute left-0 top-full w-52 rounded-xl border border-[#E9DED3] bg-white py-2 shadow-lg">
-                <button onClick={() => onNavigate('/shop')} type="button" className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">
-                  All Products
-                </button>
-                <button onClick={() => onNavigate('/shop?sort=newest')} type="button" className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">
-                  New Arrivals
-                </button>
-                <button onClick={() => onNavigate('/shop?sort=bestselling')} type="button" className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">
-                  Best Sellers
-                </button>
-              </div>
-            )}
-          </div>
+          {navItems.length > 0 ? (
+            [...navItems].sort((a, b) => (a.order || 0) - (b.order || 0)).map((item, idx) => {
+              const titleLower = item.title.toLowerCase();
 
-          <div
-            className="relative flex h-[88px] items-center"
-            onMouseEnter={() => setActiveMenu('categories')}
-            onMouseLeave={() => setActiveMenu(null)}
-          >
-            <button type="button" className="flex items-center gap-1 text-[15px] font-medium text-[#B0611C] hover:opacity-80">
-              Categories <ChevronDown className="h-4 w-4" strokeWidth={1.5} />
-            </button>
-            {activeMenu === 'categories' && (
-              <div className="absolute left-0 top-full w-64 rounded-xl border border-[#E9DED3] bg-white py-2 shadow-lg">
-                {mainCategories.length === 0 ? (
-                  <div className="px-4 py-3 text-sm text-[#8B827C]">Loading...</div>
-                ) : (
-                  mainCategories.map((mainCat) => {
-                    const subs = getSubCategories(mainCat._id);
-                    return (
-                      <div key={mainCat._id} className="group relative">
-                        <button type="button" onClick={() => onNavigate(`/shop?category=${mainCat._id}`)} className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">
-                          {mainCat.name}
-                          {subs.length > 0 && <ChevronDown className="-rotate-90 h-4 w-4" strokeWidth={1.5} />}
+              if (titleLower === 'shop') {
+                return (
+                  <div
+                    key={item._id || `nav-${idx}`}
+                    className="relative flex h-[88px] items-center"
+                    onMouseEnter={() => setActiveMenu('shop')}
+                    onMouseLeave={() => setActiveMenu(null)}
+                  >
+                    <button type="button" className="flex items-center gap-1 text-[15px] font-medium text-[#B0611C] hover:opacity-80">
+                      {item.title} <ChevronDown className="h-4 w-4" strokeWidth={1.5} />
+                    </button>
+                    {activeMenu === 'shop' && (
+                      <div className="absolute left-0 top-full w-52 rounded-xl border border-[#E9DED3] bg-white py-2 shadow-lg">
+                        <button onClick={() => onNavigate('/shop')} type="button" className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">
+                          All Products
                         </button>
-                        {subs.length > 0 && (
-                          <div className="absolute left-full top-0 hidden w-52 rounded-xl border border-[#E9DED3] bg-white py-2 shadow-lg group-hover:block">
-                            {subs.map((subCat) => (
-                              <button key={subCat._id} onClick={() => onNavigate(`/shop?category=${subCat._id}`)} type="button" className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">
-                                {subCat.name}
-                              </button>
-                            ))}
-                          </div>
+                        <button onClick={() => onNavigate('/shop?sort=newest')} type="button" className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">
+                          New Arrivals
+                        </button>
+                        <button onClick={() => onNavigate('/shop?sort=bestselling')} type="button" className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">
+                          Best Sellers
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
+              if (titleLower === 'categories') {
+                return (
+                  <div
+                    key={item._id || `nav-${idx}`}
+                    className="relative flex h-[88px] items-center"
+                    onMouseEnter={() => setActiveMenu('categories')}
+                    onMouseLeave={() => setActiveMenu(null)}
+                  >
+                    <button type="button" className="flex items-center gap-1 text-[15px] font-medium text-[#B0611C] hover:opacity-80">
+                      {item.title} <ChevronDown className="h-4 w-4" strokeWidth={1.5} />
+                    </button>
+                    {activeMenu === 'categories' && (
+                      <div className="absolute left-0 top-full w-64 rounded-xl border border-[#E9DED3] bg-white py-2 shadow-lg">
+                        {mainCategories.length === 0 ? (
+                          <div className="px-4 py-3 text-sm text-[#8B827C]">Loading...</div>
+                        ) : (
+                          mainCategories.map((mainCat) => {
+                            const subs = getSubCategories(mainCat._id);
+                            return (
+                              <div key={mainCat._id} className="group relative">
+                                <button type="button" onClick={() => onNavigate(`/shop?category=${mainCat._id}`)} className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">
+                                  {mainCat.name}
+                                  {subs.length > 0 && <ChevronDown className="-rotate-90 h-4 w-4" strokeWidth={1.5} />}
+                                </button>
+                                {subs.length > 0 && (
+                                  <div className="absolute left-full top-0 hidden w-52 rounded-xl border border-[#E9DED3] bg-white py-2 shadow-lg group-hover:block">
+                                    {subs.map((subCat) => (
+                                      <button key={subCat._id} onClick={() => onNavigate(`/shop?category=${subCat._id}`)} type="button" className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">
+                                        {subCat.name}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })
                         )}
                       </div>
-                    );
-                  })
+                    )}
+                  </div>
+                );
+              }
+
+              return (
+                <button
+                  key={item._id || `nav-${idx}`}
+                  type="button"
+                  onClick={() => {
+                    if (item.url.startsWith('http')) {
+                      window.location.href = item.url;
+                    } else {
+                      onNavigate(item.url);
+                    }
+                  }}
+                  className="text-[15px] font-medium text-[#B0611C] hover:opacity-80 whitespace-nowrap"
+                >
+                  {item.title}
+                </button>
+              );
+            })
+          ) : (
+            <>
+              <button type="button" onClick={() => onNavigate('/')} className="text-[15px] font-medium text-[#B0611C] border-b-2 border-[#B0611C] pb-0.5">
+                Home
+              </button>
+              
+              <div
+                className="relative flex h-[88px] items-center"
+                onMouseEnter={() => setActiveMenu('shop')}
+                onMouseLeave={() => setActiveMenu(null)}
+              >
+                <button type="button" className="flex items-center gap-1 text-[15px] font-medium text-[#B0611C] hover:opacity-80">
+                  Shop <ChevronDown className="h-4 w-4" strokeWidth={1.5} />
+                </button>
+                {activeMenu === 'shop' && (
+                  <div className="absolute left-0 top-full w-52 rounded-xl border border-[#E9DED3] bg-white py-2 shadow-lg">
+                    <button onClick={() => onNavigate('/shop')} type="button" className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">
+                      All Products
+                    </button>
+                    <button onClick={() => onNavigate('/shop?sort=newest')} type="button" className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">
+                      New Arrivals
+                    </button>
+                    <button onClick={() => onNavigate('/shop?sort=bestselling')} type="button" className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">
+                      Best Sellers
+                    </button>
+                  </div>
                 )}
               </div>
-            )}
-          </div>
 
-          <button type="button" onClick={() => onNavigate('/about')} className="text-[15px] font-medium text-[#B0611C] hover:opacity-80">
-            About Us
-          </button>
-          <button type="button" onClick={() => onNavigate('/blog')} className="text-[15px] font-medium text-[#B0611C] hover:opacity-80">
-            Blog
-          </button>
-          <button type="button" onClick={() => onNavigate('/contact')} className="text-[15px] font-medium text-[#B0611C] hover:opacity-80">
-            Contact
-          </button>
-          <button type="button" onClick={() => onNavigate('/bulk-orders')} className="text-[15px] font-medium text-[#B0611C] hover:opacity-80 whitespace-nowrap">
-            Bulk Orders
-          </button>
+              <div
+                className="relative flex h-[88px] items-center"
+                onMouseEnter={() => setActiveMenu('categories')}
+                onMouseLeave={() => setActiveMenu(null)}
+              >
+                <button type="button" className="flex items-center gap-1 text-[15px] font-medium text-[#B0611C] hover:opacity-80">
+                  Categories <ChevronDown className="h-4 w-4" strokeWidth={1.5} />
+                </button>
+                {activeMenu === 'categories' && (
+                  <div className="absolute left-0 top-full w-64 rounded-xl border border-[#E9DED3] bg-white py-2 shadow-lg">
+                    {mainCategories.length === 0 ? (
+                      <div className="px-4 py-3 text-sm text-[#8B827C]">Loading...</div>
+                    ) : (
+                      mainCategories.map((mainCat) => {
+                        const subs = getSubCategories(mainCat._id);
+                        return (
+                          <div key={mainCat._id} className="group relative">
+                            <button type="button" onClick={() => onNavigate(`/shop?category=${mainCat._id}`)} className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">
+                              {mainCat.name}
+                              {subs.length > 0 && <ChevronDown className="-rotate-90 h-4 w-4" strokeWidth={1.5} />}
+                            </button>
+                            {subs.length > 0 && (
+                              <div className="absolute left-full top-0 hidden w-52 rounded-xl border border-[#E9DED3] bg-white py-2 shadow-lg group-hover:block">
+                                {subs.map((subCat) => (
+                                  <button key={subCat._id} onClick={() => onNavigate(`/shop?category=${subCat._id}`)} type="button" className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">
+                                    {subCat.name}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <button type="button" onClick={() => onNavigate('/about')} className="text-[15px] font-medium text-[#B0611C] hover:opacity-80">
+                About Us
+              </button>
+              <button type="button" onClick={() => onNavigate('/blog')} className="text-[15px] font-medium text-[#B0611C] hover:opacity-80">
+                Blog
+              </button>
+              <button type="button" onClick={() => onNavigate('/contact')} className="text-[15px] font-medium text-[#B0611C] hover:opacity-80">
+                Contact
+              </button>
+              <button type="button" onClick={() => onNavigate('/bulk-orders')} className="text-[15px] font-medium text-[#B0611C] hover:opacity-80 whitespace-nowrap">
+                Bulk Orders
+              </button>
+            </>
+          )}
         </nav>
 
         {/* Animated Search Overlay */}
@@ -426,44 +522,100 @@ export default function Header({
           </button>
         </div>
         <div className="flex-1 overflow-y-auto py-4 px-6 space-y-6 pb-12">
-          <button type="button" onClick={() => { onNavigate('/'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-lg font-medium text-[#4A3326]">
-            Home
-          </button>
-          
-          <div className="space-y-3">
-            <p className="text-lg font-medium text-[#4A3326]">Shop</p>
-            <div className="pl-4 space-y-3 border-l-2 border-[#E9DED3]">
-              {['All Products', 'New Arrivals', 'Best Sellers'].map((item) => (
-                <button key={item} onClick={() => { onNavigate('/'); setIsMobileMenuOpen(false); }} type="button" className="block w-full text-left text-[#7C7370]">
-                  {item}
-                </button>
-              ))}
-            </div>
-          </div>
-          
-          <div className="space-y-3">
-            <p className="text-lg font-medium text-[#4A3326]">Categories</p>
-            <div className="pl-4 space-y-3 border-l-2 border-[#E9DED3]">
-              {mainCategories.map((mainCat) => (
-                <button key={mainCat._id} onClick={() => { onNavigate('/'); setIsMobileMenuOpen(false); }} type="button" className="block w-full text-left text-[#7C7370]">
-                  {mainCat.name}
-                </button>
-              ))}
-            </div>
-          </div>
+          {navItems.length > 0 ? (
+            [...navItems].sort((a, b) => (a.order || 0) - (b.order || 0)).map((item, idx) => {
+              const titleLower = item.title.toLowerCase();
 
-          <button type="button" onClick={() => { onNavigate('/'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-lg font-medium text-[#4A3326]">
-            About Us
-          </button>
-          <button type="button" onClick={() => { onNavigate('/'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-lg font-medium text-[#4A3326]">
-            Blog
-          </button>
-          <button type="button" onClick={() => { onNavigate('/contact'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-lg font-medium text-[#4A3326]">
-            Contact
-          </button>
-          <button type="button" onClick={() => { onNavigate('/bulk-orders'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-lg font-medium text-[#4A3326]">
-            Bulk Orders
-          </button>
+              if (titleLower === 'shop') {
+                return (
+                  <div key={item._id || `mobile-nav-${idx}`} className="space-y-3">
+                    <p className="text-lg font-medium text-[#4A3326]">{item.title}</p>
+                    <div className="pl-4 space-y-3 border-l-2 border-[#E9DED3]">
+                      {['All Products', 'New Arrivals', 'Best Sellers'].map((subItem) => (
+                        <button key={subItem} onClick={() => { onNavigate(subItem === 'All Products' ? '/shop' : (subItem === 'New Arrivals' ? '/shop?sort=newest' : '/shop?sort=bestselling')); setIsMobileMenuOpen(false); }} type="button" className="block w-full text-left text-[#7C7370]">
+                          {subItem}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              }
+
+              if (titleLower === 'categories') {
+                return (
+                  <div key={item._id || `mobile-nav-${idx}`} className="space-y-3">
+                    <p className="text-lg font-medium text-[#4A3326]">{item.title}</p>
+                    <div className="pl-4 space-y-3 border-l-2 border-[#E9DED3]">
+                      {mainCategories.map((mainCat) => (
+                        <button key={mainCat._id} onClick={() => { onNavigate(`/shop?category=${mainCat._id}`); setIsMobileMenuOpen(false); }} type="button" className="block w-full text-left text-[#7C7370]">
+                          {mainCat.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <button
+                  key={item._id || `mobile-nav-${idx}`}
+                  type="button"
+                  onClick={() => {
+                    if (item.url.startsWith('http')) {
+                      window.location.href = item.url;
+                    } else {
+                      onNavigate(item.url);
+                    }
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="block w-full text-left text-lg font-medium text-[#4A3326]"
+                >
+                  {item.title}
+                </button>
+              );
+            })
+          ) : (
+            <>
+              <button type="button" onClick={() => { onNavigate('/'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-lg font-medium text-[#4A3326]">
+                Home
+              </button>
+              
+              <div className="space-y-3">
+                <p className="text-lg font-medium text-[#4A3326]">Shop</p>
+                <div className="pl-4 space-y-3 border-l-2 border-[#E9DED3]">
+                  {['All Products', 'New Arrivals', 'Best Sellers'].map((item) => (
+                    <button key={item} onClick={() => { onNavigate(item === 'All Products' ? '/shop' : (item === 'New Arrivals' ? '/shop?sort=newest' : '/shop?sort=bestselling')); setIsMobileMenuOpen(false); }} type="button" className="block w-full text-left text-[#7C7370]">
+                      {item}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                <p className="text-lg font-medium text-[#4A3326]">Categories</p>
+                <div className="pl-4 space-y-3 border-l-2 border-[#E9DED3]">
+                  {mainCategories.map((mainCat) => (
+                    <button key={mainCat._id} onClick={() => { onNavigate(`/shop?category=${mainCat._id}`); setIsMobileMenuOpen(false); }} type="button" className="block w-full text-left text-[#7C7370]">
+                      {mainCat.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button type="button" onClick={() => { onNavigate('/about'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-lg font-medium text-[#4A3326]">
+                About Us
+              </button>
+              <button type="button" onClick={() => { onNavigate('/blog'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-lg font-medium text-[#4A3326]">
+                Blog
+              </button>
+              <button type="button" onClick={() => { onNavigate('/contact'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-lg font-medium text-[#4A3326]">
+                Contact
+              </button>
+              <button type="button" onClick={() => { onNavigate('/bulk-orders'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-lg font-medium text-[#4A3326]">
+                Bulk Orders
+              </button>
+            </>
+          )}
         </div>
       </div>
 

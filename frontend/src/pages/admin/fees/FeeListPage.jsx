@@ -3,7 +3,7 @@ import { Edit3, Trash2, Download, Plus, RefreshCw } from 'lucide-react';
 import { feeAPI } from '../../../api/feeService';
 import { downloadExcelFile } from '../../../utils/exportUtils';
 
-export default function FeeListPage({ onNavigate, onEditFee, canEdit = true, canDelete = true }) {
+export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, canEdit = true, canDelete = true }) {
   const [fees, setFees] = useState([]);
   const [categories, setCategories] = useState([]);
   const [paymentMethods, setPaymentMethods] = useState([]);
@@ -101,12 +101,14 @@ export default function FeeListPage({ onNavigate, onEditFee, canEdit = true, can
           <button onClick={loadData} className="admin-secondary-btn">
             <RefreshCw size={16} /> Refresh
           </button>
-          <button
-            onClick={() => onNavigate('add')}
-            className="admin-btn"
-          >
-            <Plus size={16} /> Add New Fee
-          </button>
+          {canCreate && (
+            <button
+              onClick={() => onNavigate('add')}
+              className="admin-btn"
+            >
+              <Plus size={16} /> Add New Fee
+            </button>
+          )}
           <button
             onClick={() => {
               if (!fees || fees.length === 0) {
