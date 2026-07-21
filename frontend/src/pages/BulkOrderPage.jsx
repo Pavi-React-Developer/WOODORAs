@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Package, ShieldCheck, Truck, Droplets } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 import { catalogService } from '../api/catalogService';
+import { productV2API } from '../api/catalogV2Service';
 
 export default function BulkOrderPage() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     companyName: '',
     contactPerson: '',
@@ -34,12 +37,12 @@ export default function BulkOrderPage() {
         const [catsRes, subsRes, prodsRes] = await Promise.all([
           catalogService.getCategories(),
           catalogService.getSubCategories(),
-          catalogService.getProducts()
+          productV2API.getAll({ limit: 1000 })
         ]);
         // Extract data depending on API response format
         setCategories(catsRes?.data || catsRes || []);
         setSubCategories(subsRes?.data || subsRes || []);
-        setProducts(prodsRes?.data || prodsRes || []);
+        setProducts(prodsRes?.products || prodsRes?.data || prodsRes || []);
       } catch (err) {
         console.error('Failed to load catalog data for bulk orders:', err);
       } finally {
@@ -145,10 +148,18 @@ export default function BulkOrderPage() {
     }
   };
 
-  const getImageUrl = (images) => {
-    if (!images || !images[0]) return null;
-    const rawUrl = images[0].url || images[0];
-    return typeof rawUrl === 'string' ? rawUrl.trim() : null;
+  const getImageUrl = (prod) => {
+    if (!prod) return null;
+    let imgSrc = prod.images?.find(img => img.isThumbnail)?.url 
+              || prod.images?.[0]?.url 
+              || (typeof prod.images?.[0] === 'string' ? prod.images[0] : null)
+              || prod.image?.url 
+              || (typeof prod.image === 'string' ? prod.image : null) 
+              || null;
+    if (imgSrc && typeof imgSrc === 'string' && imgSrc.startsWith('/uploads')) {
+      imgSrc = `http://localhost:5000${imgSrc}`;
+    }
+    return typeof imgSrc === 'string' ? imgSrc.trim() : null;
   };
 
   return (
@@ -344,17 +355,25 @@ export default function BulkOrderPage() {
             
             {/* Display Product Details / Image if selected */}
             {selectedProductDetails ? (
-              <div className="bg-white p-6 rounded-2xl border border-[#E9DED3] shadow-md transition-all">
-                <h3 className="font-serif font-bold text-xl text-[#2E2E2E] mb-4">Selected Product</h3>
+              <div 
+                onClick={() => navigate(`/product/${selectedProductDetails.slug || selectedProductDetails._id}`)}
+                className="bg-white p-6 rounded-2xl border border-[#E9DED3] shadow-md transition-all cursor-pointer hover:border-[#9C755A] group"
+              >
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-serif font-bold text-xl text-[#2E2E2E]">Selected Product</h3>
+                  <span className="text-xs font-bold text-[#9A6031] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                    View Details
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                  </span>
+                </div>
                 <div className="rounded-xl overflow-hidden mb-4 bg-[#FAF4EF] aspect-square flex items-center justify-center">
                   {(() => {
-                    let productImageUrl = null;
-                    if (selectedProductDetails.images && selectedProductDetails.images.length > 0) {
-                      productImageUrl = getImageUrl(selectedProductDetails.images);
-                    } else if (selectedProductDetails.category && selectedProductDetails.category.image?.url) {
-                      productImageUrl = selectedProductDetails.category.image.url;
-                    } else if (selectedProductDetails.subCategory && selectedProductDetails.subCategory.image?.url) {
-                      productImageUrl = selectedProductDetails.subCategory.image.url;
+                    let productImageUrl = getImageUrl(selectedProductDetails);
+                    if (!productImageUrl && selectedProductDetails.category) {
+                      productImageUrl = getImageUrl(selectedProductDetails.category);
+                    }
+                    if (!productImageUrl && selectedProductDetails.subCategory) {
+                      productImageUrl = getImageUrl(selectedProductDetails.subCategory);
                     }
                     
                     return productImageUrl ? (
@@ -364,12 +383,29 @@ export default function BulkOrderPage() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <span className="text-[#8A817C] font-medium">No Image Available</span>
+                      <img 
+                        src="/wood-placeholder.png" 
+                        alt="Placeholder" 
+                        className="w-full h-full object-cover opacity-60 mix-blend-multiply"
+                      />
                     );
                   })()}
                 </div>
                 <h4 className="font-bold text-[#4A3326] text-lg">{selectedProductDetails.name}</h4>
                 <p className="text-sm text-[#7C7370] mt-2 line-clamp-2">{selectedProductDetails.shortDescription || selectedProductDetails.description || 'Premium handcrafted wooden product.'}</p>
+                <div className="mt-4 flex flex-col gap-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xl font-bold text-[#333333]">₹{Number(selectedProductDetails.price || 0).toLocaleString()}</span>
+                    {selectedProductDetails.compareAtPrice > selectedProductDetails.price && (
+                      <>
+                        <span className="text-sm text-[#999999] line-through">₹{Number(selectedProductDetails.compareAtPrice).toLocaleString()}</span>
+                        <span className="inline-flex items-center self-center rounded-full bg-[#B1621F]/15 px-2 py-0.5 text-[11px] font-semibold text-[#B1621F]">
+                          -{Math.round(((selectedProductDetails.compareAtPrice - selectedProductDetails.price) / selectedProductDetails.compareAtPrice) * 100)}%
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
                 <div className="mt-4 flex gap-4">
                   <div className="px-3 py-1 bg-[#F9F6F0] rounded text-xs font-bold text-[#4A3326]">SKU: {selectedProductDetails.sku || 'N/A'}</div>
                 </div>

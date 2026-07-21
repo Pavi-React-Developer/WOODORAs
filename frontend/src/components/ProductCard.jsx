@@ -66,14 +66,14 @@ export default function ProductCard({ product, viewMode = 'grid', onNavigate, on
             </svg>
           </div>
         )}
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-end justify-center pb-3 gap-2 opacity-0 group-hover:opacity-100">
-          <button
-            onClick={(e) => { e.stopPropagation(); handleAction('Cart', product, e); }}
-            className="bg-brand-dark text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 hover:bg-black transition-colors"
-          >
-            Add to Cart
-          </button>
-        </div>
+        <button
+          onClick={(e) => { e.stopPropagation(); handleAction('Wishlist', product, e); }}
+          className="absolute top-2 right-2 w-8 h-8 bg-white rounded-full flex items-center justify-center text-[#999999] hover:text-[#B1621F] hover:shadow-md transition-all shadow-sm z-10"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+          </svg>
+        </button>
       </div>
       <div className={`flex flex-col flex-1 bg-white ${viewMode === 'list' ? 'p-4 sm:p-6 justify-center' : 'p-4'}`}>
         <h3 className="text-sm font-semibold text-[#B0611C] mb-2 line-clamp-1">{product.name || 'Untitled Product'}</h3>

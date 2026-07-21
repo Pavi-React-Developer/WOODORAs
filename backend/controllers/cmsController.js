@@ -138,16 +138,16 @@ exports.getProductGrids = asyncHandler(async (req, res) => {
         const variants = await ProductVariant.find({ product: prod._id }).limit(3);
         for (const v of variants) {
           if (v.images && v.images.length > 0) {
-            productImages = v.images.map((url, idx) => ({ url, isThumbnail: idx === 0, displayOrder: idx + 1 }));
+            productImages = v.images.map((img, idx) => ({ url: typeof img === 'string' ? img : img.url, isThumbnail: idx === 0, displayOrder: idx + 1 }));
             break;
           }
         }
       }
 
-      // 3rd: Fall back to old Product.images plain string array
+      // 3rd: Fall back to old Product.images
       const fallbackImages = (prod.images || [])
-        .filter(url => typeof url === 'string' && url.trim().length > 0)
-        .map(url => ({ url, isThumbnail: false, displayOrder: 1 }));
+        .filter(img => (typeof img === 'string' && img.trim().length > 0) || (typeof img === 'object' && img.url))
+        .map(img => ({ url: typeof img === 'string' ? img : img.url, isThumbnail: false, displayOrder: 1 }));
 
       const variants = await ProductVariant.find({ product: prod._id }).limit(3);
       const pricing = productService.buildProductPricing(prod, variants, productImages.length > 0 ? productImages : fallbackImages);
@@ -195,15 +195,15 @@ exports.getCategoryGrids = asyncHandler(async (req, res) => {
         const variants = await ProductVariant.find({ product: prod._id }).limit(3);
         for (const v of variants) {
           if (v.images && v.images.length > 0) {
-            productImages = v.images.map((url, idx) => ({ url, isThumbnail: idx === 0, displayOrder: idx + 1 }));
+            productImages = v.images.map((img, idx) => ({ url: typeof img === 'string' ? img : img.url, isThumbnail: idx === 0, displayOrder: idx + 1 }));
             break;
           }
         }
       }
 
       const fallbackImages = (prod.images || [])
-        .filter(url => typeof url === 'string' && url.trim().length > 0)
-        .map(url => ({ url, isThumbnail: false, displayOrder: 1 }));
+        .filter(img => (typeof img === 'string' && img.trim().length > 0) || (typeof img === 'object' && img.url))
+        .map(img => ({ url: typeof img === 'string' ? img : img.url, isThumbnail: false, displayOrder: 1 }));
 
       const variants = await ProductVariant.find({ product: prod._id }).limit(3);
       const pricing = productService.buildProductPricing(prod, variants, productImages.length > 0 ? productImages : fallbackImages);

@@ -14,6 +14,7 @@ import { productV2API } from '../api/catalogV2Service';
 import { catalogService } from '../api/catalogService';
 import { reviewService } from '../api/reviewService';
 import { getImageSrc } from '../utils/imageUtils';
+import ProductCard from '../components/ProductCard';
 
 // ── Fallback static data (used if CMS returns no content) ───────────────────
 const FALLBACK_HERO = [
@@ -182,7 +183,7 @@ function DualBannerSection({ bannerData, onNavigate }) {
               >
                 {bannerData.leftImages.map((img, i) => (
                   <SwiperSlide key={i}>
-                    <img src={img || '/wood-placeholder.png'} alt="" className="w-full h-full object-cover" onError={(e) => { e.target.src = '/wood-placeholder.png'; }} />
+                    <img src={img?.url || img || '/wood-placeholder.png'} alt="" className="w-full h-full object-cover" onError={(e) => { e.target.src = '/wood-placeholder.png'; }} />
                   </SwiperSlide>
                 ))}
               </Swiper>
@@ -213,7 +214,7 @@ function DualBannerSection({ bannerData, onNavigate }) {
               >
                 {bannerData.rightImages?.map((img, i) => (
                   <SwiperSlide key={i}>
-                    <img src={img || '/wood-placeholder.png'} alt="" className="w-full h-full object-cover" onError={(e) => { e.target.src = '/wood-placeholder.png'; }} />
+                    <img src={img?.url || img || '/wood-placeholder.png'} alt="" className="w-full h-full object-cover" onError={(e) => { e.target.src = '/wood-placeholder.png'; }} />
                   </SwiperSlide>
                 ))}
               </Swiper>
@@ -317,56 +318,9 @@ function ProductGridSection({ grid, onNavigate, onAddToCart, onAddToWishlist, us
                 className="w-full"
               >
                 {safeProducts.map((p, i) => (
-                  <SwiperSlide key={p._id || i}>
-                    <motion.div variants={fadeUp} initial="rest" whileHover="hover"
-                      animate="rest" onClick={() => onNavigate(`/product/${p._id}`)}
-                      className="group cursor-pointer bg-white rounded-2xl overflow-hidden border border-[#E6DFD4] shadow-sm hover:shadow-md transition-shadow"
-                    >
-                      <div className="aspect-square bg-[#F7F3EE] p-4 relative overflow-hidden">
-                        {(() => {
-                          let imgSrc = p.images?.find(img => img.isThumbnail)?.url || p.images?.[0]?.url || (typeof p.images?.[0] === 'string' ? p.images[0] : null) || (typeof p.image === 'object' ? p.image?.url : p.image) || null;
-                          if (imgSrc && typeof imgSrc === 'string' && imgSrc.startsWith('/uploads')) imgSrc = `http://localhost:5000${imgSrc}`;
-                          
-                          return imgSrc ? (
-                            <motion.img
-                              src={imgSrc}
-                              alt={p.name}
-                              className="w-full h-full object-contain mix-blend-multiply"
-                              variants={{ rest: { scale: 1 }, hover: { scale: 1.08 } }}
-                              transition={{ duration: 0.35 }}
-                              onError={e => { e.target.style.display = 'none'; e.target.nextSibling && (e.target.nextSibling.style.display = 'flex'); }}
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-[#C8B9A0]">
-                              <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                            </div>
-                          );
-                        })()}
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-end justify-center pb-3 gap-2 opacity-0 group-hover:opacity-100">
-                          <button onClick={e => handleAction('Cart', p, e)} className="bg-brand-dark text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 hover:bg-black transition-colors">Add to Cart</button>
-                        </div>
-                      </div>
-                      <div className="p-3">
-                        <h3 className="text-sm font-medium text-brand-dark truncate">{p.name || 'Untitled Product'}</h3>
-                        {(() => {
-                          const pricing = getPricingInfo(p);
-                          return (
-                            <div className="flex flex-col gap-2">
-                              <div className="flex items-center gap-2">
-                                <p className="text-sm text-brand-medium mt-0.5">₹{pricing.salePrice.toFixed(2)}</p>
-                                {pricing.hasDiscount && (
-                                  <p className="text-[10px] text-brand-medium line-through">₹{pricing.listPrice.toFixed(2)}</p>
-                                )}
-                              </div>
-                              {pricing.hasDiscount && (
-                                <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-semibold text-emerald-700">
-                                  -{pricing.discountPercent}%
-                                </span>
-                              )}
-                            </div>
-                          );
-                        })()}
-                      </div>
+                  <SwiperSlide key={p._id || i} className="h-auto">
+                    <motion.div variants={fadeUp} className="h-full">
+                      <ProductCard product={p} onNavigate={onNavigate} onAddToCart={onAddToCart} onAddToWishlist={onAddToWishlist} user={user} />
                     </motion.div>
                   </SwiperSlide>
                 ))}
@@ -380,7 +334,7 @@ function ProductGridSection({ grid, onNavigate, onAddToCart, onAddToWishlist, us
 }
 
 // ── Category Products ────────────────────────────────────────────────────────
-function CategoryProductsSection({ onNavigate, onAddToCart, user }) {
+function CategoryProductsSection({ onNavigate, onAddToCart, onAddToWishlist, user }) {
   const [cmsSections, setCmsSections] = useState([]);
   const [activeSection, setActiveSection] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -481,34 +435,8 @@ function CategoryProductsSection({ onNavigate, onAddToCart, user }) {
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-3 sm:gap-4">
                     {activeProducts.length ? activeProducts.slice(0, 4).map((product) => (
-                      <div key={product._id} className="group cursor-pointer" onClick={() => onNavigate(`/product/${product._id}`)}>
-                        <div className="aspect-square bg-white rounded-xl overflow-hidden mb-2 relative ring-1 ring-black/5">
-                          <img src={product.images?.find((image) => image.isThumbnail)?.url || product.images?.[0]?.url || (product.image && product.image.trim() !== '' ? product.image : '') || '/wood-placeholder.png'} alt={product.name} className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500" onError={(e) => { e.target.src = '/wood-placeholder.png'; }} />
-                          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-end justify-center pb-3 transition-opacity">
-                            <button onClick={(e) => { e.stopPropagation(); onAddToCart?.(product); }} className="bg-brand-dark text-white text-[9px] uppercase tracking-widest font-bold px-3 py-1.5">Add to Cart</button>
-                          </div>
-                        </div>
-                        <h3 className="text-sm font-medium text-brand-dark truncate">{product.name}</h3>
-                        {(() => {
-                          const pricing = getPricingInfo(product);
-                          return (
-                            <div className="flex flex-col gap-1.5 mt-1">
-                              <div className="flex items-center gap-2">
-                                <p className="text-[13px] font-medium text-brand-dark">₹{pricing.salePrice.toFixed(2)}</p>
-                                {pricing.hasDiscount && (
-                                  <p className="text-[10px] text-brand-medium line-through">₹{pricing.listPrice.toFixed(2)}</p>
-                                )}
-                              </div>
-                              {pricing.hasDiscount && (
-                                <div className="flex">
-                                  <span className="inline-flex items-center rounded-sm bg-[#5C4D43] px-1.5 py-0.5 text-[9px] font-bold text-white tracking-widest uppercase">
-                                    {pricing.discountPercent}% OFF
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })()}
+                      <div key={product._id} className="h-full">
+                        <ProductCard product={product} onNavigate={onNavigate} onAddToCart={onAddToCart} onAddToWishlist={onAddToWishlist} user={user} />
                       </div>
                     )) : <div className="col-span-2 rounded-xl border border-dashed border-[#E6DFD4] p-6 text-sm text-brand-medium">No products selected for this category yet.</div>}
                   </div>
@@ -1007,7 +935,7 @@ export default function Home({ user, onNavigate, onAddToCart, onAddToWishlist })
       ))}
 
       {/* ── CATEGORY-BASED PRODUCTS ── */}
-      <CategoryProductsSection onNavigate={onNavigate} onAddToCart={onAddToCart} user={user} />
+      <CategoryProductsSection onNavigate={onNavigate} onAddToCart={onAddToCart} onAddToWishlist={onAddToWishlist} user={user} />
 
       {/* ── TESTIMONIALS ── */}
       <section className="py-24">

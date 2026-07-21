@@ -316,6 +316,12 @@ export default function CategoryGridAdmin() {
           <div className="p-8 text-center text-brand-medium text-sm bg-white rounded-2xl border border-[#E6DFD4]">No category grids yet.</div>
         ) : items.map((item) => (
           <div key={item._id} className="bg-white rounded-2xl border border-[#E6DFD4] p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 shadow-sm">
+            <div className="flex gap-2 flex-shrink-0">
+              {item.images?.slice(0,2).map((img, i) => (
+                <img key={i} src={img.url || img} alt="" className="w-12 h-12 rounded-lg object-cover border border-[#E6DFD4] bg-[#F7F3EE]" />
+              ))}
+              {!item.images?.length && <div className="w-12 h-12 rounded-lg border border-[#E6DFD4] bg-[#F7F3EE]" />}
+            </div>
             <div className="flex-1 w-full">
               <p className="font-semibold text-brand-dark text-sm">{item.title}</p>
               <div className="flex items-center gap-3 text-xs text-brand-medium mt-0.5">

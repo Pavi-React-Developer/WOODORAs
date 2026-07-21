@@ -243,9 +243,9 @@ export default function ThirdBannerAdmin() {
         ) : items.map((item) => (
           <div key={item._id} className="bg-white rounded-2xl border border-[#E6DFD4] p-4 shadow-sm flex items-center gap-4">
             <div className="flex gap-2 flex-shrink-0">
-              {item.leftImages?.slice(0,2).map((u, i) => <img key={i} src={u} alt="" className="w-16 h-16 rounded-lg object-cover" />)}
+              {item.leftImages?.slice(0,2).map((u, i) => <img key={i} src={u.url || u} alt="" className="w-16 h-16 rounded-lg object-cover" />)}
               <div className="w-0.5 h-16 bg-[#E6DFD4]" />
-              {item.rightImages?.slice(0,2).map((u, i) => <img key={i} src={u} alt="" className="w-16 h-16 rounded-lg object-cover" />)}
+              {item.rightImages?.slice(0,2).map((u, i) => <img key={i} src={u.url || u} alt="" className="w-16 h-16 rounded-lg object-cover" />)}
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-medium text-brand-dark text-sm truncate">{item.title || 'Dual Banner'}</p>

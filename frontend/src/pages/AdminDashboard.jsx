@@ -792,6 +792,12 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                     Orders Management
                   </span>
                 </button>
+              </div>
+            )}
+
+            {/* Bulk Orders Management */}
+            {(isAdmin || canView('bulk_orders')) && (
+              <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
                 <button
                   onClick={() => openAdminTab('bulk-orders')}
                   className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${
@@ -2170,8 +2176,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
           )}
 
           {/* ── BULK ORDERS MANAGEMENT ── */}
-          {(isAdmin || canView('orders')) && currentTab === 'bulk-orders' && (
-            <BulkOrdersAdminPage />
+          {(isAdmin || canView('bulk_orders')) && currentTab === 'bulk-orders' && (
+            <BulkOrdersAdminPage canEdit={hasPermission('bulk_orders', 'edit')} />
           )}
 
         </div>

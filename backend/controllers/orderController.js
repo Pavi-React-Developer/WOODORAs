@@ -24,8 +24,13 @@ const updateVariantStock = async (variantId, qty, type) => {
       variant.inventory = (variant.inventory || 0) + qty;
     }
 
-    variant.currentStock = Math.max(0, (variant.inventory || 0) - (variant.reserveStock || 0));
-    await variant.save();
+    const newCurrent = Math.max(0, (variant.inventory || 0) - (variant.reserveStock || 0));
+    
+    await ProductVariant.findByIdAndUpdate(variantId, {
+      reserveStock: variant.reserveStock,
+      inventory: variant.inventory,
+      currentStock: newCurrent
+    });
   } catch (err) {
     console.error('Failed to update variant stock', err);
   }
@@ -295,22 +300,9 @@ const updateOrderStatus = async (req, res) => {
     }
 
     if (status === 'Cancelled' && currentWeight !== 99) {
-      // Release reserved stock when cancelled
-      for (const item of order.orderItems) {
-        if (item.variant) {
-          await updateVariantStock(item.variant, item.qty, 'cancel');
-        } else if (item.product) {
-          try {
-            const productToUpdate = await Product.findById(item.product);
-            if (productToUpdate && productToUpdate.inventory) {
-              productToUpdate.inventory.stockQuantity = (productToUpdate.inventory.stockQuantity || 0) + item.qty;
-              await productToUpdate.save();
-            }
-          } catch (err) {
-            console.error('Failed to update product stock on cancel', err);
-          }
-        }
-      }
+      // Leave stock in reserve until the admin processes the refund.
+      // The actual inventory restoration will happen in the refund controller.
+      // (No stock changes here)
     }
 
     if (status === 'Cancelled') {
@@ -562,17 +554,9 @@ const cancelOrder = async (req, res) => {
 
     await newRefund.save();
 
-    // Release reserve stock only — actual inventory restoration happens when admin approves the refund
-    for (const item of order.orderItems) {
-      if (item.variant) {
-        try {
-          // Only release the reserve (reduce reserveStock). Inventory itself is restored on admin approval.
-          await updateVariantStock(item.variant, item.qty, 'cancel');
-        } catch (err) {
-          console.error('Failed to release reserved stock on cancellation', err);
-        }
-      }
-    }
+    // Leave stock in reserve until the admin processes the refund.
+    // The actual inventory restoration will happen in the refund controller.
+    // (No stock changes here)
 
     res.json(updatedOrder);
   } catch (error) {

@@ -52,9 +52,13 @@ exports.getAllBulkOrders = async (req, res) => {
   try {
     const orders = await BulkOrder.find()
       .populate('user', 'name email')
-      .populate('category')
-      .populate('subCategory')
-      .populate('product', 'name images sku price')
+      .populate('category', 'name image')
+      .populate('subCategory', 'name image')
+      .populate({
+        path: 'product',
+        select: 'name images image sku price basePrice compareAtPrice',
+        populate: { path: 'images' }
+      })
       .sort('-createdAt');
     res.status(200).json({
       success: true,
@@ -74,9 +78,13 @@ exports.getAllBulkOrders = async (req, res) => {
 exports.getMyBulkOrders = async (req, res) => {
   try {
     const orders = await BulkOrder.find({ user: req.user._id })
-      .populate('category', 'name')
-      .populate('subCategory', 'name')
-      .populate('product', 'name images')
+      .populate('category', 'name image')
+      .populate('subCategory', 'name image')
+      .populate({
+        path: 'product',
+        select: 'name images image price basePrice compareAtPrice',
+        populate: { path: 'images' }
+      })
       .sort('-createdAt');
     res.status(200).json({
       success: true,

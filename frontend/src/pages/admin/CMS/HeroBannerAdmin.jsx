@@ -260,7 +260,7 @@ export default function HeroBannerAdmin() {
           return (
             <div key={item._id} className="bg-white rounded-2xl border border-[#E6DFD4] overflow-hidden shadow-sm">
               {item.bannerImage ? (
-                <img src={item.bannerImage} alt={item.title} className="w-full h-36 object-cover" />
+                <img src={item.bannerImage?.url || item.bannerImage} alt={item.title} className="w-full h-36 object-cover" />
               ) : (
                 <div className="w-full h-36 bg-[#F7F3EE] flex items-center justify-center text-brand-medium text-xs">No Image</div>
               )}

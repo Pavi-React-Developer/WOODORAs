@@ -141,7 +141,7 @@ export default function AddStaffPage({ onBack, onSuccess, editingStaff, currentU
       .then(res => {
         if (!mounted) return;
         if (res && Array.isArray(res.modules) && res.modules.length > 0) {
-          const filtered = res.modules.filter(m => m.key !== 'users' && m.key !== 'brands');
+          const filtered = res.modules.filter(m => m.key !== 'users' && m.key !== 'brands' && m.key !== 'reports' && m.key !== 'settings');
           // enrich with icons from the frontend ADMIN_MODULES config
           const enriched = filtered.map(m => {
             const local = ADMIN_MODULES.find(a => a.key === m.key);

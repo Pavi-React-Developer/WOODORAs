@@ -4,18 +4,36 @@ const Order = require('../models/Order');
 const ProductVariant = require('../models/ProductVariant');
 const { addWalletCredit } = require('./walletController');
 
-// Helper: restore inventory for cancelled order items
-const restoreVariantStock = async (variantId, qty) => {
-  if (!variantId) return;
+const Product = require('../models/Product');
+
+// Helper: restore inventory for refunded order items
+const restoreProductStock = async (item) => {
+  if (!item) return;
   try {
-    const variant = await ProductVariant.findById(variantId);
-    if (!variant) return;
-    variant.inventory = (variant.inventory || 0) + qty;
-    variant.currentStock = Math.max(0, (variant.inventory || 0) - (variant.reserveStock || 0));
-    await variant.save();
-    console.log(`Stock restored: +${qty} to variant ${variantId}. New inventory: ${variant.inventory}`);
+    if (item.variant) {
+      const variant = await ProductVariant.findById(item.variant);
+      if (variant) {
+        // For variants, we reduce reserveStock to make it available in currentStock again.
+        // We DO NOT increase inventory, as inventory was never deducted at checkout.
+        const newReserve = Math.max(0, (variant.reserveStock || 0) - item.qty);
+        const newCurrent = Math.max(0, (variant.inventory || 0) - newReserve);
+        await ProductVariant.findByIdAndUpdate(item.variant, {
+          reserveStock: newReserve,
+          currentStock: newCurrent
+        });
+        console.log(`Stock restored: freed ${item.qty} from reserve for variant ${item.variant}.`);
+      }
+    } else if (item.product) {
+      const product = await Product.findById(item.product);
+      if (product && product.inventory) {
+        // For standard products, inventory was deducted at checkout, so we add it back.
+        const newStock = (product.inventory.stockQuantity || 0) + item.qty;
+        await Product.findByIdAndUpdate(item.product, { 'inventory.stockQuantity': newStock });
+        console.log(`Stock restored: +${item.qty} to product ${item.product}.`);
+      }
+    }
   } catch (err) {
-    console.error('Failed to restore variant stock on refund processing', err);
+    console.error('Failed to restore stock on refund processing', err);
   }
 };
 
@@ -99,17 +117,17 @@ const processRefund = async (req, res) => {
     refund.refundActionStatus = 'Refunded';
     refund.refundMethod = refundMethod || '';
 
-    // Restore inventory stock ONLY at this step
+    // Automatic restocking is deferred until this point (Refund Processing).
+    // This perfectly matches the requested workflow where stock is only added
+    // back after the admin approves and processes the refund.
     if (!refund.stockRestored && refund.orderRef) {
       const order = await Order.findById(refund.orderRef);
       if (order && Array.isArray(order.orderItems)) {
         for (const item of order.orderItems) {
-          if (item.variant) {
-            await restoreVariantStock(item.variant, item.qty);
-          }
+          await restoreProductStock(item);
         }
         refund.stockRestored = true;
-        console.log(`Inventory restored for refund ${refund._id} (order ${refund.orderId})`);
+        console.log(`Inventory restored automatically for refund ${refund._id} (order ${refund.orderId})`);
       }
     }
 

@@ -64,6 +64,7 @@ const profileModulePaths = {
   profile: '/profile',
   orders: '/profile/order-history',
   'bulk-orders': '/profile/bulk-orders',
+  'bulk-order-details': '/profile/bulk-orders/details',
   reviews: '/profile/reviews',
   addresses: '/profile/addresses',
   cart: '/profile/cart',
@@ -80,6 +81,7 @@ const profilePathModules = Object.fromEntries(
   Object.entries(profileModulePaths).map(([moduleId, path]) => [path, moduleId])
 );
 profilePathModules['/profile/order-history/details'] = 'order-details';
+profilePathModules['/profile/bulk-orders/details'] = 'bulk-order-details';
 
 const toInputDate = (value) => {
   if (!value) return '';
@@ -130,6 +132,7 @@ export default function CustomerProfilePage({
   const { cartItems, updateQuantity, removeFromCart, getSubtotal } = useCartStore();
   const [activeModule, setActiveModule] = useState('profile');
   const [activeOrder, setActiveOrder] = useState(null);
+  const [activeBulkOrder, setActiveBulkOrder] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   
@@ -167,6 +170,7 @@ export default function CustomerProfilePage({
   const openProfileModule = (moduleId) => {
     setActiveModule(moduleId);
     setActiveOrder(null);
+    setActiveBulkOrder(null);
     navigate(profileModulePaths[moduleId] || '/profile');
   };
 
@@ -176,6 +180,9 @@ export default function CustomerProfilePage({
     setActiveModule(nextModule);
     if (nextModule !== 'order-details') {
       setActiveOrder(null);
+    }
+    if (nextModule !== 'bulk-order-details') {
+      setActiveBulkOrder(null);
     }
   }, [location.pathname]);
   
@@ -928,6 +935,13 @@ export default function CustomerProfilePage({
                       <p className="text-xs text-[#6D625C]">{order.rejectionReason}</p>
                     </div>
                   )}
+                  <button
+                    type="button"
+                    onClick={() => { setActiveBulkOrder(order); setActiveModule('bulk-order-details'); navigate('/profile/bulk-orders/details'); }}
+                    className="mt-2 flex items-center gap-1 rounded bg-[#9A6031] px-3 py-1.5 text-xs font-bold text-white transition hover:bg-[#7E4B25]"
+                  >
+                    <Eye className="h-3.5 w-3.5" /> View Details
+                  </button>
                 </div>
               </div>
             </div>
@@ -936,6 +950,123 @@ export default function CustomerProfilePage({
       )}
     </section>
   );
+
+  const renderBulkOrderDetails = () => {
+    if (!activeBulkOrder) return null;
+    const { product, category, subCategory, companyName, contactPerson, email, phone, estimatedQuantity, customBranding, customizationRequests, status, rejectionReason, createdAt } = activeBulkOrder;
+    
+    let productImageUrl = '/wood-placeholder.png';
+    
+    // Check product image
+    if (product?.images?.length > 0) {
+       productImageUrl = product.images.find(img => img.isThumbnail)?.url || product.images[0]?.url || productImageUrl;
+    } else if (product?.image?.url || typeof product?.image === 'string') {
+       productImageUrl = product.image.url || product.image;
+    } 
+    // Fallback to category image
+    else if (category?.image?.url || typeof category?.image === 'string') {
+       productImageUrl = category.image.url || category.image;
+    }
+    // Fallback to subCategory image
+    else if (subCategory?.image?.url || typeof subCategory?.image === 'string') {
+       productImageUrl = subCategory.image.url || subCategory.image;
+    }
+
+    return (
+      <section className="px-5 py-7 lg:px-7">
+        <div className="flex items-center justify-between gap-4 mb-6">
+          <div>
+            <h2 className="text-lg font-bold text-[#141225]">Bulk Order Details</h2>
+            <p className="mt-1 text-sm text-[#6D625C]">Requested on {formatDate(createdAt)}</p>
+          </div>
+          <button type="button" onClick={() => openProfileModule('bulk-orders')} className="rounded-[8px] border border-[#E9DED3] px-4 py-2 text-sm font-bold text-[#141225] hover:bg-gray-50">Back to Bulk Orders</button>
+        </div>
+
+        <div className="space-y-6">
+          <div className="rounded-[14px] border border-[#E9DED3] bg-white p-5">
+            <h3 className="font-bold text-[#141225] mb-4">Product Details</h3>
+            <div className="flex flex-col sm:flex-row gap-6">
+               <div className="h-32 w-32 shrink-0 overflow-hidden rounded-[12px] bg-[#F8F3EF] border border-[#E9DED3]">
+                 <img src={productImageUrl} alt={product?.name || 'Product'} className="h-full w-full object-cover" />
+               </div>
+               <div>
+                  <p className="font-bold text-lg text-[#141225]">{product?.name || 'Unknown Product'}</p>
+                  {product?.price || product?.basePrice ? (
+                     <div className="mt-3 flex items-center gap-2 flex-wrap">
+                        <span className="text-[16px] font-bold text-[#333333]">
+                           ₹{Number(product.price || product.basePrice).toLocaleString()}
+                        </span>
+                        {product.compareAtPrice > (product.price || product.basePrice) ? (
+                           <>
+                              <span className="text-[12px] text-[#999999] line-through">
+                                 ₹{Number(product.compareAtPrice).toLocaleString()}
+                              </span>
+                              <span className="inline-flex items-center self-start rounded-full bg-[#B1621F]/15 px-2 py-0.5 text-[10px] font-semibold text-[#B1621F]">
+                                 -{Math.round(((product.compareAtPrice - (product.price || product.basePrice)) / product.compareAtPrice) * 100)}%
+                              </span>
+                           </>
+                        ) : null}
+                     </div>
+                  ) : null}
+                  <p className="text-sm text-[#6D625C] mt-2"><span className="font-semibold">Category:</span> {category?.name || 'N/A'} {'>'} {subCategory?.name || 'N/A'}</p>
+                  <div className="mt-4">
+                     <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider ${
+                        status === 'Approved' ? 'bg-emerald-100 text-emerald-700' :
+                        status === 'Rejected' ? 'bg-red-100 text-red-700' :
+                        'bg-[#F2E3D1] text-[#8B5E3C]'
+                      }`}>
+                        {status || 'Pending'}
+                      </span>
+                  </div>
+               </div>
+            </div>
+          </div>
+
+          <div className="rounded-[14px] border border-[#E9DED3] bg-white p-5">
+            <h3 className="font-bold text-[#141225] mb-4">Request Information</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 text-sm">
+               <div>
+                  <p className="text-[#6D625C]">Company Name</p>
+                  <p className="font-semibold text-[#141225] mt-1">{companyName}</p>
+               </div>
+               <div>
+                  <p className="text-[#6D625C]">Contact Person</p>
+                  <p className="font-semibold text-[#141225] mt-1">{contactPerson}</p>
+               </div>
+               <div>
+                  <p className="text-[#6D625C]">Email Address</p>
+                  <p className="font-semibold text-[#141225] mt-1">{email}</p>
+               </div>
+               <div>
+                  <p className="text-[#6D625C]">Phone Number</p>
+                  <p className="font-semibold text-[#141225] mt-1">{phone}</p>
+               </div>
+               <div>
+                  <p className="text-[#6D625C]">Estimated Quantity</p>
+                  <p className="font-semibold text-[#141225] mt-1">{estimatedQuantity}</p>
+               </div>
+               <div>
+                  <p className="text-[#6D625C]">Custom Branding</p>
+                  <p className="font-semibold text-[#141225] mt-1">{customBranding ? 'Requested' : 'Not Requested'}</p>
+               </div>
+               {customizationRequests && (
+                  <div className="sm:col-span-2 mt-2">
+                     <p className="text-[#6D625C]">Customization Requests</p>
+                     <p className="font-semibold text-[#141225] mt-1 p-3 bg-[#FAF8F5] rounded-[8px] border border-[#E9DED3]">{customizationRequests}</p>
+                  </div>
+               )}
+               {status === 'Rejected' && rejectionReason && (
+                  <div className="sm:col-span-2 bg-red-50 p-4 rounded-lg border border-red-100 mt-2">
+                     <p className="font-bold text-red-600">Rejection Reason</p>
+                     <p className="text-red-700 text-sm mt-1">{rejectionReason}</p>
+                  </div>
+               )}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  };
 
   const renderTrackingTimeline = (order) => {
     if (order.status === 'Cancelled') {
@@ -1690,6 +1821,7 @@ export default function CustomerProfilePage({
           {activeModule === 'profile' && renderProfile()}
           {activeModule === 'orders' && renderOrders()}
           {activeModule === 'bulk-orders' && renderBulkOrders()}
+          {activeModule === 'bulk-order-details' && renderBulkOrderDetails()}
           {activeModule === 'reviews' && renderReviews()}
           {activeModule === 'order-details' && renderOrderDetails()}
           {activeModule === 'addresses' && renderAddresses()}

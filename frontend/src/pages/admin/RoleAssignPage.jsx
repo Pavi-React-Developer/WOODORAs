@@ -137,8 +137,7 @@ export default function RoleAssignPage({ onBack, targetStaff, currentUserPermiss
       .then(res => {
         if (!mounted) return;
         if (res && Array.isArray(res.modules) && res.modules.length > 0) {
-          // remove 'users' and 'brands' from modules list so they don't show in permissions
-          const filtered = res.modules.filter(m => m.key !== 'users' && m.key !== 'brands');
+          const filtered = res.modules.filter(m => m.key !== 'users' && m.key !== 'brands' && m.key !== 'reports' && m.key !== 'settings');
           // enrich with icons from the frontend ADMIN_MODULES config (backend may not store icons)
           const enriched = filtered.map(m => {
             const local = ADMIN_MODULES.find(a => a.key === m.key);

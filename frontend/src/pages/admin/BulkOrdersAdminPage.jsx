@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Package, Search, CheckCircle2, XCircle, Clock, Eye, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-export default function BulkOrdersAdminPage() {
+export default function BulkOrdersAdminPage({ canEdit = true }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -212,7 +212,7 @@ export default function BulkOrdersAdminPage() {
                           >
                             <Eye className="w-4 h-4" />
                           </button>
-                          {(!order.status || order.status === 'Pending') && (
+                          {(!order.status || order.status === 'Pending') && canEdit && (
                             <>
                               <button
                                 onClick={() => handleApprove(order._id)}

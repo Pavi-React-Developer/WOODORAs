@@ -76,14 +76,9 @@ export const ADMIN_MODULES = [
     icon: '💳',
   },
   {
-    key: 'reports',
-    label: 'Reports',
-    icon: '📈',
-  },
-  {
-    key: 'settings',
-    label: 'Settings',
-    icon: '⚙️',
-  },
+    key: 'bulk_orders',
+    label: 'Bulk Orders',
+    icon: '📦',
+  }
 ];
 
