@@ -1,4 +1,5 @@
 import React from 'react';
+import { Gift } from 'lucide-react';
 
 /**
  * CartOffcanvas
@@ -79,6 +80,14 @@ export default function CartOffcanvas({ isOpen, onClose, cartItems, onUpdateQuan
                       <h4 className="font-bold text-sm text-brand-dark line-clamp-2">{item.name}</h4>
                       {item.variantOptions && (
                         <p className="text-xs text-brand-dark/60 mt-1 line-clamp-2">{item.variantOptions}</p>
+                      )}
+                      {item.isGift && (
+                        <div className="mt-1">
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#FFF0E6] text-[#D95F24] text-[10px] font-bold tracking-wider">
+                            <Gift className="w-3 h-3" />
+                            GIFT & CARD
+                          </span>
+                        </div>
                       )}
 
                       {/* Quantity Controls */}

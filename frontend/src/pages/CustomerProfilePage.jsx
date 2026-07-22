@@ -58,6 +58,7 @@ const modules = [
   { id: 'password', label: 'Change Password', icon: LockKeyhole },
   { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'refunds', label: 'Refunds', icon: ExternalLink },
+  { id: 'gift-card', label: 'Gift & Card', icon: Gift },
 ];
 
 const profileModulePaths = {
@@ -75,6 +76,7 @@ const profileModulePaths = {
   rewards: '/profile/loyalty-rewards',
   password: '/profile/change-password',
   notifications: '/profile/notifications',
+  'gift-card': '/profile/gift-card',
 };
 
 const profilePathModules = Object.fromEntries(
@@ -82,6 +84,7 @@ const profilePathModules = Object.fromEntries(
 );
 profilePathModules['/profile/order-history/details'] = 'order-details';
 profilePathModules['/profile/bulk-orders/details'] = 'bulk-order-details';
+profilePathModules['/profile/gift-card/details'] = 'gift-card-details';
 
 const toInputDate = (value) => {
   if (!value) return '';
@@ -767,6 +770,12 @@ export default function CustomerProfilePage({
                         </div>
                         <div>
                           <p className="font-bold text-[#141225] line-clamp-1">{firstItem.name || `Order #${order._id.slice(-8).toUpperCase()}`}</p>
+                          {order.isGiftOrder && (
+                            <span className="mt-1 mb-1 inline-flex w-max items-center gap-1 rounded bg-[#FDF0EB] px-2 py-0.5 text-[10px] font-bold text-[#D04E26] uppercase tracking-wider">
+                              <Gift size={10} />
+                              Gift & Card
+                            </span>
+                          )}
                           {extraItemsCount > 0 && <p className="text-xs font-semibold text-[#9A6031]">+{extraItemsCount} more item(s)</p>}
                           <p className="text-xs text-[#6D625C] mt-0.5">#{order._id.slice(-8).toUpperCase()}</p>
                         </div>
@@ -1753,6 +1762,55 @@ export default function CustomerProfilePage({
     );
   };
 
+  const renderGiftCardOrders = () => {
+    const giftOrders = orders.filter(o => o.isGiftOrder);
+    
+    return (
+      <section className="px-5 py-7 lg:px-7">
+        <div className="flex items-center justify-between gap-4 border-b border-[#E9DED3] pb-5">
+          <div>
+            <h2 className="text-lg font-bold text-[#141225]">Gift & Card Orders</h2>
+            <p className="mt-1 text-sm text-[#6D625C]">Track your curated gifts and personalized messages.</p>
+          </div>
+        </div>
+
+        {ordersLoading ? (
+          <p className="mt-8 text-sm text-[#6D625C]">Loading gift orders...</p>
+        ) : giftOrders.length === 0 ? (
+          <EmptyState icon={Gift} title="No Gift Orders" text="You haven't placed any gift orders yet." action="Send a Gift" onAction={() => onNavigate('/gift-and-card')} />
+        ) : (
+          <div className="mt-6 space-y-4">
+            {giftOrders.map((order) => (
+              <div key={order._id} className="rounded-[14px] border border-[#E9DED3] bg-white p-5 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+                  <div>
+                    <h3 className="font-bold text-[#141225]">Order #{order._id.slice(-8).toUpperCase()}</h3>
+                    <p className="text-sm text-[#6D625C] mt-1">Status: <span className="font-bold text-[#8B5E3C]">{order.status || 'Pending'}</span></p>
+                    {order.giftMessage && (
+                       <div className="mt-3 p-3 bg-[#FAF8F5] rounded-[8px] border border-dashed border-[#E9DED3]">
+                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Personalized Message</p>
+                         <p className="text-sm italic font-serif">"{order.giftMessage}"</p>
+                         <p className="text-xs text-gray-400 mt-2">Style: {order.giftMessageStyle || 'Classic'}</p>
+                       </div>
+                    )}
+                    {order.scheduledDeliveryDate && (
+                      <p className="text-sm text-gray-700 mt-3 font-semibold bg-gray-50 inline-block px-3 py-1.5 rounded-[6px] border border-gray-100">
+                        Scheduled Delivery: {new Date(order.scheduledDeliveryDate).toLocaleDateString()}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                     <p className="font-bold text-[#141225] text-lg">₹{Number(order.totalPrice || 0).toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+    );
+  };
+
   return (
     <section className="min-h-screen bg-[#FAF8F5] px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
       <div className="mx-auto grid max-w-[1440px] gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
@@ -1833,6 +1891,7 @@ export default function CustomerProfilePage({
           {activeModule === 'refunds' && renderRefunds()}
           {activeModule === 'password' && renderChangePassword()}
           {activeModule === 'notifications' && renderNotifications()}
+          {activeModule === 'gift-card' && renderGiftCardOrders()}
         </div>
       </div>
 

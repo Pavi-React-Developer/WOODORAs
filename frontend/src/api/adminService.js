@@ -172,4 +172,60 @@ export const adminService = {
       'Failed to apply coupon'
     );
   },
+
+  getGiftCardConfig: async () => {
+    return withAuthRetry(
+      (config) => axios.get(`${API_URL}/gift-cards/config`, config),
+      'Failed to fetch gift card config'
+    );
+  },
+
+  updateGiftCardConfig: async (data) => {
+    return withAuthRetry(
+      (config) => axios.put(`${API_URL}/gift-cards/config`, data, config),
+      'Failed to update gift card config'
+    );
+  },
+
+  getAdminGiftOrders: async () => {
+    return withAuthRetry(
+      (config) => axios.get(`${API_URL}/gift-cards/admin/orders`, config),
+      'Failed to fetch gift card orders'
+    );
+  },
+
+  getAdminMessages: async () => {
+    return withAuthRetry(
+      (config) => axios.get(`${API_URL}/gift-cards/admin/messages`, config),
+      'Failed to fetch personalized messages'
+    );
+  },
+
+  // Gift Box Rules
+  getGiftBoxRules: async () => {
+    return withAuthRetry((headers) => axios.get(`${API_URL}/gift-box-rules`, headers), 'Failed to fetch gift box rules');
+  },
+  createGiftBoxRule: async (ruleData) => {
+    return withAuthRetry((headers) => axios.post(`${API_URL}/gift-box-rules`, ruleData, headers), 'Failed to create gift box rule');
+  },
+  updateGiftBoxRule: async (id, ruleData) => {
+    return withAuthRetry((headers) => axios.put(`${API_URL}/gift-box-rules/${id}`, ruleData, headers), 'Failed to update gift box rule');
+  },
+  deleteGiftBoxRule: async (id) => {
+    return withAuthRetry((headers) => axios.delete(`${API_URL}/gift-box-rules/${id}`, headers), 'Failed to delete gift box rule');
+  },
+  
+  // Product Fee Rules
+  getProductFeeRules: async () => {
+    return withAuthRetry((headers) => axios.get(`${API_URL}/product-fee-rules`, headers), 'Failed to fetch product fee rules');
+  },
+  createProductFeeRule: async (ruleData) => {
+    return withAuthRetry((headers) => axios.post(`${API_URL}/product-fee-rules`, ruleData, headers), 'Failed to create product fee rule');
+  },
+  updateProductFeeRule: async (id, ruleData) => {
+    return withAuthRetry((headers) => axios.put(`${API_URL}/product-fee-rules/${id}`, ruleData, headers), 'Failed to update product fee rule');
+  },
+  deleteProductFeeRule: async (id) => {
+    return withAuthRetry((headers) => axios.delete(`${API_URL}/product-fee-rules/${id}`, headers), 'Failed to delete product fee rule');
+  }
 };

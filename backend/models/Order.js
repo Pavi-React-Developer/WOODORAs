@@ -59,6 +59,29 @@ const orderSchema = new mongoose.Schema(
     orderNotes: {
       type: String,
     },
+    isGiftOrder: {
+      type: Boolean,
+      default: false,
+    },
+    giftMessage: {
+      type: String,
+    },
+    giftMessageStyle: {
+      type: String,
+    },
+    scheduledDeliveryDate: {
+      type: Date,
+    },
+    giftWrapFee: {
+      type: Number,
+      default: 0,
+    },
+    giftWrapping: {
+      enabled: { type: Boolean, default: false },
+      volume: { type: Number },
+      boxSize: { type: String },
+      giftFee: { type: Number }
+    },
     itemsPrice: {
       type: Number,
       required: true,

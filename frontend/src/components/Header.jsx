@@ -189,14 +189,27 @@ export default function Header({
                 );
               }
 
+              if (titleLower === 'gift & card') {
+                return (
+                  <button
+                    key={item._id || `nav-${idx}`}
+                    type="button"
+                    onClick={() => onNavigate('/gift-and-card')}
+                    className="text-[15px] font-medium text-[#B0611C] hover:opacity-80 whitespace-nowrap"
+                  >
+                    {item.title}
+                  </button>
+                );
+              }
+
               return (
                 <button
                   key={item._id || `nav-${idx}`}
                   type="button"
                   onClick={() => {
-                    if (item.url.startsWith('http')) {
+                    if (item.url && item.url.startsWith('http')) {
                       window.location.href = item.url;
-                    } else {
+                    } else if (item.url) {
                       onNavigate(item.url);
                     }
                   }}
@@ -284,6 +297,9 @@ export default function Header({
               </button>
               <button type="button" onClick={() => onNavigate('/bulk-orders')} className="text-[15px] font-medium text-[#B0611C] hover:opacity-80 whitespace-nowrap">
                 Bulk Orders
+              </button>
+              <button type="button" onClick={() => onNavigate('/gift-and-card')} className="text-[15px] font-medium text-[#B0611C] hover:opacity-80 whitespace-nowrap">
+                Gift & Card
               </button>
             </>
           )}
@@ -556,14 +572,30 @@ export default function Header({
                 );
               }
 
+              if (titleLower === 'gift & card') {
+                return (
+                  <button
+                    key={item._id || `mobile-nav-${idx}`}
+                    type="button"
+                    onClick={() => {
+                      onNavigate('/gift-and-card');
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="block w-full text-left text-lg font-medium text-[#4A3326]"
+                  >
+                    {item.title}
+                  </button>
+                );
+              }
+
               return (
                 <button
                   key={item._id || `mobile-nav-${idx}`}
                   type="button"
                   onClick={() => {
-                    if (item.url.startsWith('http')) {
+                    if (item.url && item.url.startsWith('http')) {
                       window.location.href = item.url;
-                    } else {
+                    } else if (item.url) {
                       onNavigate(item.url);
                     }
                     setIsMobileMenuOpen(false);
@@ -613,6 +645,9 @@ export default function Header({
               </button>
               <button type="button" onClick={() => { onNavigate('/bulk-orders'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-lg font-medium text-[#4A3326]">
                 Bulk Orders
+              </button>
+              <button type="button" onClick={() => { onNavigate('/gift-and-card'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-lg font-medium text-[#4A3326]">
+                Gift & Card
               </button>
             </>
           )}

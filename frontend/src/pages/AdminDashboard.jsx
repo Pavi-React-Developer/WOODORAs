@@ -22,6 +22,7 @@ import ReviewManagementPage from './admin/reviews/ReviewManagementPage';
 import CouponManagementPage from './admin/coupons/CouponManagementPage';
 import HomePageCMS from './admin/CMS/HomePageCMS';
 import BulkOrdersAdminPage from './admin/BulkOrdersAdminPage';
+import GiftAndCardAdminPage from './admin/GiftAndCardAdminPage';
 
 const adminRouteState = {
   '/admin': { tab: 'dashboard' },
@@ -46,6 +47,7 @@ const adminRouteState = {
   '/admin/cancellations': { tab: 'cancellation' },
   '/admin/refunds': { tab: 'refund', refundSubTab: 'list', refundMenuOpen: true },
   '/admin/bulk-orders': { tab: 'bulk-orders' },
+  '/admin/gift-and-card': { tab: 'gift_and_card' },
 };
 
 const adminTabPaths = {
@@ -66,6 +68,7 @@ const adminTabPaths = {
   cancellation: '/admin/cancellations',
   refund: '/admin/refunds',
   'bulk-orders': '/admin/bulk-orders',
+  'gift_and_card': '/admin/gift-and-card',
 };
 
 export default function AdminDashboard({ user, onNavigate, onLogout }) {
@@ -102,6 +105,10 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
 
   // Customer Management state
   const [customerMenuOpen, setCustomerMenuOpen] = useState(false);
+
+  // Gift & Card Management state
+  const [giftAndCardMenuOpen, setGiftAndCardMenuOpen] = useState(false);
+  const [giftAndCardSubTab, setGiftAndCardSubTab] = useState('rules');
 
   // Dynamic permissions for sidebar
   const [userPermissions, setUserPermissions] = useState(null); // null = not loaded yet
@@ -192,6 +199,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
     if (options.customerMenuOpen !== undefined) setCustomerMenuOpen(options.customerMenuOpen);
     if (options.feeMenuOpen !== undefined) setFeeMenuOpen(options.feeMenuOpen);
     if (options.refundMenuOpen !== undefined) setRefundMenuOpen(options.refundMenuOpen);
+    if (options.giftAndCardMenuOpen !== undefined) setGiftAndCardMenuOpen(options.giftAndCardMenuOpen);
+    if (options.giftAndCardSubTab !== undefined) setGiftAndCardSubTab(options.giftAndCardSubTab);
     if (options.editingStaff !== undefined) setEditingStaff(options.editingStaff);
     if (options.roleAssignStaff !== undefined) setRoleAssignStaff(options.roleAssignStaff);
     if (options.editingFee !== undefined) setEditingFee(options.editingFee);
@@ -809,6 +818,55 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                     Bulk Orders
                   </span>
                 </button>
+              </div>
+            )}
+
+            {/* Gift & Card Management */}
+            {(isAdmin || canView('gift_and_card')) && (
+              <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
+                <button
+                  onClick={() => setGiftAndCardMenuOpen(o => !o)}
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${
+                    currentTab === 'gift_and_card' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                  }`}
+                >
+                  <span className="flex items-center gap-2.5">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    Gift & Card
+                  </span>
+                  <svg className={`w-3.5 h-3.5 transition-transform ${giftAndCardMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                </button>
+                {giftAndCardMenuOpen && (
+                  <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
+                    <button
+                      onClick={() => openAdminTab('gift_and_card', { giftAndCardSubTab: 'rules', giftAndCardMenuOpen: true })}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
+                        currentTab === 'gift_and_card' && giftAndCardSubTab === 'rules' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                      }`}
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                      Delivery Rules
+                    </button>
+                    <button
+                      onClick={() => openAdminTab('gift_and_card', { giftAndCardSubTab: 'messages', giftAndCardMenuOpen: true })}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
+                        currentTab === 'gift_and_card' && giftAndCardSubTab === 'messages' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                      }`}
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                      Personalized Messages
+                    </button>
+                    <button
+                      onClick={() => openAdminTab('gift_and_card', { giftAndCardSubTab: 'orders', giftAndCardMenuOpen: true })}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
+                        currentTab === 'gift_and_card' && giftAndCardSubTab === 'orders' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                      }`}
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+                      Gift Orders
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -2178,6 +2236,11 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
           {/* ── BULK ORDERS MANAGEMENT ── */}
           {(isAdmin || canView('bulk_orders')) && currentTab === 'bulk-orders' && (
             <BulkOrdersAdminPage canEdit={hasPermission('bulk_orders', 'edit')} />
+          )}
+
+          {/* ── GIFT & CARD MANAGEMENT ── */}
+          {(isAdmin || canView('gift_and_card')) && currentTab === 'gift_and_card' && (
+            <GiftAndCardAdminPage activeSubTab={giftAndCardSubTab} />
           )}
 
         </div>

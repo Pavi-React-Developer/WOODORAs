@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import useCartStore from '../store/useCartStore';
 import { orderService } from '../api/orderService';
 import { authService } from '../api/authService';
-import { ArrowLeft, Plus, Minus, MapPin, Trash2, Edit2, CreditCard, Banknote, Loader2, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, MapPin, Trash2, Edit2, CreditCard, Banknote, Loader2, CheckCircle2, Gift } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { stateDistricts } from '../utils/indiaStates';
 import { feeAPI } from '../api/feeService';
+import { adminService } from '../api/adminService';
 import { createCashfreeSession } from '../api/cashfreeService';
 import { calculateOrderFees } from '../utils/feeCalculator';
 import { getImageSrc } from '../utils/imageUtils';
@@ -29,6 +30,8 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
   const [orderNotes, setOrderNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [fees, setFees] = useState([]);
+  const [productFeeRules, setProductFeeRules] = useState([]);
+  const [giftBoxRules, setGiftBoxRules] = useState([]);
   const [cityError, setCityError] = useState('');
   const [discountAmount, setDiscountAmount] = useState(0);
   const [appliedCoupon, setAppliedCoupon] = useState(null);
@@ -85,8 +88,14 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
     // Fetch fees
     const fetchFees = async () => {
       try {
-        const data = await feeAPI.getAllFees();
-        setFees(data);
+        const [feesData, productRules, giftRules] = await Promise.all([
+          feeAPI.getAllFees(),
+          feeAPI.getProductFeeRules().catch(() => []),
+          adminService.getGiftBoxRules().catch(() => [])
+        ]);
+        setFees(feesData || []);
+        setProductFeeRules(productRules || []);
+        setGiftBoxRules(giftRules || []);
       } catch (err) {
         console.error('Error fetching fees', err);
       }
@@ -111,7 +120,45 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
   const extraChargeSum = extraFeesList.reduce((sum, fee) => sum + fee.amount, 0);
   const discountedSubtotal = Math.max(subtotal - discountAmount, 0);
 
-  const orderTotal = discountedSubtotal + shippingCharge + extraChargeSum;
+  // Calculate dynamic gift box fee and product fee
+  let dynamicGiftBoxFee = 0;
+  let dynamicProductFee = 0;
+
+  cartItems.forEach(item => {
+    // Calculate volume: length * width * height
+    let volume = 0;
+    if (item.dimensions && item.dimensions.length && item.dimensions.width && item.dimensions.height) {
+      volume = item.dimensions.length * item.dimensions.width * item.dimensions.height;
+    }
+
+    // Product and Gift Fees
+    if (item.isGift) {
+      // Gift Fee
+      const gRule = giftBoxRules.find(r => r.isActive && volume >= r.minVolume && volume <= r.maxVolume);
+      if (gRule) {
+         dynamicGiftBoxFee += (gRule.fee * item.qty);
+      } else if (item.giftBox && item.giftBox.giftFee) {
+         // Fallback to legacy
+         dynamicGiftBoxFee += (Number(item.giftBox.giftFee) * item.qty);
+      }
+    } else {
+      // Product Fee (only applies if NOT a gift)
+      const pRule = productFeeRules.find(r => r.isActive && volume >= r.minVolume && volume <= r.maxVolume);
+      if (pRule) {
+        dynamicProductFee += (pRule.fee * item.qty);
+      }
+    }
+  });
+
+  if (dynamicProductFee > 0 && !appliedFees.some(f => f.name === 'Product Fee')) {
+    appliedFees.push({ name: 'Product Fee', amount: dynamicProductFee });
+  }
+
+  if (dynamicGiftBoxFee > 0 && !appliedFees.some(f => f.name === 'Gift Box Fee')) {
+    appliedFees.push({ name: 'Gift Box Fee', amount: dynamicGiftBoxFee });
+  }
+
+  const orderTotal = discountedSubtotal + shippingCharge + extraChargeSum + dynamicGiftBoxFee + dynamicProductFee;
   const isCodAdvance = paymentMethod === 'COD' && codAdvance > 0;
   const balanceAmount = isCodAdvance ? (orderTotal - codAdvance) : 0; // Deduct advance from order total
 
@@ -268,6 +315,7 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
 
     try {
       setLoading(true);
+      
       const orderData = {
         orderItems: cartItems.map(item => ({
           name: item.variantOptions ? `${item.name} (${item.variantOptions})` : item.name,
@@ -289,11 +337,13 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
         orderNotes,
         fees: appliedFees,
         couponCode: appliedCoupon?.couponCode || null,
-        discountAmount
+        discountAmount,
+        ...giftProps
       };
 
       // Create the order in our backend first
       const order = await orderService.createOrder(orderData);
+      localStorage.removeItem('giftCardPreferences');
 
       if (paymentMethod === 'Cashfree' || isCodAdvance) {
         // — Cashfree online payment flow —
@@ -575,6 +625,14 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
                       <h4 className="text-sm font-bold text-gray-800 line-clamp-1">{item.name}</h4>
                       {item.variantOptions && (
                         <p className="text-xs text-gray-500 line-clamp-1">{item.variantOptions}</p>
+                      )}
+                      {item.isGift && (
+                        <div className="mt-1">
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#FFF0E6] text-[#D95F24] text-[10px] font-bold tracking-wider">
+                            <Gift className="w-3 h-3" />
+                            GIFT & CARD
+                          </span>
+                        </div>
                       )}
                       {item.weight && !isNaN(Number(item.weight)) && Number(item.weight) > 0 && (
                         <p className="text-xs text-gray-500">{(Number(item.weight) * item.qty)} kg</p>

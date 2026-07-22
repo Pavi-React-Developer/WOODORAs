@@ -20,6 +20,8 @@ const reviewRoutes  = require('./routes/reviewRoutes');
 const couponRoutes = require('./routes/couponRoutes');
 const cmsRoutes = require('./routes/cmsRoutes');
 const bulkOrderRoutes = require('./routes/bulkOrderRoutes');
+const giftCardRoutes = require('./routes/giftCardRoutes');
+const giftBoxRuleRoutes = require('./routes/giftBoxRuleRoutes');
 const seedAttributes = require('./seedAttributes');
 const Order = require('./models/Order');
 const Review = require('./models/Review');
@@ -132,6 +134,10 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/coupons', couponRoutes);
 app.use('/api/cms', cmsRoutes);
 app.use('/api/bulk-orders', bulkOrderRoutes);
+app.use('/api/gift-cards', giftCardRoutes);
+app.use('/api/gift-box-rules', giftBoxRuleRoutes);
+const productFeeRuleRoutes = require('./routes/productFeeRuleRoutes');
+app.use('/api/product-fee-rules', productFeeRuleRoutes);
 
 app.get('/', (req, res) => {
     res.send('API is running...');

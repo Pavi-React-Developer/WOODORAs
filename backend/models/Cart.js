@@ -42,6 +42,20 @@ const cartItemSchema = new mongoose.Schema({
     type: Number,
     default: 999,
   },
+  isGift: {
+    type: Boolean,
+    default: false,
+  },
+  giftBox: {
+    volume: { type: Number },
+    boxSize: { type: String },
+    giftFee: { type: Number }
+  },
+  dimensions: {
+    length: { type: Number },
+    width: { type: Number },
+    height: { type: Number }
+  }
 }, { _id: false });
 
 const cartSchema = new mongoose.Schema({

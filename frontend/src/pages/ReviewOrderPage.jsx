@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import useCartStore from '../store/useCartStore';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { getImageSrc } from '../utils/imageUtils';
@@ -6,8 +6,16 @@ import { getImageSrc } from '../utils/imageUtils';
 export default function ReviewOrderPage({ onNavigate }) {
   const { cartItems, getSubtotal } = useCartStore();
 
+
   const subtotal = getSubtotal();
-  const total = subtotal;
+  let giftWrapFee = 0;
+  cartItems.forEach(item => {
+    if (item.isGift && item.giftBox && item.giftBox.giftFee) {
+       giftWrapFee += (Number(item.giftBox.giftFee) * item.qty);
+    }
+  });
+  
+  const total = subtotal + giftWrapFee;
 
   if (cartItems.length === 0) {
     return (
@@ -96,6 +104,12 @@ export default function ReviewOrderPage({ onNavigate }) {
                   <span>Subtotal ({cartItems.length} items)</span>
                   <span className="text-gray-900 font-bold">₹{subtotal.toLocaleString()}</span>
                 </div>
+                {giftWrapFee > 0 && (
+                  <div className="flex justify-between text-gray-600 font-medium">
+                    <span>Gift Wrap Fee</span>
+                    <span className="text-gray-900 font-bold">₹{giftWrapFee.toLocaleString()}</span>
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-between items-end my-8">

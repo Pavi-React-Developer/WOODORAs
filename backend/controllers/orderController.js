@@ -59,7 +59,12 @@ const addOrderItems = async (req, res) => {
       itemsPrice,
       taxPrice,
       orderNotes,
-      fees
+      fees,
+      isGiftOrder,
+      giftMessage,
+      giftMessageStyle,
+      scheduledDeliveryDate,
+      giftWrapFee
     } = req.body;
 
     if (orderItems && orderItems.length === 0) {
@@ -106,6 +111,12 @@ const addOrderItems = async (req, res) => {
         couponCode: req.body.couponCode || null,
         discountAmount: Number(req.body.discountAmount || 0),
         coupon: null,
+        isGiftOrder: isGiftOrder || false,
+        giftMessage,
+        giftMessageStyle,
+        scheduledDeliveryDate,
+        giftWrapFee: giftWrapFee || 0,
+        giftWrapping: req.body.giftWrapping || { enabled: false }
       });
 
       // If a couponCode was provided, attempt to link the coupon ObjectId for stronger referential integrity

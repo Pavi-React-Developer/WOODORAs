@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { orderService, ORDER_STATUS_OPTIONS } from '../../api/orderService';
-import { Package, Search, Calendar, MapPin, Eye, Trash2, X, Edit, Save, Download, RefreshCw } from 'lucide-react';
+import { Package, Search, Calendar, MapPin, Eye, Trash2, X, Edit, Save, Download, RefreshCw, Gift } from 'lucide-react';
 import { downloadExcelFile } from '../../utils/exportUtils';
 import toast from 'react-hot-toast';
 
@@ -303,6 +303,12 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                 <tr key={order._id} className="hover:bg-gray-50/50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="font-mono text-sm font-bold text-gray-900 mb-1">{(order._id || '').substring((order._id || '').length - 8)}</div>
+                    {order.isGiftOrder && (
+                      <span className="mb-2 inline-flex items-center gap-1 rounded bg-[#FDF0EB] px-2 py-0.5 text-[10px] font-bold text-[#D04E26] uppercase tracking-wider">
+                        <Gift className="w-3 h-3" />
+                        Gift & Card
+                      </span>
+                    )}
                     <div className="text-xs text-gray-500 flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
                       {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}
@@ -551,6 +557,35 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                   <p className="mt-2 font-semibold text-gray-900">{selectedOrder.isDelivered ? 'Delivered' : 'Not delivered'}</p>
                 </div>
               </div>
+
+              {selectedOrder.isGiftOrder && (
+                <div className="rounded-3xl border border-[#D04E26] bg-[#FDF0EB] p-4 mt-6">
+                  <h4 className="text-sm font-bold text-[#D04E26] mb-4 uppercase tracking-wider flex items-center gap-2">
+                    <Gift size={16} /> Gift & Card Details
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs uppercase tracking-widest text-gray-500">Message</p>
+                      <p className="font-semibold text-gray-900">{selectedOrder.giftMessage || 'No message'}</p>
+                      {selectedOrder.giftMessageStyle && <p className="text-xs text-gray-500 mt-1">Style: {selectedOrder.giftMessageStyle}</p>}
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-widest text-gray-500">Scheduled Date</p>
+                      <p className="font-semibold text-gray-900">{selectedOrder.scheduledDeliveryDate ? new Date(selectedOrder.scheduledDeliveryDate).toLocaleDateString() : 'N/A'}</p>
+                    </div>
+                    {selectedOrder.giftWrapping?.enabled && (
+                      <div className="col-span-1 md:col-span-2 mt-2 pt-2 border-t border-[#F2CBBF]">
+                        <p className="text-xs uppercase tracking-widest text-gray-500 mb-2">Gift Box Info</p>
+                        <div className="flex gap-4">
+                          <p className="text-sm text-gray-700">Volume: <span className="font-semibold">{selectedOrder.giftWrapping.volume} cm³</span></p>
+                          <p className="text-sm text-gray-700">Size: <span className="font-semibold">{selectedOrder.giftWrapping.boxSize}</span></p>
+                          <p className="text-sm text-gray-700">Fee: <span className="font-semibold text-green-600">₹{selectedOrder.giftWrapping.giftFee}</span></p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

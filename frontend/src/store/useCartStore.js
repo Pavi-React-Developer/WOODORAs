@@ -200,6 +200,12 @@ const useCartStore = create(
             variant: variantId || null,
             variantOptions,
             maxStock: Math.max(1, maxStock),
+            weight: selectedVariant?.weight ?? product.shippingWeight ?? product.weight ?? 0,
+            isGift: product.isGift || false,
+            giftBox: product.giftBox || null,
+            dimensions: (selectedVariant?.length && selectedVariant?.width && selectedVariant?.height) 
+              ? { length: selectedVariant.length, width: selectedVariant.width, height: selectedVariant.height }
+              : product.dimensions || null,
           };
 
           const existIndex = state.cartItems.findIndex(
@@ -308,6 +314,10 @@ function normalizeCartItem(item = {}) {
     variant: item.variant ? toStr(item.variant) : null,
     variantOptions: item.variantOptions || null,
     maxStock: Number(item.maxStock) || 999,
+    weight: Number(item.weight) || 0,
+    isGift: item.isGift || false,
+    giftBox: item.giftBox || null,
+    dimensions: item.dimensions || null,
   };
 }
 

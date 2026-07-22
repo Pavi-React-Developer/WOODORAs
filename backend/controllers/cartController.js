@@ -1,6 +1,7 @@
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 const ProductVariant = require('../models/ProductVariant');
+const GiftBoxRule = require('../models/GiftBoxRule');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -17,6 +18,21 @@ const normalizeItem = (item = {}) => ({
   qty: Math.max(1, Number(item.qty) || 1),
   maxStock: Number(item.maxStock) || 999,
   variantOptions: item.variantOptions || null,
+  isGift: Boolean(item.isGift) || false,
+  giftBox: item.giftBox
+    ? {
+        volume: Number(item.giftBox.volume) || 0,
+        boxSize: item.giftBox.boxSize || '',
+        giftFee: Number(item.giftBox.giftFee) || 0,
+      }
+    : undefined,
+  dimensions: item.dimensions
+    ? {
+        length: Number(item.dimensions.length) || 0,
+        width: Number(item.dimensions.width) || 0,
+        height: Number(item.dimensions.height) || 0,
+      }
+    : undefined,
 });
 
 /**
@@ -60,12 +76,18 @@ const getCart = async (req, res) => {
             if (variant) {
               obj.price = variant.discountPrice ?? variant.basePrice ?? item.price;
               obj.maxStock = getLiveStock(variant);
+              if (variant.length && variant.width && variant.height) {
+                obj.dimensions = { length: variant.length, width: variant.width, height: variant.height };
+              }
             }
           } else if (item.product) {
             const product = await Product.findById(item.product).lean();
             if (product) {
               obj.price = product.discountPrice ?? product.price ?? item.price;
               obj.name = product.name ?? item.name;
+              if (!obj.dimensions && product.dimensions) {
+                obj.dimensions = product.dimensions;
+              }
             }
           }
           return obj;
@@ -172,6 +194,46 @@ const addCartItem = async (req, res) => {
       liveMaxStock = incoming.maxStock; // Use frontend maxStock for non-variant products
     }
 
+    // ── Calculate Gift Box if isGift is true ──────────────────────────────
+    if (incoming.isGift) {
+      let productVol = 0;
+      
+      if (incoming.variant) {
+         const variantDoc = await ProductVariant.findById(incoming.variant).lean();
+         if (variantDoc && variantDoc.length && variantDoc.width && variantDoc.height) {
+            productVol = variantDoc.length * variantDoc.width * variantDoc.height;
+         }
+      } 
+      
+      if (!productVol) {
+         const productDoc = await Product.findById(incoming.product).lean();
+         if (productDoc && productDoc.dimensions && productDoc.dimensions.length && productDoc.dimensions.width && productDoc.dimensions.height) {
+            productVol = productDoc.dimensions.length * productDoc.dimensions.width * productDoc.dimensions.height;
+         }
+      }
+
+      if (productVol > 0) {
+        const rule = await GiftBoxRule.findOne({
+          isActive: true,
+          minVolume: { $lte: productVol },
+          maxVolume: { $gte: productVol }
+        }).lean();
+
+        if (rule) {
+          incoming.giftBox = {
+            volume: productVol,
+            boxSize: rule.boxSize,
+            giftFee: rule.fee
+          };
+        } else {
+          // No rule found, could handle this based on requirement
+          incoming.giftBox = { volume: productVol, boxSize: 'N/A', giftFee: 0 };
+        }
+      } else {
+        incoming.giftBox = { volume: 0, boxSize: 'N/A', giftFee: 0 };
+      }
+    }
+
     // ── Get current cart and find existing item ───────────────────────────
     const cart = await getOrCreateCart(req.user._id);
     const existingItem = cart.items.find(
@@ -195,6 +257,8 @@ const addCartItem = async (req, res) => {
     // ── Apply update ──────────────────────────────────────────────────────
     if (existingItem) {
       existingItem.qty = totalDesiredQty;
+      existingItem.isGift = incoming.isGift;
+      if (incoming.giftBox) existingItem.giftBox = incoming.giftBox;
     } else {
       cart.items.push({ ...incoming, maxStock: liveMaxStock });
     }

@@ -20,6 +20,7 @@ import { authService } from './api/authService';
 import CartOffcanvas from './components/CartOffcanvas';
 import WishlistOffcanvas from './components/WishlistOffcanvas';
 import useCartStore from './store/useCartStore';
+import GiftAndCardPage from './pages/GiftAndCardPage';
 
 import OAuthCallback from './pages/OAuthCallback';
 
@@ -508,6 +509,26 @@ export default function AppRouter() {
         />
 
         {/* Catch-all - 404 */}
+        <Route
+          path="/gift-and-card"
+          element={
+            <PageLayout>
+              <Header
+                user={user}
+                onLogout={handleLogout}
+                onNavigate={handleNavigate}
+                cartCount={cartItems.reduce((acc, item) => acc + item.qty, 0)}
+                onOpenCart={() => setIsCartOpen(true)}
+                wishlistCount={wishlistItems.length}
+                onOpenWishlist={() => setIsWishlistOpen(true)}
+              />
+              <GiftAndCardPage
+                onNavigate={handleNavigate}
+                onAddToCart={handleAddToCart}
+              />
+            </PageLayout>
+          }
+        />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>

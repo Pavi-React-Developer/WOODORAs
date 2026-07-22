@@ -1,6 +1,6 @@
 import React from 'react';
 import useCartStore from '../store/useCartStore';
-import { Trash2, Plus, Minus, ArrowLeft, ShoppingBag } from 'lucide-react';
+import { Trash2, Plus, Minus, ArrowLeft, ShoppingBag, Gift } from 'lucide-react';
 import { getImageSrc } from '../utils/imageUtils';
 
 export default function CartPage({ onNavigate }) {
@@ -69,6 +69,14 @@ export default function CartPage({ onNavigate }) {
                     <h3 className="font-bold text-gray-800 text-lg line-clamp-2 leading-snug mb-1">{item.name}</h3>
                     {item.variantOptions && (
                       <p className="text-xs text-gray-500 mb-1">{item.variantOptions}</p>
+                    )}
+                    {item.isGift && (
+                      <div className="mb-1">
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#FFF0E6] text-[#D95F24] text-[10px] font-bold tracking-wider">
+                          <Gift className="w-3 h-3" />
+                          GIFT & CARD
+                        </span>
+                      </div>
                     )}
                     {item.weight && !isNaN(Number(item.weight)) && Number(item.weight) > 0 && (
                       <p className="text-sm text-gray-500 font-medium">Weight: {(Number(item.weight) * item.qty)} kg</p>

@@ -79,6 +79,11 @@ export const ADMIN_MODULES = [
     key: 'bulk_orders',
     label: 'Bulk Orders',
     icon: '📦',
+  },
+  {
+    key: 'gift_and_card',
+    label: 'Gift & Card',
+    icon: '🎁',
   }
 ];
 

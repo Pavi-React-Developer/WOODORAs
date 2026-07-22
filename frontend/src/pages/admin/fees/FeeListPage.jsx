@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Edit3, Trash2, Download, Plus, RefreshCw } from 'lucide-react';
+import { Edit3, Trash2, Download, Plus, RefreshCw, Package } from 'lucide-react';
 import { feeAPI } from '../../../api/feeService';
 import { downloadExcelFile } from '../../../utils/exportUtils';
+import ProductFeeRulesList from './ProductFeeRulesList';
 
 export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, canEdit = true, canDelete = true }) {
   const [fees, setFees] = useState([]);
   const [categories, setCategories] = useState([]);
   const [paymentMethods, setPaymentMethods] = useState([]);
+  const [showProductFees, setShowProductFees] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -90,6 +92,10 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
     return <div className="p-8 text-center text-gray-500">Loading fees...</div>;
   }
 
+  if (showProductFees) {
+    return <ProductFeeRulesList onBack={() => setShowProductFees(false)} />;
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-[#E6DFD4] pb-4 gap-4">
@@ -97,7 +103,10 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
           <h2 className="text-2xl font-bold text-brand-dark font-serif">Fee List</h2>
           <p className="text-sm text-brand-medium">Manage all configured fees</p>
         </div>
-        <div className="flex justify-end gap-3 mb-4">
+        <div className="flex justify-end gap-3 mb-4 flex-wrap">
+          <button onClick={() => setShowProductFees(true)} className="admin-btn bg-indigo-600 hover:bg-indigo-700">
+            <Package size={16} /> Product fee
+          </button>
           <button onClick={loadData} className="admin-secondary-btn">
             <RefreshCw size={16} /> Refresh
           </button>

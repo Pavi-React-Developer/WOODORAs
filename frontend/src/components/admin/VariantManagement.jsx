@@ -78,6 +78,11 @@ export const VariantManagement = ({
             const existing = variants.find(v => v.variantCombination === comboString);
             
             if (existing) {
+                const vol = (Number(existing.length) || 0) * (Number(existing.width) || 0) * (Number(existing.height) || 0);
+                if ((!existing.volume || existing.volume === 0) && vol > 0) {
+                    hasChanges = true;
+                    return { ...existing, volume: Number(vol.toFixed(2)) };
+                }
                 return existing;
             }
             hasChanges = true;
@@ -95,6 +100,7 @@ export const VariantManagement = ({
                 length: 0,
                 width: 0,
                 height: 0,
+                volume: 0,
                 variantCombination: comboString,
                 isActive: true,
                 isPrimary: idx === 0,
@@ -127,6 +133,13 @@ export const VariantManagement = ({
     const handleFieldChange = (index, field, value) => {
         const updated = [...variants];
         updated[index] = { ...updated[index], [field]: value };
+        
+        if (['length', 'width', 'height'].includes(field)) {
+            const v = updated[index];
+            const vol = (Number(v.length) || 0) * (Number(v.width) || 0) * (Number(v.height) || 0);
+            updated[index].volume = vol > 0 ? Number(vol.toFixed(2)) : 0;
+        }
+        
         onChange(updated);
     };
 
@@ -276,6 +289,7 @@ export const VariantManagement = ({
                                                                 <div className="flex flex-col gap-1"><span className="text-xs text-gray-500">Length (cm)</span><input type="number" value={variant.length || ''} onChange={e => handleFieldChange(idx, 'length', e.target.value)} className="p-2 border rounded text-sm"/></div>
                                                                 <div className="flex flex-col gap-1"><span className="text-xs text-gray-500">Width (cm)</span><input type="number" value={variant.width || ''} onChange={e => handleFieldChange(idx, 'width', e.target.value)} className="p-2 border rounded text-sm"/></div>
                                                                 <div className="flex flex-col gap-1"><span className="text-xs text-gray-500">Height (cm)</span><input type="number" value={variant.height || ''} onChange={e => handleFieldChange(idx, 'height', e.target.value)} className="p-2 border rounded text-sm"/></div>
+                                                                <div className="flex flex-col gap-1"><span className="text-xs text-gray-500">Volume (cm³)</span><input type="text" value={variant.volume || 0} readOnly className="p-2 border rounded text-sm bg-slate-50 text-slate-700"/></div>
                                                                 <div className="flex flex-col gap-1"><span className="text-xs text-gray-500">Low Stock Alert</span><input type="number" value={variant.lowStockAlert !== undefined ? variant.lowStockAlert : ''} onChange={e => handleFieldChange(idx, 'lowStockAlert', e.target.value)} className="p-2 border rounded text-sm"/></div>
                                                             </div>
                                                         </div>
@@ -352,6 +366,22 @@ export const VariantManagement = ({
                                         <div className="flex flex-col gap-1">
                                             <label className="text-xs text-gray-500">Weight (kg)</label>
                                             <input type="number" step="0.0001" min="0" value={variant.weight || ''} onChange={e => handleFieldChange(idx, 'weight', e.target.value)} onBlur={e => handleFieldChange(idx, 'weight', formatWeightInput(e.target.value))} className="p-2 border rounded text-sm focus:ring-1 focus:ring-amber-500 focus:outline-none"/>
+                                        </div>
+                                        <div className="flex flex-col gap-1">
+                                            <label className="text-xs text-gray-500">Length (cm)</label>
+                                            <input type="number" value={variant.length || ''} onChange={e => handleFieldChange(idx, 'length', e.target.value)} className="p-2 border rounded text-sm focus:ring-1 focus:ring-amber-500 focus:outline-none"/>
+                                        </div>
+                                        <div className="flex flex-col gap-1">
+                                            <label className="text-xs text-gray-500">Width (cm)</label>
+                                            <input type="number" value={variant.width || ''} onChange={e => handleFieldChange(idx, 'width', e.target.value)} className="p-2 border rounded text-sm focus:ring-1 focus:ring-amber-500 focus:outline-none"/>
+                                        </div>
+                                        <div className="flex flex-col gap-1">
+                                            <label className="text-xs text-gray-500">Height (cm)</label>
+                                            <input type="number" value={variant.height || ''} onChange={e => handleFieldChange(idx, 'height', e.target.value)} className="p-2 border rounded text-sm focus:ring-1 focus:ring-amber-500 focus:outline-none"/>
+                                        </div>
+                                        <div className="flex flex-col gap-1">
+                                            <label className="text-xs text-gray-500">Volume (cm³)</label>
+                                            <input type="text" value={variant.volume || 0} readOnly className="p-2 border rounded text-sm bg-slate-50 text-slate-700 focus:outline-none"/>
                                         </div>
                                     </div>
                                 </div>

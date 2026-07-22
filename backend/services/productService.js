@@ -284,6 +284,7 @@ const getProducts = async (query = {}) => {
         result.push({
             ...prod.toObject(),
             ...pricing,
+            variants: variants.map(v => v.toObject()),
             variantsCount: variants.length,
             totalStock: pricing.totalStock,
             inventory: inventory ? { sku: inventory.sku, stockQuantity: inventory.stockQuantity } : null,
@@ -538,6 +539,7 @@ const createProduct = async (data, auditContext) => {
                 length: v.length === '' || v.length === undefined ? undefined : toFiniteNumber(v.length),
                 width: v.width === '' || v.width === undefined ? undefined : toFiniteNumber(v.width),
                 height: v.height === '' || v.height === undefined ? undefined : toFiniteNumber(v.height),
+                volume: v.volume === '' || v.volume === undefined ? undefined : toFiniteNumber(v.volume),
                 lowStockAlert: v.lowStockAlert === '' || v.lowStockAlert === undefined ? 5 : toFiniteNumber(v.lowStockAlert),
                 images: v.images || [],
                 isActive: v.isActive !== undefined ? v.isActive : true,
@@ -676,6 +678,7 @@ const updateProduct = async (id, data, auditContext) => {
                 length: v.length === '' || v.length === undefined ? undefined : toFiniteNumber(v.length),
                 width: v.width === '' || v.width === undefined ? undefined : toFiniteNumber(v.width),
                 height: v.height === '' || v.height === undefined ? undefined : toFiniteNumber(v.height),
+                volume: v.volume === '' || v.volume === undefined ? undefined : toFiniteNumber(v.volume),
                 lowStockAlert: v.lowStockAlert === '' || v.lowStockAlert === undefined ? 5 : toFiniteNumber(v.lowStockAlert),
                 images: v.images || [],
                 isActive: v.isActive !== undefined ? v.isActive : true,

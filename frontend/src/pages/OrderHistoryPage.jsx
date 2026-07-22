@@ -143,6 +143,37 @@ export default function OrderHistoryPage({ onNavigate }) {
                       </div>
                     </div>
                   ))}
+
+                  {order.isGiftOrder && (
+                    <div className="py-4 mt-2">
+                      <div className="rounded-2xl border border-[#D04E26]/20 bg-[#FDF0EB] p-4">
+                        <h4 className="text-sm font-bold text-[#D04E26] mb-3 uppercase tracking-wider flex items-center gap-2">
+                           Gift & Card Details
+                        </h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-xs text-gray-500 uppercase tracking-widest">Message</p>
+                            <p className="font-semibold text-gray-900 text-sm">{order.giftMessage || 'No message'}</p>
+                            {order.giftMessageStyle && <p className="text-xs text-gray-500 mt-0.5">Style: {order.giftMessageStyle}</p>}
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 uppercase tracking-widest">Scheduled Delivery</p>
+                            <p className="font-semibold text-gray-900 text-sm">{order.scheduledDeliveryDate ? new Date(order.scheduledDeliveryDate).toLocaleDateString() : 'N/A'}</p>
+                          </div>
+                          {order.giftWrapping?.enabled && (
+                            <div className="sm:col-span-2 pt-3 mt-1 border-t border-[#F2CBBF]/50">
+                              <p className="text-xs text-gray-500 uppercase tracking-widest mb-2">Gift Box Selected</p>
+                              <div className="flex flex-wrap gap-x-6 gap-y-2">
+                                <p className="text-sm text-gray-700">Volume: <span className="font-semibold text-gray-900">{order.giftWrapping.volume} cm³</span></p>
+                                <p className="text-sm text-gray-700">Box Size: <span className="font-semibold text-gray-900">{order.giftWrapping.boxSize}</span></p>
+                                <p className="text-sm text-gray-700">Fee: <span className="font-bold text-[#D04E26]">₹{order.giftWrapping.giftFee}</span></p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

@@ -17,6 +17,7 @@ import CustomerProfilePage from './pages/CustomerProfilePage';
 import WishlistPage from './pages/WishlistPage';
 import ShopPage from './pages/ShopPage';
 import BulkOrderPage from './pages/BulkOrderPage';
+import GiftAndCardPage from './pages/GiftAndCardPage';
 import OAuthCallback from './pages/OAuthCallback';
 import { authService } from './api/authService';
 import CartOffcanvas from './components/CartOffcanvas';
@@ -567,6 +568,27 @@ export default function App() {
                 </ErrorBoundary>
               </AdminLayout>
             </ProtectedRoute>
+          }
+        />
+
+        {/* Gift & Card Page */}
+        <Route
+          path="/gift-and-card"
+          element={
+            <LayoutWithHeader
+              user={user}
+              cartItems={cartItems}
+              wishlistItems={wishlistItems}
+              onOpenCart={() => setIsCartOpen(true)}
+              onOpenWishlist={() => setIsWishlistOpen(true)}
+              onLogout={handleLogout}
+              onNavigate={handleNavigate}
+            >
+              <GiftAndCardPage
+                onNavigate={handleNavigate}
+                onAddToCart={handleAddToCart}
+              />
+            </LayoutWithHeader>
           }
         />
 

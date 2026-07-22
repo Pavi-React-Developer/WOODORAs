@@ -317,6 +317,11 @@ const updateVariant = async (req, res) => {
         if (length !== undefined) variant.length = length;
         if (width !== undefined) variant.width = width;
         if (height !== undefined) variant.height = height;
+        if (req.body.volume !== undefined) {
+            variant.volume = req.body.volume;
+        } else if (length !== undefined || width !== undefined || height !== undefined) {
+            variant.volume = (variant.length || 0) * (variant.width || 0) * (variant.height || 0);
+        }
         if (isActive !== undefined) variant.isActive = isActive;
         if (isPrimary !== undefined) variant.isPrimary = isPrimary;
         if (images) variant.images = images;
