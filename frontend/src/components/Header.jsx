@@ -3,6 +3,7 @@ import { ChevronDown, Heart, Search, ShoppingCart, User, X, Loader2, Menu } from
 import { catalogService } from '../api/catalogService';
 import { cmsService } from '../api/cmsService';
 import { productV2API, categoryV2API } from '../api/catalogV2Service';
+import { Link } from 'react-router-dom';
 
 export default function Header({
   user,
@@ -17,6 +18,7 @@ export default function Header({
   const [categories, setCategories] = useState([]);
   const [activeMenu, setActiveMenu] = useState(null);
   const [navItems, setNavItems] = useState([]);
+  const [navbarConfig, setNavbarConfig] = useState(null);
   
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -38,9 +40,10 @@ export default function Header({
 
     const fetchNavbars = async () => {
       try {
-        const res = await cmsService.getNavbars();
+        const res = await cmsService.getNavbar();
         if (res.success && res.data) {
-          setNavItems(res.data.filter((item) => item.status));
+          setNavbarConfig(res.data);
+          setNavItems((res.data.items || []).filter((item) => item.status));
         }
       } catch (err) {
         console.error('Failed to load navbars from CMS', err);
@@ -96,50 +99,87 @@ export default function Header({
 
   return (
     <>
-    <header className="sticky top-0 z-50 border-b border-[#E9DED3] bg-white/95 shadow-[0_6px_28px_rgba(62,39,35,0.06)] backdrop-blur font-sans">
-      <div className="mx-auto flex min-h-[88px] max-w-[1500px] items-center justify-between gap-2 sm:gap-4 px-3 sm:px-6 lg:px-10">
+    <header 
+      className="sticky top-0 z-50 border-b border-[#E9DED3] shadow-[0_6px_28px_rgba(62,39,35,0.06)] backdrop-blur font-sans transition-colors duration-300"
+      style={{ 
+        backgroundColor: navbarConfig?.backgroundColor || 'rgba(255, 255, 255, 0.95)',
+        color: navbarConfig?.textColor || '#4A3326'
+      }}
+    >
+      <div className={`mx-auto flex min-h-[88px] max-w-[1500px] items-center gap-2 sm:gap-4 px-3 sm:px-6 lg:px-10 ${
+        navbarConfig?.logoPosition === 'center' ? 'flex-row' : 
+        navbarConfig?.logoPosition === 'right' ? 'flex-row-reverse justify-between' : 'justify-between'
+      }`}>
         <div className="flex items-center gap-2 sm:gap-4">
           
           <button
             type="button"
-            onClick={() => onNavigate('/')}
+            onClick={() => onNavigate(navbarConfig?.logoUrl || '/')}
             className="shrink-0 flex items-center"
           >
             <img 
-              src="/woodora-logo.png" 
+              src={navbarConfig?.logo?.url || "/woodora-logo.png"} 
               alt="Woodora Logo" 
               className="h-20 sm:h-24 md:h-28 w-auto object-contain scale-110 origin-left" 
             />
           </button>
         </div>
 
-        <nav className="hidden flex-1 items-center justify-center gap-8 xl:flex">
+        <nav className={`hidden flex-1 items-center gap-8 xl:flex ${
+          navbarConfig?.logoPosition === 'center' ? 'justify-between' : 
+          navbarConfig?.logoPosition === 'right' ? 'justify-end' : 'justify-center'
+        }`}>
           {navItems.length > 0 ? (
             [...navItems].sort((a, b) => (a.order || 0) - (b.order || 0)).map((item, idx) => {
               const titleLower = item.title.toLowerCase();
 
-              if (titleLower === 'shop') {
+              if (titleLower === 'shop' || item.isDropdown) {
                 return (
                   <div
                     key={item._id || `nav-${idx}`}
                     className="relative flex h-[88px] items-center"
-                    onMouseEnter={() => setActiveMenu('shop')}
+                    onMouseEnter={() => setActiveMenu(titleLower)}
                     onMouseLeave={() => setActiveMenu(null)}
                   >
-                    <button type="button" className="flex items-center gap-1 text-[15px] font-medium text-[#B0611C] hover:opacity-80">
+                    <button type="button" 
+                      className="flex items-center gap-1 text-[15px] font-medium hover:opacity-80 transition-colors"
+                      style={{ color: item.textColor || navbarConfig?.textColor || '#B0611C', backgroundColor: item.backgroundColor || 'transparent' }}
+                    >
                       {item.title} <ChevronDown className="h-4 w-4" strokeWidth={1.5} />
                     </button>
-                    {activeMenu === 'shop' && (
-                      <div className="absolute left-0 top-full w-52 rounded-xl border border-[#E9DED3] bg-white py-2 shadow-lg">
-                        <button onClick={() => onNavigate('/shop')} type="button" className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">
-                          All Products
-                        </button>
-                        <button onClick={() => onNavigate('/shop?sort=newest')} type="button" className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">
-                          New Arrivals
-                        </button>
-                        <button onClick={() => onNavigate('/shop?sort=bestselling')} type="button" className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">
-                          Best Sellers
-                        </button>
+                    {activeMenu === titleLower && (
+                      <div className="absolute left-0 top-full min-w-[208px] rounded-xl border border-[#E9DED3] bg-white py-2 shadow-lg z-50">
+                        {titleLower === 'shop' ? (
+                          <>
+                            <button onClick={() => onNavigate('/shop')} type="button" className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">
+                              All Products
+                            </button>
+                            <button onClick={() => onNavigate('/shop?sort=newest')} type="button" className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">
+                              New Arrivals
+                            </button>
+                            <button onClick={() => onNavigate('/shop?sort=bestselling')} type="button" className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">
+                              Best Sellers
+                            </button>
+                          </>
+                        ) : (
+                          item.subItems?.length > 0 ? (
+                            item.subItems.map((subItem, sIdx) => {
+                              const isExt = subItem.url.startsWith('http://') || subItem.url.startsWith('https://');
+                              if (isExt) {
+                                return (
+                                  <a key={sIdx} href={subItem.url} className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">
+                                    {subItem.title}
+                                  </a>
+                                );
+                              }
+                              return (
+                                <button key={sIdx} onClick={() => onNavigate(subItem.url)} type="button" className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">
+                                  {subItem.title}
+                                </button>
+                              );
+                            })
+                          ) : null
+                        )}
                       </div>
                     )}
                   </div>
@@ -151,13 +191,16 @@ export default function Header({
                   <div
                     key={item._id || `nav-${idx}`}
                     className="relative flex h-[88px] items-center"
-                    onMouseEnter={() => setActiveMenu('categories')}
+                    onMouseEnter={() => setActiveMenu(titleLower)}
                     onMouseLeave={() => setActiveMenu(null)}
                   >
-                    <button type="button" className="flex items-center gap-1 text-[15px] font-medium text-[#B0611C] hover:opacity-80">
+                    <button type="button" 
+                      className="flex items-center gap-1 text-[15px] font-medium hover:opacity-80 transition-colors"
+                      style={{ color: item.textColor || '#B0611C', backgroundColor: item.backgroundColor || 'transparent' }}
+                    >
                       {item.title} <ChevronDown className="h-4 w-4" strokeWidth={1.5} />
                     </button>
-                    {activeMenu === 'categories' && (
+                    {activeMenu === titleLower && titleLower === 'categories' && (
                       <div className="absolute left-0 top-full w-64 rounded-xl border border-[#E9DED3] bg-white py-2 shadow-lg">
                         {mainCategories.length === 0 ? (
                           <div className="px-4 py-3 text-sm text-[#8B827C]">Loading...</div>
@@ -210,26 +253,34 @@ export default function Header({
                 );
               }
 
+              const isExternalItem = item.url && (item.url.startsWith('http://') || item.url.startsWith('https://'));
+              if (isExternalItem) {
+                return (
+                  <a
+                    key={item._id || `nav-${idx}`}
+                    href={item.url}
+                    className="flex h-[88px] items-center text-[15px] font-medium hover:opacity-80 transition-colors"
+                    style={{ color: item.textColor || navbarConfig?.textColor || '#B0611C', backgroundColor: item.backgroundColor || 'transparent', padding: item.backgroundColor ? '0.5rem 1rem' : '0', borderRadius: item.backgroundColor ? '0.5rem' : '0' }}
+                  >
+                    {item.title}
+                  </a>
+                );
+              }
+
               return (
-                <button
+                <Link
                   key={item._id || `nav-${idx}`}
-                  type="button"
-                  onClick={() => {
-                    if (item.url && item.url.startsWith('http')) {
-                      window.location.href = item.url;
-                    } else if (item.url) {
-                      onNavigate(item.url);
-                    }
-                  }}
-                  className="text-[15px] font-medium text-[#B0611C] hover:opacity-80 whitespace-nowrap"
+                  to={item.url}
+                  className="flex h-[88px] items-center text-[15px] font-medium hover:opacity-80 transition-colors"
+                  style={{ color: item.textColor || navbarConfig?.textColor || '#B0611C', backgroundColor: item.backgroundColor || 'transparent', padding: item.backgroundColor ? '0.5rem 1rem' : '0', borderRadius: item.backgroundColor ? '0.5rem' : '0' }}
                 >
                   {item.title}
-                </button>
+                </Link>
               );
             })
           ) : (
             <>
-              <button type="button" onClick={() => onNavigate('/')} className="text-[15px] font-medium text-[#B0611C] border-b-2 border-[#B0611C] pb-0.5">
+              <button type="button" onClick={() => onNavigate('/')} className="text-[15px] font-medium pb-0.5" style={{ color: navbarConfig?.textColor || '#B0611C', borderBottomColor: navbarConfig?.textColor || '#B0611C', borderBottomWidth: '2px' }}>
                 Home
               </button>
               
@@ -238,7 +289,7 @@ export default function Header({
                 onMouseEnter={() => setActiveMenu('shop')}
                 onMouseLeave={() => setActiveMenu(null)}
               >
-                <button type="button" className="flex items-center gap-1 text-[15px] font-medium text-[#B0611C] hover:opacity-80">
+                <button type="button" className="flex items-center gap-1 text-[15px] font-medium hover:opacity-80 transition-colors" style={{ color: navbarConfig?.textColor || '#B0611C' }}>
                   Shop <ChevronDown className="h-4 w-4" strokeWidth={1.5} />
                 </button>
                 {activeMenu === 'shop' && (
@@ -261,7 +312,7 @@ export default function Header({
                 onMouseEnter={() => setActiveMenu('categories')}
                 onMouseLeave={() => setActiveMenu(null)}
               >
-                <button type="button" className="flex items-center gap-1 text-[15px] font-medium text-[#B0611C] hover:opacity-80">
+                <button type="button" className="flex items-center gap-1 text-[15px] font-medium hover:opacity-80 transition-colors" style={{ color: navbarConfig?.textColor || '#B0611C' }}>
                   Categories <ChevronDown className="h-4 w-4" strokeWidth={1.5} />
                 </button>
                 {activeMenu === 'categories' && (
@@ -294,22 +345,22 @@ export default function Header({
                 )}
               </div>
 
-              <button type="button" onClick={() => onNavigate('/about')} className="text-[15px] font-medium text-[#B0611C] hover:opacity-80">
+              <button type="button" onClick={() => onNavigate('/about')} className="text-[15px] font-medium hover:opacity-80 transition-colors" style={{ color: navbarConfig?.textColor || '#B0611C' }}>
                 About Us
               </button>
-              <button type="button" onClick={() => onNavigate('/blog')} className="text-[15px] font-medium text-[#B0611C] hover:opacity-80">
+              <button type="button" onClick={() => onNavigate('/blog')} className="text-[15px] font-medium hover:opacity-80 transition-colors" style={{ color: navbarConfig?.textColor || '#B0611C' }}>
                 Blog
               </button>
-              <button type="button" onClick={() => onNavigate('/contact')} className="text-[15px] font-medium text-[#B0611C] hover:opacity-80">
+              <button type="button" onClick={() => onNavigate('/contact')} className="text-[15px] font-medium hover:opacity-80 transition-colors" style={{ color: navbarConfig?.textColor || '#B0611C' }}>
                 Contact
               </button>
-              <button type="button" onClick={() => onNavigate('/bulk-orders')} className="text-[15px] font-medium text-[#B0611C] hover:opacity-80 whitespace-nowrap">
+              <button type="button" onClick={() => onNavigate('/bulk-orders')} className="text-[15px] font-medium hover:opacity-80 whitespace-nowrap transition-colors" style={{ color: navbarConfig?.textColor || '#B0611C' }}>
                 Bulk Orders
               </button>
-              <button type="button" onClick={() => onNavigate('/gift-and-card')} className="text-[15px] font-medium text-[#B0611C] hover:opacity-80 whitespace-nowrap">
+              <button type="button" onClick={() => onNavigate('/gift-and-card')} className="text-[15px] font-medium hover:opacity-80 whitespace-nowrap transition-colors" style={{ color: navbarConfig?.textColor || '#B0611C' }}>
                 Gift & Card
               </button>
-              <button type="button" onClick={() => onNavigate('/customize')} className="text-[15px] font-medium text-[#B0611C] hover:opacity-80 whitespace-nowrap">
+              <button type="button" onClick={() => onNavigate('/customize')} className="text-[15px] font-medium hover:opacity-80 whitespace-nowrap transition-colors" style={{ color: navbarConfig?.textColor || '#B0611C' }}>
                 Customize
               </button>
             </>
@@ -553,16 +604,36 @@ export default function Header({
             [...navItems].sort((a, b) => (a.order || 0) - (b.order || 0)).map((item, idx) => {
               const titleLower = item.title.toLowerCase();
 
-              if (titleLower === 'shop') {
+              if (titleLower === 'shop' || item.isDropdown) {
                 return (
                   <div key={item._id || `mobile-nav-${idx}`} className="space-y-3">
                     <p className="text-lg font-medium text-[#4A3326]">{item.title}</p>
                     <div className="pl-4 space-y-3 border-l-2 border-[#E9DED3]">
-                      {['All Products', 'New Arrivals', 'Best Sellers'].map((subItem) => (
-                        <button key={subItem} onClick={() => { onNavigate(subItem === 'All Products' ? '/shop' : (subItem === 'New Arrivals' ? '/shop?sort=newest' : '/shop?sort=bestselling')); setIsMobileMenuOpen(false); }} type="button" className="block w-full text-left text-[#7C7370]">
-                          {subItem}
-                        </button>
-                      ))}
+                      {titleLower === 'shop' ? (
+                        ['All Products', 'New Arrivals', 'Best Sellers'].map((subItem) => (
+                          <button key={subItem} onClick={() => { onNavigate(subItem === 'All Products' ? '/shop' : (subItem === 'New Arrivals' ? '/shop?sort=newest' : '/shop?sort=bestselling')); setIsMobileMenuOpen(false); }} type="button" className="block w-full text-left text-[#7C7370]">
+                            {subItem}
+                          </button>
+                        ))
+                      ) : (
+                        item.subItems?.map((subItem, sIdx) => {
+                          const isExt = subItem.url.startsWith('http://') || subItem.url.startsWith('https://');
+                          return (
+                            <button
+                              key={sIdx}
+                              onClick={() => {
+                                if (isExt) window.location.href = subItem.url;
+                                else onNavigate(subItem.url);
+                                setIsMobileMenuOpen(false);
+                              }}
+                              type="button"
+                              className="block w-full text-left text-[#7C7370]"
+                            >
+                              {subItem.title}
+                            </button>
+                          );
+                        })
+                      )}
                     </div>
                   </div>
                 );

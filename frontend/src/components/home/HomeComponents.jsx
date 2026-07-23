@@ -8,6 +8,7 @@ import ProductCard from '../ProductCard';
 import Header from '../Header';
 import Footer from '../Footer';
 import { cmsService } from '../../api/cmsService';
+import { getImageSrc } from '../../utils/imageUtils';
 
 const fadeUp = { hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } } };
 const stagger = { visible: { transition: { staggerChildren: 0.12 } } };
@@ -51,58 +52,87 @@ export function HomeNavbar({ context = {} }) {
   return <Header {...context} />;
 }
 
-export function HomeFooter({ context = {} }) {
+export function HomeReviews({ context = {} }) {
   const { featuredReviews = [] } = context;
+  if (!featuredReviews || featuredReviews.length === 0) return null;
+
   return (
-    <>
-      <section className="py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
-            <motion.div variants={fadeUp} className="flex justify-center items-center gap-4 mb-10">
-              <svg width="40" height="20" viewBox="0 0 40 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#D4C3A3]">
-                <path d="M2 10C10 10 18 5 28 10C32 12 36 12 38 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                <path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8" />
-                <path d="M24 8C21 2 15 2 15 10C21 10 24 8 24 8Z" fill="currentColor" opacity="0.5" />
-              </svg>
-              <h2 className="text-3xl font-serif text-[#B0611C] tracking-wide">What Parents Love</h2>
-              <svg width="40" height="20" viewBox="0 0 40 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#D4C3A3] transform scale-x-[-1]">
-                <path d="M2 10C10 10 18 5 28 10C32 12 36 12 38 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                <path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8" />
-                <path d="M24 8C21 2 15 2 15 10C21 10 24 8 24 8Z" fill="currentColor" opacity="0.5" />
-              </svg>
-            </motion.div>
-            <div className="overflow-hidden w-full py-4 relative">
-              <div className="animate-marquee">
-                {Array(10).fill(featuredReviews).flat().map((t, i) => (
-                  <motion.div key={i} whileHover={{ scale: 1.02 }}
-                    className="bg-white border border-gray-100 p-8 flex flex-col justify-between rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 w-[280px] sm:w-[320px] shrink-0">
-                    <div>
-                      <div className="mb-4"><Stars rating={t?.rating || 5} /></div>
-                      <p className="text-sm italic text-brand-dark leading-relaxed line-clamp-4">"{t?.description || t?.title || t?.quote}"</p>
-                    </div>
-                    <div className="flex items-center gap-3 mt-8">
-                      <div className="w-9 h-9 bg-[#E6DFD4] rounded-full flex items-center justify-center text-xs font-bold text-brand-dark shrink-0">
-                        {(t?.user?.name || t?.author || 'G').charAt(0)}
-                      </div>
-                      <div className="overflow-hidden">
-                        <p className="text-[11px] font-bold text-brand-dark truncate">{t?.user?.name || t?.author || 'Guest'}</p>
-                        <p className="text-[9px] text-brand-medium truncate">{t?.isVerifiedPurchase ? 'Verified Buyer' : (t?.context || '')}</p>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
+    <section className="py-24 bg-[#EAE6E1]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
+          <motion.div variants={fadeUp} className="flex justify-center items-center gap-4 mb-10">
+            <svg width="40" height="20" viewBox="0 0 40 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#D4C3A3]">
+              <path d="M2 10C10 10 18 5 28 10C32 12 36 12 38 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8" />
+              <path d="M24 8C21 2 15 2 15 10C21 10 24 8 24 8Z" fill="currentColor" opacity="0.5" />
+            </svg>
+            <h2 className="text-3xl font-serif text-[#B0611C] tracking-wide">What Parents Love</h2>
+            <svg width="40" height="20" viewBox="0 0 40 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#D4C3A3] transform scale-x-[-1]">
+              <path d="M2 10C10 10 18 5 28 10C32 12 36 12 38 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8" />
+              <path d="M24 8C21 2 15 2 15 10C21 10 24 8 24 8Z" fill="currentColor" opacity="0.5" />
+            </svg>
           </motion.div>
-        </div>
-      </section>
-      <Footer {...context} />
-    </>
+          <div className="overflow-hidden w-full py-4 relative">
+            <div className="animate-marquee">
+              {Array(10).fill(featuredReviews).flat().map((t, i) => (
+                <motion.div key={i} whileHover={{ scale: 1.02 }}
+                  className="bg-white border border-gray-100 p-8 flex flex-col justify-between rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 w-[280px] sm:w-[320px] shrink-0">
+                  <div>
+                    <div className="mb-4"><Stars rating={t?.rating || 5} /></div>
+                    <p className="text-sm italic text-brand-dark leading-relaxed line-clamp-4">"{t?.description || t?.title || t?.quote}"</p>
+                  </div>
+                  <div className="flex items-center gap-3 mt-8">
+                    <div className="w-9 h-9 bg-[#E6DFD4] rounded-full flex items-center justify-center text-xs font-bold text-brand-dark shrink-0">
+                      {(t?.user?.name || t?.author || 'G').charAt(0)}
+                    </div>
+                    <div className="overflow-hidden">
+                      <p className="text-[11px] font-bold text-brand-dark truncate">{t?.user?.name || t?.author || 'Guest'}</p>
+                      <p className="text-[9px] text-brand-medium truncate">{t?.isVerifiedPurchase ? 'Verified Buyer' : (t?.context || '')}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </section>
   );
 }
 
-export function HomeHeroBanner({ context = {} }) {
-  const { heroSlides } = context;
+export function HomeFooter({ context = {} }) {
+  return (
+    <div className="bg-[#FDF9F1]">
+      <Footer {...context} />
+    </div>
+  );
+}
+
+export function HomeHeroBanner({ context = {}, specificData }) {
+  let heroSlides = [];
+  
+  if (specificData) {
+    const banner = specificData;
+    if (banner.status) {
+        if (banner.desktopVideo || banner.mobileVideo) {
+            heroSlides.push({ ...banner, itemType: 'video', desktopUrl: getImageSrc(banner.desktopVideo), mobileUrl: getImageSrc(banner.mobileVideo) });
+        } else if (banner.bannerImage || banner.mobileBanner) {
+            heroSlides.push({ ...banner, itemType: 'image', desktopUrl: getImageSrc(banner.bannerImage), mobileUrl: getImageSrc(banner.mobileBanner) });
+        }
+        if (banner.items && banner.items.length > 0) {
+            banner.items.forEach(item => {
+                heroSlides.push({ ...banner, itemType: item.mediaType || 'image', desktopUrl: getImageSrc(item.desktopUrl), mobileUrl: getImageSrc(item.mobileUrl) });
+            });
+        }
+        if (heroSlides.length === 0) {
+            heroSlides.push({ ...banner, desktopUrl: getImageSrc(banner.bannerImage), mobileUrl: getImageSrc(banner.mobileBanner) });
+        }
+    }
+  } else {
+      heroSlides = context.heroSlides;
+  }
+
   const [prevEl, setPrevEl] = useState(null);
   const [nextEl, setNextEl] = useState(null);
   const [paginationEl, setPaginationEl] = useState(null);
@@ -260,17 +290,12 @@ function ThirdBannerItem({ bannerData, onNavigate }) {
   );
 }
 
-export function HomeThirdBanner({ context = {} }) {
-  const { thirdBanners, onNavigate } = context;
-  if (!thirdBanners || !thirdBanners.length) return null;
+export function HomeThirdBanner({ context = {}, specificData }) {
+  const { onNavigate } = context;
+  const banner = specificData || (context.thirdBanners ? context.thirdBanners[0] : null);
+  if (!banner) return null;
 
-  return (
-    <>
-      {thirdBanners.map((bannerData, i) => (
-        <ThirdBannerItem key={bannerData._id || i} bannerData={bannerData} onNavigate={onNavigate} />
-      ))}
-    </>
-  );
+  return <ThirdBannerItem bannerData={banner} onNavigate={onNavigate} />;
 }
 
 function ProductGridBlock({ grid, onNavigate, onAddToCart, onAddToWishlist, user }) {
@@ -341,108 +366,29 @@ function ProductGridBlock({ grid, onNavigate, onAddToCart, onAddToWishlist, user
   );
 }
 
-export function HomeProductGrid({ context = {} }) {
-  const { productGrids, featuredProducts, onNavigate, onAddToCart, onAddToWishlist, user } = context;
-  const [bsPrev, setBsPrev] = useState(null);
-  const [bsNext, setBsNext] = useState(null);
+
+
+export function HomeProductGrid({ context = {}, specificData }) {
+  const { onNavigate, onAddToCart, onAddToWishlist, user } = context;
+  const grids = specificData ? [specificData] : (context.productGrids || []);
+  if (!grids || !grids.length) return null;
 
   return (
     <>
-      {productGrids?.map((grid, i) => (
+      {grids.map((grid, i) => (
         <ProductGridBlock key={grid._id || i} grid={grid} onNavigate={onNavigate} onAddToCart={onAddToCart} onAddToWishlist={onAddToWishlist} user={user} />
       ))}
-
-      {/* Featured Products / Best Sellers */}
-      {featuredProducts?.length > 0 && (
-        <section id="trending" className="py-16 overflow-hidden">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <motion.div initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.1 }} variants={stagger}>
-              <motion.div className="flex justify-center items-center gap-4 mb-10" initial={{ opacity: 0, y: -30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: false, amount: 0.5 }} transition={{ duration: 0.6, ease: 'easeOut' }}>
-                <svg width="40" height="20" viewBox="0 0 40 20" fill="none" className="text-[#D4C3A3]"><path d="M2 10C10 10 18 5 28 10C32 12 36 12 38 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8" /><path d="M24 8C21 2 15 2 15 10C21 10 24 8 24 8Z" fill="currentColor" opacity="0.5" /></svg>
-                <h2 className="text-3xl font-serif text-[#B0611C] tracking-wide">Best Sellers</h2>
-                <svg width="40" height="20" viewBox="0 0 40 20" fill="none" className="text-[#D4C3A3] transform scale-x-[-1]"><path d="M2 10C10 10 18 5 28 10C32 12 36 12 38 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8" /><path d="M24 8C21 2 15 2 15 10C21 10 24 8 24 8Z" fill="currentColor" opacity="0.5" /></svg>
-              </motion.div>
-              
-              <div className="relative group px-10 md:px-14 mt-4">
-                {bsNext && bsPrev ? (
-                  <Swiper
-                    modules={[Navigation]}
-                    navigation={{ nextEl: bsNext, prevEl: bsPrev }}
-                    spaceBetween={28}
-                    slidesPerView={1}
-                    breakpoints={{ 480: { slidesPerView: 2 }, 768: { slidesPerView: 2.5 }, 1024: { slidesPerView: 3 }, 1280: { slidesPerView: 4 } }}
-                    className="w-full pb-8"
-                  >
-                    {featuredProducts.map((p) => (
-                      <SwiperSlide key={p._id || p.id} className="h-auto">
-                        <ProductCard product={p} onNavigate={onNavigate} onAddToCart={onAddToCart} onAddToWishlist={onAddToWishlist} user={user} />
-                      </SwiperSlide>
-                    ))}
-                  </Swiper>
-                ) : (
-                  <div className="w-full pb-8 h-[300px] flex gap-6 overflow-hidden">
-                    <div className="flex-1 bg-gray-100 rounded-2xl animate-pulse" />
-                    <div className="hidden md:block flex-1 bg-gray-100 rounded-2xl animate-pulse" />
-                    <div className="hidden lg:block flex-1 bg-gray-100 rounded-2xl animate-pulse" />
-                  </div>
-                )}
-                <button ref={setBsPrev} type="button" className="bs-prev absolute top-1/2 left-0 z-10 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-[#767676] hover:bg-[#555555] text-white rounded-full transition-colors shadow-md disabled:opacity-50"><ChevronLeft className="w-5 h-5" /></button>
-                <button ref={setBsNext} type="button" className="bs-next absolute top-1/2 right-0 z-10 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-[#767676] hover:bg-[#555555] text-white rounded-full transition-colors shadow-md disabled:opacity-50"><ChevronRight className="w-5 h-5" /></button>
-              </div>
-
-              <div className="flex justify-center mt-6 mb-12">
-                <Link to="/shop" onClick={() => onNavigate('/shop')} className="bg-[#8B5E3C] text-white px-8 py-3 rounded-full text-sm font-medium hover:bg-[#4A5441] transition-colors inline-flex items-center gap-2">View All Products <span>→</span></Link>
-              </div>
-
-              {/* Trust Badges Strip */}
-              <div className="border border-[#E6DFD4] rounded-3xl lg:rounded-full bg-white px-4 md:px-8 py-5 md:py-6 mt-8">
-                <div className="flex flex-col lg:flex-row justify-between items-center gap-6 lg:gap-0 divide-y lg:divide-y-0 lg:divide-x divide-[#E6DFD4]">
-                  <div className="flex items-center gap-4 w-full lg:w-1/4 pt-4 lg:pt-0 lg:px-6 first:pt-0 justify-center lg:justify-start">
-                    <Truck className="w-7 h-7 text-[#5A5A5A] shrink-0" strokeWidth={1.5} />
-                    <div><h4 className="text-[13px] font-bold text-[#333333]">Free Shipping</h4><p className="text-[11px] text-[#7A7A7A] mt-0.5">On orders above ₹999</p></div>
-                  </div>
-                  <div className="flex items-center gap-4 w-full lg:w-1/4 pt-4 lg:pt-0 lg:px-6 justify-center lg:justify-start">
-                    <Package className="w-7 h-7 text-[#5A5A5A] shrink-0" strokeWidth={1.5} />
-                    <div><h4 className="text-[13px] font-bold text-[#333333]">Easy Returns</h4><p className="text-[11px] text-[#7A7A7A] mt-0.5">Within 7 days</p></div>
-                  </div>
-                  <div className="flex items-center gap-4 w-full lg:w-1/4 pt-4 lg:pt-0 lg:px-6 justify-center lg:justify-start">
-                    <ShieldCheck className="w-7 h-7 text-[#5A5A5A] shrink-0" strokeWidth={1.5} />
-                    <div><h4 className="text-[13px] font-bold text-[#333333]">Secure Payments</h4><p className="text-[11px] text-[#7A7A7A] mt-0.5">100% Safe & Secure</p></div>
-                  </div>
-                  <div className="flex items-center gap-4 w-full lg:w-1/4 pt-4 lg:pt-0 lg:px-6 justify-center lg:justify-start">
-                    <Banknote className="w-7 h-7 text-[#5A5A5A] shrink-0" strokeWidth={1.5} />
-                    <div><h4 className="text-[13px] font-bold text-[#333333]">COD Available</h4><p className="text-[11px] text-[#7A7A7A] mt-0.5">Pay on Delivery</p></div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </section>
-      )}
     </>
   );
 }
 
-export function HomeCategoryGrid({ context = {} }) {
+export function HomeCategoryGrid({ context = {}, specificData }) {
   const { shopCategories, onNavigate, onAddToCart, onAddToWishlist, user } = context;
   
-  const [cmsSections, setCmsSections] = useState([]);
-  const [activeSection, setActiveSection] = useState(null);
-  const [loading, setLoading] = useState(true);
-
   const [catPrev, setCatPrev] = useState(null);
   const [catNext, setCatNext] = useState(null);
 
-  useEffect(() => {
-    cmsService.getCategoryGrids()
-      .then((res) => {
-        const sections = (res.data || []).filter((item) => item.status !== false).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-        setCmsSections(sections);
-        if (sections.length) setActiveSection(sections[0]);
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+  const activeSection = specificData || (context.categoryGrids ? context.categoryGrids[0] : null);
 
   const activeProducts = Array.isArray(activeSection?.products) ? activeSection.products : [];
   const activeImage = activeSection?.images?.find((image) => image.isThumbnail)?.url || activeSection?.images?.[0]?.url || '';
@@ -450,140 +396,64 @@ export function HomeCategoryGrid({ context = {} }) {
 
   return (
     <>
-      {/* SHOP BY CATEGORIES (Top slider) */}
-      {shopCategories && shopCategories.length > 0 && (
-        <section className="py-16 overflow-hidden">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <motion.div className="flex items-center justify-center gap-4 mb-12" initial={{ opacity: 0, y: -30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: false, amount: 0.5 }} transition={{ duration: 0.6, ease: 'easeOut' }}>
-              <svg width="40" height="20" viewBox="0 0 40 20" fill="none" className="text-[#D4C3A3]"><path d="M2 10C10 10 18 5 28 10C32 12 36 12 38 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8" /><path d="M24 8C21 2 15 2 15 10C21 10 24 8 24 8Z" fill="currentColor" opacity="0.5" /></svg>
-              <h2 className="text-3xl font-serif text-[#B0611C] tracking-wide">Shop by Categories</h2>
-              <svg width="40" height="20" viewBox="0 0 40 20" fill="none" className="text-[#D4C3A3] transform scale-x-[-1]"><path d="M2 10C10 10 18 5 28 10C32 12 36 12 38 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8" /><path d="M24 8C21 2 15 2 15 10C21 10 24 8 24 8Z" fill="currentColor" opacity="0.5" /></svg>
-            </motion.div>
-            <motion.div className="relative group px-10 md:px-14" initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.2 }} variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.12 } } }}>
-              {catNext && catPrev ? (
-                <Swiper
-                  modules={[Navigation]}
-                  navigation={{ nextEl: catNext, prevEl: catPrev }}
-                  spaceBetween={24}
-                  slidesPerView={1}
-                  breakpoints={{ 480: { slidesPerView: 2 }, 768: { slidesPerView: 3 }, 1024: { slidesPerView: 4 }, 1280: { slidesPerView: 4 } }}
-                >
-                  {shopCategories.map((cat, i) => (
-                    <SwiperSlide key={i}>
-                      <motion.div variants={{ hidden: { opacity: 0, x: -80 }, visible: { opacity: 1, x: 0, transition: { duration: 0.55, ease: 'easeOut' } } }} onClick={() => { const catId = cat._id || cat.id; onNavigate(catId ? `/shop?category=${catId}` : `/shop`); }} className="group cursor-pointer flex flex-col rounded-[24px] border border-[#E9DED3] bg-white overflow-hidden shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md max-w-[260px] mx-auto sm:max-w-none">
-                        <div className="aspect-square w-full overflow-hidden">
-                          <img src={(typeof cat.image === 'object' ? cat.image?.url : cat.image) || (typeof cat.imageUrl === 'object' ? cat.imageUrl?.url : cat.imageUrl)} alt={cat.title || cat.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" onError={e => { e.target.src = '/wood-placeholder.png'; }} />
-                        </div>
-                        <div className="flex flex-col items-center justify-center py-3 text-center">
-                          <h3 className="text-sm font-bold text-[#141225] mb-1">{cat.title || cat.name}</h3>
-                          <p className="text-[11px] text-[#8A817C]">View All</p>
-                        </div>
-                      </motion.div>
-                    </SwiperSlide>
-                  ))}
-                </Swiper>
-              ) : (
-                <div className="w-full h-[250px] flex gap-6 overflow-hidden">
-                  <div className="flex-1 bg-gray-100 rounded-3xl animate-pulse" />
-                  <div className="hidden md:block flex-1 bg-gray-100 rounded-3xl animate-pulse" />
-                  <div className="hidden lg:block flex-1 bg-gray-100 rounded-3xl animate-pulse" />
-                </div>
-              )}
-              <button ref={setCatPrev} type="button" className="cat-prev absolute top-1/2 left-0 z-10 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-[#767676] hover:bg-[#555555] text-white rounded-full transition-colors shadow-md"><ChevronLeft className="w-5 h-5" /></button>
-              <button ref={setCatNext} type="button" className="cat-next absolute top-1/2 right-0 z-10 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-[#767676] hover:bg-[#555555] text-white rounded-full transition-colors shadow-md"><ChevronRight className="w-5 h-5" /></button>
-            </motion.div>
-          </div>
-        </section>
-      )}
-
-      {/* CATEGORY PRODUCTS (Left nav, right products) */}
-      {!loading && cmsSections.length > 0 && (
+      {/* SHOP BY CATEGORIES (Top slider) - only rendered if no specificData is provided (legacy mode) or if explicitly requested. We'll leave it here for now if specificData is null. But actually, if they want separate blocks, maybe we should just render the grid itself. Let's assume shopCategories is a separate block or rendered before. */}
+      
+      {/* CATEGORY PRODUCTS */}
+      {activeSection && (
         <section className="py-16 border-y border-[#EFE5DA]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
               <motion.div variants={fadeUp} className="flex justify-between items-end mb-8">
                 <div>
-                  <h2 className="text-xl font-bold tracking-tight text-brand-dark">Shop by Category</h2>
-                  <p className="text-xs text-brand-medium mt-1">Tap a category to explore.</p>
+                  <h2 className="text-3xl md:text-4xl font-serif text-[#333333] mb-4 tracking-tight leading-tight">{activeSection.title}</h2>
+                  <p className="text-[#5A5A5A] text-lg leading-relaxed">{activeSection.subtitle}</p>
                 </div>
                 <button onClick={() => onNavigate('/shop')} className="text-[10px] font-bold uppercase tracking-widest text-brand-medium hover:text-brand-dark">View All &gt;</button>
               </motion.div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] gap-6">
-                <div className="space-y-3">
-                  {cmsSections.map((section) => (
-                    <button
-                      key={section._id}
-                      onClick={() => setActiveSection(section)}
-                      className={`w-full rounded-2xl border p-4 text-left transition-all ${activeSection?._id === section._id ? 'bg-brand-dark text-white border-brand-dark shadow' : 'bg-[#FDFCFB] border-[#E6DFD4] text-brand-dark hover:border-brand-dark'}`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="h-14 w-14 overflow-hidden rounded-xl bg-[#F7F3EE] shrink-0">
-                          {section.images?.[0]?.url ? <img src={section.images[0].url} alt={section.title} className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center text-[10px] text-brand-medium">IMG</div>}
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold">{section.title}</p>
-                          <p className="text-xs mt-1 opacity-80">{section.category?.name || 'Category'}</p>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
+              <div className="grid grid-cols-1 md:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] gap-6 rounded-3xl border border-[#E6DFD4] bg-[#FDFCFB] p-4 sm:p-6">
+                <div className="relative overflow-hidden rounded-2xl bg-[#F7F3EE] min-h-[250px]">
+                  {activeImage ? (
+                    <div className="absolute inset-0">
+                      <motion.img
+                        src={activeImage}
+                        alt={activeSection.title}
+                        className="w-full h-full object-cover"
+                        initial={{ opacity: 0, scale: 1.03 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.35 }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-brand-medium">No image</div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
+                    <p className="text-xs uppercase tracking-[0.3em] opacity-80">{activeSection?.category?.name || 'Featured'}</p>
+                    <h3 className="text-xl font-semibold mt-2">{activeSection?.title}</h3>
+                    {activeSection?.ctaText && (
+                      <button onClick={() => activeSection?.ctaUrl && onNavigate(activeSection.ctaUrl)} className="mt-4 inline-flex items-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-brand-dark">
+                        {activeSection.ctaText}
+                      </button>
+                    )}
+                  </div>
                 </div>
 
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={activeSection?._id}
-                    initial={animationVariant.initial}
-                    animate={animationVariant.animate}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.3 }}
-                    className="grid grid-cols-1 md:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] gap-6 rounded-3xl border border-[#E6DFD4] bg-[#FDFCFB] p-4 sm:p-6"
-                  >
-                    <div className="relative overflow-hidden rounded-2xl bg-[#F7F3EE] min-h-[250px]">
-                      {activeSection?.images?.length ? (
-                        <div className="absolute inset-0">
-                          <motion.img
-                            key={activeImage}
-                            src={activeImage}
-                            alt={activeSection.title}
-                            className="w-full h-full object-cover"
-                            initial={{ opacity: 0, scale: 1.03 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.35 }}
-                          />
-                        </div>
-                      ) : (
-                        <div className="absolute inset-0 flex items-center justify-center text-brand-medium">No image</div>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-                      <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
-                        <p className="text-xs uppercase tracking-[0.3em] opacity-80">{activeSection?.category?.name || 'Featured'}</p>
-                        <h3 className="text-xl font-semibold mt-2">{activeSection?.title}</h3>
-                        {activeSection?.ctaText && (
-                          <button onClick={() => activeSection?.ctaUrl && onNavigate(activeSection.ctaUrl)} className="mt-4 inline-flex items-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-brand-dark">
-                            {activeSection.ctaText}
-                          </button>
-                        )}
-                      </div>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-brand-dark">{activeSection?.category?.name || 'Category Products'}</p>
+                      <p className="text-xs text-brand-medium">{activeProducts.length} products in this collection</p>
                     </div>
-
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-semibold text-brand-dark">{activeSection?.category?.name || 'Category Products'}</p>
-                          <p className="text-xs text-brand-medium">{activeProducts.length} products in this collection</p>
-                        </div>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-3 sm:gap-4">
+                    {activeProducts.length ? activeProducts.slice(0, 4).map((product) => (
+                      <div key={product._id} className="h-full">
+                        <ProductCard product={product} onNavigate={onNavigate} onAddToCart={onAddToCart} onAddToWishlist={onAddToWishlist} user={user} />
                       </div>
-                      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-3 sm:gap-4">
-                        {activeProducts.length ? activeProducts.slice(0, 4).map((product) => (
-                          <div key={product._id} className="h-full">
-                            <ProductCard product={product} onNavigate={onNavigate} onAddToCart={onAddToCart} onAddToWishlist={onAddToWishlist} user={user} />
-                          </div>
-                        )) : <div className="col-span-2 rounded-xl border border-dashed border-[#E6DFD4] p-6 text-sm text-brand-medium">No products selected for this category yet.</div>}
-                      </div>
-                    </div>
-                  </motion.div>
-                </AnimatePresence>
+                    )) : <div className="col-span-2 rounded-xl border border-dashed border-[#E6DFD4] p-6 text-sm text-brand-medium">No products selected for this category yet.</div>}
+                  </div>
+                </div>
               </div>
             </motion.div>
           </div>

@@ -4,7 +4,7 @@ const cmsController = require('../controllers/cmsController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
 // Public routes for storefront
-router.get('/navbar', cmsController.getNavbars);
+router.get('/navbar', cmsController.getNavbar);
 router.get('/hero', cmsController.getHeroBanners);
 router.get('/third-banner', cmsController.getThirdBanners);
 router.get('/product-grid', cmsController.getProductGrids);
@@ -13,9 +13,7 @@ router.get('/footer', cmsController.getFooter);
 router.get('/layout', cmsController.getLayout);
 
 // Protected admin routes for CMS
-router.post('/navbar', protect, authorize('admin'), cmsController.createNavbar);
-router.put('/navbar/:id', protect, authorize('admin'), cmsController.updateNavbar);
-router.delete('/navbar/:id', protect, authorize('admin'), cmsController.deleteNavbar);
+router.put('/navbar', protect, authorize('admin'), cmsController.updateNavbar);
 
 router.post('/hero', protect, authorize('admin'), cmsController.createHeroBanner);
 router.put('/hero/:id', protect, authorize('admin'), cmsController.updateHeroBanner);

@@ -37,10 +37,12 @@ export default function Home({ user, cartItems, wishlistItems, onOpenCart, onOpe
   const [shopCategories, setShopCategories] = useState([]);
   const [thirdBanners, setThirdBanners] = useState([]);
   const [productGrids, setProductGrids] = useState([]);
+  const [categoryGrids, setCategoryGrids] = useState([]);
   const [footerData, setFooterData] = useState(null);
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [featuredReviews, setFeaturedReviews] = useState(TESTIMONIALS);
   const [cmsLoaded, setCmsLoaded] = useState(false);
+  const [heroBanners, setHeroBanners] = useState([]);
 
   useEffect(() => {
     const now = new Date();
@@ -54,7 +56,8 @@ export default function Home({ user, cartItems, wishlistItems, onOpenCart, onOpe
       cmsService.getFooter(),
       productV2API.getAll({ limit: 10, isActive: 'true' }),
       reviewService.getFeaturedReviews(),
-    ]).then(([layoutRes, heroRes, categoriesRes, thirdRes, gridRes, footerRes, prodRes, reviewRes]) => {
+      cmsService.getCategoryGrids()
+    ]).then(([layoutRes, heroRes, categoriesRes, thirdRes, gridRes, footerRes, prodRes, reviewRes, catGridRes]) => {
       
       if (layoutRes.status === 'fulfilled' && layoutRes.value.data) {
         setLayout((layoutRes.value.data.sections || []).sort((a,b) => a.order - b.order));
@@ -71,7 +74,9 @@ export default function Home({ user, cartItems, wishlistItems, onOpenCart, onOpe
       }
 
       if (heroRes.status === 'fulfilled') {
-        const active = (heroRes.value.data || []).filter(b => {
+        const heroes = heroRes.value.data || [];
+        setHeroBanners(heroes);
+        const active = heroes.filter(b => {
           if (!b.status) return false;
           if (b.startDate && b.endDate) {
             const start = new Date(b.startDate);
@@ -115,6 +120,10 @@ export default function Home({ user, cartItems, wishlistItems, onOpenCart, onOpe
         setProductGrids((gridRes.value.data || []).filter(g => g.status));
       }
 
+      if (catGridRes?.status === 'fulfilled') {
+        setCategoryGrids((catGridRes.value.data || []).filter(g => g.status));
+      }
+
       if (footerRes.status === 'fulfilled') setFooterData(footerRes.value.data);
 
       if (prodRes.status === 'fulfilled') {
@@ -136,9 +145,11 @@ export default function Home({ user, cartItems, wishlistItems, onOpenCart, onOpe
   const context = {
     user,
     heroSlides,
+    heroBanners,
     shopCategories,
     thirdBanners,
     productGrids,
+    categoryGrids,
     footerData,
     featuredProducts,
     featuredReviews,

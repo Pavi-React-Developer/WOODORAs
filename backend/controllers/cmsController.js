@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const CmsNavbar = require('../models/CmsNavbar');
 const CmsHeroBanner = require('../models/CmsHeroBanner');
 const CmsThirdBanner = require('../models/CmsThirdBanner');
@@ -9,37 +10,41 @@ const CmsLayout = require('../models/CmsLayout');
 const productService = require('../services/productService');
 const { deleteFromCloudinary } = require('../services/uploadService');
 
+
+// --- LAYOUT HELPERS ---
+const addLayoutBlock = async (sectionType, recordId, title) => {
+  let layout = await CmsLayout.findOne({ page: 'home' });
+  if (!layout) {
+    layout = await CmsLayout.create({ page: 'home', sections: [] });
+  }
+  const newOrder = layout.sections.length > 0 ? Math.max(...layout.sections.map(s => s.order)) + 1 : 1;
+  
+  layout.sections.push({
+    id: `layout_${new mongoose.Types.ObjectId().toString()}`,
+    sectionType,
+    recordId: recordId ? recordId.toString() : null,
+    title: title || sectionType,
+    order: newOrder,
+    visible: true
+  });
+  await layout.save();
+};
+
+const removeLayoutBlock = async (recordId) => {
+  if (!recordId) return;
+  let layout = await CmsLayout.findOne({ page: 'home' });
+  if (layout) {
+    layout.sections = layout.sections.filter(s => s.recordId !== recordId.toString());
+    layout.sections.forEach((s, idx) => s.order = idx + 1);
+    await layout.save();
+  }
+};
+
 // Utility to wrap async functions
 const asyncHandler = (fn) => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch(next);
 
 // --- NAVBAR ---
-exports.getNavbars = asyncHandler(async (req, res) => {
-  const navbars = await CmsNavbar.find().sort({ order: 1 });
-  res.json({ success: true, data: navbars });
-});
-
-exports.createNavbar = asyncHandler(async (req, res) => {
-  const navbar = await CmsNavbar.create(req.body);
-  res.status(201).json({ success: true, data: navbar });
-});
-
-exports.updateNavbar = asyncHandler(async (req, res) => {
-  const navbar = await CmsNavbar.findByIdAndUpdate(req.params.id, req.body, { returnDocument: 'after', runValidators: true });
-  res.json({ success: true, data: navbar });
-});
-
-exports.deleteNavbar = asyncHandler(async (req, res) => {
-  await CmsNavbar.findByIdAndDelete(req.params.id);
-  res.json({ success: true, message: 'Navbar deleted' });
-});
-
-// --- HERO BANNER ---
-exports.getHeroBanners = asyncHandler(async (req, res) => {
-  const banners = await CmsHeroBanner.find().sort({ sortOrder: 1 });
-  res.json({ success: true, data: banners });
-});
-
 const processMediaFields = (body) => {
   const cloned = { ...body };
   const unsetFields = {};
@@ -59,12 +64,42 @@ const processMediaFields = (body) => {
     });
   }
   
-  // If there are fields to unset, wrap the update in $set and $unset
   if (Object.keys(unsetFields).length > 0) {
     return { $set: cloned, $unset: unsetFields };
   }
   return cloned;
 };
+
+exports.getNavbar = asyncHandler(async (req, res) => {
+  let navbar = await CmsNavbar.findOne();
+  if (!navbar) {
+    navbar = await CmsNavbar.create({ logoPosition: 'left', items: [] });
+  }
+  res.json({ success: true, data: navbar });
+});
+
+exports.updateNavbar = asyncHandler(async (req, res) => {
+  console.log('--- updateNavbar CALLED ---');
+  console.log('req.body:', JSON.stringify(req.body, null, 2));
+  let navbar = await CmsNavbar.findOne();
+  if (!navbar) {
+    const createData = processMediaFields(req.body).$set || processMediaFields(req.body);
+    navbar = await CmsNavbar.create(createData);
+  } else {
+    const updateData = processMediaFields(req.body);
+    console.log('updateData:', JSON.stringify(updateData, null, 2));
+    navbar = await CmsNavbar.findByIdAndUpdate(navbar._id, updateData, { new: true, runValidators: true });
+    console.log('updated DB navbar:', JSON.stringify(navbar, null, 2));
+  }
+  res.json({ success: true, data: navbar });
+});
+
+
+// --- HERO BANNER ---
+exports.getHeroBanners = asyncHandler(async (req, res) => {
+  const banners = await CmsHeroBanner.find().sort({ sortOrder: 1 });
+  res.json({ success: true, data: banners });
+});
 
 exports.createHeroBanner = asyncHandler(async (req, res) => {
   const banner = await CmsHeroBanner.create(processMediaFields(req.body).$set || processMediaFields(req.body));
@@ -270,12 +305,13 @@ exports.getLayout = asyncHandler(async (req, res) => {
     layout = await CmsLayout.create({
       page: 'home',
       sections: [
-        { id: 'navbar', order: 1, visible: true },
-        { id: 'heroBanner', order: 2, visible: true },
-        { id: 'thirdBanner', order: 3, visible: true },
-        { id: 'categoryGrid', order: 4, visible: true },
-        { id: 'productGrid', order: 5, visible: true },
-        { id: 'footer', order: 6, visible: true },
+        { id: 'navbar', sectionType: 'navbar', order: 1, visible: true },
+        { id: 'heroBanner', sectionType: 'heroBanner', order: 2, visible: true },
+        { id: 'thirdBanner', sectionType: 'thirdBanner', order: 3, visible: true },
+        { id: 'categoryGrid', sectionType: 'categoryGrid', order: 4, visible: true },
+        { id: 'productGrid', sectionType: 'productGrid', order: 5, visible: true },
+        { id: 'reviews', sectionType: 'reviews', order: 6, visible: true },
+        { id: 'footer', sectionType: 'footer', order: 7, visible: true },
       ]
     });
   }

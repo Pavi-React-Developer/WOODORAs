@@ -24,10 +24,8 @@ const requestForm = async (url, formData, method = 'POST') => {
 
 export const cmsService = {
   // Navbar
-  getNavbars: () => request(`${BASE}/navbar`),
-  createNavbar: (body) => request(`${BASE}/navbar`, { method: 'POST', body: JSON.stringify(body) }),
-  updateNavbar: (id, body) => request(`${BASE}/navbar/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-  deleteNavbar: (id) => request(`${BASE}/navbar/${id}`, { method: 'DELETE' }),
+  getNavbar: () => request(`${BASE}/navbar`),
+  updateNavbar: (body) => request(`${BASE}/navbar`, { method: 'PUT', body: JSON.stringify(body) }),
 
   // Hero Banner
   getHeroBanners: () => request(`${BASE}/hero`),
