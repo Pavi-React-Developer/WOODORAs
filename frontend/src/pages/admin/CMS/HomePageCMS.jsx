@@ -5,6 +5,7 @@ import ThirdBannerAdmin from './ThirdBannerAdmin';
 import ProductGridAdmin from './ProductGridAdmin';
 import CategoryGridAdmin from './CategoryGridAdmin';
 import FooterAdmin from './FooterAdmin';
+import ReviewAdmin from './ReviewAdmin';
 import HomeLayoutBuilder from './HomeLayoutBuilder';
 
 const TABS = [
@@ -15,6 +16,7 @@ const TABS = [
   { id: 'grid', label: '📦 Product Grid' },
   { id: 'category-grid', label: '🗂️ Category Grid' },
   { id: 'footer', label: '📋 Footer' },
+  { id: 'reviews', label: '⭐ Reviews' },
 ];
 
 export default function HomePageCMS() {
@@ -29,6 +31,7 @@ export default function HomePageCMS() {
       case 'grid': return <ProductGridAdmin />;
       case 'category-grid': return <CategoryGridAdmin />;
       case 'footer': return <FooterAdmin />;
+      case 'reviews': return <ReviewAdmin />;
       default: return null;
     }
   };

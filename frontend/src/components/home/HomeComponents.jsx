@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, EffectFade, EffectCreative, Navigation, Controller } from 'swiper/modules';
@@ -53,47 +53,243 @@ export function HomeNavbar({ context = {} }) {
 }
 
 export function HomeReviews({ context = {} }) {
-  const { featuredReviews = [] } = context;
-  if (!featuredReviews || featuredReviews.length === 0) return null;
+  const { featuredReviews: contextReviews = [] } = context;
+  const [config, setConfig] = useState(null);
+  const [swiperReady, setSwiperReady] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+
+  useEffect(() => {
+    cmsService.getReviewConfig().then(res => setConfig(res.data)).catch(console.error);
+  }, []);
+
+  const mobileCols = config?.mobileColumns || 1;
+  const desktopCols = config?.desktopColumns || 3;
+
+  const getItemsPerSlide = useCallback(() => {
+    if (typeof window === 'undefined') return desktopCols;
+    if (window.innerWidth < 640) return mobileCols;
+    if (window.innerWidth < 1024) return Math.min(desktopCols, 2);
+    return desktopCols;
+  }, [mobileCols, desktopCols]);
+
+  const [itemsPerSlide, setItemsPerSlide] = useState(getItemsPerSlide());
+
+  useEffect(() => {
+    setItemsPerSlide(getItemsPerSlide());
+    setCurrentPage(0);
+    const handleResize = () => {
+      setItemsPerSlide(getItemsPerSlide());
+      setCurrentPage(0);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [getItemsPerSlide]);
+
+  const animationType = config?.animationType || 'marquee';
+  const showArrows = config?.showArrows || false;
+  const showDots = config?.showDots || false;
+  const sliderSpeed = config?.sliderSpeed || 3000;
+  const marqueeSpeed = config?.marqueeSpeed || 30;
+
+  // Use featured reviews from CMS config if available, otherwise fall back to context
+  const featuredIds = config?.featuredReviewIds
+    ? config.featuredReviewIds.map(r => typeof r === 'object' ? r._id : r)
+    : [];
+
+  const displayReviews = featuredIds.length > 0
+    ? contextReviews.filter(r => featuredIds.includes(r._id))
+    : contextReviews;
+
+  if (!displayReviews || displayReviews.length === 0) return null;
+
+  const isNone = animationType === 'none';
+  const isFade = animationType === 'fade';
+  const isSlider = !isNone && animationType !== 'marquee';
+
+  const getSwiperEffect = () => isFade ? 'fade' : undefined;
+
+  const swiperModules = () => {
+    const mods = [Navigation, Pagination, Autoplay];
+    if (isFade) mods.push(EffectFade);
+    return mods;
+  };
+
+  const renderReviewCard = (t, i) => (
+    <motion.div key={i} whileHover={{ scale: 1.02 }}
+      className="bg-white border border-gray-100 p-8 flex flex-col justify-between rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 w-full min-h-[220px]">
+      <div>
+        <div className="mb-4"><Stars rating={t?.rating || 5} /></div>
+        <p className="text-sm italic text-brand-dark leading-relaxed line-clamp-4">"{t?.description || t?.title || t?.quote}"</p>
+      </div>
+      <div className="flex items-center gap-3 mt-8">
+        <div className="w-9 h-9 bg-[#E6DFD4] rounded-full flex items-center justify-center text-xs font-bold text-brand-dark shrink-0">
+          {(t?.user?.name || t?.author || 'G').charAt(0)}
+        </div>
+        <div className="overflow-hidden">
+          <p className="text-[11px] font-bold text-brand-dark truncate">{t?.user?.name || t?.author || 'Guest'}</p>
+          <p className="text-[9px] text-brand-medium truncate">{t?.isVerifiedPurchase ? 'Verified Buyer' : (t?.context || '')}</p>
+        </div>
+      </div>
+    </motion.div>
+  );
 
   return (
     <section className="py-24 bg-[#EAE6E1]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
-          <motion.div variants={fadeUp} className="flex justify-center items-center gap-4 mb-10">
-            <svg width="40" height="20" viewBox="0 0 40 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#D4C3A3]">
-              <path d="M2 10C10 10 18 5 28 10C32 12 36 12 38 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              <path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8" />
-              <path d="M24 8C21 2 15 2 15 10C21 10 24 8 24 8Z" fill="currentColor" opacity="0.5" />
-            </svg>
-            <h2 className="text-3xl font-serif text-[#B0611C] tracking-wide">What Parents Love</h2>
-            <svg width="40" height="20" viewBox="0 0 40 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#D4C3A3] transform scale-x-[-1]">
-              <path d="M2 10C10 10 18 5 28 10C32 12 36 12 38 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              <path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8" />
-              <path d="M24 8C21 2 15 2 15 10C21 10 24 8 24 8Z" fill="currentColor" opacity="0.5" />
-            </svg>
-          </motion.div>
-          <div className="overflow-hidden w-full py-4 relative">
-            <div className="animate-marquee">
-              {Array(10).fill(featuredReviews).flat().map((t, i) => (
-                <motion.div key={i} whileHover={{ scale: 1.02 }}
-                  className="bg-white border border-gray-100 p-8 flex flex-col justify-between rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 w-[280px] sm:w-[320px] shrink-0">
-                  <div>
-                    <div className="mb-4"><Stars rating={t?.rating || 5} /></div>
-                    <p className="text-sm italic text-brand-dark leading-relaxed line-clamp-4">"{t?.description || t?.title || t?.quote}"</p>
-                  </div>
-                  <div className="flex items-center gap-3 mt-8">
-                    <div className="w-9 h-9 bg-[#E6DFD4] rounded-full flex items-center justify-center text-xs font-bold text-brand-dark shrink-0">
-                      {(t?.user?.name || t?.author || 'G').charAt(0)}
-                    </div>
-                    <div className="overflow-hidden">
-                      <p className="text-[11px] font-bold text-brand-dark truncate">{t?.user?.name || t?.author || 'Guest'}</p>
-                      <p className="text-[9px] text-brand-medium truncate">{t?.isVerifiedPurchase ? 'Verified Buyer' : (t?.context || '')}</p>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
+          <motion.div variants={fadeUp} className="flex flex-col items-center gap-4 mb-10">
+            <div className="flex justify-center items-center gap-4">
+              <svg width="40" height="20" viewBox="0 0 40 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#D4C3A3]">
+                <path d="M2 10C10 10 18 5 28 10C32 12 36 12 38 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8" />
+                <path d="M24 8C21 2 15 2 15 10C21 10 24 8 24 8Z" fill="currentColor" opacity="0.5" />
+              </svg>
+              <h2 className="text-3xl font-serif text-[#B0611C] tracking-wide">What Parents Love</h2>
+              <svg width="40" height="20" viewBox="0 0 40 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#D4C3A3] transform scale-x-[-1]">
+                <path d="M2 10C10 10 18 5 28 10C32 12 36 12 38 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8" />
+                <path d="M24 8C21 2 15 2 15 10C21 10 24 8 24 8Z" fill="currentColor" opacity="0.5" />
+              </svg>
             </div>
+          </motion.div>
+
+          <div className="w-full py-4 relative">
+            <style>{`
+              .review-pagination { position: relative; margin-top: 2rem; display: flex; justify-content: center; gap: 12px; }
+              .review-pagination .swiper-pagination-bullet { width: 12px; height: 12px; background: #D4C3A3; opacity: 1; border-radius: 50%; cursor: pointer; transition: none; }
+              .review-pagination .swiper-pagination-bullet-active { background: #B0611C; border: 3px solid #fff; box-shadow: 0 0 0 1px #B0611C; }
+              .review-prev-btn, .review-next-btn { position: absolute; top: 50%; transform: translateY(-50%); z-index: 10; width: 44px; height: 44px; border-radius: 50%; border: 2px solid #D4C3A3; background: white; color: #B0611C; display: flex; align-items: center; justify-content: center; font-size: 20px; line-height: 1; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+              .review-prev-btn { left: 0px; }
+              .review-next-btn { right: 0px; }
+            `}</style>
+
+            {isNone ? (
+              <div className="relative">
+                {showArrows && (
+                  <div className="absolute top-0 left-0 w-full h-[260px] pointer-events-none z-10">
+                    <div 
+                      className={`review-prev-btn pointer-events-auto cursor-pointer ${currentPage === 0 ? 'opacity-50' : ''}`}
+                      onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+                    >&#8249;</div>
+                    <div 
+                      className={`review-next-btn pointer-events-auto cursor-pointer ${currentPage >= Math.ceil(displayReviews.length / itemsPerSlide) - 1 ? 'opacity-50' : ''}`}
+                      onClick={() => setCurrentPage(p => Math.min(Math.ceil(displayReviews.length / itemsPerSlide) - 1, p + 1))}
+                    >&#8250;</div>
+                  </div>
+                )}
+                
+                <div className={showArrows ? "px-20" : ""}>
+                  <div className={`grid gap-6 ${
+                    mobileCols === 2 ? 'grid-cols-2' : mobileCols === 3 ? 'grid-cols-3' : mobileCols === 4 ? 'grid-cols-4' : 'grid-cols-1'
+                  } md:grid-cols-2 ${
+                    desktopCols === 2 ? 'lg:grid-cols-2' : 
+                    desktopCols === 4 ? 'lg:grid-cols-4' : 
+                    desktopCols === 5 ? 'lg:grid-cols-5' : 
+                    desktopCols === 6 ? 'lg:grid-cols-6' : 
+                    'lg:grid-cols-3'
+                  }`}>
+                    {displayReviews.slice(currentPage * itemsPerSlide, (currentPage + 1) * itemsPerSlide).map((t, i) => renderReviewCard(t, currentPage * itemsPerSlide + i))}
+                  </div>
+                </div>
+                
+                {showDots && (
+                  <div className="review-pagination">
+                    {Array.from({ length: Math.ceil(displayReviews.length / itemsPerSlide) }).map((_, idx) => (
+                      <span 
+                        key={idx}
+                        className={`swiper-pagination-bullet ${currentPage === idx ? 'swiper-pagination-bullet-active' : ''}`}
+                        onClick={() => setCurrentPage(idx)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : animationType === 'marquee' ? (
+              <div className="overflow-hidden w-full">
+                <div className="animate-marquee flex gap-6" style={{ width: 'max-content', animationDuration: `${marqueeSpeed}s` }}>
+                  {Array(10).fill(displayReviews).flat().map((t, i) => (
+                    <div key={i} className="w-[280px] sm:w-[320px] shrink-0">
+                      {renderReviewCard(t, i)}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="relative">
+                {/* Left Arrow */}
+                {isSlider && showArrows && (
+                  <div className="review-prev-btn cursor-pointer">&#8249;</div>
+                )}
+
+                {/* Slider */}
+                <div className={showArrows ? "px-20" : ""}>
+                  {isFade ? (
+                    <Swiper
+                      modules={swiperModules()}
+                      effect={getSwiperEffect()}
+                      navigation={showArrows ? {
+                        prevEl: '.review-prev-btn',
+                        nextEl: '.review-next-btn',
+                      } : false}
+                      pagination={showDots ? { el: '.review-pagination', clickable: true } : false}
+                      autoplay={{ delay: sliderSpeed, disableOnInteraction: false }}
+                      spaceBetween={0}
+                      slidesPerView={1}
+                      className="w-full"
+                    >
+                      {(() => {
+                        const chunks = [];
+                        for (let i = 0; i < displayReviews.length; i += itemsPerSlide) {
+                          chunks.push(displayReviews.slice(i, i + itemsPerSlide));
+                        }
+                        return chunks.map((chunk, groupIdx) => (
+                          <SwiperSlide key={groupIdx} className="h-auto">
+                            <div className={`grid gap-6 ${
+                              itemsPerSlide === 1 ? 'grid-cols-1' :
+                              itemsPerSlide === 2 ? 'grid-cols-2' :
+                              itemsPerSlide === 4 ? 'grid-cols-4' :
+                              itemsPerSlide === 5 ? 'grid-cols-5' :
+                              itemsPerSlide === 6 ? 'grid-cols-6' :
+                              'grid-cols-3'
+                            }`}>
+                              {chunk.map((t, idx) => renderReviewCard(t, groupIdx * 3 + idx))}
+                            </div>
+                          </SwiperSlide>
+                        ));
+                      })()}
+                    </Swiper>
+                  ) : (
+                    <Swiper
+                      modules={swiperModules()}
+                      navigation={showArrows ? {
+                        prevEl: '.review-prev-btn',
+                        nextEl: '.review-next-btn',
+                      } : false}
+                      pagination={showDots ? { el: '.review-pagination', clickable: true } : false}
+                      autoplay={{ delay: sliderSpeed, disableOnInteraction: false }}
+                      spaceBetween={24}
+                      slidesPerView={mobileCols}
+                      breakpoints={{ 640: { slidesPerView: Math.min(desktopCols, 2) }, 1024: { slidesPerView: desktopCols } }}
+                      className="w-full"
+                    >
+                      {displayReviews.map((t, i) => (
+                        <SwiperSlide key={i} className="h-auto">
+                          {renderReviewCard(t, i)}
+                        </SwiperSlide>
+                      ))}
+                    </Swiper>
+                  )}
+                </div>
+
+                {/* Right Arrow */}
+                {isSlider && showArrows && (
+                  <div className="review-next-btn cursor-pointer">&#8250;</div>
+                )}
+
+                {/* Dots */}
+                {showDots && <div className="review-pagination" />}
+              </div>
+            )}
           </div>
         </motion.div>
       </div>

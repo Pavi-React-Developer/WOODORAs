@@ -11,6 +11,8 @@ router.get('/product-grid', cmsController.getProductGrids);
 router.get('/category-grid', cmsController.getCategoryGrids);
 router.get('/footer', cmsController.getFooter);
 router.get('/layout', cmsController.getLayout);
+router.get('/review-config', cmsController.getReviewConfig);
+router.get('/review-config/approved', protect, authorize('admin'), cmsController.getApprovedReviews);
 
 // Protected admin routes for CMS
 router.put('/navbar', protect, authorize('admin'), cmsController.updateNavbar);
@@ -33,5 +35,6 @@ router.delete('/category-grid/:id', protect, authorize('admin'), cmsController.d
 
 router.put('/footer', protect, authorize('admin'), cmsController.updateFooter);
 router.put('/layout', protect, authorize('admin'), cmsController.updateLayout);
+router.put('/review-config', protect, authorize('admin'), cmsController.updateReviewConfig);
 
 module.exports = router;

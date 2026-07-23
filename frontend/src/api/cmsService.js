@@ -57,6 +57,12 @@ export const cmsService = {
 
   // Layout
   getLayout: () => request(`${BASE}/layout`),
+  updateLayout: (body) => request(`${BASE}/layout`, { method: 'PUT', body: JSON.stringify(body) }),
+
+  // Review Config
+  getReviewConfig: () => request(`${BASE}/review-config`),
+  updateReviewConfig: (body) => request(`${BASE}/review-config`, { method: 'PUT', body: JSON.stringify(body) }),
+  getApprovedReviews: () => request(`${BASE}/review-config/approved`),
 
 
   // Image Upload (uses existing catalog upload endpoint)

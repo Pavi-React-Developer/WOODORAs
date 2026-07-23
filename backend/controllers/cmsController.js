@@ -5,6 +5,8 @@ const CmsThirdBanner = require('../models/CmsThirdBanner');
 const CmsProductGrid = require('../models/CmsProductGrid');
 const CmsCategoryGrid = require('../models/CmsCategoryGrid');
 const CmsFooter = require('../models/CmsFooter');
+const CmsReviewConfig = require('../models/CmsReviewConfig');
+const Review = require('../models/Review');
 const ProductVariant = require('../models/ProductVariant');
 const CmsLayout = require('../models/CmsLayout');
 const productService = require('../services/productService');
@@ -296,6 +298,34 @@ exports.updateFooter = asyncHandler(async (req, res) => {
     footer = await CmsFooter.findByIdAndUpdate(footer._id, updateData, { returnDocument: 'after', runValidators: true });
   }
   res.json({ success: true, data: footer });
+});
+
+// --- REVIEW CONFIG ---
+exports.getApprovedReviews = asyncHandler(async (req, res) => {
+  const reviews = await Review.find({ status: 'approved' })
+    .populate('user', 'name')
+    .populate('product', 'name')
+    .sort({ createdAt: -1 })
+    .lean();
+  res.json({ success: true, data: reviews });
+});
+
+exports.getReviewConfig = asyncHandler(async (req, res) => {
+  let config = await CmsReviewConfig.findOne().populate('featuredReviewIds');
+  if (!config) {
+    config = await CmsReviewConfig.create({});
+  }
+  res.json({ success: true, data: config });
+});
+
+exports.updateReviewConfig = asyncHandler(async (req, res) => {
+  let config = await CmsReviewConfig.findOne();
+  if (!config) {
+    config = await CmsReviewConfig.create(req.body);
+  } else {
+    config = await CmsReviewConfig.findByIdAndUpdate(config._id, req.body, { returnDocument: 'after', runValidators: true, new: true });
+  }
+  res.json({ success: true, data: config });
 });
 
 // --- LAYOUT ---
