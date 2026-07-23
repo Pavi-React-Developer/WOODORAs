@@ -22,6 +22,7 @@ const cmsRoutes = require('./routes/cmsRoutes');
 const bulkOrderRoutes = require('./routes/bulkOrderRoutes');
 const giftCardRoutes = require('./routes/giftCardRoutes');
 const giftBoxRuleRoutes = require('./routes/giftBoxRuleRoutes');
+const customizeRoutes = require('./routes/customizeRoutes');
 const seedAttributes = require('./seedAttributes');
 const Order = require('./models/Order');
 const Review = require('./models/Review');
@@ -136,11 +137,21 @@ app.use('/api/cms', cmsRoutes);
 app.use('/api/bulk-orders', bulkOrderRoutes);
 app.use('/api/gift-cards', giftCardRoutes);
 app.use('/api/gift-box-rules', giftBoxRuleRoutes);
+app.use('/api/customize', customizeRoutes);
 const productFeeRuleRoutes = require('./routes/productFeeRuleRoutes');
 app.use('/api/product-fee-rules', productFeeRuleRoutes);
 
 app.get('/', (req, res) => {
     res.send('API is running...');
+});
+
+// Global error handler to prevent HTML responses on errors
+app.use((err, req, res, next) => {
+    console.error('Global Error Handler:', err);
+    res.status(err.status || 500).json({
+        success: false,
+        message: err.message || 'Internal Server Error'
+    });
 });
 
 const PORT = process.env.PORT || 5000;

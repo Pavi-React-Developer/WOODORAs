@@ -96,3 +96,20 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #D4C9B8;
 }
+
+/* Review Marquee Animation */
+@keyframes slide-left {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(calc(-50% - 0.75rem)); }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: slide-left 30s linear infinite;
+  gap: 1.5rem; /* 24px */
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}

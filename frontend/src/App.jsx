@@ -18,6 +18,7 @@ import WishlistPage from './pages/WishlistPage';
 import ShopPage from './pages/ShopPage';
 import BulkOrderPage from './pages/BulkOrderPage';
 import GiftAndCardPage from './pages/GiftAndCardPage';
+import CustomizePage from './pages/CustomizePage';
 import OAuthCallback from './pages/OAuthCallback';
 import { authService } from './api/authService';
 import CartOffcanvas from './components/CartOffcanvas';
@@ -285,7 +286,7 @@ export default function App() {
         <Route
           path="/"
           element={
-            <LayoutWithHeader
+            <Home
               user={user}
               cartItems={cartItems}
               wishlistItems={wishlistItems}
@@ -293,14 +294,9 @@ export default function App() {
               onOpenWishlist={() => setIsWishlistOpen(true)}
               onLogout={handleLogout}
               onNavigate={handleNavigate}
-            >
-              <Home
-                user={user}
-                onNavigate={handleNavigate}
-                onAddToCart={handleAddToCart}
-                onAddToWishlist={handleAddToWishlist}
-              />
-            </LayoutWithHeader>
+              onAddToCart={handleAddToCart}
+              onAddToWishlist={handleAddToWishlist}
+            />
           }
         />
 
@@ -588,6 +584,24 @@ export default function App() {
                 onNavigate={handleNavigate}
                 onAddToCart={handleAddToCart}
               />
+            </LayoutWithHeader>
+          }
+        />
+
+        {/* Customize Page */}
+        <Route
+          path="/customize"
+          element={
+            <LayoutWithHeader
+              user={user}
+              cartItems={cartItems}
+              wishlistItems={wishlistItems}
+              onOpenCart={() => setIsCartOpen(true)}
+              onOpenWishlist={() => setIsWishlistOpen(true)}
+              onLogout={handleLogout}
+              onNavigate={handleNavigate}
+            >
+              <CustomizePage />
             </LayoutWithHeader>
           }
         />

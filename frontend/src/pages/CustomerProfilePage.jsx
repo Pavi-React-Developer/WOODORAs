@@ -33,7 +33,8 @@ import {
   ExternalLink,
   Truck,
   Check,
-  CreditCard
+  CreditCard,
+  Settings
 } from 'lucide-react';
 import { authService } from '../api/authService';
 import { orderService } from '../api/orderService';
@@ -41,13 +42,31 @@ import { uploadAPI } from '../api/catalogAdminService';
 import { reviewService } from '../api/reviewService';
 import { walletService } from '../api/walletService';
 import { refundService } from '../api/refundService';
+import { customizeService } from '../api/customizeService';
 import useCartStore from '../store/useCartStore';
 import WriteReviewModal from '../components/WriteReviewModal';
+
+const getProductName = (details) => {
+  if (!details) return 'Custom Order';
+  if (!Array.isArray(details)) return details.productName || 'Custom Order';
+  const nameField = details.find(f => f.label && f.label.toLowerCase().includes('name'));
+  if (nameField && typeof nameField.value === 'string') return nameField.value;
+  const firstStringField = details.find(f => typeof f.value === 'string');
+  return firstStringField ? firstStringField.value : 'Custom Order';
+};
+
+const getWoodType = (details) => {
+  if (!details) return 'N/A';
+  if (!Array.isArray(details)) return details.woodType || 'N/A';
+  const woodField = details.find(f => f.label && f.label.toLowerCase().includes('wood'));
+  return woodField && typeof woodField.value === 'string' ? woodField.value : 'N/A';
+};
 
 const modules = [
   { id: 'profile', label: 'My Profile', icon: User },
   { id: 'orders', label: 'Order History', icon: Package },
   { id: 'bulk-orders', label: 'Bulk Orders', icon: Package },
+  { id: 'customize-orders', label: 'Customize Orders', icon: Settings },
   { id: 'reviews', label: 'Reviews & Ratings', icon: Star },
   { id: 'addresses', label: 'Addresses', icon: MapPin },
   { id: 'cart', label: 'Cart', icon: ShoppingBag },
@@ -66,6 +85,8 @@ const profileModulePaths = {
   orders: '/profile/order-history',
   'bulk-orders': '/profile/bulk-orders',
   'bulk-order-details': '/profile/bulk-orders/details',
+  'customize-orders': '/profile/customize-orders',
+  'customize-order-details': '/profile/customize-orders/details',
   reviews: '/profile/reviews',
   addresses: '/profile/addresses',
   cart: '/profile/cart',
@@ -84,6 +105,7 @@ const profilePathModules = Object.fromEntries(
 );
 profilePathModules['/profile/order-history/details'] = 'order-details';
 profilePathModules['/profile/bulk-orders/details'] = 'bulk-order-details';
+profilePathModules['/profile/customize-orders/details'] = 'customize-order-details';
 profilePathModules['/profile/gift-card/details'] = 'gift-card-details';
 
 const toInputDate = (value) => {
@@ -136,6 +158,7 @@ export default function CustomerProfilePage({
   const [activeModule, setActiveModule] = useState('profile');
   const [activeOrder, setActiveOrder] = useState(null);
   const [activeBulkOrder, setActiveBulkOrder] = useState(null);
+  const [activeCustomizeOrder, setActiveCustomizeOrder] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   
@@ -154,6 +177,8 @@ export default function CustomerProfilePage({
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [bulkOrders, setBulkOrders] = useState([]);
   const [bulkOrdersLoading, setBulkOrdersLoading] = useState(false);
+  const [customizeOrders, setCustomizeOrders] = useState([]);
+  const [customizeOrdersLoading, setCustomizeOrdersLoading] = useState(false);
   const [refunds, setRefunds] = useState([]);
   const [refundsLoading, setRefundsLoading] = useState(false);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
@@ -174,6 +199,7 @@ export default function CustomerProfilePage({
     setActiveModule(moduleId);
     setActiveOrder(null);
     setActiveBulkOrder(null);
+    setActiveCustomizeOrder(null);
     navigate(profileModulePaths[moduleId] || '/profile');
   };
 
@@ -267,6 +293,25 @@ export default function CustomerProfilePage({
         }
       };
       fetchBulkOrders();
+    }
+  }, [activeModule]);
+
+  useEffect(() => {
+    if (activeModule === 'customize-orders') {
+      const fetchCustomizeOrders = async () => {
+        try {
+          setCustomizeOrdersLoading(true);
+          const data = await customizeService.getMyRequests();
+          if (data) {
+            setCustomizeOrders(data);
+          }
+        } catch (err) {
+          toast.error('Failed to load customize orders');
+        } finally {
+          setCustomizeOrdersLoading(false);
+        }
+      };
+      fetchCustomizeOrders();
     }
   }, [activeModule]);
 
@@ -895,6 +940,165 @@ export default function CustomerProfilePage({
       )}
     </section>
   );
+
+  const renderCustomizeOrders = () => (
+    <section className="px-5 py-7 lg:px-7">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-bold text-[#141225]">Customize Orders</h2>
+          <p className="mt-1 text-sm text-[#6D625C]">Track the status of your customized order requests.</p>
+        </div>
+      </div>
+
+      {customizeOrdersLoading ? (
+        <p className="mt-8 text-sm text-[#6D625C]">Loading customize orders...</p>
+      ) : customizeOrders.length === 0 ? (
+        <div className="mt-6 flex flex-col items-center justify-center rounded-[14px] border border-dashed border-[#E9DED3] bg-[#FAF8F5] py-12 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-[#C4B9B0] shadow-sm">
+            <Settings className="h-8 w-8" strokeWidth={1.5} />
+          </div>
+          <h3 className="mt-4 text-base font-bold text-[#141225]">No Customize Orders Yet</h3>
+          <p className="mt-2 max-w-sm text-sm text-[#6D625C]">You haven't placed any custom order requests.</p>
+          <button type="button" onClick={() => onNavigate('/customize')} className="mt-6 rounded-[8px] bg-[#9A6031] px-6 py-2.5 text-sm font-bold text-white transition hover:bg-[#7E4B25]">
+            Request Customize Order
+          </button>
+        </div>
+      ) : (
+        <div className="mt-6 space-y-4">
+          {customizeOrders.map((order) => (
+            <div key={order._id} className="rounded-[14px] border border-[#E9DED3] bg-white p-5 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+                <div>
+                  <h3 className="font-bold text-[#141225]">{getProductName(order.productDetails)}</h3>
+                  <p className="text-sm text-[#6D625C]">Contact: {order.customerInfo.fullName} ({order.customerInfo.phone})</p>
+                  <p className="text-sm text-[#6D625C]">Wood Type: {getWoodType(order.productDetails)}</p>
+                  <p className="text-xs text-[#8A817C] mt-2">Requested on: {formatDate(order.createdAt)}</p>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                  <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider ${
+                    order.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' :
+                    order.status === 'Rejected' ? 'bg-red-100 text-red-700' :
+                    'bg-[#F2E3D1] text-[#8B5E3C]'
+                  }`}>
+                    {order.status || 'Pending'}
+                  </span>
+                  {order.status === 'Rejected' && order.rejectionReason && (
+                    <div className="mt-2 max-w-xs text-right">
+                      <p className="text-xs font-bold text-red-600">Rejection Reason:</p>
+                      <p className="text-xs text-[#6D625C]">{order.rejectionReason}</p>
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => { setActiveCustomizeOrder(order); setActiveModule('customize-order-details'); navigate('/profile/customize-orders/details'); }}
+                    className="mt-2 flex items-center gap-1 rounded bg-[#9A6031] px-3 py-1.5 text-xs font-bold text-white transition hover:bg-[#7E4B25]"
+                  >
+                    <Eye className="h-3.5 w-3.5" /> View Details
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+
+  const renderCustomizeOrderDetails = () => {
+    if (!activeCustomizeOrder) return null;
+    const { customerInfo, shippingAddress, productDetails, status, rejectionReason, createdAt, images } = activeCustomizeOrder;
+
+    return (
+      <section className="px-5 py-7 lg:px-7">
+        <div className="flex items-center justify-between gap-4 mb-6">
+          <div>
+            <h2 className="text-lg font-bold text-[#141225]">Customize Order Details</h2>
+            <p className="mt-1 text-sm text-[#6D625C]">Requested on {formatDate(createdAt)}</p>
+          </div>
+          <button type="button" onClick={() => openProfileModule('customize-orders')} className="rounded-[8px] border border-[#E9DED3] px-4 py-2 text-sm font-bold text-[#141225] hover:bg-gray-50">Back to Customize Orders</button>
+        </div>
+
+        <div className="space-y-6">
+          <div className="rounded-[14px] border border-[#E9DED3] bg-white p-5">
+            <h3 className="font-bold text-[#141225] mb-4">Request Information</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 text-sm">
+               <div>
+                  <p className="text-[#6D625C]">Full Name</p>
+                  <p className="font-semibold text-[#141225] mt-1">{customerInfo.fullName}</p>
+               </div>
+               <div>
+                  <p className="text-[#6D625C]">Email Address</p>
+                  <p className="font-semibold text-[#141225] mt-1">{customerInfo.email}</p>
+               </div>
+               <div>
+                  <p className="text-[#6D625C]">Phone Number</p>
+                  <p className="font-semibold text-[#141225] mt-1">{customerInfo.phone}</p>
+               </div>
+               <div>
+                  <p className="text-[#6D625C]">Status</p>
+                  <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider mt-1 ${
+                    status === 'Approved' ? 'bg-emerald-100 text-emerald-700' :
+                    status === 'Rejected' ? 'bg-red-100 text-red-700' :
+                    'bg-[#F2E3D1] text-[#8B5E3C]'
+                  }`}>
+                    {status || 'Pending'}
+                  </span>
+               </div>
+               {status === 'Rejected' && rejectionReason && (
+                 <div className="col-span-1 sm:col-span-2">
+                    <p className="text-red-600 font-bold">Rejection Reason</p>
+                    <p className="font-semibold text-[#141225] mt-1">{rejectionReason}</p>
+                 </div>
+               )}
+            </div>
+          </div>
+
+          <div className="rounded-[14px] border border-[#E9DED3] bg-white p-5">
+            <h3 className="font-bold text-[#141225] mb-4">Shipping Address</h3>
+            <p className="text-sm text-[#141225] font-semibold">{shippingAddress.addressLine1}</p>
+            {shippingAddress.addressLine2 && <p className="text-sm text-[#6D625C]">{shippingAddress.addressLine2}</p>}
+            <p className="text-sm text-[#6D625C]">{shippingAddress.city}, {shippingAddress.state} {shippingAddress.pincode}</p>
+          </div>
+
+          <div className="rounded-[14px] border border-[#E9DED3] bg-white p-5">
+            <h3 className="font-bold text-[#141225] mb-4">Product Configuration</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 text-sm bg-[#FAF8F5] p-4 rounded-xl border border-[#E9DED3]">
+               {Array.isArray(productDetails) ? (
+                 productDetails.map((field, idx) => (
+                   <div key={idx}>
+                      <p className="text-[#8B5E3C] text-xs font-bold uppercase">{field.label}</p>
+                      <p className="font-bold text-[#141225] mt-1">
+                        {typeof field.value === 'boolean' 
+                          ? (field.value ? 'Yes' : 'No') 
+                          : (field.value || 'N/A')}
+                      </p>
+                   </div>
+                 ))
+               ) : (
+                 <div className="col-span-1 sm:col-span-2 text-gray-500 italic">No configuration data</div>
+               )}
+            </div>
+            
+            {images && images.length > 0 && (
+              <div className="mt-6">
+                <h3 className="font-bold text-[#141225] mb-3">Reference Images</h3>
+                <div className="flex gap-4 overflow-x-auto pb-4">
+                  {images.map((img, idx) => (
+                    <a key={idx} href={img.url} target="_blank" rel="noopener noreferrer" className="shrink-0 group relative rounded-lg overflow-hidden border border-[#E9DED3] shadow-sm">
+                      <img src={img.url} alt={`Reference ${idx + 1}`} className="h-32 w-32 object-cover" />
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <ExternalLink className="w-6 h-6 text-white" />
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  };
 
   const renderBulkOrders = () => (
     <section className="px-5 py-7 lg:px-7">
@@ -1880,6 +2084,8 @@ export default function CustomerProfilePage({
           {activeModule === 'orders' && renderOrders()}
           {activeModule === 'bulk-orders' && renderBulkOrders()}
           {activeModule === 'bulk-order-details' && renderBulkOrderDetails()}
+          {activeModule === 'customize-orders' && renderCustomizeOrders()}
+          {activeModule === 'customize-order-details' && renderCustomizeOrderDetails()}
           {activeModule === 'reviews' && renderReviews()}
           {activeModule === 'order-details' && renderOrderDetails()}
           {activeModule === 'addresses' && renderAddresses()}

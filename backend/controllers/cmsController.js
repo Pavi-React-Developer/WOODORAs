@@ -5,6 +5,7 @@ const CmsProductGrid = require('../models/CmsProductGrid');
 const CmsCategoryGrid = require('../models/CmsCategoryGrid');
 const CmsFooter = require('../models/CmsFooter');
 const ProductVariant = require('../models/ProductVariant');
+const CmsLayout = require('../models/CmsLayout');
 const productService = require('../services/productService');
 const { deleteFromCloudinary } = require('../services/uploadService');
 
@@ -260,4 +261,34 @@ exports.updateFooter = asyncHandler(async (req, res) => {
     footer = await CmsFooter.findByIdAndUpdate(footer._id, updateData, { returnDocument: 'after', runValidators: true });
   }
   res.json({ success: true, data: footer });
+});
+
+// --- LAYOUT ---
+exports.getLayout = asyncHandler(async (req, res) => {
+  let layout = await CmsLayout.findOne({ page: 'home' });
+  if (!layout) {
+    layout = await CmsLayout.create({
+      page: 'home',
+      sections: [
+        { id: 'navbar', order: 1, visible: true },
+        { id: 'heroBanner', order: 2, visible: true },
+        { id: 'thirdBanner', order: 3, visible: true },
+        { id: 'categoryGrid', order: 4, visible: true },
+        { id: 'productGrid', order: 5, visible: true },
+        { id: 'footer', order: 6, visible: true },
+      ]
+    });
+  }
+  res.json({ success: true, data: layout });
+});
+
+exports.updateLayout = asyncHandler(async (req, res) => {
+  let layout = await CmsLayout.findOne({ page: 'home' });
+  if (!layout) {
+    layout = await CmsLayout.create({ page: 'home', sections: req.body.sections });
+  } else {
+    layout.sections = req.body.sections;
+    await layout.save();
+  }
+  res.json({ success: true, data: layout });
 });

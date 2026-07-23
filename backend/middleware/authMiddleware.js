@@ -50,6 +50,26 @@ const protect = async (req, res, next) => {
     }
 };
 
+const optionalAuth = async (req, res, next) => {
+    const authorization = req.headers.authorization || '';
+    const [scheme, token] = authorization.split(' ');
+
+    if (scheme !== 'Bearer' || !token) {
+        return next();
+    }
+
+    try {
+        const decoded = jwt.verify(token.trim(), process.env.JWT_SECRET);
+        let user = await User.findById(decoded.id).select('-password');
+        if (user) {
+            req.user = user;
+        }
+    } catch (error) {
+        // Ignore errors, just proceed without req.user
+    }
+    return next();
+};
+
 const authorize = (...roles) => {
     return (req, res, next) => {
         if (!req.user) {
@@ -71,4 +91,4 @@ const authorize = (...roles) => {
     };
 };
 
-module.exports = { protect, authorize };
+module.exports = { protect, optionalAuth, authorize };

@@ -10,6 +10,7 @@ router.get('/third-banner', cmsController.getThirdBanners);
 router.get('/product-grid', cmsController.getProductGrids);
 router.get('/category-grid', cmsController.getCategoryGrids);
 router.get('/footer', cmsController.getFooter);
+router.get('/layout', cmsController.getLayout);
 
 // Protected admin routes for CMS
 router.post('/navbar', protect, authorize('admin'), cmsController.createNavbar);
@@ -33,5 +34,6 @@ router.put('/category-grid/:id', protect, authorize('admin'), cmsController.upda
 router.delete('/category-grid/:id', protect, authorize('admin'), cmsController.deleteCategoryGrid);
 
 router.put('/footer', protect, authorize('admin'), cmsController.updateFooter);
+router.put('/layout', protect, authorize('admin'), cmsController.updateLayout);
 
 module.exports = router;

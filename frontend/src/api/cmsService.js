@@ -57,6 +57,10 @@ export const cmsService = {
   getFooter: () => request(`${BASE}/footer`),
   updateFooter: (body) => request(`${BASE}/footer`, { method: 'PUT', body: JSON.stringify(body) }),
 
+  // Layout
+  getLayout: () => request(`${BASE}/layout`),
+
+
   // Image Upload (uses existing catalog upload endpoint)
   uploadImages: (files) => {
     const formData = new FormData();

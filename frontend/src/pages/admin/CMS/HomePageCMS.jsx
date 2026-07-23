@@ -5,8 +5,10 @@ import ThirdBannerAdmin from './ThirdBannerAdmin';
 import ProductGridAdmin from './ProductGridAdmin';
 import CategoryGridAdmin from './CategoryGridAdmin';
 import FooterAdmin from './FooterAdmin';
+import HomeLayoutBuilder from './HomeLayoutBuilder';
 
 const TABS = [
+  { id: 'layout', label: '🛠️ Layout Builder' },
   { id: 'navbar', label: '🔗 Navbar' },
   { id: 'hero', label: '🖼️ Hero Banner' },
   { id: 'third', label: '🎨 Third Banner' },
@@ -16,10 +18,11 @@ const TABS = [
 ];
 
 export default function HomePageCMS() {
-  const [activeTab, setActiveTab] = useState('navbar');
+  const [activeTab, setActiveTab] = useState('layout');
 
   const renderTab = () => {
     switch (activeTab) {
+      case 'layout': return <HomeLayoutBuilder />;
       case 'navbar': return <NavbarAdmin />;
       case 'hero': return <HeroBannerAdmin />;
       case 'third': return <ThirdBannerAdmin />;

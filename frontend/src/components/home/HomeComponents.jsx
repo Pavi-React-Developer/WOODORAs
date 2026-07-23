@@ -1,0 +1,594 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, Pagination, EffectFade, EffectCreative, Navigation, Controller } from 'swiper/modules';
+import { ChevronLeft, ChevronRight, Truck, Package, ShieldCheck, Banknote, Heart } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import ProductCard from '../ProductCard';
+import Header from '../Header';
+import Footer from '../Footer';
+import { cmsService } from '../../api/cmsService';
+
+const fadeUp = { hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } } };
+const stagger = { visible: { transition: { staggerChildren: 0.12 } } };
+
+const starContainerVariants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.1 } }
+};
+const starVariants = {
+  hidden: { scale: 0, opacity: 0, rotate: -45 },
+  visible: { scale: 1, opacity: 1, rotate: 0, transition: { type: 'spring', stiffness: 300, damping: 20 } }
+};
+
+function Stars({ rating }) {
+  return (
+    <motion.div className="flex gap-0.5" variants={starContainerVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+      {[1, 2, 3, 4, 5].map(s => (
+        <motion.svg variants={starVariants} key={s} className={`w-3 h-3 ${s <= rating ? 'text-amber-400' : 'text-gray-200'}`} fill="currentColor" viewBox="0 0 20 20">
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+        </motion.svg>
+      ))}
+    </motion.div>
+  );
+}
+
+const getPricingInfo = (source = {}) => {
+  const listPrice = Number(source.compareAtPrice ?? source.basePrice ?? source.effectivePrice ?? source.price ?? 0);
+  const salePriceCandidate = source.discountPrice !== null && source.discountPrice !== undefined && source.discountPrice !== ''
+    ? Number(source.discountPrice)
+    : NaN;
+  const salePrice = Number.isFinite(salePriceCandidate) && salePriceCandidate > 0
+    ? salePriceCandidate
+    : Number(source.basePrice ?? source.effectivePrice ?? source.price ?? 0);
+  const effectiveListPrice = listPrice > 0 ? listPrice : salePrice;
+  const hasDiscount = salePrice > 0 && effectiveListPrice > 0 && salePrice < effectiveListPrice;
+  const discountPercent = hasDiscount ? Math.round((1 - salePrice / effectiveListPrice) * 100) : 0;
+  return { salePrice, listPrice: effectiveListPrice, hasDiscount, discountPercent };
+};
+
+export function HomeNavbar({ context = {} }) {
+  return <Header {...context} />;
+}
+
+export function HomeFooter({ context = {} }) {
+  const { featuredReviews = [] } = context;
+  return (
+    <>
+      <section className="py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
+            <motion.div variants={fadeUp} className="flex justify-center items-center gap-4 mb-10">
+              <svg width="40" height="20" viewBox="0 0 40 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#D4C3A3]">
+                <path d="M2 10C10 10 18 5 28 10C32 12 36 12 38 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8" />
+                <path d="M24 8C21 2 15 2 15 10C21 10 24 8 24 8Z" fill="currentColor" opacity="0.5" />
+              </svg>
+              <h2 className="text-3xl font-serif text-[#B0611C] tracking-wide">What Parents Love</h2>
+              <svg width="40" height="20" viewBox="0 0 40 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#D4C3A3] transform scale-x-[-1]">
+                <path d="M2 10C10 10 18 5 28 10C32 12 36 12 38 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8" />
+                <path d="M24 8C21 2 15 2 15 10C21 10 24 8 24 8Z" fill="currentColor" opacity="0.5" />
+              </svg>
+            </motion.div>
+            <div className="overflow-hidden w-full py-4 relative">
+              <div className="animate-marquee">
+                {Array(10).fill(featuredReviews).flat().map((t, i) => (
+                  <motion.div key={i} whileHover={{ scale: 1.02 }}
+                    className="bg-white border border-gray-100 p-8 flex flex-col justify-between rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 w-[280px] sm:w-[320px] shrink-0">
+                    <div>
+                      <div className="mb-4"><Stars rating={t?.rating || 5} /></div>
+                      <p className="text-sm italic text-brand-dark leading-relaxed line-clamp-4">"{t?.description || t?.title || t?.quote}"</p>
+                    </div>
+                    <div className="flex items-center gap-3 mt-8">
+                      <div className="w-9 h-9 bg-[#E6DFD4] rounded-full flex items-center justify-center text-xs font-bold text-brand-dark shrink-0">
+                        {(t?.user?.name || t?.author || 'G').charAt(0)}
+                      </div>
+                      <div className="overflow-hidden">
+                        <p className="text-[11px] font-bold text-brand-dark truncate">{t?.user?.name || t?.author || 'Guest'}</p>
+                        <p className="text-[9px] text-brand-medium truncate">{t?.isVerifiedPurchase ? 'Verified Buyer' : (t?.context || '')}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+      <Footer {...context} />
+    </>
+  );
+}
+
+export function HomeHeroBanner({ context = {} }) {
+  const { heroSlides } = context;
+  const [prevEl, setPrevEl] = useState(null);
+  const [nextEl, setNextEl] = useState(null);
+  const [paginationEl, setPaginationEl] = useState(null);
+
+  if (!heroSlides || !heroSlides.length) return null;
+  return (
+    <section className="relative w-full h-[50vh] md:h-[70vh] lg:h-[90vh] min-h-[350px] md:min-h-[450px] lg:min-h-[600px] overflow-hidden bg-brand-dark group">
+      {prevEl && nextEl && paginationEl ? (
+        <Swiper
+          modules={[Autoplay, Pagination, EffectFade, EffectCreative, Navigation]}
+          effect="fade"
+          autoplay={{ delay: 5000, disableOnInteraction: false }}
+          pagination={{ clickable: true, el: paginationEl }}
+          navigation={{ prevEl: prevEl, nextEl: nextEl }}
+          loop={heroSlides.length > 1}
+          className="w-full h-full"
+        >
+          {heroSlides.map((slide, i) => (
+            <SwiperSlide key={i}>
+              <div className="relative w-full h-full">
+                {(() => {
+                  const isDesktopVid = slide.desktopUrl && slide.desktopUrl.match(/\.(mp4|webm)$/i);
+                  const isMobileVid = slide.mobileUrl && slide.mobileUrl.match(/\.(mp4|webm)$/i);
+                  return (
+                    <>
+                      {slide.desktopUrl && (
+                        isDesktopVid ? (
+                          <video src={slide.desktopUrl} className={`w-full h-full object-cover object-center brightness-90 ${slide.mobileUrl ? 'hidden md:block' : ''}`} autoPlay muted loop playsInline />
+                        ) : (
+                          <img src={slide.desktopUrl} alt={slide.title} className={`w-full h-full object-cover object-center brightness-90 ${slide.mobileUrl ? 'hidden md:block' : ''}`} onError={e => { e.target.src = '/wood-placeholder.png'; }} />
+                        )
+                      )}
+                      {slide.mobileUrl && (
+                        isMobileVid ? (
+                          <video src={slide.mobileUrl} className={`w-full h-full object-cover object-center brightness-90 ${slide.desktopUrl ? 'block md:hidden' : ''}`} autoPlay muted loop playsInline />
+                        ) : (
+                          <img src={slide.mobileUrl} alt={slide.title} className={`w-full h-full object-cover object-center brightness-90 ${slide.desktopUrl ? 'block md:hidden' : ''}`} onError={e => { e.target.src = '/wood-placeholder.png'; }} />
+                        )
+                      )}
+                      {(!slide.desktopUrl && !slide.mobileUrl) && (
+                        <img src={slide.bannerImage || '/wood-placeholder.png'} alt={slide.title} className="w-full h-full object-cover object-center brightness-90" onError={e => { e.target.src = '/wood-placeholder.png'; }} />
+                      )}
+                    </>
+                  );
+                })()}
+              </div>
+            </SwiperSlide>
+          ))}
+        </Swiper>
+      ) : (
+        <div className="w-full h-full bg-brand-dark" />
+      )}
+      <button ref={setPrevEl} type="button" className="hero-prev absolute top-1/2 left-4 z-20 -translate-y-1/2 w-12 h-12 flex items-center justify-center bg-white/20 hover:bg-white/40 text-white rounded-full backdrop-blur transition-all md:opacity-0 md:group-hover:opacity-100">
+        <ChevronLeft className="w-6 h-6" />
+      </button>
+      <button ref={setNextEl} type="button" className="hero-next absolute top-1/2 right-4 z-20 -translate-y-1/2 w-12 h-12 flex items-center justify-center bg-white/20 hover:bg-white/40 text-white rounded-full backdrop-blur transition-all md:opacity-0 md:group-hover:opacity-100">
+        <ChevronRight className="w-6 h-6" />
+      </button>
+      <div ref={setPaginationEl} className="hero-dots absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-3" />
+    </section>
+  );
+}
+
+function ThirdBannerItem({ bannerData, onNavigate }) {
+  const [firstSwiper, setFirstSwiper] = useState(null);
+  const [secondSwiper, setSecondSwiper] = useState(null);
+  const [paginationEl, setPaginationEl] = useState(null);
+
+  if (!bannerData || !bannerData.leftImages?.length) return null;
+
+  const isSlide = !bannerData.animation || bannerData.animation === 'Slide';
+  const effectMap = { 'Fade': 'fade', 'Creative': 'creative', 'Zoom': 'creative' };
+  const currentEffect = effectMap[bannerData.animation] || undefined;
+  const swiperDirection = isSlide ? 'vertical' : 'horizontal';
+  const creativeOptions = currentEffect === 'creative'
+    ? { prev: { shadow: true, translate: ['-120%', 0, -500] }, next: { translate: ['100%', 0, 0] } }
+    : undefined;
+
+  const leftCtaLabel = bannerData.leftButtonText || 'Explore Here';
+  const rightCtaLabel = bannerData.rightButtonText || 'Explore Here';
+
+  return (
+    <section className="py-16 bg-[#FDF9F1]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {bannerData.title && (
+          <motion.h2 initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}
+            className="text-center text-3xl font-serif text-brand-dark mb-12 tracking-wide">{bannerData.title}</motion.h2>
+        )}
+        <div className="relative">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
+            <div className="overflow-hidden rounded-2xl shadow-sm relative group h-[30vh] md:h-[70vh] min-h-[220px] md:min-h-[400px] max-h-[600px]">
+              {paginationEl ? (
+                <Swiper
+                  modules={[Autoplay, Pagination, Controller, EffectFade, EffectCreative]}
+                  effect={currentEffect}
+                  creativeEffect={creativeOptions}
+                  onSwiper={setFirstSwiper}
+                  controller={{ control: secondSwiper }}
+                  autoplay={{ delay: 3500, disableOnInteraction: false }}
+                  loop={bannerData.leftImages.length > 1}
+                  direction={swiperDirection}
+                  pagination={{ clickable: true, el: paginationEl }}
+                  className="w-full h-full"
+                >
+                  {bannerData.leftImages.map((img, i) => (
+                    <SwiperSlide key={i}>
+                      <img src={img?.url || img || '/wood-placeholder.png'} alt="" className="w-full h-full object-cover" onError={(e) => { e.target.src = '/wood-placeholder.png'; }} />
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
+              ) : (
+                <div className="w-full h-full bg-[#E6DFD4]" />
+              )}
+              <div className="absolute inset-0 z-10 bg-gradient-to-r from-black/55 via-black/20 to-transparent pointer-events-none" />
+              <div className="absolute inset-0 z-20 flex items-end p-8 pointer-events-none">
+                <button onClick={() => onNavigate && onNavigate(bannerData.leftCtaUrl || '/')} className="pointer-events-auto bg-white text-brand-dark text-xs font-bold px-8 py-4 uppercase tracking-widest hover:bg-brand-dark hover:text-white transition-colors">
+                  {leftCtaLabel} <span className="ml-1">→</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="overflow-hidden rounded-2xl shadow-sm relative group h-[30vh] md:h-[70vh] min-h-[220px] md:min-h-[400px] max-h-[600px]">
+              <Swiper
+                modules={[Controller, EffectFade, EffectCreative]}
+                effect={currentEffect}
+                creativeEffect={creativeOptions}
+                onSwiper={setSecondSwiper}
+                controller={{ control: firstSwiper }}
+                loop={(bannerData.rightImages?.length || 0) > 1}
+                direction={swiperDirection}
+                allowTouchMove={false}
+                className="w-full h-full"
+              >
+                {bannerData.rightImages?.map((img, i) => (
+                  <SwiperSlide key={i}>
+                    <img src={img?.url || img || '/wood-placeholder.png'} alt="" className="w-full h-full object-cover" onError={(e) => { e.target.src = '/wood-placeholder.png'; }} />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+              <div className="absolute inset-0 z-10 bg-gradient-to-r from-black/55 via-black/20 to-transparent pointer-events-none" />
+              <div className="absolute inset-0 z-20 flex items-end p-8 pointer-events-none">
+                <button onClick={() => onNavigate && onNavigate(bannerData.rightCtaUrl || '/')} className="pointer-events-auto bg-white text-brand-dark text-xs font-bold px-8 py-4 uppercase tracking-widest hover:bg-brand-dark hover:text-white transition-colors">
+                  {rightCtaLabel} <span className="ml-1">→</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div className="absolute top-0 bottom-4 md:bottom-0 left-0 md:left-1/2 md:-translate-x-1/2 right-0 md:right-auto flex flex-col md:items-center justify-end md:justify-center z-30 pointer-events-none">
+            <div ref={setPaginationEl} className="dual-banner-pagination flex flex-row md:flex-col justify-center gap-3 pointer-events-auto mb-4 md:mb-0" style={{ position: 'relative', top: 'auto', bottom: 'auto', left: 'auto', right: 'auto', transform: 'none', width: 'auto', height: 'auto' }} />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function HomeThirdBanner({ context = {} }) {
+  const { thirdBanners, onNavigate } = context;
+  if (!thirdBanners || !thirdBanners.length) return null;
+
+  return (
+    <>
+      {thirdBanners.map((bannerData, i) => (
+        <ThirdBannerItem key={bannerData._id || i} bannerData={bannerData} onNavigate={onNavigate} />
+      ))}
+    </>
+  );
+}
+
+function ProductGridBlock({ grid, onNavigate, onAddToCart, onAddToWishlist, user }) {
+  const [prevEl, setPrevEl] = useState(null);
+  const [nextEl, setNextEl] = useState(null);
+  const [paginationEl, setPaginationEl] = useState(null);
+
+  const safeProducts = Array.isArray(grid.products) ? grid.products.filter(Boolean) : [];
+  if (!safeProducts.length) return null;
+  const mobileCount = grid.mobileCount || 2;
+  const desktopCount = grid.desktopCount || 4;
+
+  return (
+    <section className="py-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
+          <motion.div variants={fadeUp} className="flex justify-between items-end mb-8">
+            <h2 className="text-xl font-bold tracking-tight text-brand-dark">{grid.title}</h2>
+            <div className="flex items-center gap-4">
+              {grid.ctaText && (
+                <button onClick={() => onNavigate(grid.ctaUrl || '/')} className="text-[10px] font-bold uppercase tracking-widest text-brand-medium hover:text-brand-dark">
+                  {grid.ctaText} &gt;
+                </button>
+              )}
+              <div className="flex gap-2">
+                <button ref={setPrevEl} className="w-10 h-10 rounded-full border border-[#E6DFD4] flex items-center justify-center text-brand-dark hover:bg-[#F7F3EE] disabled:opacity-30 transition-colors shadow-sm">&lt;</button>
+                <button ref={setNextEl} className="w-10 h-10 rounded-full border border-[#E6DFD4] flex items-center justify-center text-brand-dark hover:bg-[#F7F3EE] disabled:opacity-30 transition-colors shadow-sm">&gt;</button>
+              </div>
+            </div>
+          </motion.div>
+
+          <div className="relative group px-2 md:px-4 mt-4">
+            <style>{`
+              .custom-pagination-${grid._id} { position: relative; margin-top: 2rem; display: flex; justify-content: center; gap: 12px; }
+              .custom-pagination-${grid._id} .swiper-pagination-bullet { width: 16px; height: 16px; background: #fff; border: 1px solid #999; opacity: 1; transition: all 0.2s; border-radius: 50%; }
+              .custom-pagination-${grid._id} .swiper-pagination-bullet-active { background: #8b7355; border: 4px solid #fff; box-shadow: 0 0 0 1px #8b7355; }
+            `}</style>
+            {prevEl && nextEl && paginationEl ? (
+              <Swiper
+                modules={[Navigation, Pagination]}
+                navigation={{ prevEl: prevEl, nextEl: nextEl }}
+                pagination={{ clickable: true, el: paginationEl }}
+                spaceBetween={16}
+                slidesPerView={mobileCount}
+                breakpoints={{ 768: { slidesPerView: desktopCount } }}
+                className="w-full"
+              >
+                {safeProducts.map((p, i) => (
+                  <SwiperSlide key={p._id || i} className="h-auto">
+                    <motion.div variants={fadeUp} className="h-full">
+                      <ProductCard product={p} onNavigate={onNavigate} onAddToCart={onAddToCart} onAddToWishlist={onAddToWishlist} user={user} />
+                    </motion.div>
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            ) : (
+              <div className="w-full h-[300px] flex gap-4 overflow-hidden">
+                <div className="flex-1 bg-gray-100 rounded-2xl animate-pulse" />
+                <div className="hidden md:block flex-1 bg-gray-100 rounded-2xl animate-pulse" />
+                <div className="hidden md:block flex-1 bg-gray-100 rounded-2xl animate-pulse" />
+              </div>
+            )}
+            <div ref={setPaginationEl} className={`custom-pagination-${grid._id}`} />
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+export function HomeProductGrid({ context = {} }) {
+  const { productGrids, featuredProducts, onNavigate, onAddToCart, onAddToWishlist, user } = context;
+  const [bsPrev, setBsPrev] = useState(null);
+  const [bsNext, setBsNext] = useState(null);
+
+  return (
+    <>
+      {productGrids?.map((grid, i) => (
+        <ProductGridBlock key={grid._id || i} grid={grid} onNavigate={onNavigate} onAddToCart={onAddToCart} onAddToWishlist={onAddToWishlist} user={user} />
+      ))}
+
+      {/* Featured Products / Best Sellers */}
+      {featuredProducts?.length > 0 && (
+        <section id="trending" className="py-16 overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <motion.div initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.1 }} variants={stagger}>
+              <motion.div className="flex justify-center items-center gap-4 mb-10" initial={{ opacity: 0, y: -30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: false, amount: 0.5 }} transition={{ duration: 0.6, ease: 'easeOut' }}>
+                <svg width="40" height="20" viewBox="0 0 40 20" fill="none" className="text-[#D4C3A3]"><path d="M2 10C10 10 18 5 28 10C32 12 36 12 38 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8" /><path d="M24 8C21 2 15 2 15 10C21 10 24 8 24 8Z" fill="currentColor" opacity="0.5" /></svg>
+                <h2 className="text-3xl font-serif text-[#B0611C] tracking-wide">Best Sellers</h2>
+                <svg width="40" height="20" viewBox="0 0 40 20" fill="none" className="text-[#D4C3A3] transform scale-x-[-1]"><path d="M2 10C10 10 18 5 28 10C32 12 36 12 38 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8" /><path d="M24 8C21 2 15 2 15 10C21 10 24 8 24 8Z" fill="currentColor" opacity="0.5" /></svg>
+              </motion.div>
+              
+              <div className="relative group px-10 md:px-14 mt-4">
+                {bsNext && bsPrev ? (
+                  <Swiper
+                    modules={[Navigation]}
+                    navigation={{ nextEl: bsNext, prevEl: bsPrev }}
+                    spaceBetween={28}
+                    slidesPerView={1}
+                    breakpoints={{ 480: { slidesPerView: 2 }, 768: { slidesPerView: 2.5 }, 1024: { slidesPerView: 3 }, 1280: { slidesPerView: 4 } }}
+                    className="w-full pb-8"
+                  >
+                    {featuredProducts.map((p) => (
+                      <SwiperSlide key={p._id || p.id} className="h-auto">
+                        <ProductCard product={p} onNavigate={onNavigate} onAddToCart={onAddToCart} onAddToWishlist={onAddToWishlist} user={user} />
+                      </SwiperSlide>
+                    ))}
+                  </Swiper>
+                ) : (
+                  <div className="w-full pb-8 h-[300px] flex gap-6 overflow-hidden">
+                    <div className="flex-1 bg-gray-100 rounded-2xl animate-pulse" />
+                    <div className="hidden md:block flex-1 bg-gray-100 rounded-2xl animate-pulse" />
+                    <div className="hidden lg:block flex-1 bg-gray-100 rounded-2xl animate-pulse" />
+                  </div>
+                )}
+                <button ref={setBsPrev} type="button" className="bs-prev absolute top-1/2 left-0 z-10 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-[#767676] hover:bg-[#555555] text-white rounded-full transition-colors shadow-md disabled:opacity-50"><ChevronLeft className="w-5 h-5" /></button>
+                <button ref={setBsNext} type="button" className="bs-next absolute top-1/2 right-0 z-10 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-[#767676] hover:bg-[#555555] text-white rounded-full transition-colors shadow-md disabled:opacity-50"><ChevronRight className="w-5 h-5" /></button>
+              </div>
+
+              <div className="flex justify-center mt-6 mb-12">
+                <Link to="/shop" onClick={() => onNavigate('/shop')} className="bg-[#8B5E3C] text-white px-8 py-3 rounded-full text-sm font-medium hover:bg-[#4A5441] transition-colors inline-flex items-center gap-2">View All Products <span>→</span></Link>
+              </div>
+
+              {/* Trust Badges Strip */}
+              <div className="border border-[#E6DFD4] rounded-3xl lg:rounded-full bg-white px-4 md:px-8 py-5 md:py-6 mt-8">
+                <div className="flex flex-col lg:flex-row justify-between items-center gap-6 lg:gap-0 divide-y lg:divide-y-0 lg:divide-x divide-[#E6DFD4]">
+                  <div className="flex items-center gap-4 w-full lg:w-1/4 pt-4 lg:pt-0 lg:px-6 first:pt-0 justify-center lg:justify-start">
+                    <Truck className="w-7 h-7 text-[#5A5A5A] shrink-0" strokeWidth={1.5} />
+                    <div><h4 className="text-[13px] font-bold text-[#333333]">Free Shipping</h4><p className="text-[11px] text-[#7A7A7A] mt-0.5">On orders above ₹999</p></div>
+                  </div>
+                  <div className="flex items-center gap-4 w-full lg:w-1/4 pt-4 lg:pt-0 lg:px-6 justify-center lg:justify-start">
+                    <Package className="w-7 h-7 text-[#5A5A5A] shrink-0" strokeWidth={1.5} />
+                    <div><h4 className="text-[13px] font-bold text-[#333333]">Easy Returns</h4><p className="text-[11px] text-[#7A7A7A] mt-0.5">Within 7 days</p></div>
+                  </div>
+                  <div className="flex items-center gap-4 w-full lg:w-1/4 pt-4 lg:pt-0 lg:px-6 justify-center lg:justify-start">
+                    <ShieldCheck className="w-7 h-7 text-[#5A5A5A] shrink-0" strokeWidth={1.5} />
+                    <div><h4 className="text-[13px] font-bold text-[#333333]">Secure Payments</h4><p className="text-[11px] text-[#7A7A7A] mt-0.5">100% Safe & Secure</p></div>
+                  </div>
+                  <div className="flex items-center gap-4 w-full lg:w-1/4 pt-4 lg:pt-0 lg:px-6 justify-center lg:justify-start">
+                    <Banknote className="w-7 h-7 text-[#5A5A5A] shrink-0" strokeWidth={1.5} />
+                    <div><h4 className="text-[13px] font-bold text-[#333333]">COD Available</h4><p className="text-[11px] text-[#7A7A7A] mt-0.5">Pay on Delivery</p></div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+      )}
+    </>
+  );
+}
+
+export function HomeCategoryGrid({ context = {} }) {
+  const { shopCategories, onNavigate, onAddToCart, onAddToWishlist, user } = context;
+  
+  const [cmsSections, setCmsSections] = useState([]);
+  const [activeSection, setActiveSection] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const [catPrev, setCatPrev] = useState(null);
+  const [catNext, setCatNext] = useState(null);
+
+  useEffect(() => {
+    cmsService.getCategoryGrids()
+      .then((res) => {
+        const sections = (res.data || []).filter((item) => item.status !== false).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+        setCmsSections(sections);
+        if (sections.length) setActiveSection(sections[0]);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const activeProducts = Array.isArray(activeSection?.products) ? activeSection.products : [];
+  const activeImage = activeSection?.images?.find((image) => image.isThumbnail)?.url || activeSection?.images?.[0]?.url || '';
+  const animationVariant = activeSection?.animation === 'slide' ? { initial: { opacity: 0, x: 24 }, animate: { opacity: 1, x: 0 } } : activeSection?.animation === 'zoom' ? { initial: { opacity: 0, scale: 0.96 }, animate: { opacity: 1, scale: 1 } } : { initial: { opacity: 0, y: 15 }, animate: { opacity: 1, y: 0 } };
+
+  return (
+    <>
+      {/* SHOP BY CATEGORIES (Top slider) */}
+      {shopCategories && shopCategories.length > 0 && (
+        <section className="py-16 overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <motion.div className="flex items-center justify-center gap-4 mb-12" initial={{ opacity: 0, y: -30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: false, amount: 0.5 }} transition={{ duration: 0.6, ease: 'easeOut' }}>
+              <svg width="40" height="20" viewBox="0 0 40 20" fill="none" className="text-[#D4C3A3]"><path d="M2 10C10 10 18 5 28 10C32 12 36 12 38 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8" /><path d="M24 8C21 2 15 2 15 10C21 10 24 8 24 8Z" fill="currentColor" opacity="0.5" /></svg>
+              <h2 className="text-3xl font-serif text-[#B0611C] tracking-wide">Shop by Categories</h2>
+              <svg width="40" height="20" viewBox="0 0 40 20" fill="none" className="text-[#D4C3A3] transform scale-x-[-1]"><path d="M2 10C10 10 18 5 28 10C32 12 36 12 38 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8" /><path d="M24 8C21 2 15 2 15 10C21 10 24 8 24 8Z" fill="currentColor" opacity="0.5" /></svg>
+            </motion.div>
+            <motion.div className="relative group px-10 md:px-14" initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.2 }} variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.12 } } }}>
+              {catNext && catPrev ? (
+                <Swiper
+                  modules={[Navigation]}
+                  navigation={{ nextEl: catNext, prevEl: catPrev }}
+                  spaceBetween={24}
+                  slidesPerView={1}
+                  breakpoints={{ 480: { slidesPerView: 2 }, 768: { slidesPerView: 3 }, 1024: { slidesPerView: 4 }, 1280: { slidesPerView: 4 } }}
+                >
+                  {shopCategories.map((cat, i) => (
+                    <SwiperSlide key={i}>
+                      <motion.div variants={{ hidden: { opacity: 0, x: -80 }, visible: { opacity: 1, x: 0, transition: { duration: 0.55, ease: 'easeOut' } } }} onClick={() => { const catId = cat._id || cat.id; onNavigate(catId ? `/shop?category=${catId}` : `/shop`); }} className="group cursor-pointer flex flex-col rounded-[24px] border border-[#E9DED3] bg-white overflow-hidden shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md max-w-[260px] mx-auto sm:max-w-none">
+                        <div className="aspect-square w-full overflow-hidden">
+                          <img src={(typeof cat.image === 'object' ? cat.image?.url : cat.image) || (typeof cat.imageUrl === 'object' ? cat.imageUrl?.url : cat.imageUrl)} alt={cat.title || cat.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" onError={e => { e.target.src = '/wood-placeholder.png'; }} />
+                        </div>
+                        <div className="flex flex-col items-center justify-center py-3 text-center">
+                          <h3 className="text-sm font-bold text-[#141225] mb-1">{cat.title || cat.name}</h3>
+                          <p className="text-[11px] text-[#8A817C]">View All</p>
+                        </div>
+                      </motion.div>
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
+              ) : (
+                <div className="w-full h-[250px] flex gap-6 overflow-hidden">
+                  <div className="flex-1 bg-gray-100 rounded-3xl animate-pulse" />
+                  <div className="hidden md:block flex-1 bg-gray-100 rounded-3xl animate-pulse" />
+                  <div className="hidden lg:block flex-1 bg-gray-100 rounded-3xl animate-pulse" />
+                </div>
+              )}
+              <button ref={setCatPrev} type="button" className="cat-prev absolute top-1/2 left-0 z-10 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-[#767676] hover:bg-[#555555] text-white rounded-full transition-colors shadow-md"><ChevronLeft className="w-5 h-5" /></button>
+              <button ref={setCatNext} type="button" className="cat-next absolute top-1/2 right-0 z-10 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-[#767676] hover:bg-[#555555] text-white rounded-full transition-colors shadow-md"><ChevronRight className="w-5 h-5" /></button>
+            </motion.div>
+          </div>
+        </section>
+      )}
+
+      {/* CATEGORY PRODUCTS (Left nav, right products) */}
+      {!loading && cmsSections.length > 0 && (
+        <section className="py-16 border-y border-[#EFE5DA]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
+              <motion.div variants={fadeUp} className="flex justify-between items-end mb-8">
+                <div>
+                  <h2 className="text-xl font-bold tracking-tight text-brand-dark">Shop by Category</h2>
+                  <p className="text-xs text-brand-medium mt-1">Tap a category to explore.</p>
+                </div>
+                <button onClick={() => onNavigate('/shop')} className="text-[10px] font-bold uppercase tracking-widest text-brand-medium hover:text-brand-dark">View All &gt;</button>
+              </motion.div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] gap-6">
+                <div className="space-y-3">
+                  {cmsSections.map((section) => (
+                    <button
+                      key={section._id}
+                      onClick={() => setActiveSection(section)}
+                      className={`w-full rounded-2xl border p-4 text-left transition-all ${activeSection?._id === section._id ? 'bg-brand-dark text-white border-brand-dark shadow' : 'bg-[#FDFCFB] border-[#E6DFD4] text-brand-dark hover:border-brand-dark'}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="h-14 w-14 overflow-hidden rounded-xl bg-[#F7F3EE] shrink-0">
+                          {section.images?.[0]?.url ? <img src={section.images[0].url} alt={section.title} className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center text-[10px] text-brand-medium">IMG</div>}
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold">{section.title}</p>
+                          <p className="text-xs mt-1 opacity-80">{section.category?.name || 'Category'}</p>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeSection?._id}
+                    initial={animationVariant.initial}
+                    animate={animationVariant.animate}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3 }}
+                    className="grid grid-cols-1 md:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] gap-6 rounded-3xl border border-[#E6DFD4] bg-[#FDFCFB] p-4 sm:p-6"
+                  >
+                    <div className="relative overflow-hidden rounded-2xl bg-[#F7F3EE] min-h-[250px]">
+                      {activeSection?.images?.length ? (
+                        <div className="absolute inset-0">
+                          <motion.img
+                            key={activeImage}
+                            src={activeImage}
+                            alt={activeSection.title}
+                            className="w-full h-full object-cover"
+                            initial={{ opacity: 0, scale: 1.03 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.35 }}
+                          />
+                        </div>
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center text-brand-medium">No image</div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                      <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
+                        <p className="text-xs uppercase tracking-[0.3em] opacity-80">{activeSection?.category?.name || 'Featured'}</p>
+                        <h3 className="text-xl font-semibold mt-2">{activeSection?.title}</h3>
+                        {activeSection?.ctaText && (
+                          <button onClick={() => activeSection?.ctaUrl && onNavigate(activeSection.ctaUrl)} className="mt-4 inline-flex items-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-brand-dark">
+                            {activeSection.ctaText}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-semibold text-brand-dark">{activeSection?.category?.name || 'Category Products'}</p>
+                          <p className="text-xs text-brand-medium">{activeProducts.length} products in this collection</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-3 sm:gap-4">
+                        {activeProducts.length ? activeProducts.slice(0, 4).map((product) => (
+                          <div key={product._id} className="h-full">
+                            <ProductCard product={product} onNavigate={onNavigate} onAddToCart={onAddToCart} onAddToWishlist={onAddToWishlist} user={user} />
+                          </div>
+                        )) : <div className="col-span-2 rounded-xl border border-dashed border-[#E6DFD4] p-6 text-sm text-brand-medium">No products selected for this category yet.</div>}
+                      </div>
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+      )}
+    </>
+  );
+}

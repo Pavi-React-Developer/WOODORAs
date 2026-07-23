@@ -132,7 +132,7 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
     }
 
     // Product and Gift Fees
-    if (item.isGift) {
+    if (item.isGift && item.isGiftWrapper !== false) {
       // Gift Fee
       const gRule = giftBoxRules.find(r => r.isActive && volume >= r.minVolume && volume <= r.maxVolume);
       if (gRule) {
@@ -142,7 +142,7 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
          dynamicGiftBoxFee += (Number(item.giftBox.giftFee) * item.qty);
       }
     } else {
-      // Product Fee (only applies if NOT a gift)
+      // Product Fee (only applies if NOT a gift, or if gift wrapper is inactive)
       const pRule = productFeeRules.find(r => r.isActive && volume >= r.minVolume && volume <= r.maxVolume);
       if (pRule) {
         dynamicProductFee += (pRule.fee * item.qty);
@@ -316,6 +316,14 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
     try {
       setLoading(true);
       
+      const giftItem = cartItems.find(item => item.isGift) || {};
+      const giftProps = {
+        isGiftOrder: cartItems.some(item => item.isGift),
+        giftMessage: giftItem.giftMessage || '',
+        giftMessageStyle: giftItem.giftCardStyle || '',
+        giftWrapFee: appliedFees.find(f => f.name === 'Gift Box Fee')?.amount || 0,
+      };
+
       const orderData = {
         orderItems: cartItems.map(item => ({
           name: item.variantOptions ? `${item.name} (${item.variantOptions})` : item.name,
@@ -324,7 +332,9 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
           price: item.price,
           product: item.product,
           variant: item.variant,
-          weight: item.weight
+          weight: item.weight,
+          isGift: item.isGift,
+          giftMessage: item.giftMessage
         })),
         shippingAddress,
         paymentMethod,
@@ -630,7 +640,7 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
                         <div className="mt-1">
                           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#FFF0E6] text-[#D95F24] text-[10px] font-bold tracking-wider">
                             <Gift className="w-3 h-3" />
-                            GIFT & CARD
+                            GIFT & CARD {item.isGiftWrapper === false ? '(NO WRAPPER)' : ''}
                           </span>
                         </div>
                       )}

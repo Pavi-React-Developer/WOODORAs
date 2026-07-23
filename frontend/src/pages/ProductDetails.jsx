@@ -668,33 +668,33 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
             <div className="rounded-[2.5rem] bg-white p-6 sm:p-8 md:p-10 shadow-sm border border-slate-100 relative h-fit min-w-0 w-full">
 
               {/* Wishlist and Share absolute top right */}
-              <div className="absolute top-10 right-10 flex gap-3">
+              <div className="absolute top-4 right-4 sm:top-8 sm:right-8 md:top-10 md:right-10 flex gap-2 sm:gap-3 z-10">
                 <button
                   type="button"
                   onClick={() => handleAction('Wishlist')}
-                  className="flex h-12 w-12 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 transition hover:bg-[#FDF9F1] hover:text-[#8B5E3C] hover:border-[#8B5E3C]"
+                  className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 transition hover:bg-[#FDF9F1] hover:text-[#8B5E3C] hover:border-[#8B5E3C] shadow-sm"
                   aria-label="Add to Wishlist"
                   title="Add to Wishlist"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                   </svg>
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowSharePopup(true)}
-                  className="flex h-12 w-12 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 transition hover:bg-[#FDF9F1] hover:text-[#8B5E3C] hover:border-[#8B5E3C]"
+                  className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 transition hover:bg-[#FDF9F1] hover:text-[#8B5E3C] hover:border-[#8B5E3C] shadow-sm"
                   aria-label="Share Product"
                   title="Share"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                   </svg>
                 </button>
               </div>
 
               {/* Title & Starting From */}
-              <div className="pr-32">
+              <div className="pr-24 sm:pr-32">
                 <p className="text-[11px] font-medium uppercase tracking-[0.25em] text-[#B0611C] mb-4">{product.name}</p>
 
                 <div className="flex flex-col gap-2 mb-8">
@@ -705,19 +705,19 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
 
                     return (
                       <>
-                        <div className="flex items-center gap-4 mt-1">
-                          <p className="text-[2.5rem] font-medium tracking-tight text-[#333333] leading-none">
+                        <div className="flex flex-wrap items-baseline gap-2 sm:gap-4 mt-1">
+                          <p className="text-[2rem] sm:text-[2.5rem] font-medium tracking-tight text-[#333333] leading-none">
                             ₹{(pricing.salePrice * quantity).toFixed(2)}
                           </p>
                           {pricing.hasDiscount && (
-                            <>
-                              <span className="text-xl text-[#999999] line-through">
+                            <div className="flex items-center gap-2 sm:gap-4">
+                              <span className="text-lg sm:text-xl text-[#999999] line-through shrink-0">
                                 ₹{(pricing.listPrice * quantity).toFixed(2)}
                               </span>
-                              <span className="inline-flex items-center rounded-full bg-[#B1621F]/15 px-2.5 py-0.5 text-xs font-semibold text-[#B1621F]">
+                              <span className="inline-flex items-center rounded-full bg-[#B1621F]/15 px-2.5 py-0.5 text-xs font-semibold text-[#B1621F] shrink-0 whitespace-nowrap">
                                 -{pricing.discountPercent}%
                               </span>
-                            </>
+                            </div>
                           )}
                         </div>
                       </>

@@ -23,6 +23,7 @@ import CouponManagementPage from './admin/coupons/CouponManagementPage';
 import HomePageCMS from './admin/CMS/HomePageCMS';
 import BulkOrdersAdminPage from './admin/BulkOrdersAdminPage';
 import GiftAndCardAdminPage from './admin/GiftAndCardAdminPage';
+import CustomizeAdminPage from './admin/customize/CustomizeAdminPage';
 
 const adminRouteState = {
   '/admin': { tab: 'dashboard' },
@@ -48,6 +49,8 @@ const adminRouteState = {
   '/admin/refunds': { tab: 'refund', refundSubTab: 'list', refundMenuOpen: true },
   '/admin/bulk-orders': { tab: 'bulk-orders' },
   '/admin/gift-and-card': { tab: 'gift_and_card' },
+  '/admin/customize': { tab: 'customize_order', customizeSubTab: 'list', customizeMenuOpen: true },
+  '/admin/customize/add': { tab: 'customize_order', customizeSubTab: 'add', customizeMenuOpen: true },
 };
 
 const adminTabPaths = {
@@ -69,6 +72,7 @@ const adminTabPaths = {
   refund: '/admin/refunds',
   'bulk-orders': '/admin/bulk-orders',
   'gift_and_card': '/admin/gift-and-card',
+  'customize_order': '/admin/customize',
 };
 
 export default function AdminDashboard({ user, onNavigate, onLogout }) {
@@ -109,6 +113,10 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
   // Gift & Card Management state
   const [giftAndCardMenuOpen, setGiftAndCardMenuOpen] = useState(false);
   const [giftAndCardSubTab, setGiftAndCardSubTab] = useState('rules');
+
+  // Customize Management state
+  const [customizeMenuOpen, setCustomizeMenuOpen] = useState(false);
+  const [customizeSubTab, setCustomizeSubTab] = useState('list');
 
   // Dynamic permissions for sidebar
   const [userPermissions, setUserPermissions] = useState(null); // null = not loaded yet
@@ -198,6 +206,10 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
     if (options.inventoryMenuOpen !== undefined) setInventoryMenuOpen(options.inventoryMenuOpen);
     if (options.customerMenuOpen !== undefined) setCustomerMenuOpen(options.customerMenuOpen);
     if (options.feeMenuOpen !== undefined) setFeeMenuOpen(options.feeMenuOpen);
+    if (options.refundMenuOpen !== undefined) setRefundMenuOpen(options.refundMenuOpen);
+    if (options.giftAndCardMenuOpen !== undefined) setGiftAndCardMenuOpen(options.giftAndCardMenuOpen);
+    if (options.customizeSubTab) setCustomizeSubTab(options.customizeSubTab);
+    if (options.customizeMenuOpen !== undefined) setCustomizeMenuOpen(options.customizeMenuOpen);
     if (options.refundMenuOpen !== undefined) setRefundMenuOpen(options.refundMenuOpen);
     if (options.giftAndCardMenuOpen !== undefined) setGiftAndCardMenuOpen(options.giftAndCardMenuOpen);
     if (options.giftAndCardSubTab !== undefined) setGiftAndCardSubTab(options.giftAndCardSubTab);
@@ -864,6 +876,46 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                     >
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
                       Gift Orders
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Customize Order Management */}
+            {(isAdmin || canView('customize_order')) && (
+              <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
+                <button
+                  onClick={() => setCustomizeMenuOpen(o => !o)}
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${
+                    currentTab === 'customize_order' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                  }`}
+                >
+                  <span className="flex items-center gap-2.5">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                    Customize Order
+                  </span>
+                  <svg className={`w-3.5 h-3.5 transition-transform ${customizeMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                </button>
+                {customizeMenuOpen && (
+                  <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
+                    <button
+                      onClick={() => openAdminTab('customize_order', { customizeSubTab: 'list', customizeMenuOpen: true })}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
+                        currentTab === 'customize_order' && customizeSubTab === 'list' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                      }`}
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                      Customize List
+                    </button>
+                    <button
+                      onClick={() => openAdminTab('customize_order', { customizeSubTab: 'add', customizeMenuOpen: true })}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
+                        currentTab === 'customize_order' && customizeSubTab === 'add' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                      }`}
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                      Add Customize
                     </button>
                   </div>
                 )}
@@ -2241,6 +2293,11 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
           {/* ── GIFT & CARD MANAGEMENT ── */}
           {(isAdmin || canView('gift_and_card')) && currentTab === 'gift_and_card' && (
             <GiftAndCardAdminPage activeSubTab={giftAndCardSubTab} />
+          )}
+
+          {/* ── CUSTOMIZE ORDER MANAGEMENT ── */}
+          {(isAdmin || canView('customize_order')) && currentTab === 'customize_order' && (
+            <CustomizeAdminPage activeSubTab={customizeSubTab} />
           )}
 
         </div>

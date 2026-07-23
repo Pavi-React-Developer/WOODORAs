@@ -320,8 +320,8 @@ function ReviewCard({ review, user, onVote, onOpenImage }) {
       </div>
 
       {/* Title + Description */}
-      {review.title && <h4 className="font-bold text-[#141225] text-sm">{review.title}</h4>}
-      {review.description && <p className="text-sm text-[#6D625C] leading-relaxed">{review.description}</p>}
+      {review.title && <h4 className="font-bold text-[#141225] text-sm break-all">{review.title}</h4>}
+      {review.description && <p className="text-sm text-[#6D625C] leading-relaxed break-all whitespace-pre-wrap">{review.description}</p>}
 
       {/* Images */}
       {review.images?.length > 0 && (
@@ -538,7 +538,7 @@ export default function ProductReviewSection({ product, user }) {
 
 
         {/* ── CUSTOMER REVIEWS ── */}
-        <div className="flex h-full flex-col">
+        <div className="flex h-full flex-col min-w-0 overflow-hidden">
           <div className="flex items-center justify-end mb-4 flex-wrap gap-3">
             <div className="flex items-center gap-2">
               {hasReviewSlider && (

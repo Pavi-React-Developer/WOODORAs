@@ -15,6 +15,7 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
   const [style, setStyle] = useState('Classic');
   const [selectedDate, setSelectedDate] = useState('');
   const [showCalendar, setShowCalendar] = useState(false);
+  const [isGiftWrapper, setIsGiftWrapper] = useState(true);
 
   // Product Selection States
   const [categories, setCategories] = useState([]);
@@ -102,6 +103,7 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
     selectedProduct.giftMessageStyle = style;
     selectedProduct.scheduledDeliveryDate = selectedDate;
     selectedProduct.isGift = true;
+    selectedProduct.isGiftWrapper = isGiftWrapper;
     
     // Add product to cart and navigate
     if (onAddToCart && onNavigate) {
@@ -257,6 +259,19 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
             <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">TOUCH OF THOUGHT</p>
             <h3 className="text-xl font-semibold text-gray-900 mb-4">Personalized Message</h3>
             
+            <div className="mb-6 flex items-center justify-between bg-gray-50 p-4 rounded-sm border border-gray-100">
+              <div>
+                <p className="text-sm font-bold text-gray-900">Gift Wrapper</p>
+                <p className="text-xs text-gray-500">Add premium wrapping and gift box</p>
+              </div>
+              <button 
+                onClick={() => setIsGiftWrapper(!isGiftWrapper)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isGiftWrapper ? 'bg-black' : 'bg-gray-300'}`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isGiftWrapper ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+            </div>
+
             <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">YOUR NOTE</label>
             <textarea
               rows="3"
@@ -301,30 +316,32 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
                 />
               </div>
 
-              <div className="flex-1 relative">
+              <div className="flex-1">
                 <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Delivery Date</label>
-                <div 
-                  className="w-full border border-gray-200 p-3 text-sm bg-white cursor-pointer hover:border-gray-300 rounded-sm flex justify-between items-center"
-                  onClick={() => setShowCalendar(!showCalendar)}
-                >
-                  <span className={selectedDate ? "text-gray-900" : "text-gray-400"}>
-                    {selectedDate ? new Date(selectedDate).toLocaleDateString('en-GB') : 'Select a date'}
-                  </span>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-
-                {showCalendar && (
-                  <div className="absolute top-full left-0 mt-1 w-[320px] z-50 shadow-xl rounded-lg bg-white border border-gray-100 right-0 md:right-auto origin-top-left">
-                    <CustomCalendar 
-                      selectedDate={selectedDate} 
-                      onSelectDate={handleDateSelect} 
-                      config={config} 
-                      isAdminMode={false} 
-                    />
+                <div className="relative">
+                  <div 
+                    className="w-full border border-gray-200 p-3 text-sm bg-white cursor-pointer hover:border-gray-300 rounded-sm flex justify-between items-center"
+                    onClick={() => setShowCalendar(!showCalendar)}
+                  >
+                    <span className={selectedDate ? "text-gray-900" : "text-gray-400"}>
+                      {selectedDate ? new Date(selectedDate).toLocaleDateString('en-GB') : 'Select a date'}
+                    </span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
                   </div>
-                )}
+
+                  {showCalendar && (
+                    <div className="absolute top-full mt-1 w-[280px] sm:w-[320px] z-50 shadow-xl rounded-lg bg-white border border-gray-100 right-0 origin-top-right">
+                      <CustomCalendar 
+                        selectedDate={selectedDate} 
+                        onSelectDate={handleDateSelect} 
+                        config={config} 
+                        isAdminMode={false} 
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 

@@ -191,14 +191,22 @@ export default function Header({
 
               if (titleLower === 'gift & card') {
                 return (
-                  <button
-                    key={item._id || `nav-${idx}`}
-                    type="button"
-                    onClick={() => onNavigate('/gift-and-card')}
-                    className="text-[15px] font-medium text-[#B0611C] hover:opacity-80 whitespace-nowrap"
-                  >
-                    {item.title}
-                  </button>
+                  <React.Fragment key={item._id || `nav-${idx}`}>
+                    <button
+                      type="button"
+                      onClick={() => onNavigate('/gift-and-card')}
+                      className="text-[15px] font-medium text-[#B0611C] hover:opacity-80 whitespace-nowrap"
+                    >
+                      {item.title}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onNavigate('/customize')}
+                      className="text-[15px] font-medium text-[#B0611C] hover:opacity-80 whitespace-nowrap"
+                    >
+                      Customize
+                    </button>
+                  </React.Fragment>
                 );
               }
 
@@ -300,6 +308,9 @@ export default function Header({
               </button>
               <button type="button" onClick={() => onNavigate('/gift-and-card')} className="text-[15px] font-medium text-[#B0611C] hover:opacity-80 whitespace-nowrap">
                 Gift & Card
+              </button>
+              <button type="button" onClick={() => onNavigate('/customize')} className="text-[15px] font-medium text-[#B0611C] hover:opacity-80 whitespace-nowrap">
+                Customize
               </button>
             </>
           )}
@@ -574,17 +585,22 @@ export default function Header({
 
               if (titleLower === 'gift & card') {
                 return (
-                  <button
-                    key={item._id || `mobile-nav-${idx}`}
-                    type="button"
-                    onClick={() => {
-                      onNavigate('/gift-and-card');
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="block w-full text-left text-lg font-medium text-[#4A3326]"
-                  >
-                    {item.title}
-                  </button>
+                  <React.Fragment key={item._id || `nav-mobile-${idx}`}>
+                    <button
+                      type="button"
+                      onClick={() => { onNavigate('/gift-and-card'); setIsMobileMenuOpen(false); }}
+                      className="block w-full text-left py-2 text-base font-medium text-[#4A403B]"
+                    >
+                      {item.title}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { onNavigate('/customize'); setIsMobileMenuOpen(false); }}
+                      className="block w-full text-left py-2 text-base font-medium text-[#4A403B]"
+                    >
+                      Customize
+                    </button>
+                  </React.Fragment>
                 );
               }
 
@@ -646,8 +662,11 @@ export default function Header({
               <button type="button" onClick={() => { onNavigate('/bulk-orders'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-lg font-medium text-[#4A3326]">
                 Bulk Orders
               </button>
-              <button type="button" onClick={() => { onNavigate('/gift-and-card'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-lg font-medium text-[#4A3326]">
+              <button type="button" onClick={() => { onNavigate('/gift-and-card'); setMobileMenuOpen(false); }} className="block w-full text-left py-2 text-base font-medium text-[#4A403B]">
                 Gift & Card
+              </button>
+              <button type="button" onClick={() => { onNavigate('/customize'); setMobileMenuOpen(false); }} className="block w-full text-left py-2 text-base font-medium text-[#4A403B]">
+                Customize
               </button>
             </>
           )}
