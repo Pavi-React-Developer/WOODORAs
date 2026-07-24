@@ -6,7 +6,7 @@ import { Eye, X, Edit2, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react';
 import { getImageSrc } from '../../utils/imageUtils';
 import EditGiftBoxRulePage from './fees/EditGiftBoxRulePage';
 
-export default function GiftAndCardAdminPage({ activeSubTab = 'rules' }) {
+export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate = true, canEdit = true, canDelete = true }) {
   const [activeTab, setActiveTab] = useState(activeSubTab);
 
   useEffect(() => {
@@ -123,22 +123,7 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules' }) {
         <h1 className="text-2xl font-bold text-[#4A403B]">Gift & Card Management</h1>
       </div>
 
-      <div className="mb-6 border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
-          {['rules', 'messages', 'orders', 'gift-fee'].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`${activeTab === tab
-                ? 'border-[#B0611C] text-[#B0611C]'
-                : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                } whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium capitalize`}
-            >
-              {tab === 'rules' ? 'Delivery Rules' : tab === 'messages' ? 'Personalized Messages' : tab === 'orders' ? 'Gift Orders' : 'Gift Fee'}
-            </button>
-          ))}
-        </nav>
-      </div>
+
 
       {activeTab === 'rules' && (
         <div className="max-w-2xl bg-white p-6 shadow rounded-md">
@@ -146,6 +131,7 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules' }) {
           <CustomCalendar
             config={config}
             isAdminMode={true}
+            canEdit={canEdit}
             onToggleAdminDate={handleToggleAdminDate}
           />
         </div>
@@ -166,6 +152,7 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules' }) {
               <h2 className="text-lg font-medium text-gray-900 mb-4">Dynamic Gift Box Rules</h2>
               <p className="text-sm text-gray-500 mb-6">Configure dynamic volume ranges (Min Volume and Max Volume in cm³) to determine Box Size and Fee.</p>
               
+              {canCreate && (
               <div className="bg-gray-50 p-4 rounded border border-gray-200 mb-6">
                 <h3 className="text-sm font-semibold text-gray-700 mb-4">Add New Rule</h3>
             <form onSubmit={async (e) => {
@@ -227,6 +214,7 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules' }) {
               </div>
             </form>
           </div>
+          )}
 
           <table className="min-w-full divide-y divide-gray-200 border rounded overflow-hidden">
             <thead className="bg-gray-50">
@@ -252,30 +240,35 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules' }) {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-center flex justify-center gap-3">
-                    <button onClick={() => {
-                      setEditingRuleId(rule._id);
-                      setFormData({
-                        minVolume: rule.minVolume,
-                        maxVolume: rule.maxVolume,
-                        boxSize: rule.boxSize,
-                        fee: rule.fee,
-                        isActive: rule.isActive
-                      });
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }} className="text-gray-400 hover:text-blue-500 transition-colors" title="Edit Rule">
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button onClick={async () => {
-                      try {
-                        await adminService.updateGiftBoxRule(rule._id, { isActive: !rule.isActive });
-                        toast.success(`Rule ${rule.isActive ? 'deactivated' : 'activated'}`);
-                        fetchGiftBoxRules();
-                      } catch (e) {
-                        toast.error('Failed to update status');
-                      }
-                    }} className={`transition-colors ${rule.isActive ? 'text-green-500 hover:text-green-600' : 'text-gray-400 hover:text-gray-500'}`} title={rule.isActive ? 'Deactivate' : 'Activate'}>
-                      {rule.isActive ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
-                    </button>
+                    {canEdit && (
+                      <>
+                        <button onClick={() => {
+                          setEditingRuleId(rule._id);
+                          setFormData({
+                            minVolume: rule.minVolume,
+                            maxVolume: rule.maxVolume,
+                            boxSize: rule.boxSize,
+                            fee: rule.fee,
+                            isActive: rule.isActive
+                          });
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }} className="text-gray-400 hover:text-blue-500 transition-colors" title="Edit Rule">
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button onClick={async () => {
+                          try {
+                            await adminService.updateGiftBoxRule(rule._id, { isActive: !rule.isActive });
+                            toast.success(`Rule ${rule.isActive ? 'deactivated' : 'activated'}`);
+                            fetchGiftBoxRules();
+                          } catch (e) {
+                            toast.error('Failed to update status');
+                          }
+                        }} className={`transition-colors ${rule.isActive ? 'text-green-500 hover:text-green-600' : 'text-gray-400 hover:text-gray-500'}`} title={rule.isActive ? 'Deactivate' : 'Activate'}>
+                          {rule.isActive ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
+                        </button>
+                      </>
+                    )}
+                    {canDelete && (
                     <button onClick={async () => {
                       if (!window.confirm('Are you sure you want to delete this rule?')) return;
                       try {
@@ -288,6 +281,7 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules' }) {
                     }} className="text-gray-400 hover:text-red-500 transition-colors" title="Delete Rule">
                       <Trash2 className="w-4 h-4" />
                     </button>
+                    )}
                   </td>
                 </tr>
               ))}

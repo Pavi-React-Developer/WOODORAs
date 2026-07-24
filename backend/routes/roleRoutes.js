@@ -7,5 +7,6 @@ const adminOnly = [protect, authorize('admin')];
 
 router.get('/', ...adminOnly, getRoles);
 router.post('/', ...adminOnly, createRole);
+router.delete('/:id', ...adminOnly, require('../controllers/roleController').deleteRole);
 
 module.exports = router;

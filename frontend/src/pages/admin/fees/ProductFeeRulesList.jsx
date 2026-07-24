@@ -4,7 +4,7 @@ import { adminService } from '../../../api/adminService';
 import toast from 'react-hot-toast';
 import EditProductFeeRulePage from './EditProductFeeRulePage';
 
-export default function ProductFeeRulesList({ onBack }) {
+export default function ProductFeeRulesList({ onBack, canCreate = true, canEdit = true, canDelete = true }) {
   const [rules, setRules] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -97,13 +97,13 @@ export default function ProductFeeRulesList({ onBack }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4 border-b border-[#E6DFD4] pb-4">
-        <button onClick={onBack} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-          <ArrowLeft size={20} />
+      <div className="flex items-center gap-3 mb-6">
+        <button onClick={onBack} className="p-2 hover:bg-[#E6DFD4] rounded-full transition-colors text-[#4A3326]">
+          <ArrowLeft size={24} />
         </button>
         <div>
-          <h2 className="text-2xl font-bold text-brand-dark font-serif">Product Fees</h2>
-          <p className="text-sm text-brand-medium">Manage volume-based product fee rules</p>
+          <h2 className="text-3xl font-bold text-[#4A3326] font-serif">Product Fees</h2>
+          <p className="text-[#8A817C] mt-1">Manage volume-based product fee rules</p>
         </div>
       </div>
 
@@ -113,8 +113,9 @@ export default function ProductFeeRulesList({ onBack }) {
           Configure dynamic product fees based on Min Volume and Max Volume (cm³).
         </p>
 
-        <div className="bg-gray-50 p-4 rounded border border-gray-200 mb-6">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">Add New Rule</h3>
+        {canCreate && (
+        <div className="bg-white p-5 rounded-lg border border-[#E6DFD4] mb-8">
+          <h3 className="text-[15px] font-bold text-[#4A3326] mb-4">Add New Rule</h3>
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-2 md:grid-cols-6 gap-4 items-end">
               <div>
@@ -141,17 +142,18 @@ export default function ProductFeeRulesList({ onBack }) {
                 </select>
               </div>
               <div>
-                <button type="submit" className="w-full bg-[#B0611C] text-white p-2 rounded text-sm font-medium hover:bg-[#8B5E3C] transition-colors">
+                <button type="submit" className="w-full bg-[#B0611C] text-white p-2.5 rounded font-bold hover:bg-[#8B5E3C] transition-colors shadow-sm">
                   Add Rule
                 </button>
               </div>
             </div>
           </form>
         </div>
+        )}
 
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 border rounded overflow-hidden">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200 border border-[#E6DFD4] rounded overflow-hidden">
+            <thead className="bg-[#F8F4EC]">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Min Vol (cm³)</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Max Vol (cm³)</th>
@@ -181,15 +183,21 @@ export default function ProductFeeRulesList({ onBack }) {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-center flex justify-center gap-3">
-                      <button onClick={() => handleEdit(rule)} className="text-gray-400 hover:text-blue-500 transition-colors" title="Edit Rule">
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => toggleStatus(rule)} className={`transition-colors ${rule.isActive ? 'text-green-500 hover:text-green-600' : 'text-gray-400 hover:text-gray-500'}`} title={rule.isActive ? 'Deactivate' : 'Activate'}>
-                        {rule.isActive ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
-                      </button>
+                      {canEdit && (
+                        <>
+                          <button onClick={() => handleEdit(rule)} className="text-gray-400 hover:text-blue-500 transition-colors" title="Edit Rule">
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => toggleStatus(rule)} className={`transition-colors ${rule.isActive ? 'text-green-500 hover:text-green-600' : 'text-gray-400 hover:text-gray-500'}`} title={rule.isActive ? 'Deactivate' : 'Activate'}>
+                            {rule.isActive ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
+                          </button>
+                        </>
+                      )}
+                      {canDelete && (
                       <button onClick={() => handleDelete(rule._id)} className="text-gray-400 hover:text-red-500 transition-colors" title="Delete Rule">
                         <Trash2 className="w-4 h-4" />
                       </button>
+                      )}
                     </td>
                   </tr>
                 ))

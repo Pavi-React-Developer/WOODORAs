@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { staffAPI } from '../../api/staffService';
 import { roleAPI } from '../../api/roleService';
 import { ADMIN_MODULES } from '../../config/adminModules';
+import { X, ChevronDown } from 'lucide-react';
 
 const ACTIONS = ['view', 'create', 'edit', 'delete'];
 
@@ -51,12 +52,37 @@ const PermissionTable = ({ modules, permissions, onToggle, onToggleRow, onToggle
         <thead className="bg-[#F8F4EC]">
           <tr>
             <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 w-48">Module</th>
-            {ACTIONS.map(action => (
-              <th key={action} className="px-5 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-gray-500">
-                <button onClick={() => onToggleColumn(action)} type="button" className="hover:text-[#8B5E3C] transition-colors capitalize">{action}</button>
-              </th>
-            ))}
-            <th className="px-5 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-gray-500">All</th>
+            {ACTIONS.map(action => {
+              const allowedModules = visibleModules.filter((m) => canToggleActionForModule(m.key || m, action));
+              const allChecked = allowedModules.length > 0 && allowedModules.every(mod => permissions[mod.key || mod]?.[action]);
+              return (
+                <th key={action} className="px-5 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-gray-500">
+                  <div className="flex items-center justify-center gap-2 cursor-pointer" onClick={() => onToggleColumn(action)}>
+                    <input 
+                      type="checkbox" 
+                      checked={allChecked} 
+                      readOnly
+                      className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer pointer-events-none"
+                    />
+                    <span className="capitalize hover:text-[#8B5E3C] transition-colors">{action}</span>
+                  </div>
+                </th>
+              );
+            })}
+            <th className="px-5 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-gray-500">
+              <div className="flex items-center justify-center gap-2 cursor-pointer" onClick={(e) => {
+                const allChecked = visibleModules.length > 0 && visibleModules.every(mod => ACTIONS.every(a => permissions[mod.key || mod]?.[a]));
+                allChecked ? onClearAll() : onSelectAll();
+              }}>
+                <input 
+                  type="checkbox" 
+                  checked={visibleModules.length > 0 && visibleModules.every(mod => ACTIONS.every(a => permissions[mod.key || mod]?.[a]))} 
+                  readOnly
+                  className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer pointer-events-none"
+                />
+                <span className="hover:text-[#8B5E3C] transition-colors">All</span>
+              </div>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -123,8 +149,49 @@ export default function AddStaffPage({ onBack, onSuccess, editingStaff, currentU
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [successStaff, setSuccessStaff] = useState(null);
   const [dynamicRoles, setDynamicRoles] = useState([]);
+  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
+  const roleDropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (roleDropdownRef.current && !roleDropdownRef.current.contains(event.target)) {
+        setIsRoleDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleDeleteRole = async (e, roleId) => {
+    e.stopPropagation();
+    if (window.confirm("Are you sure you want to delete this role?")) {
+      try {
+        await roleAPI.delete(roleId);
+        setDynamicRoles(prev => prev.filter(r => r._id !== roleId));
+        if (form.role === dynamicRoles.find(r => r._id === roleId)?.name) {
+          setForm(prev => ({ ...prev, role: '' }));
+        }
+      } catch(err) {
+        alert("Error deleting role: " + err.message);
+      }
+    }
+  };
+
+  const handleRoleChange = (roleName) => {
+    handleChange('role')({ target: { value: roleName } });
+    if (roleName) {
+      const selectedRole = dynamicRoles.find(r => r.name === roleName);
+      if (selectedRole && selectedRole.permissions) {
+        setStaffPerms(permsToMap(selectedRole.permissions, permissionModules));
+      } else {
+        setStaffPerms(initPerms(permissionModules));
+      }
+    } else {
+      setStaffPerms(initPerms(permissionModules));
+    }
+    setIsRoleDropdownOpen(false);
+  };
 
   const [permissionModules, setPermissionModules] = useState(ADMIN_MODULES);
   const [staffPerms, setStaffPerms] = useState(initPerms(ADMIN_MODULES));
@@ -146,6 +213,12 @@ export default function AddStaffPage({ onBack, onSuccess, editingStaff, currentU
           const enriched = filtered.map(m => {
             const local = ADMIN_MODULES.find(a => a.key === m.key);
             return { ...m, icon: local?.icon || m.icon || '' };
+          });
+          // Ensure all local frontend modules are also present
+          ADMIN_MODULES.forEach(localMod => {
+            if (!enriched.some(e => e.key === localMod.key)) {
+              enriched.push(localMod);
+            }
           });
           setPermissionModules(enriched);
           setStaffPerms(initPerms(enriched));
@@ -317,10 +390,48 @@ export default function AddStaffPage({ onBack, onSuccess, editingStaff, currentU
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <InputField label="Role Assignment" error={errors.role} required>
-              <select value={form.role} onChange={handleChange('role')} className={inputClass(errors.role)}>
-                <option value="">Select Role...</option>
-                {dynamicRoles.map(r => <option key={r._id} value={r.name}>{r.name}</option>)}
-              </select>
+              <div className="relative" ref={roleDropdownRef}>
+                <button 
+                  type="button" 
+                  onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
+                  className={`w-full flex items-center justify-between px-4 py-2.5 text-sm bg-white border rounded-xl focus:outline-none transition-colors ${errors.role ? 'border-red-400' : 'border-[#E6DFD4]'}`}
+                >
+                  <span className={form.role ? 'text-gray-900' : 'text-gray-500'}>
+                    {form.role || "Select Role..."}
+                  </span>
+                  <ChevronDown className="w-4 h-4 text-gray-500" />
+                </button>
+                {isRoleDropdownOpen && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-[#E6DFD4] rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                    <button
+                      type="button"
+                      className="w-full text-left px-4 py-2 text-sm text-gray-500 hover:bg-[#F8F4EC] transition-colors"
+                      onClick={() => handleRoleChange('')}
+                    >
+                      Select Role...
+                    </button>
+                    {dynamicRoles.map(r => (
+                      <div key={r._id} className="flex items-center justify-between px-4 py-2 hover:bg-[#F8F4EC] transition-colors">
+                        <button
+                          type="button"
+                          className="flex-1 text-left text-sm text-gray-900"
+                          onClick={() => handleRoleChange(r.name)}
+                        >
+                          {r.name}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => handleDeleteRole(e, r._id)}
+                          className="p-1 text-gray-400 hover:text-red-500 transition-colors bg-white rounded-full border border-gray-200"
+                          title="Delete Role"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </InputField>
             <InputField label="Status">
               <select value={form.status} onChange={handleChange('status')} className={inputClass(false)}>

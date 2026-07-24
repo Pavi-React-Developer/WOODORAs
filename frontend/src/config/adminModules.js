@@ -84,6 +84,16 @@ export const ADMIN_MODULES = [
     key: 'gift_and_card',
     label: 'Gift & Card',
     icon: '🎁',
+  },
+  {
+    key: 'customize_order',
+    label: 'Customize Order',
+    icon: '🎨',
+  },
+  {
+    key: 'cms',
+    label: 'CMS Management',
+    icon: '📝',
   }
 ];
 

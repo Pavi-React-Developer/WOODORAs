@@ -93,7 +93,12 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
   }
 
   if (showProductFees) {
-    return <ProductFeeRulesList onBack={() => setShowProductFees(false)} />;
+    return <ProductFeeRulesList 
+      onBack={() => setShowProductFees(false)} 
+      canCreate={canCreate}
+      canEdit={canEdit}
+      canDelete={canDelete}
+    />;
   }
 
   return (
@@ -104,11 +109,11 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
           <p className="text-sm text-brand-medium">Manage all configured fees</p>
         </div>
         <div className="flex justify-end gap-3 mb-4 flex-wrap">
-          <button onClick={() => setShowProductFees(true)} className="admin-btn bg-indigo-600 hover:bg-indigo-700">
-            <Package size={16} /> Product fee
-          </button>
           <button onClick={loadData} className="admin-secondary-btn">
             <RefreshCw size={16} /> Refresh
+          </button>
+          <button onClick={() => setShowProductFees(true)} className="admin-btn">
+            <Package size={16} /> Product Fee
           </button>
           {canCreate && (
             <button

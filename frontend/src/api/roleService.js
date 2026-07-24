@@ -40,4 +40,5 @@ const request = async (url, options = {}) => {
 export const roleAPI = {
   getAll: () => request(ROLE_URL),
   create: (data) => request(ROLE_URL, { method: 'POST', body: JSON.stringify(data) }),
+  delete: (id) => request(`${ROLE_URL}/${id}`, { method: 'DELETE' }),
 };

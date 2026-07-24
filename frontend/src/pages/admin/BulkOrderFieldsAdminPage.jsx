@@ -3,7 +3,7 @@ import { Plus, Edit2, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import { bulkOrderService } from '../../api/bulkOrderService';
 import { toast } from 'react-hot-toast';
 
-export default function BulkOrderFieldsAdminPage() {
+export default function BulkOrderFieldsAdminPage({ canCreate = true, canEdit = true, canDelete = true }) {
   const [fields, setFields] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -143,6 +143,7 @@ export default function BulkOrderFieldsAdminPage() {
           <h2 className="text-xl font-bold text-[#4A3326] font-serif">Bulk Order Form Fields</h2>
           <p className="text-sm text-[#8A817C] mt-1">Manage dynamic fields that appear on the bulk order submission form.</p>
         </div>
+        {canCreate && (
         <button 
           onClick={() => handleOpenModal()}
           className="flex items-center gap-2 bg-[#4A3326] hover:bg-[#3A281E] text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-sm"
@@ -150,6 +151,7 @@ export default function BulkOrderFieldsAdminPage() {
           <Plus className="w-4 h-4" />
           Add Field
         </button>
+        )}
       </div>
 
       <div className="overflow-x-auto">
@@ -197,6 +199,7 @@ export default function BulkOrderFieldsAdminPage() {
                     </span>
                   </td>
                   <td className="p-4 flex justify-end gap-2">
+                    {canEdit && (
                     <button 
                       onClick={() => handleOpenModal(field)}
                       className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
@@ -204,6 +207,8 @@ export default function BulkOrderFieldsAdminPage() {
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
+                    )}
+                    {canDelete && (
                     <button 
                       onClick={() => handleDelete(field._id)}
                       className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
@@ -211,6 +216,7 @@ export default function BulkOrderFieldsAdminPage() {
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
+                    )}
                   </td>
                 </tr>
               ))

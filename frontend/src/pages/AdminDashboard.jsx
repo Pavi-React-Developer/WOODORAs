@@ -14,6 +14,7 @@ import OrdersPage from './admin/OrdersPage';
 import { staffAPI } from '../api/staffService';
 import FeeListPage from './admin/fees/FeeListPage';
 import AddFeePage from './admin/fees/AddFeePage';
+import ProductFeeRulesList from './admin/fees/ProductFeeRulesList';
 import CancellationManagementPage from './admin/cancellations/CancellationManagementPage';
 import RefundManagementPage from './admin/refunds/RefundManagementPage';
 import InventoryManagement from './admin/inventory/InventoryManagement';
@@ -45,6 +46,7 @@ const adminRouteState = {
   '/admin/reviews': { tab: 'reviews' },
   '/admin/fees': { tab: 'fees', feeSubTab: 'list', feeMenuOpen: true },
   '/admin/fees/add': { tab: 'fees', feeSubTab: 'add', feeMenuOpen: true },
+  '/admin/fees/product-fees': { tab: 'fees', feeSubTab: 'product-fees', feeMenuOpen: true },
   '/admin/cancellations': { tab: 'cancellation' },
   '/admin/cancellations': { tab: 'cancellation' },
   '/admin/refunds': { tab: 'refund', refundSubTab: 'list', refundMenuOpen: true },
@@ -910,6 +912,15 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
                       Gift Orders
                     </button>
+                    <button
+                      onClick={() => openAdminTab('gift_and_card', { giftAndCardSubTab: 'gift-fee', giftAndCardMenuOpen: true })}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
+                        currentTab === 'gift_and_card' && giftAndCardSubTab === 'gift-fee' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                      }`}
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0a9 9 0 0118 0z" /></svg>
+                      Gift Fee
+                    </button>
                   </div>
                 )}
               </div>
@@ -1018,7 +1029,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
             )}
 
             {/* CMS Management */}
-            {isAdmin && (
+            {(isAdmin || canView('cms')) && (
               <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
                 <button
                   onClick={() => openAdminTab('cms')}
@@ -1099,6 +1110,15 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                       Add New Fee
                     </button>
                     )}
+                    <button
+                      onClick={() => openAdminTab('fees', { feeSubTab: 'product-fees', feeMenuOpen: true, path: '/admin/fees/product-fees' })}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
+                        currentTab === 'fees' && feeSubTab === 'product-fees' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                      }`}
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+                      Product Fees
+                    </button>
                   </div>
                 )}
               </div>
@@ -2271,10 +2291,19 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
               editingFee={editingFee} 
             />
           )}
+          {(isAdmin || canView('fees')) && currentTab === 'fees' && feeSubTab === 'product-fees' && (
+            <ProductFeeRulesList 
+              onBack={() => setFeeSubTab('list')} 
+              canCreate={isAdmin || hasPermission('fees', 'create')}
+              canEdit={isAdmin || hasPermission('fees', 'edit')}
+              canDelete={isAdmin || hasPermission('fees', 'delete')}
+            />
+          )}
 
           {/* ── CANCELLATION MANAGEMENT ── */}
           {(isAdmin || canView('cancellation')) && currentTab === 'cancellation' && (
             <CancellationManagementPage 
+              canCreate={hasPermission('cancellation', 'create')}
               canEdit={hasPermission('cancellation', 'edit')}
               canDelete={hasPermission('cancellation', 'delete')}
             />
@@ -2320,20 +2349,34 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
 
           {/* ── BULK ORDERS MANAGEMENT ── */}
           {(isAdmin || canView('bulk_orders')) && currentTab === 'bulk-orders' && bulkOrderSubTab === 'list' && (
-            <BulkOrdersAdminPage canEdit={hasPermission('bulk_orders', 'edit')} />
+            <BulkOrdersAdminPage canEdit={isAdmin || hasPermission('bulk_orders', 'edit')} />
           )}
           {(isAdmin || canView('bulk_orders')) && currentTab === 'bulk-orders' && bulkOrderSubTab === 'fields' && (
-            <BulkOrderFieldsAdminPage />
+            <BulkOrderFieldsAdminPage 
+              canCreate={isAdmin || hasPermission('bulk_orders', 'create')}
+              canEdit={isAdmin || hasPermission('bulk_orders', 'edit')}
+              canDelete={isAdmin || hasPermission('bulk_orders', 'delete')}
+            />
           )}
 
           {/* ── GIFT & CARD MANAGEMENT ── */}
           {(isAdmin || canView('gift_and_card')) && currentTab === 'gift_and_card' && (
-            <GiftAndCardAdminPage activeSubTab={giftAndCardSubTab} />
+            <GiftAndCardAdminPage 
+              activeSubTab={giftAndCardSubTab}
+              canCreate={isAdmin || hasPermission('gift_and_card', 'create')}
+              canEdit={isAdmin || hasPermission('gift_and_card', 'edit')}
+              canDelete={isAdmin || hasPermission('gift_and_card', 'delete')}
+            />
           )}
 
           {/* ── CUSTOMIZE ORDER MANAGEMENT ── */}
           {(isAdmin || canView('customize_order')) && currentTab === 'customize_order' && (
-            <CustomizeAdminPage activeSubTab={customizeSubTab} />
+            <CustomizeAdminPage 
+              activeSubTab={customizeSubTab} 
+              canCreate={isAdmin || hasPermission('customize_order', 'create')}
+              canEdit={isAdmin || hasPermission('customize_order', 'edit')}
+              canDelete={isAdmin || hasPermission('customize_order', 'delete')}
+            />
           )}
 
         </div>

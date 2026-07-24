@@ -44,7 +44,27 @@ const createRole = async (req, res) => {
   }
 };
 
+// @desc    Delete a role
+// @route   DELETE /api/roles/:id
+// @access  Private/Admin
+const deleteRole = async (req, res) => {
+  try {
+    const role = await Role.findById(req.params.id);
+    if (!role) {
+      return res.status(404).json({ message: 'Role not found' });
+    }
+    
+    // Optional: check if staff members are using this role and prevent deletion or let it be.
+    // For now, just delete the role.
+    await Role.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Role removed' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error deleting role' });
+  }
+};
+
 module.exports = {
   getRoles,
   createRole,
+  deleteRole,
 };

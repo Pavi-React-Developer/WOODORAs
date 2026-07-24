@@ -5,7 +5,7 @@ import { downloadExcelFile } from '../../../utils/exportUtils';
 
 import { adminService } from '../../../api/adminService';
 
-export default function CancellationManagementPage({ canEdit = true, canDelete = true }) {
+export default function CancellationManagementPage({ canCreate = true, canEdit = true, canDelete = true }) {
   const [activeTab, setActiveTab] = useState('COD');
   const [rules, setRules] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -185,7 +185,7 @@ export default function CancellationManagementPage({ canEdit = true, canDelete =
               <Download size={16} />
               Export Excel
             </button>
-            {canEdit && (
+            {canCreate && (
             <button 
               onClick={() => {
                 setEditingId(null);

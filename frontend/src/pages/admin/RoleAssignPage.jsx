@@ -54,12 +54,37 @@ const PermissionTable = ({ modules, permissions, onToggle, onToggleRow, onToggle
         <thead className="bg-[#F8F4EC]">
           <tr>
             <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 w-48">Module</th>
-            {ACTIONS.map(action => (
-              <th key={action} className="px-5 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-gray-500">
-                <button onClick={() => onToggleColumn(action)} className="hover:text-[#8B5E3C] transition-colors capitalize">{action}</button>
-              </th>
-            ))}
-            <th className="px-5 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-gray-500">All</th>
+            {ACTIONS.map(action => {
+              const allowedModules = visibleModules.filter((m) => canToggleActionForModule(m.key || m, action));
+              const allChecked = allowedModules.length > 0 && allowedModules.every(mod => permissions[mod.key || mod]?.[action]);
+              return (
+                <th key={action} className="px-5 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-gray-500">
+                  <div className="flex items-center justify-center gap-2 cursor-pointer" onClick={() => onToggleColumn(action)}>
+                    <input 
+                      type="checkbox" 
+                      checked={allChecked} 
+                      readOnly
+                      className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer pointer-events-none"
+                    />
+                    <span className="capitalize hover:text-[#8B5E3C] transition-colors">{action}</span>
+                  </div>
+                </th>
+              );
+            })}
+            <th className="px-5 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-gray-500">
+              <div className="flex items-center justify-center gap-2 cursor-pointer" onClick={(e) => {
+                const allChecked = visibleModules.length > 0 && visibleModules.every(mod => ACTIONS.every(a => permissions[mod.key || mod]?.[a]));
+                allChecked ? onClearAll() : onSelectAll();
+              }}>
+                <input 
+                  type="checkbox" 
+                  checked={visibleModules.length > 0 && visibleModules.every(mod => ACTIONS.every(a => permissions[mod.key || mod]?.[a]))} 
+                  readOnly
+                  className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer pointer-events-none"
+                />
+                <span className="hover:text-[#8B5E3C] transition-colors">All</span>
+              </div>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -142,6 +167,12 @@ export default function RoleAssignPage({ onBack, targetStaff, currentUserPermiss
           const enriched = filtered.map(m => {
             const local = ADMIN_MODULES.find(a => a.key === m.key);
             return { ...m, icon: local?.icon || m.icon || '' };
+          });
+          // Ensure all local frontend modules are also present
+          ADMIN_MODULES.forEach(localMod => {
+            if (!enriched.some(e => e.key === localMod.key)) {
+              enriched.push(localMod);
+            }
           });
           setPermissionModules(enriched);
           setRolePerms(initPerms(enriched));

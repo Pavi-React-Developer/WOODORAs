@@ -22,6 +22,13 @@ export default function Header({
   
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [expandedMobileMenus, setExpandedMobileMenus] = useState({});
+  const toggleMobileMenu = (menuId) => {
+    setExpandedMobileMenus(prev => ({
+      ...prev,
+      [menuId]: !prev[menuId]
+    }));
+  };
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [categoryResults, setCategoryResults] = useState([]);
@@ -125,7 +132,7 @@ export default function Header({
           </button>
         </div>
 
-        <nav className={`hidden flex-1 items-center gap-8 xl:flex ${
+        <nav className={`hidden flex-1 items-center gap-8 lg:flex ${
           navbarConfig?.logoPosition === 'center' ? 'justify-between' : 
           navbarConfig?.logoPosition === 'right' ? 'justify-end' : 'justify-center'
         }`}>
@@ -142,10 +149,12 @@ export default function Header({
                     onMouseLeave={() => setActiveMenu(null)}
                   >
                     <button type="button" 
-                      className="flex items-center gap-1 text-[15px] font-medium hover:opacity-80 transition-colors"
+                      className="group flex items-center gap-1 text-[15px] font-medium transition-colors"
                       style={{ color: item.textColor || navbarConfig?.textColor || '#B0611C', backgroundColor: item.backgroundColor || 'transparent' }}
                     >
-                      {item.title} <ChevronDown className="h-4 w-4" strokeWidth={1.5} />
+                      <span className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-bottom-left after:scale-x-0 after:bg-current after:transition-transform after:duration-300 group-hover:after:scale-x-100">
+                        {item.title}
+                      </span> <ChevronDown className="h-4 w-4" strokeWidth={1.5} />
                     </button>
                     {activeMenu === titleLower && (
                       <div className="absolute left-0 top-full min-w-[208px] rounded-xl border border-[#E9DED3] bg-white py-2 shadow-lg z-50">
@@ -195,10 +204,12 @@ export default function Header({
                     onMouseLeave={() => setActiveMenu(null)}
                   >
                     <button type="button" 
-                      className="flex items-center gap-1 text-[15px] font-medium hover:opacity-80 transition-colors"
+                      className="group flex items-center gap-1 text-[15px] font-medium transition-colors"
                       style={{ color: item.textColor || '#B0611C', backgroundColor: item.backgroundColor || 'transparent' }}
                     >
-                      {item.title} <ChevronDown className="h-4 w-4" strokeWidth={1.5} />
+                      <span className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-bottom-left after:scale-x-0 after:bg-current after:transition-transform after:duration-300 group-hover:after:scale-x-100">
+                        {item.title}
+                      </span> <ChevronDown className="h-4 w-4" strokeWidth={1.5} />
                     </button>
                     {activeMenu === titleLower && titleLower === 'categories' && (
                       <div className="absolute left-0 top-full w-64 rounded-xl border border-[#E9DED3] bg-white py-2 shadow-lg">
@@ -238,16 +249,22 @@ export default function Header({
                     <button
                       type="button"
                       onClick={() => onNavigate('/gift-and-card')}
-                      className="text-[15px] font-medium text-[#B0611C] hover:opacity-80 whitespace-nowrap"
+                      className="group text-[15px] font-medium whitespace-nowrap"
+                      style={{ color: item.textColor || navbarConfig?.textColor || '#B0611C' }}
                     >
-                      {item.title}
+                      <span className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-bottom-left after:scale-x-0 after:bg-current after:transition-transform after:duration-300 group-hover:after:scale-x-100">
+                        {item.title}
+                      </span>
                     </button>
                     <button
                       type="button"
                       onClick={() => onNavigate('/customize')}
-                      className="text-[15px] font-medium text-[#B0611C] hover:opacity-80 whitespace-nowrap"
+                      className="group text-[15px] font-medium whitespace-nowrap"
+                      style={{ color: item.textColor || navbarConfig?.textColor || '#B0611C' }}
                     >
-                      Customize
+                      <span className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-bottom-left after:scale-x-0 after:bg-current after:transition-transform after:duration-300 group-hover:after:scale-x-100">
+                        Customize
+                      </span>
                     </button>
                   </React.Fragment>
                 );
@@ -259,10 +276,12 @@ export default function Header({
                   <a
                     key={item._id || `nav-${idx}`}
                     href={item.url}
-                    className="flex h-[88px] items-center text-[15px] font-medium hover:opacity-80 transition-colors"
+                    className="group flex h-[88px] items-center text-[15px] font-medium transition-colors"
                     style={{ color: item.textColor || navbarConfig?.textColor || '#B0611C', backgroundColor: item.backgroundColor || 'transparent', padding: item.backgroundColor ? '0.5rem 1rem' : '0', borderRadius: item.backgroundColor ? '0.5rem' : '0' }}
                   >
-                    {item.title}
+                    <span className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-bottom-left after:scale-x-0 after:bg-current after:transition-transform after:duration-300 group-hover:after:scale-x-100">
+                      {item.title}
+                    </span>
                   </a>
                 );
               }
@@ -271,17 +290,21 @@ export default function Header({
                 <Link
                   key={item._id || `nav-${idx}`}
                   to={item.url}
-                  className="flex h-[88px] items-center text-[15px] font-medium hover:opacity-80 transition-colors"
+                  className="group flex h-[88px] items-center text-[15px] font-medium transition-colors"
                   style={{ color: item.textColor || navbarConfig?.textColor || '#B0611C', backgroundColor: item.backgroundColor || 'transparent', padding: item.backgroundColor ? '0.5rem 1rem' : '0', borderRadius: item.backgroundColor ? '0.5rem' : '0' }}
                 >
-                  {item.title}
+                  <span className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-bottom-left after:scale-x-0 after:bg-current after:transition-transform after:duration-300 group-hover:after:scale-x-100">
+                    {item.title}
+                  </span>
                 </Link>
               );
             })
           ) : (
             <>
-              <button type="button" onClick={() => onNavigate('/')} className="text-[15px] font-medium pb-0.5" style={{ color: navbarConfig?.textColor || '#B0611C', borderBottomColor: navbarConfig?.textColor || '#B0611C', borderBottomWidth: '2px' }}>
-                Home
+              <button type="button" onClick={() => onNavigate('/')} className="group text-[15px] font-medium" style={{ color: navbarConfig?.textColor || '#B0611C' }}>
+                <span className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-bottom-left after:scale-x-0 after:bg-current after:transition-transform after:duration-300 group-hover:after:scale-x-100">
+                  Home
+                </span>
               </button>
               
               <div
@@ -289,8 +312,10 @@ export default function Header({
                 onMouseEnter={() => setActiveMenu('shop')}
                 onMouseLeave={() => setActiveMenu(null)}
               >
-                <button type="button" className="flex items-center gap-1 text-[15px] font-medium hover:opacity-80 transition-colors" style={{ color: navbarConfig?.textColor || '#B0611C' }}>
-                  Shop <ChevronDown className="h-4 w-4" strokeWidth={1.5} />
+                <button type="button" className="group flex items-center gap-1 text-[15px] font-medium transition-colors" style={{ color: navbarConfig?.textColor || '#B0611C' }}>
+                  <span className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-bottom-left after:scale-x-0 after:bg-current after:transition-transform after:duration-300 group-hover:after:scale-x-100">
+                    Shop
+                  </span> <ChevronDown className="h-4 w-4" strokeWidth={1.5} />
                 </button>
                 {activeMenu === 'shop' && (
                   <div className="absolute left-0 top-full w-52 rounded-xl border border-[#E9DED3] bg-white py-2 shadow-lg">
@@ -312,8 +337,10 @@ export default function Header({
                 onMouseEnter={() => setActiveMenu('categories')}
                 onMouseLeave={() => setActiveMenu(null)}
               >
-                <button type="button" className="flex items-center gap-1 text-[15px] font-medium hover:opacity-80 transition-colors" style={{ color: navbarConfig?.textColor || '#B0611C' }}>
-                  Categories <ChevronDown className="h-4 w-4" strokeWidth={1.5} />
+                <button type="button" className="group flex items-center gap-1 text-[15px] font-medium transition-colors" style={{ color: navbarConfig?.textColor || '#B0611C' }}>
+                  <span className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-bottom-left after:scale-x-0 after:bg-current after:transition-transform after:duration-300 group-hover:after:scale-x-100">
+                    Categories
+                  </span> <ChevronDown className="h-4 w-4" strokeWidth={1.5} />
                 </button>
                 {activeMenu === 'categories' && (
                   <div className="absolute left-0 top-full w-64 rounded-xl border border-[#E9DED3] bg-white py-2 shadow-lg">
@@ -345,23 +372,35 @@ export default function Header({
                 )}
               </div>
 
-              <button type="button" onClick={() => onNavigate('/about')} className="text-[15px] font-medium hover:opacity-80 transition-colors" style={{ color: navbarConfig?.textColor || '#B0611C' }}>
-                About Us
+              <button type="button" onClick={() => onNavigate('/about')} className="group text-[15px] font-medium transition-colors" style={{ color: navbarConfig?.textColor || '#B0611C' }}>
+                <span className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-bottom-left after:scale-x-0 after:bg-current after:transition-transform after:duration-300 group-hover:after:scale-x-100">
+                  About Us
+                </span>
               </button>
-              <button type="button" onClick={() => onNavigate('/blog')} className="text-[15px] font-medium hover:opacity-80 transition-colors" style={{ color: navbarConfig?.textColor || '#B0611C' }}>
-                Blog
+              <button type="button" onClick={() => onNavigate('/blog')} className="group text-[15px] font-medium transition-colors" style={{ color: navbarConfig?.textColor || '#B0611C' }}>
+                <span className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-bottom-left after:scale-x-0 after:bg-current after:transition-transform after:duration-300 group-hover:after:scale-x-100">
+                  Blog
+                </span>
               </button>
-              <button type="button" onClick={() => onNavigate('/contact')} className="text-[15px] font-medium hover:opacity-80 transition-colors" style={{ color: navbarConfig?.textColor || '#B0611C' }}>
-                Contact
+              <button type="button" onClick={() => onNavigate('/contact')} className="group text-[15px] font-medium transition-colors" style={{ color: navbarConfig?.textColor || '#B0611C' }}>
+                <span className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-bottom-left after:scale-x-0 after:bg-current after:transition-transform after:duration-300 group-hover:after:scale-x-100">
+                  Contact
+                </span>
               </button>
-              <button type="button" onClick={() => onNavigate('/bulk-orders')} className="text-[15px] font-medium hover:opacity-80 whitespace-nowrap transition-colors" style={{ color: navbarConfig?.textColor || '#B0611C' }}>
-                Bulk Orders
+              <button type="button" onClick={() => onNavigate('/bulk-orders')} className="group text-[15px] font-medium whitespace-nowrap transition-colors" style={{ color: navbarConfig?.textColor || '#B0611C' }}>
+                <span className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-bottom-left after:scale-x-0 after:bg-current after:transition-transform after:duration-300 group-hover:after:scale-x-100">
+                  Bulk Orders
+                </span>
               </button>
-              <button type="button" onClick={() => onNavigate('/gift-and-card')} className="text-[15px] font-medium hover:opacity-80 whitespace-nowrap transition-colors" style={{ color: navbarConfig?.textColor || '#B0611C' }}>
-                Gift & Card
+              <button type="button" onClick={() => onNavigate('/gift-and-card')} className="group text-[15px] font-medium whitespace-nowrap transition-colors" style={{ color: navbarConfig?.textColor || '#B0611C' }}>
+                <span className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-bottom-left after:scale-x-0 after:bg-current after:transition-transform after:duration-300 group-hover:after:scale-x-100">
+                  Gift & Card
+                </span>
               </button>
-              <button type="button" onClick={() => onNavigate('/customize')} className="text-[15px] font-medium hover:opacity-80 whitespace-nowrap transition-colors" style={{ color: navbarConfig?.textColor || '#B0611C' }}>
-                Customize
+              <button type="button" onClick={() => onNavigate('/customize')} className="group text-[15px] font-medium whitespace-nowrap transition-colors" style={{ color: navbarConfig?.textColor || '#B0611C' }}>
+                <span className="relative pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-bottom-left after:scale-x-0 after:bg-current after:transition-transform after:duration-300 group-hover:after:scale-x-100">
+                  Customize
+                </span>
               </button>
             </>
           )}
@@ -551,7 +590,7 @@ export default function Header({
           {/* Mobile Menu Toggle */}
           <button
             type="button"
-            className="xl:hidden transition hover:opacity-80 ml-1 sm:ml-2"
+            className="lg:hidden transition hover:opacity-80 ml-1 sm:ml-2"
             aria-label="Open menu"
             onClick={() => setIsMobileMenuOpen(true)}
           >
@@ -577,24 +616,24 @@ export default function Header({
 
       {/* Mobile Menu Drawer (Outside Header to avoid backdrop-filter stacking context) */}
       <div 
-        className={`fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm transition-opacity duration-300 xl:hidden ${
+        className={`fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${
           isMobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
         }`}
         onClick={() => setIsMobileMenuOpen(false)}
       />
       <div 
-        className={`fixed top-0 left-0 bottom-0 z-[70] w-[80vw] max-w-sm bg-white shadow-2xl transition-transform duration-300 ease-in-out xl:hidden flex flex-col ${
+        className={`fixed top-0 left-0 bottom-0 z-[70] w-[80vw] max-w-sm bg-white shadow-2xl transition-transform duration-300 ease-in-out lg:hidden flex flex-col ${
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div className="flex items-center justify-between p-6 border-b border-[#E9DED3]">
-          <span className="font-['Poppins'] text-2xl font-extrabold text-[#4A3326]">
+          <span className="font-['Poppins'] text-2xl font-extrabold text-[#B1621D]">
             Menu
           </span>
           <button 
             type="button" 
             onClick={() => setIsMobileMenuOpen(false)}
-            className="p-2 -mr-2 text-[#4A3326] hover:text-[#9C755A]"
+            className="p-2 -mr-2 text-[#B1621D] hover:text-[#9C755A]"
           >
             <X className="h-6 w-6" strokeWidth={1.5} />
           </button>
@@ -605,10 +644,15 @@ export default function Header({
               const titleLower = item.title.toLowerCase();
 
               if (titleLower === 'shop' || item.isDropdown) {
+                const menuId = item._id || `mobile-nav-${idx}`;
                 return (
-                  <div key={item._id || `mobile-nav-${idx}`} className="space-y-3">
-                    <p className="text-lg font-medium text-[#4A3326]">{item.title}</p>
-                    <div className="pl-4 space-y-3 border-l-2 border-[#E9DED3]">
+                  <div key={menuId} className="space-y-3">
+                    <button type="button" onClick={() => toggleMobileMenu(menuId)} className="flex w-full items-center justify-between text-base font-bold text-[#B1621D]">
+                      <span>{item.title}</span>
+                      <ChevronDown className={`h-4 w-4 transition-transform duration-300 ${expandedMobileMenus[menuId] ? 'rotate-180' : ''}`} />
+                    </button>
+                    {expandedMobileMenus[menuId] && (
+                      <div className="pl-4 space-y-3 border-l-2 border-[#E9DED3]">
                       {titleLower === 'shop' ? (
                         ['All Products', 'New Arrivals', 'Best Sellers'].map((subItem) => (
                           <button key={subItem} onClick={() => { onNavigate(subItem === 'All Products' ? '/shop' : (subItem === 'New Arrivals' ? '/shop?sort=newest' : '/shop?sort=bestselling')); setIsMobileMenuOpen(false); }} type="button" className="block w-full text-left text-[#7C7370]">
@@ -634,22 +678,29 @@ export default function Header({
                           );
                         })
                       )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 );
               }
 
               if (titleLower === 'categories') {
+                const menuId = item._id || `mobile-nav-${idx}`;
                 return (
-                  <div key={item._id || `mobile-nav-${idx}`} className="space-y-3">
-                    <p className="text-lg font-medium text-[#4A3326]">{item.title}</p>
-                    <div className="pl-4 space-y-3 border-l-2 border-[#E9DED3]">
+                  <div key={menuId} className="space-y-3">
+                    <button type="button" onClick={() => toggleMobileMenu(menuId)} className="flex w-full items-center justify-between text-base font-bold text-[#B1621D]">
+                      <span>{item.title}</span>
+                      <ChevronDown className={`h-4 w-4 transition-transform duration-300 ${expandedMobileMenus[menuId] ? 'rotate-180' : ''}`} />
+                    </button>
+                    {expandedMobileMenus[menuId] && (
+                      <div className="pl-4 space-y-3 border-l-2 border-[#E9DED3]">
                       {mainCategories.map((mainCat) => (
                         <button key={mainCat._id} onClick={() => { onNavigate(`/shop?category=${mainCat._id}`); setIsMobileMenuOpen(false); }} type="button" className="block w-full text-left text-[#7C7370]">
                           {mainCat.name}
                         </button>
                       ))}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 );
               }
@@ -687,7 +738,7 @@ export default function Header({
                     }
                     setIsMobileMenuOpen(false);
                   }}
-                  className="block w-full text-left text-lg font-medium text-[#4A3326]"
+                  className="block w-full text-left text-base font-bold text-[#B1621D]"
                 >
                   {item.title}
                 </button>
@@ -695,48 +746,58 @@ export default function Header({
             })
           ) : (
             <>
-              <button type="button" onClick={() => { onNavigate('/'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-lg font-medium text-[#4A3326]">
+              <button type="button" onClick={() => { onNavigate('/'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-base font-bold text-[#B1621D]">
                 Home
               </button>
               
               <div className="space-y-3">
-                <p className="text-lg font-medium text-[#4A3326]">Shop</p>
-                <div className="pl-4 space-y-3 border-l-2 border-[#E9DED3]">
+                <button type="button" onClick={() => toggleMobileMenu('static-shop')} className="flex w-full items-center justify-between text-base font-bold text-[#B1621D]">
+                  <span>Shop</span>
+                  <ChevronDown className={`h-4 w-4 transition-transform duration-300 ${expandedMobileMenus['static-shop'] ? 'rotate-180' : ''}`} />
+                </button>
+                {expandedMobileMenus['static-shop'] && (
+                  <div className="pl-4 space-y-3 border-l-2 border-[#E9DED3]">
                   {['All Products', 'New Arrivals', 'Best Sellers'].map((item) => (
                     <button key={item} onClick={() => { onNavigate(item === 'All Products' ? '/shop' : (item === 'New Arrivals' ? '/shop?sort=newest' : '/shop?sort=bestselling')); setIsMobileMenuOpen(false); }} type="button" className="block w-full text-left text-[#7C7370]">
                       {item}
                     </button>
                   ))}
-                </div>
+                  </div>
+                )}
               </div>
               
               <div className="space-y-3">
-                <p className="text-lg font-medium text-[#4A3326]">Categories</p>
-                <div className="pl-4 space-y-3 border-l-2 border-[#E9DED3]">
+                <button type="button" onClick={() => toggleMobileMenu('static-categories')} className="flex w-full items-center justify-between text-base font-bold text-[#B1621D]">
+                  <span>Categories</span>
+                  <ChevronDown className={`h-4 w-4 transition-transform duration-300 ${expandedMobileMenus['static-categories'] ? 'rotate-180' : ''}`} />
+                </button>
+                {expandedMobileMenus['static-categories'] && (
+                  <div className="pl-4 space-y-3 border-l-2 border-[#E9DED3]">
                   {mainCategories.map((mainCat) => (
                     <button key={mainCat._id} onClick={() => { onNavigate(`/shop?category=${mainCat._id}`); setIsMobileMenuOpen(false); }} type="button" className="block w-full text-left text-[#7C7370]">
                       {mainCat.name}
                     </button>
                   ))}
-                </div>
+                  </div>
+                )}
               </div>
 
-              <button type="button" onClick={() => { onNavigate('/about'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-lg font-medium text-[#4A3326]">
+              <button type="button" onClick={() => { onNavigate('/about'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-base font-bold text-[#B1621D]">
                 About Us
               </button>
-              <button type="button" onClick={() => { onNavigate('/blog'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-lg font-medium text-[#4A3326]">
+              <button type="button" onClick={() => { onNavigate('/blog'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-base font-bold text-[#B1621D]">
                 Blog
               </button>
-              <button type="button" onClick={() => { onNavigate('/contact'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-lg font-medium text-[#4A3326]">
+              <button type="button" onClick={() => { onNavigate('/contact'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-base font-bold text-[#B1621D]">
                 Contact
               </button>
-              <button type="button" onClick={() => { onNavigate('/bulk-orders'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-lg font-medium text-[#4A3326]">
+              <button type="button" onClick={() => { onNavigate('/bulk-orders'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-base font-bold text-[#B1621D]">
                 Bulk Orders
               </button>
-              <button type="button" onClick={() => { onNavigate('/gift-and-card'); setMobileMenuOpen(false); }} className="block w-full text-left py-2 text-base font-medium text-[#4A403B]">
+              <button type="button" onClick={() => { onNavigate('/gift-and-card'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-base font-bold text-[#B1621D]">
                 Gift & Card
               </button>
-              <button type="button" onClick={() => { onNavigate('/customize'); setMobileMenuOpen(false); }} className="block w-full text-left py-2 text-base font-medium text-[#4A403B]">
+              <button type="button" onClick={() => { onNavigate('/customize'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-base font-bold text-[#B1621D]">
                 Customize
               </button>
             </>

@@ -3,7 +3,7 @@ import { toast } from 'react-hot-toast';
 import { Plus, Trash2, Settings, X, PlusCircle } from 'lucide-react';
 import { customizeService } from '../../../api/customizeService';
 
-export default function CustomizeFieldManager() {
+export default function CustomizeFieldManager({ canCreate = true, canEdit = true, canDelete = true }) {
   const [fields, setFields] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -113,12 +113,14 @@ export default function CustomizeFieldManager() {
           <h2 className="text-xl font-bold text-[#4A3326]">Form Fields Builder</h2>
           <p className="text-sm text-gray-500 mt-1">Manage the dynamic input fields shown on the Custom Order page</p>
         </div>
+        {canCreate && (
         <button
           onClick={() => setShowAddModal(true)}
           className="flex items-center gap-2 px-4 py-2 bg-[#8B5E3C] text-white rounded-xl hover:bg-[#7a5234] transition-colors"
         >
           <Plus className="w-4 h-4" /> Add Field
         </button>
+        )}
       </div>
 
       <div className="overflow-x-auto">
@@ -150,17 +152,21 @@ export default function CustomizeFieldManager() {
                   </span>
                 </td>
                 <td className="px-6 py-4">
+                  {canEdit && (
                   <button
                     onClick={() => handleToggleStatus(field._id, field.isActive)}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${field.isActive ? 'bg-[#4ADE80]' : 'bg-gray-200'}`}
                   >
                     <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${field.isActive ? 'translate-x-6' : 'translate-x-1'}`} />
                   </button>
+                  )}
                 </td>
                 <td className="px-6 py-4 text-right">
+                  {canDelete && (
                   <button onClick={() => handleDelete(field._id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
                     <Trash2 className="w-4 h-4" />
                   </button>
+                  )}
                 </td>
               </tr>
             ))}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const CustomCalendar = ({ selectedDate, onSelectDate, config, isAdminMode, onToggleAdminDate }) => {
+const CustomCalendar = ({ selectedDate, onSelectDate, config, isAdminMode, onToggleAdminDate, canEdit = true }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const daysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
@@ -76,7 +76,7 @@ const CustomCalendar = ({ selectedDate, onSelectDate, config, isAdminMode, onTog
     const status = isDateStatus(dateObj);
 
     if (isAdminMode) {
-      if (onToggleAdminDate) {
+      if (canEdit && onToggleAdminDate) {
         onToggleAdminDate(dateStr, status);
       }
     } else {
@@ -120,11 +120,19 @@ const CustomCalendar = ({ selectedDate, onSelectDate, config, isAdminMode, onTog
           const isSelected = selectedDate === dateStr;
 
           if (isAdminMode) {
-            btnClass += "cursor-pointer ";
-            if (status === 'blocked-manual') btnClass += "bg-red-100 text-red-700 border border-red-300 font-bold hover:bg-red-200 ";
-            else if (status === 'available-manual') btnClass += "bg-green-100 text-green-700 border border-green-300 font-bold hover:bg-green-200 ";
-            else if (status === 'available-baseline') btnClass += "bg-blue-50 text-blue-700 hover:bg-blue-100 ";
-            else btnClass += "text-gray-400 hover:bg-gray-50 ";
+            if (canEdit) {
+              btnClass += "cursor-pointer ";
+              if (status === 'blocked-manual') btnClass += "bg-red-100 text-red-700 border border-red-300 font-bold hover:bg-red-200 ";
+              else if (status === 'available-manual') btnClass += "bg-green-100 text-green-700 border border-green-300 font-bold hover:bg-green-200 ";
+              else if (status === 'available-baseline') btnClass += "bg-blue-50 text-blue-700 hover:bg-blue-100 ";
+              else btnClass += "text-gray-400 hover:bg-gray-50 ";
+            } else {
+              btnClass += "cursor-not-allowed ";
+              if (status === 'blocked-manual') btnClass += "bg-red-50 text-red-700 border border-red-200 font-bold opacity-70 ";
+              else if (status === 'available-manual') btnClass += "bg-green-50 text-green-700 border border-green-200 font-bold opacity-70 ";
+              else if (status === 'available-baseline') btnClass += "bg-blue-50 text-blue-700 opacity-70 ";
+              else btnClass += "text-gray-400 opacity-70 ";
+            }
           } else {
             if (status === 'available-baseline' || status === 'available-manual') {
               btnClass += "cursor-pointer font-medium hover:bg-gray-100 ";
@@ -144,7 +152,7 @@ const CustomCalendar = ({ selectedDate, onSelectDate, config, isAdminMode, onTog
               type="button"
               onClick={() => handleDateClick(dateObj)}
               className={btnClass}
-              disabled={!isAdminMode && !(status === 'available-baseline' || status === 'available-manual')}
+              disabled={(!isAdminMode && !(status === 'available-baseline' || status === 'available-manual')) || (isAdminMode && !canEdit)}
             >
               {dateObj.getDate()}
             </button>
