@@ -9,6 +9,7 @@ router.get('/hero', cmsController.getHeroBanners);
 router.get('/third-banner', cmsController.getThirdBanners);
 router.get('/product-grid', cmsController.getProductGrids);
 router.get('/category-grid', cmsController.getCategoryGrids);
+router.get('/categories-grid', cmsController.getCategoriesGrids);
 router.get('/footer', cmsController.getFooter);
 router.get('/layout', cmsController.getLayout);
 router.get('/review-config', cmsController.getReviewConfig);
@@ -32,6 +33,10 @@ router.delete('/product-grid/:id', protect, authorize('admin'), cmsController.de
 router.post('/category-grid', protect, authorize('admin'), cmsController.createCategoryGrid);
 router.put('/category-grid/:id', protect, authorize('admin'), cmsController.updateCategoryGrid);
 router.delete('/category-grid/:id', protect, authorize('admin'), cmsController.deleteCategoryGrid);
+
+router.post('/categories-grid', protect, authorize('admin'), cmsController.createCategoriesGrid);
+router.put('/categories-grid/:id', protect, authorize('admin'), cmsController.updateCategoriesGrid);
+router.delete('/categories-grid/:id', protect, authorize('admin'), cmsController.deleteCategoriesGrid);
 
 router.put('/footer', protect, authorize('admin'), cmsController.updateFooter);
 router.put('/layout', protect, authorize('admin'), cmsController.updateLayout);

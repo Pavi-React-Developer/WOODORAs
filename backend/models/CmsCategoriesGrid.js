@@ -1,13 +1,13 @@
 const mongoose = require('mongoose');
 
-const productGridSchema = new mongoose.Schema({
+const categoriesGridSchema = new mongoose.Schema({
   title: {
     type: String,
     required: true,
   },
-  products: [{
+  categories: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Product'
+    ref: 'Category'
   }],
   mobileCount: {
     type: Number,
@@ -46,4 +46,4 @@ const productGridSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-module.exports = mongoose.model('CmsProductGrid', productGridSchema);
+module.exports = mongoose.model('CmsCategoriesGrid', categoriesGridSchema);

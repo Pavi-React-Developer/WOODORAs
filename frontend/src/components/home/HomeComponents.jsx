@@ -503,37 +503,64 @@ function ProductGridBlock({ grid, onNavigate, onAddToCart, onAddToWishlist, user
   if (!safeProducts.length) return null;
   const mobileCount = grid.mobileCount || 2;
   const desktopCount = grid.desktopCount || 4;
+  
+  const showArrows = grid.showArrows !== false;
+  const showDots = grid.showDots || false;
+  const ctaPosition = grid.ctaPosition || 'right';
+
+  const ctaClass = ctaPosition === 'center' 
+    ? 'flex flex-col items-center gap-2 text-center mb-8' 
+    : ctaPosition === 'left' 
+      ? 'flex flex-col items-start gap-2 mb-8' 
+      : 'flex justify-between items-end mb-8';
 
   return (
     <section className="py-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
-          <motion.div variants={fadeUp} className="flex justify-between items-end mb-8">
+          <motion.div variants={fadeUp} className={ctaClass}>
             <h2 className="text-xl font-bold tracking-tight text-brand-dark">{grid.title}</h2>
-            <div className="flex items-center gap-4">
-              {grid.ctaText && (
-                <button onClick={() => onNavigate(grid.ctaUrl || '/')} className="text-[10px] font-bold uppercase tracking-widest text-brand-medium hover:text-brand-dark">
-                  {grid.ctaText} &gt;
-                </button>
-              )}
-              <div className="flex gap-2">
-                <button ref={setPrevEl} className="w-10 h-10 rounded-full border border-[#E6DFD4] flex items-center justify-center text-brand-dark hover:bg-[#F7F3EE] disabled:opacity-30 transition-colors shadow-sm">&lt;</button>
-                <button ref={setNextEl} className="w-10 h-10 rounded-full border border-[#E6DFD4] flex items-center justify-center text-brand-dark hover:bg-[#F7F3EE] disabled:opacity-30 transition-colors shadow-sm">&gt;</button>
-              </div>
-            </div>
+            {grid.ctaText && (
+              <button onClick={() => onNavigate(grid.ctaUrl || '/')} className="text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full border border-[#B0611B] text-[#B0611B] hover:bg-[#B0611B] hover:text-white transition-colors">
+                {grid.ctaText} &gt;
+              </button>
+            )}
           </motion.div>
 
-          <div className="relative group px-2 md:px-4 mt-4">
+          <div className="relative group px-4 md:px-14 mt-4">
             <style>{`
               .custom-pagination-${grid._id} { position: relative; margin-top: 2rem; display: flex; justify-content: center; gap: 12px; }
-              .custom-pagination-${grid._id} .swiper-pagination-bullet { width: 16px; height: 16px; background: #fff; border: 1px solid #999; opacity: 1; transition: all 0.2s; border-radius: 50%; }
+              .custom-pagination-${grid._id} .swiper-pagination-bullet { width: 16px; height: 16px; background: #fff; border: 1px solid #999; opacity: 1; transition: all 0.2s; border-radius: 50%; cursor: pointer; }
               .custom-pagination-${grid._id} .swiper-pagination-bullet-active { background: #8b7355; border: 4px solid #fff; box-shadow: 0 0 0 1px #8b7355; }
+              
+              .pg-prev-${grid._id}, .pg-next-${grid._id} {
+                position: absolute; top: 50%; transform: translateY(-50%); z-index: 10;
+                width: 44px; height: 44px; border-radius: 50%; border: 1px solid #E6DFD4;
+                background: white; color: #333; display: flex; align-items: center; justify-content: center;
+                cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.2s;
+              }
+              .pg-prev-${grid._id}:hover, .pg-next-${grid._id}:hover { background: #F7F3EE; }
+              .pg-prev-${grid._id}.swiper-button-disabled, .pg-next-${grid._id}.swiper-button-disabled { opacity: 0.3; cursor: not-allowed; }
+              .pg-prev-${grid._id} { left: -12px; }
+              .pg-next-${grid._id} { right: -12px; }
+              @media (min-width: 768px) {
+                .pg-prev-${grid._id} { left: -10px; }
+                .pg-next-${grid._id} { right: -10px; }
+              }
             `}</style>
-            {prevEl && nextEl && paginationEl ? (
+
+            {showArrows && (
+              <>
+                <button ref={setPrevEl} className={`pg-prev-${grid._id}`}><ChevronLeft className="w-5 h-5" /></button>
+                <button ref={setNextEl} className={`pg-next-${grid._id}`}><ChevronRight className="w-5 h-5" /></button>
+              </>
+            )}
+
+            {((showArrows && prevEl && nextEl) || !showArrows) && (paginationEl || !showDots) ? (
               <Swiper
                 modules={[Navigation, Pagination]}
-                navigation={{ prevEl: prevEl, nextEl: nextEl }}
-                pagination={{ clickable: true, el: paginationEl }}
+                navigation={showArrows ? { prevEl: prevEl, nextEl: nextEl } : false}
+                pagination={showDots ? { clickable: true, el: paginationEl } : false}
                 spaceBetween={16}
                 slidesPerView={mobileCount}
                 breakpoints={{ 768: { slidesPerView: desktopCount } }}
@@ -554,7 +581,7 @@ function ProductGridBlock({ grid, onNavigate, onAddToCart, onAddToWishlist, user
                 <div className="hidden md:block flex-1 bg-gray-100 rounded-2xl animate-pulse" />
               </div>
             )}
-            <div ref={setPaginationEl} className={`custom-pagination-${grid._id}`} />
+            {showDots && <div ref={setPaginationEl} className={`custom-pagination-${grid._id}`} />}
           </div>
         </motion.div>
       </div>
@@ -655,6 +682,123 @@ export function HomeCategoryGrid({ context = {}, specificData }) {
           </div>
         </section>
       )}
+    </>
+  );
+}
+
+function CategoriesGridBlock({ grid, onNavigate }) {
+  const [prevEl, setPrevEl] = useState(null);
+  const [nextEl, setNextEl] = useState(null);
+  const [paginationEl, setPaginationEl] = useState(null);
+
+  const safeCategories = Array.isArray(grid.categories) ? grid.categories.filter(Boolean) : [];
+  if (!safeCategories.length) return null;
+  const mobileCount = grid.mobileCount || 2;
+  const desktopCount = grid.desktopCount || 4;
+  
+  const showArrows = grid.showArrows !== false;
+  const showDots = grid.showDots || false;
+  const ctaPosition = grid.ctaPosition || 'right';
+
+  const ctaClass = ctaPosition === 'center' 
+    ? 'flex flex-col items-center gap-2 text-center mb-8' 
+    : ctaPosition === 'left' 
+      ? 'flex flex-col items-start gap-2 mb-8' 
+      : 'flex justify-between items-end mb-8';
+
+  return (
+    <section className="py-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
+          <motion.div variants={fadeUp} className={ctaClass}>
+            <h2 className="text-xl font-bold tracking-tight text-brand-dark">{grid.title}</h2>
+            {grid.ctaText && (
+              <button onClick={() => onNavigate(grid.ctaUrl || '/')} className="text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full border border-[#B0611B] text-[#B0611B] hover:bg-[#B0611B] hover:text-white transition-colors">
+                {grid.ctaText} &gt;
+              </button>
+            )}
+          </motion.div>
+
+          <div className="relative group px-4 md:px-14 mt-4">
+            <style>{`
+              .cat-pagination-${grid._id} { position: relative; margin-top: 2rem; display: flex; justify-content: center; gap: 12px; }
+              .cat-pagination-${grid._id} .swiper-pagination-bullet { width: 16px; height: 16px; background: #fff; border: 1px solid #999; opacity: 1; transition: all 0.2s; border-radius: 50%; cursor: pointer; }
+              .cat-pagination-${grid._id} .swiper-pagination-bullet-active { background: #8b7355; border: 4px solid #fff; box-shadow: 0 0 0 1px #8b7355; }
+              
+              .cat-prev-${grid._id}, .cat-next-${grid._id} {
+                position: absolute; top: 50%; transform: translateY(-50%); z-index: 10;
+                width: 44px; height: 44px; border-radius: 50%; border: 1px solid #E6DFD4;
+                background: white; color: #333; display: flex; align-items: center; justify-content: center;
+                cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.2s;
+              }
+              .cat-prev-${grid._id}:hover, .cat-next-${grid._id}:hover { background: #F7F3EE; }
+              .cat-prev-${grid._id}.swiper-button-disabled, .cat-next-${grid._id}.swiper-button-disabled { opacity: 0.3; cursor: not-allowed; }
+              .cat-prev-${grid._id} { left: -12px; }
+              .cat-next-${grid._id} { right: -12px; }
+              @media (min-width: 768px) {
+                .cat-prev-${grid._id} { left: -10px; }
+                .cat-next-${grid._id} { right: -10px; }
+              }
+            `}</style>
+
+            {showArrows && (
+              <>
+                <button ref={setPrevEl} className={`cat-prev-${grid._id}`}><ChevronLeft className="w-5 h-5" /></button>
+                <button ref={setNextEl} className={`cat-next-${grid._id}`}><ChevronRight className="w-5 h-5" /></button>
+              </>
+            )}
+
+            {((showArrows && prevEl && nextEl) || !showArrows) && (paginationEl || !showDots) ? (
+              <Swiper
+                modules={[Navigation, Pagination]}
+                navigation={showArrows ? { prevEl: prevEl, nextEl: nextEl } : false}
+                pagination={showDots ? { clickable: true, el: paginationEl } : false}
+                spaceBetween={16}
+                slidesPerView={mobileCount}
+                breakpoints={{ 768: { slidesPerView: desktopCount } }}
+                className="w-full"
+              >
+                {safeCategories.map((c, i) => {
+                  const imageSrc = c.image?.url || c.image || '/wood-placeholder.png';
+                  return (
+                    <SwiperSlide key={c._id || i} className="h-auto">
+                      <motion.div variants={fadeUp} className="h-full flex flex-col cursor-pointer" onClick={() => onNavigate(`/shop?category=${c._id}`)}>
+                        <div className="aspect-[4/5] bg-[#F7F3EE] rounded-2xl overflow-hidden shadow-sm relative">
+                          <img src={imageSrc} alt={c.name} className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" onError={e => e.target.src='/wood-placeholder.png'} />
+                        </div>
+                        <div className="mt-3 text-center">
+                          <h3 className="font-semibold text-brand-dark text-sm md:text-base truncate">{c.name}</h3>
+                        </div>
+                      </motion.div>
+                    </SwiperSlide>
+                  );
+                })}
+              </Swiper>
+            ) : (
+              <div className="w-full h-[300px] flex gap-4 overflow-hidden">
+                <div className="flex-1 bg-gray-100 rounded-2xl animate-pulse" />
+                <div className="hidden md:block flex-1 bg-gray-100 rounded-2xl animate-pulse" />
+                <div className="hidden md:block flex-1 bg-gray-100 rounded-2xl animate-pulse" />
+              </div>
+            )}
+            {showDots && <div ref={setPaginationEl} className={`cat-pagination-${grid._id}`} />}
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+export function HomeCategoriesGrid({ context = {}, specificData }) {
+  const { onNavigate } = context;
+  const grids = specificData ? [specificData] : (context.categoriesGrids || []);
+  if (!grids || !grids.length) return null;
+
+  return (
+    <>
+      {grids.map((grid, i) => (
+        <CategoriesGridBlock key={grid._id || i} grid={grid} onNavigate={onNavigate} />
+      ))}
     </>
   );
 }

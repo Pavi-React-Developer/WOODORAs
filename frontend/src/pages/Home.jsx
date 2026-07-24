@@ -38,6 +38,7 @@ export default function Home({ user, cartItems, wishlistItems, onOpenCart, onOpe
   const [thirdBanners, setThirdBanners] = useState([]);
   const [productGrids, setProductGrids] = useState([]);
   const [categoryGrids, setCategoryGrids] = useState([]);
+  const [categoriesGrids, setCategoriesGrids] = useState([]);
   const [footerData, setFooterData] = useState(null);
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [featuredReviews, setFeaturedReviews] = useState(TESTIMONIALS);
@@ -56,8 +57,9 @@ export default function Home({ user, cartItems, wishlistItems, onOpenCart, onOpe
       cmsService.getFooter(),
       productV2API.getAll({ limit: 10, isActive: 'true' }),
       reviewService.getFeaturedReviews(),
-      cmsService.getCategoryGrids()
-    ]).then(([layoutRes, heroRes, categoriesRes, thirdRes, gridRes, footerRes, prodRes, reviewRes, catGridRes]) => {
+      cmsService.getCategoryGrids(),
+      cmsService.getCategoriesGrids()
+    ]).then(([layoutRes, heroRes, categoriesRes, thirdRes, gridRes, footerRes, prodRes, reviewRes, catGridRes, catsGridsRes]) => {
       
       if (layoutRes.status === 'fulfilled' && layoutRes.value.data) {
         setLayout((layoutRes.value.data.sections || []).sort((a,b) => a.order - b.order));
@@ -68,8 +70,9 @@ export default function Home({ user, cartItems, wishlistItems, onOpenCart, onOpe
             { id: 'heroBanner', visible: true, order: 2 },
             { id: 'thirdBanner', visible: true, order: 3 },
             { id: 'categoryGrid', visible: true, order: 4 },
-            { id: 'productGrid', visible: true, order: 5 },
-            { id: 'footer', visible: true, order: 6 },
+            { id: 'categoriesGrid', visible: true, order: 5 },
+            { id: 'productGrid', visible: true, order: 6 },
+            { id: 'footer', visible: true, order: 7 },
         ]);
       }
 
@@ -124,6 +127,10 @@ export default function Home({ user, cartItems, wishlistItems, onOpenCart, onOpe
         setCategoryGrids((catGridRes.value.data || []).filter(g => g.status));
       }
 
+      if (catsGridsRes?.status === 'fulfilled') {
+        setCategoriesGrids((catsGridsRes.value.data || []).filter(g => g.status));
+      }
+
       if (footerRes.status === 'fulfilled') setFooterData(footerRes.value.data);
 
       if (prodRes.status === 'fulfilled') {
@@ -150,6 +157,7 @@ export default function Home({ user, cartItems, wishlistItems, onOpenCart, onOpe
     thirdBanners,
     productGrids,
     categoryGrids,
+    categoriesGrids,
     footerData,
     featuredProducts,
     featuredReviews,

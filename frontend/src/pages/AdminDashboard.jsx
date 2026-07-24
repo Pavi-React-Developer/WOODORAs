@@ -22,6 +22,7 @@ import ReviewManagementPage from './admin/reviews/ReviewManagementPage';
 import CouponManagementPage from './admin/coupons/CouponManagementPage';
 import HomePageCMS from './admin/CMS/HomePageCMS';
 import BulkOrdersAdminPage from './admin/BulkOrdersAdminPage';
+import BulkOrderFieldsAdminPage from './admin/BulkOrderFieldsAdminPage';
 import GiftAndCardAdminPage from './admin/GiftAndCardAdminPage';
 import CustomizeAdminPage from './admin/customize/CustomizeAdminPage';
 
@@ -47,7 +48,8 @@ const adminRouteState = {
   '/admin/cancellations': { tab: 'cancellation' },
   '/admin/cancellations': { tab: 'cancellation' },
   '/admin/refunds': { tab: 'refund', refundSubTab: 'list', refundMenuOpen: true },
-  '/admin/bulk-orders': { tab: 'bulk-orders' },
+  '/admin/bulk-orders': { tab: 'bulk-orders', bulkOrderSubTab: 'list', bulkOrderMenuOpen: true },
+  '/admin/bulk-orders/fields': { tab: 'bulk-orders', bulkOrderSubTab: 'fields', bulkOrderMenuOpen: true },
   '/admin/gift-and-card': { tab: 'gift_and_card' },
   '/admin/customize': { tab: 'customize_order', customizeSubTab: 'list', customizeMenuOpen: true },
   '/admin/customize/add': { tab: 'customize_order', customizeSubTab: 'add', customizeMenuOpen: true },
@@ -113,6 +115,10 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
   // Gift & Card Management state
   const [giftAndCardMenuOpen, setGiftAndCardMenuOpen] = useState(false);
   const [giftAndCardSubTab, setGiftAndCardSubTab] = useState('rules');
+
+  // Bulk Orders Management state
+  const [bulkOrderMenuOpen, setBulkOrderMenuOpen] = useState(false);
+  const [bulkOrderSubTab, setBulkOrderSubTab] = useState('list');
 
   // Customize Management state
   const [customizeMenuOpen, setCustomizeMenuOpen] = useState(false);
@@ -200,12 +206,14 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
     if (options.productSubTab) setProductSubTab(options.productSubTab);
     if (options.feeSubTab) setFeeSubTab(options.feeSubTab);
     if (options.refundSubTab) setRefundSubTab(options.refundSubTab);
+    if (options.bulkOrderSubTab) setBulkOrderSubTab(options.bulkOrderSubTab);
     if (options.staffMenuOpen !== undefined) setStaffMenuOpen(options.staffMenuOpen);
     if (options.catalogMenuOpen !== undefined) setCatalogMenuOpen(options.catalogMenuOpen);
     if (options.productMenuOpen !== undefined) setProductMenuOpen(options.productMenuOpen);
     if (options.inventoryMenuOpen !== undefined) setInventoryMenuOpen(options.inventoryMenuOpen);
     if (options.customerMenuOpen !== undefined) setCustomerMenuOpen(options.customerMenuOpen);
     if (options.feeMenuOpen !== undefined) setFeeMenuOpen(options.feeMenuOpen);
+    if (options.bulkOrderMenuOpen !== undefined) setBulkOrderMenuOpen(options.bulkOrderMenuOpen);
     if (options.refundMenuOpen !== undefined) setRefundMenuOpen(options.refundMenuOpen);
     if (options.giftAndCardMenuOpen !== undefined) setGiftAndCardMenuOpen(options.giftAndCardMenuOpen);
     if (options.customizeSubTab) setCustomizeSubTab(options.customizeSubTab);
@@ -302,12 +310,14 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
     if (routeState.productSubTab) setProductSubTab(routeState.productSubTab);
     if (routeState.feeSubTab) setFeeSubTab(routeState.feeSubTab);
     if (routeState.refundSubTab) setRefundSubTab(routeState.refundSubTab);
+    if (routeState.bulkOrderSubTab) setBulkOrderSubTab(routeState.bulkOrderSubTab);
     if (routeState.staffMenuOpen !== undefined) setStaffMenuOpen(routeState.staffMenuOpen);
     if (routeState.catalogMenuOpen !== undefined) setCatalogMenuOpen(routeState.catalogMenuOpen);
     if (routeState.productMenuOpen !== undefined) setProductMenuOpen(routeState.productMenuOpen);
     if (routeState.inventoryMenuOpen !== undefined) setInventoryMenuOpen(routeState.inventoryMenuOpen);
     if (routeState.customerMenuOpen !== undefined) setCustomerMenuOpen(routeState.customerMenuOpen);
     if (routeState.feeMenuOpen !== undefined) setFeeMenuOpen(routeState.feeMenuOpen);
+    if (routeState.bulkOrderMenuOpen !== undefined) setBulkOrderMenuOpen(routeState.bulkOrderMenuOpen);
     if (routeState.refundMenuOpen !== undefined) setRefundMenuOpen(routeState.refundMenuOpen);
   }, [location.pathname]);
 
@@ -820,8 +830,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
             {(isAdmin || canView('bulk_orders')) && (
               <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
                 <button
-                  onClick={() => openAdminTab('bulk-orders')}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${
+                  onClick={() => setBulkOrderMenuOpen(o => !o)}
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${
                     currentTab === 'bulk-orders' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
                   }`}
                 >
@@ -829,7 +839,30 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
                     Bulk Orders
                   </span>
+                  <svg className={`w-3.5 h-3.5 transition-transform ${bulkOrderMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                 </button>
+                {bulkOrderMenuOpen && (
+                  <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
+                    <button
+                      onClick={() => openAdminTab('bulk-orders', { bulkOrderSubTab: 'list', bulkOrderMenuOpen: true })}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
+                        currentTab === 'bulk-orders' && bulkOrderSubTab === 'list' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                      }`}
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                      Bulk Order List
+                    </button>
+                    <button
+                      onClick={() => openAdminTab('bulk-orders', { bulkOrderSubTab: 'fields', bulkOrderMenuOpen: true })}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
+                        currentTab === 'bulk-orders' && bulkOrderSubTab === 'fields' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                      }`}
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                      Add Bulkorder Fields
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -2286,8 +2319,11 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
           )}
 
           {/* ── BULK ORDERS MANAGEMENT ── */}
-          {(isAdmin || canView('bulk_orders')) && currentTab === 'bulk-orders' && (
+          {(isAdmin || canView('bulk_orders')) && currentTab === 'bulk-orders' && bulkOrderSubTab === 'list' && (
             <BulkOrdersAdminPage canEdit={hasPermission('bulk_orders', 'edit')} />
+          )}
+          {(isAdmin || canView('bulk_orders')) && currentTab === 'bulk-orders' && bulkOrderSubTab === 'fields' && (
+            <BulkOrderFieldsAdminPage />
           )}
 
           {/* ── GIFT & CARD MANAGEMENT ── */}

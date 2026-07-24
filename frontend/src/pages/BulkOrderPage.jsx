@@ -4,21 +4,18 @@ import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { catalogService } from '../api/catalogService';
 import { productV2API } from '../api/catalogV2Service';
+import { bulkOrderService } from '../api/bulkOrderService';
 
 export default function BulkOrderPage() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    companyName: '',
-    contactPerson: '',
-    email: '',
-    phone: '',
-    estimatedQuantity: '',
     category: '',
     subCategory: '',
     product: '',
-    customizationRequests: '',
-    customBranding: false
+    customFields: []
   });
+  
+  const [dynamicFields, setDynamicFields] = useState([]);
   
   const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
@@ -34,15 +31,19 @@ export default function BulkOrderPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [catsRes, subsRes, prodsRes] = await Promise.all([
+        const [catsRes, subsRes, prodsRes, fieldsRes] = await Promise.all([
           catalogService.getCategories(),
           catalogService.getSubCategories(),
-          productV2API.getAll({ limit: 1000 })
+          productV2API.getAll({ limit: 1000 }),
+          bulkOrderService.getAllFields()
         ]);
         // Extract data depending on API response format
         setCategories(catsRes?.data || catsRes || []);
         setSubCategories(subsRes?.data || subsRes || []);
         setProducts(prodsRes?.products || prodsRes?.data || prodsRes || []);
+        if (fieldsRes?.success) {
+          setDynamicFields(fieldsRes.data.filter(f => f.isActive));
+        }
       } catch (err) {
         console.error('Failed to load catalog data for bulk orders:', err);
       } finally {
@@ -90,6 +91,24 @@ export default function BulkOrderPage() {
         setSelectedProductDetails(selectedProd || null);
       }
 
+      if (name.startsWith('customField_')) {
+        const fieldId = name.replace('customField_', '');
+        const fieldDef = dynamicFields.find(f => f._id === fieldId);
+        if (fieldDef) {
+          let updatedCustomFields = [...(prev.customFields || [])];
+          const existingIndex = updatedCustomFields.findIndex(cf => cf.fieldId === fieldId);
+          const newValue = type === 'checkbox' ? checked : value;
+
+          if (existingIndex >= 0) {
+            updatedCustomFields[existingIndex].value = newValue;
+          } else {
+            updatedCustomFields.push({ fieldId, label: fieldDef.label, value: newValue });
+          }
+          newData.customFields = updatedCustomFields;
+        }
+        return newData;
+      }
+
       return newData;
     });
   };
@@ -111,6 +130,18 @@ export default function BulkOrderPage() {
         return;
       }
 
+      // Validate dynamic fields
+      for (const field of dynamicFields) {
+        if (field.isRequired) {
+          const submittedField = formData.customFields?.find(cf => cf.fieldId === field._id);
+          if (!submittedField || submittedField.value === '' || submittedField.value === false) {
+            toast.error(`${field.label} is required`);
+            setIsSubmitting(false);
+            return;
+          }
+        }
+      }
+
       const res = await fetch('http://localhost:5000/api/bulk-orders', {
         method: 'POST',
         headers: {
@@ -124,16 +155,10 @@ export default function BulkOrderPage() {
       if (data.success) {
         toast.success('Bulk order request submitted successfully!');
         setFormData({
-          companyName: '',
-          contactPerson: '',
-          email: '',
-          phone: '',
-          estimatedQuantity: '',
           category: '',
           subCategory: '',
           product: '',
-          customizationRequests: '',
-          customBranding: false
+          customFields: []
         });
         setFilteredSubCategories([]);
         setFilteredProducts([]);
@@ -243,102 +268,72 @@ export default function BulkOrderPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[11px] font-bold text-[#8A817C] uppercase tracking-wider mb-2">Company Name</label>
-                  <input
-                    type="text"
-                    name="companyName"
-                    value={formData.companyName}
-                    onChange={handleChange}
-                    required
-                    placeholder="e.g. Oak & Iron Studio"
-                    className="w-full px-4 py-3 rounded-lg border border-[#E9DED3] bg-[#FAF4EF] focus:bg-white focus:border-[#9C755A] focus:ring-1 focus:ring-[#9C755A] outline-none transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-bold text-[#8A817C] uppercase tracking-wider mb-2">Contact Person</label>
-                  <input
-                    type="text"
-                    name="contactPerson"
-                    value={formData.contactPerson}
-                    onChange={handleChange}
-                    required
-                    placeholder="Full Name"
-                    className="w-full px-4 py-3 rounded-lg border border-[#E9DED3] bg-[#FAF4EF] focus:bg-white focus:border-[#9C755A] focus:ring-1 focus:ring-[#9C755A] outline-none transition-all"
-                  />
-                </div>
-              </div>
+              {/* Dynamic Fields */}
+              {dynamicFields.length > 0 && (
+                <div className="pt-4 border-t border-[#E9DED3] space-y-4">
+                  <h3 className="text-sm font-bold text-[#4A3326] uppercase tracking-wider mb-2">Additional Information</h3>
+                  {dynamicFields.map(field => {
+                    const fieldValue = formData.customFields?.find(cf => cf.fieldId === field._id)?.value || (field.type === 'checkbox' ? false : '');
+                    
+                    if (field.type === 'checkbox') {
+                      return (
+                        <div key={field._id} className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            id={`customField_${field._id}`}
+                            name={`customField_${field._id}`}
+                            checked={fieldValue}
+                            onChange={handleChange}
+                            className="w-5 h-5 text-[#4A3326] border-gray-300 rounded focus:ring-[#4A3326]"
+                          />
+                          <label htmlFor={`customField_${field._id}`} className="text-sm text-[#7C7370]">
+                            {field.label} {field.isRequired && <span className="text-red-500">*</span>}
+                          </label>
+                        </div>
+                      );
+                    }
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[11px] font-bold text-[#8A817C] uppercase tracking-wider mb-2">Email Address</label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    placeholder="name@company.com"
-                    className="w-full px-4 py-3 rounded-lg border border-[#E9DED3] bg-[#FAF4EF] focus:bg-white focus:border-[#9C755A] focus:ring-1 focus:ring-[#9C755A] outline-none transition-all"
-                  />
+                    if (field.type === 'dropdown') {
+                      return (
+                        <div key={field._id}>
+                          <label className="block text-[11px] font-bold text-[#8A817C] uppercase tracking-wider mb-2">
+                            {field.label} {field.isRequired && <span className="text-red-500">*</span>}
+                          </label>
+                          <select
+                            name={`customField_${field._id}`}
+                            value={fieldValue}
+                            onChange={handleChange}
+                            required={field.isRequired}
+                            className="w-full px-4 py-3 rounded-lg border border-[#E9DED3] bg-[#FAF4EF] focus:bg-white focus:border-[#9C755A] focus:ring-1 focus:ring-[#9C755A] outline-none transition-all appearance-none"
+                          >
+                            <option value="">Select option...</option>
+                            {field.options?.map((opt, i) => (
+                              <option key={i} value={opt}>{opt}</option>
+                            ))}
+                          </select>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div key={field._id}>
+                        <label className="block text-[11px] font-bold text-[#8A817C] uppercase tracking-wider mb-2">
+                          {field.label} {field.isRequired && <span className="text-red-500">*</span>}
+                        </label>
+                        <input
+                          type="text"
+                          name={`customField_${field._id}`}
+                          value={fieldValue}
+                          onChange={handleChange}
+                          required={field.isRequired}
+                          placeholder={field.placeholder || ''}
+                          className="w-full px-4 py-3 rounded-lg border border-[#E9DED3] bg-[#FAF4EF] focus:bg-white focus:border-[#9C755A] focus:ring-1 focus:ring-[#9C755A] outline-none transition-all"
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
-                <div>
-                  <label className="block text-[11px] font-bold text-[#8A817C] uppercase tracking-wider mb-2">Phone Number</label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    required
-                    placeholder="+1 (555) 000-0000"
-                    className="w-full px-4 py-3 rounded-lg border border-[#E9DED3] bg-[#FAF4EF] focus:bg-white focus:border-[#9C755A] focus:ring-1 focus:ring-[#9C755A] outline-none transition-all"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold text-[#8A817C] uppercase tracking-wider mb-2">Estimated Order Quantity</label>
-                <select
-                  name="estimatedQuantity"
-                  value={formData.estimatedQuantity}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 rounded-lg border border-[#E9DED3] bg-[#FAF4EF] focus:bg-white focus:border-[#9C755A] focus:ring-1 focus:ring-[#9C755A] outline-none transition-all appearance-none"
-                >
-                  <option value="">Select volume range...</option>
-                  <option value="50-100">50 - 100 units</option>
-                  <option value="101-500">101 - 500 units</option>
-                  <option value="501-1000">501 - 1000 units</option>
-                  <option value="1000+">1000+ units</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold text-[#8A817C] uppercase tracking-wider mb-2">Customization Requests</label>
-                <textarea
-                  name="customizationRequests"
-                  value={formData.customizationRequests}
-                  onChange={handleChange}
-                  rows="4"
-                  placeholder="Tell us about laser engraving, specific wood types (Oak, Walnut, Cedar), or custom dimensions required."
-                  className="w-full px-4 py-3 rounded-lg border border-[#E9DED3] bg-[#FAF4EF] focus:bg-white focus:border-[#9C755A] focus:ring-1 focus:ring-[#9C755A] outline-none transition-all resize-none"
-                ></textarea>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  id="customBranding"
-                  name="customBranding"
-                  checked={formData.customBranding}
-                  onChange={handleChange}
-                  className="w-5 h-5 text-[#4A3326] border-gray-300 rounded focus:ring-[#4A3326]"
-                />
-                <label htmlFor="customBranding" className="text-sm text-[#7C7370]">
-                  I require custom branding/logo engraving on the products.
-                </label>
-              </div>
+              )}
 
               <button
                 type="submit"

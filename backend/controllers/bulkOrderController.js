@@ -9,13 +9,7 @@ exports.createBulkOrder = async (req, res) => {
       category,
       subCategory,
       product,
-      companyName,
-      contactPerson,
-      email,
-      phone,
-      estimatedQuantity,
-      customBranding,
-      customizationRequests
+      customFields
     } = req.body;
 
     const newBulkOrder = await BulkOrder.create({
@@ -23,13 +17,7 @@ exports.createBulkOrder = async (req, res) => {
       category,
       subCategory,
       product,
-      companyName,
-      contactPerson,
-      email,
-      phone,
-      estimatedQuantity,
-      customBranding,
-      customizationRequests
+      customFields
     });
 
     res.status(201).json({

@@ -97,10 +97,10 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
   };
 
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = 
-      order.companyName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      order.contactPerson?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    const searchLower = searchTerm.toLowerCase();
+    const matchesSearch = searchTerm === '' || (order.customFields && order.customFields.some(cf => 
+      cf.value && typeof cf.value === 'string' && cf.value.toLowerCase().includes(searchLower)
+    ));
     const matchesStatus = statusFilter === 'All' || order.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -121,7 +121,7 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A817C]" />
               <input
                 type="text"
-                placeholder="Search by company, name, email..."
+                placeholder="Search custom fields..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-9 pr-4 py-2 bg-[#FAF8F5] border border-[#E9DED3] rounded-[10px] text-sm focus:outline-none focus:border-[#9A6031] focus:ring-1 focus:ring-[#9A6031] transition-all"
@@ -154,10 +154,9 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
               <table className="w-full text-left text-sm whitespace-nowrap">
                 <thead className="bg-[#FAF8F5] text-xs font-bold uppercase tracking-wider text-[#6D625C] border-b border-[#E9DED3]">
                   <tr>
-                    <th className="px-6 py-4">Company Details</th>
-                    <th className="px-6 py-4">Contact</th>
+                    <th className="px-6 py-4">Date & ID</th>
                     <th className="px-6 py-4">Selected Product</th>
-                    <th className="px-6 py-4">Quantity / Needs</th>
+                    <th className="px-6 py-4">Custom Fields Preview</th>
                     <th className="px-6 py-4 text-center">Status</th>
                     <th className="px-6 py-4 text-center">Actions</th>
                   </tr>
@@ -166,13 +165,8 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                   {filteredOrders.map(order => (
                     <tr key={order._id} className="hover:bg-[#FAF8F5]/50 transition-colors">
                       <td className="px-6 py-4">
-                        <p className="font-bold text-[#141225]">{order.companyName}</p>
+                        <p className="font-bold text-[#141225]">Order #{order._id.substring(order._id.length - 6).toUpperCase()}</p>
                         <p className="text-xs text-[#6D625C] mt-0.5">{new Date(order.createdAt).toLocaleDateString()}</p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="font-semibold text-[#141225]">{order.contactPerson}</p>
-                        <p className="text-[#6D625C] text-xs">{order.email}</p>
-                        <p className="text-[#6D625C] text-xs">{order.phone}</p>
                       </td>
                       <td className="px-6 py-4">
                         {order.product ? (
@@ -185,8 +179,16 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-normal min-w-[200px]">
-                        <p className="font-bold text-[#141225] bg-[#FAF8F5] px-2 py-1 rounded inline-block text-xs border border-[#E9DED3]">{order.estimatedQuantity} units</p>
-                        {order.customBranding && <span className="ml-2 text-xs font-bold text-[#8B5E3C]">Custom Branding</span>}
+                        <div className="space-y-1">
+                          {order.customFields && order.customFields.slice(0, 2).map((cf, idx) => (
+                            <p key={idx} className="text-xs text-[#6D625C] truncate max-w-[250px]">
+                              <span className="font-semibold">{cf.label}:</span> {typeof cf.value === 'boolean' ? (cf.value ? 'Yes' : 'No') : cf.value}
+                            </p>
+                          ))}
+                          {order.customFields && order.customFields.length > 2 && (
+                            <p className="text-[10px] text-[#9A6031] font-bold">+ {order.customFields.length - 2} more fields</p>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-center">
                         <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
@@ -250,7 +252,7 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
               </button>
             </div>
             <div className="p-5">
-              <p className="text-sm text-[#4A403B] mb-4">Please provide a reason for rejecting the bulk order from <strong>{rejectingOrder?.companyName}</strong>.</p>
+              <p className="text-sm text-[#4A403B] mb-4">Please provide a reason for rejecting the bulk order <strong>#{rejectingOrder?._id.substring(rejectingOrder._id.length - 6).toUpperCase()}</strong>.</p>
               <textarea
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
@@ -290,23 +292,12 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
             <div className="p-6 overflow-y-auto">
               <div className="grid md:grid-cols-2 gap-6">
                 
-                {/* User & Company Details */}
                 <div className="space-y-4">
                   <div className="bg-[#FAF8F5] p-4 rounded-xl border border-[#E9DED3]">
-                    <h3 className="text-xs font-bold text-[#8A817C] uppercase tracking-wider mb-3">Customer Information</h3>
+                    <h3 className="text-xs font-bold text-[#8A817C] uppercase tracking-wider mb-3">Order Status</h3>
                     <div className="space-y-2 text-sm">
-                      <p><span className="text-[#6D625C] w-24 inline-block">Company:</span> <span className="font-bold text-[#141225]">{viewingOrder.companyName}</span></p>
-                      <p><span className="text-[#6D625C] w-24 inline-block">Contact:</span> <span className="font-semibold text-[#141225]">{viewingOrder.contactPerson}</span></p>
-                      <p><span className="text-[#6D625C] w-24 inline-block">Email:</span> <span className="text-[#4A3326]">{viewingOrder.email}</span></p>
-                      <p><span className="text-[#6D625C] w-24 inline-block">Phone:</span> <span className="text-[#4A3326]">{viewingOrder.phone}</span></p>
-                    </div>
-                  </div>
-
-                  <div className="bg-[#FAF8F5] p-4 rounded-xl border border-[#E9DED3]">
-                    <h3 className="text-xs font-bold text-[#8A817C] uppercase tracking-wider mb-3">Order Requirements</h3>
-                    <div className="space-y-2 text-sm">
-                      <p><span className="text-[#6D625C] w-28 inline-block">Quantity:</span> <span className="font-bold text-[#141225]">{viewingOrder.estimatedQuantity} units</span></p>
-                      <p><span className="text-[#6D625C] w-28 inline-block">Custom Branding:</span> <span className="font-bold text-[#141225]">{viewingOrder.customBranding ? 'Yes' : 'No'}</span></p>
+                      <p><span className="text-[#6D625C] w-28 inline-block">Order ID:</span> <span className="font-bold text-[#141225]">#{viewingOrder._id.substring(viewingOrder._id.length - 6).toUpperCase()}</span></p>
+                      <p><span className="text-[#6D625C] w-28 inline-block">Date:</span> <span className="font-bold text-[#141225]">{new Date(viewingOrder.createdAt).toLocaleString()}</span></p>
                       <p><span className="text-[#6D625C] w-28 inline-block">Status:</span> 
                         <span className={`ml-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
                           viewingOrder.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' :
@@ -368,12 +359,22 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                 </div>
 
               </div>
-              
-              {/* Customization Details */}
-              {viewingOrder.customizationRequests && (
+              {/* Removed Customization Details */}
+
+              {/* Dynamic Fields */}
+              {viewingOrder.customFields && viewingOrder.customFields.length > 0 && (
                 <div className="mt-6 bg-[#FAF8F5] p-4 rounded-xl border border-[#E9DED3]">
-                  <h3 className="text-xs font-bold text-[#8A817C] uppercase tracking-wider mb-2">Customization Requests</h3>
-                  <p className="text-sm text-[#4A403B] whitespace-pre-wrap">{viewingOrder.customizationRequests}</p>
+                  <h3 className="text-xs font-bold text-[#8A817C] uppercase tracking-wider mb-4">Additional Information</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {viewingOrder.customFields.map((field, idx) => (
+                      <div key={idx} className="bg-white p-3 rounded-lg border border-[#E9DED3]">
+                        <p className="text-[10px] font-bold text-[#8A817C] uppercase tracking-wider mb-1">{field.label}</p>
+                        <p className="text-sm font-semibold text-[#141225]">
+                          {typeof field.value === 'boolean' ? (field.value ? 'Yes' : 'No') : field.value || 'N/A'}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

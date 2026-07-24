@@ -21,33 +21,6 @@ const bulkOrderSchema = new mongoose.Schema({
     ref: 'Product',
     required: true
   },
-  companyName: {
-    type: String,
-    required: true
-  },
-  contactPerson: {
-    type: String,
-    required: true
-  },
-  email: {
-    type: String,
-    required: true
-  },
-  phone: {
-    type: String,
-    required: true
-  },
-  estimatedQuantity: {
-    type: String,
-    required: true
-  },
-  customBranding: {
-    type: Boolean,
-    default: false
-  },
-  customizationRequests: {
-    type: String
-  },
   status: {
     type: String,
     enum: ['Pending', 'Approved', 'Rejected'],
@@ -55,7 +28,17 @@ const bulkOrderSchema = new mongoose.Schema({
   },
   rejectionReason: {
     type: String
-  }
+  },
+  customFields: [
+    {
+      fieldId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'BulkOrderField'
+      },
+      label: String,
+      value: mongoose.Schema.Types.Mixed
+    }
+  ]
 }, { timestamps: true });
 
 module.exports = mongoose.model('BulkOrder', bulkOrderSchema);

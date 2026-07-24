@@ -51,6 +51,12 @@ export const cmsService = {
   updateCategoryGrid: (id, body) => request(`${BASE}/category-grid/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   deleteCategoryGrid: (id) => request(`${BASE}/category-grid/${id}`, { method: 'DELETE' }),
 
+  // Categories Grid
+  getCategoriesGrids: () => request(`${BASE}/categories-grid`),
+  createCategoriesGrid: (body) => request(`${BASE}/categories-grid`, { method: 'POST', body: JSON.stringify(body) }),
+  updateCategoriesGrid: (id, body) => request(`${BASE}/categories-grid/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deleteCategoriesGrid: (id) => request(`${BASE}/categories-grid/${id}`, { method: 'DELETE' }),
+
   // Footer
   getFooter: () => request(`${BASE}/footer`),
   updateFooter: (body) => request(`${BASE}/footer`, { method: 'PUT', body: JSON.stringify(body) }),

@@ -57,12 +57,14 @@ export default function HomeLayoutBuilder() {
             cmsService.getThirdBanners(),
             cmsService.getProductGrids(),
             cmsService.getFooter(),
-            cmsService.getCategoryGrids()
-        ]).then(([heroRes, categoriesRes, thirdRes, gridRes, footerRes, catGridRes]) => {
+            cmsService.getCategoryGrids(),
+            cmsService.getCategoriesGrids()
+        ]).then(([heroRes, categoriesRes, thirdRes, gridRes, footerRes, catGridRes, catsGridsRes]) => {
             const heroes = heroRes.status === 'fulfilled' ? heroRes.value.data || [] : [];
             const thirdBanners = thirdRes.status === 'fulfilled' ? thirdRes.value.data || [] : [];
             const productGrids = gridRes.status === 'fulfilled' ? gridRes.value.data || [] : [];
             const categoryGrids = catGridRes.status === 'fulfilled' ? catGridRes.value.data || [] : [];
+            const categoriesGrids = catsGridsRes.status === 'fulfilled' ? catsGridsRes.value.data || [] : [];
 
             // We still build heroSlides for the preview context, but we want all models available
             let heroSlides = [];
@@ -88,6 +90,7 @@ export default function HomeLayoutBuilder() {
                 thirdBanners,
                 productGrids,
                 categoryGrids,
+                categoriesGrids,
                 shopCategories: categoriesRes.status === 'fulfilled' ? categoriesRes.value.data : [],
                 footerData: footerRes.status === 'fulfilled' ? footerRes.value.data : null,
                 featuredProducts: [],
@@ -112,6 +115,7 @@ export default function HomeLayoutBuilder() {
                 ...realContext.thirdBanners.map(b => ({ id: `thirdBanner_${b._id}`, sectionType: 'thirdBanner', title: b.title || 'Third Banner' })),
                 ...realContext.productGrids.map(b => ({ id: `productGrid_${b._id}`, sectionType: 'productGrid', title: b.title || 'Product Grid' })),
                 ...realContext.categoryGrids.map(b => ({ id: `categoryGrid_${b._id}`, sectionType: 'categoryGrid', title: b.title || 'Category Grid' })),
+                ...realContext.categoriesGrids.map(b => ({ id: `categoriesGrid_${b._id}`, sectionType: 'categoriesGrid', title: b.title || 'Categories Grid' })),
                 { id: 'reviews', sectionType: 'reviews', title: 'Customer Reviews' },
                 { id: 'footer', sectionType: 'footer', title: 'Footer' }
             ];
@@ -193,6 +197,7 @@ export default function HomeLayoutBuilder() {
             heroBanner: '🖼️ Hero Banner',
             thirdBanner: '🎨 Third Banner',
             categoryGrid: '🗂️ Category Grid',
+            categoriesGrid: '🗂️ Categories Grid',
             productGrid: '📦 Product Grid',
             footer: '📋 Footer'
         };

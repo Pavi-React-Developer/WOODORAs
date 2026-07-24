@@ -8,6 +8,22 @@ const {
   updateBulkOrderStatus
 } = require('../controllers/bulkOrderController');
 
+const {
+  getAllFields,
+  createField,
+  updateField,
+  deleteField
+} = require('../controllers/bulkOrderFieldController');
+
+// Field routes
+router.route('/fields')
+  .get(getAllFields)
+  .post(protect, authorize('admin'), createField);
+
+router.route('/fields/:id')
+  .put(protect, authorize('admin'), updateField)
+  .delete(protect, authorize('admin'), deleteField);
+
 router.route('/')
   .post(protect, createBulkOrder)
   .get(protect, authorize('admin'), getAllBulkOrders);

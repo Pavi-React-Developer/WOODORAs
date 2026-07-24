@@ -1,5 +1,5 @@
 import React from 'react';
-import { HomeNavbar, HomeHeroBanner, HomeThirdBanner, HomeCategoryGrid, HomeProductGrid, HomeReviews, HomeFooter } from './HomeComponents';
+import { HomeNavbar, HomeHeroBanner, HomeThirdBanner, HomeCategoryGrid, HomeCategoriesGrid, HomeProductGrid, HomeReviews, HomeFooter } from './HomeComponents';
 
 export default function SectionRenderer({ section, context, isPreview = false }) {
     if (!section || !section.visible) return null;
@@ -24,6 +24,11 @@ export default function SectionRenderer({ section, context, isPreview = false })
                 specificData = context.categoryGrids.find(b => b._id === instanceId);
             }
             break;
+        case 'categoriesGrid':
+            if (instanceId && context.categoriesGrids) {
+                specificData = context.categoriesGrids.find(b => b._id === instanceId);
+            }
+            break;
         case 'productGrid':
             if (instanceId && context.productGrids) {
                 specificData = context.productGrids.find(b => b._id === instanceId);
@@ -42,6 +47,8 @@ export default function SectionRenderer({ section, context, isPreview = false })
             return <HomeThirdBanner {...props} />;
         case 'categoryGrid':
             return <HomeCategoryGrid {...props} />;
+        case 'categoriesGrid':
+            return <HomeCategoriesGrid {...props} />;
         case 'productGrid':
             return <HomeProductGrid {...props} />;
         case 'reviews':

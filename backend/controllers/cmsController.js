@@ -4,6 +4,7 @@ const CmsHeroBanner = require('../models/CmsHeroBanner');
 const CmsThirdBanner = require('../models/CmsThirdBanner');
 const CmsProductGrid = require('../models/CmsProductGrid');
 const CmsCategoryGrid = require('../models/CmsCategoryGrid');
+const CmsCategoriesGrid = require('../models/CmsCategoriesGrid');
 const CmsFooter = require('../models/CmsFooter');
 const CmsReviewConfig = require('../models/CmsReviewConfig');
 const Review = require('../models/Review');
@@ -279,6 +280,27 @@ exports.deleteCategoryGrid = asyncHandler(async (req, res) => {
   res.json({ success: true, message: 'Category grid deleted' });
 });
 
+// --- CATEGORIES GRID ---
+exports.getCategoriesGrids = asyncHandler(async (req, res) => {
+  const grids = await CmsCategoriesGrid.find().populate('categories').sort({ sortOrder: 1 });
+  res.json({ success: true, data: grids });
+});
+
+exports.createCategoriesGrid = asyncHandler(async (req, res) => {
+  const grid = await CmsCategoriesGrid.create(req.body);
+  res.status(201).json({ success: true, data: grid });
+});
+
+exports.updateCategoriesGrid = asyncHandler(async (req, res) => {
+  const grid = await CmsCategoriesGrid.findByIdAndUpdate(req.params.id, req.body, { returnDocument: 'after', runValidators: true }).populate('categories');
+  res.json({ success: true, data: grid });
+});
+
+exports.deleteCategoriesGrid = asyncHandler(async (req, res) => {
+  await CmsCategoriesGrid.findByIdAndDelete(req.params.id);
+  res.json({ success: true, message: 'Categories grid deleted' });
+});
+
 // --- FOOTER ---
 exports.getFooter = asyncHandler(async (req, res) => {
   let footer = await CmsFooter.findOne();
@@ -340,8 +362,9 @@ exports.getLayout = asyncHandler(async (req, res) => {
         { id: 'thirdBanner', sectionType: 'thirdBanner', order: 3, visible: true },
         { id: 'categoryGrid', sectionType: 'categoryGrid', order: 4, visible: true },
         { id: 'productGrid', sectionType: 'productGrid', order: 5, visible: true },
-        { id: 'reviews', sectionType: 'reviews', order: 6, visible: true },
-        { id: 'footer', sectionType: 'footer', order: 7, visible: true },
+        { id: 'categoriesGrid', sectionType: 'categoriesGrid', order: 6, visible: true },
+        { id: 'reviews', sectionType: 'reviews', order: 7, visible: true },
+        { id: 'footer', sectionType: 'footer', order: 8, visible: true },
       ]
     });
   }
