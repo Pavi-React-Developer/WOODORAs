@@ -19,6 +19,7 @@ const normalizeItem = (item = {}) => ({
   maxStock: Number(item.maxStock) || 999,
   variantOptions: item.variantOptions || null,
   isGift: Boolean(item.isGift) || false,
+  isGiftWrapper: item.isGiftWrapper !== undefined ? item.isGiftWrapper : true,
   giftBox: item.giftBox
     ? {
         volume: Number(item.giftBox.volume) || 0,

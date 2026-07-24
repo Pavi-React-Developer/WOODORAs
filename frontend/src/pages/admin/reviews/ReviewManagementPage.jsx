@@ -89,7 +89,7 @@ function ReviewDetailModal({ review, onClose, onStatusChange, onDelete, canEdit,
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
-              <MessageCircle size={18} className="text-indigo-600" />
+              <MessageCircle size={18} className="p-1.5 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded transition-colors" />
             </div>
             <div>
               <h2 className="font-bold text-gray-900 text-lg">Review Details</h2>
@@ -403,7 +403,7 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
                           <MessageCircle size={28} className="text-gray-300"/>
                         </div>
                         <p className="text-gray-400 font-medium">No reviews found</p>
-                        <button onClick={resetFilters} className="text-sm text-indigo-600 hover:underline">Clear filters</button>
+                        <button onClick={resetFilters} className="p-1.5 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded transition-colors">Clear filters</button>
                       </div>
                     </td>
                   </tr>
@@ -460,7 +460,7 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
                       <td className="px-5 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-1.5">
                           <button onClick={() => setDetail(r)} title="View"
-                            className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-indigo-100 hover:text-indigo-600 flex items-center justify-center transition">
+                            className="p-1.5 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded transition-colors">
                             <Eye size={14}/>
                           </button>
                           {canEdit && r.status !== "approved" && (
@@ -471,13 +471,13 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
                           )}
                           {canEdit && r.status !== "rejected" && (
                             <button onClick={() => handleStatusChange(r._id, "rejected")} title="Reject"
-                              className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-red-100 hover:text-red-500 flex items-center justify-center transition">
+                              className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
                               <X size={14}/>
                             </button>
                           )}
                           {canDelete && (
                           <button onClick={() => setConfirm({ id: r._id })} title="Delete"
-                            className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-red-100 hover:text-red-500 flex items-center justify-center transition">
+                            className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
                             <Trash2 size={14}/>
                           </button>
                           )}
@@ -563,7 +563,7 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full">
             <div className="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Trash2 size={22} className="text-red-500"/>
+              <Trash2 size={22} className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"/>
             </div>
             <h3 className="text-center font-bold text-gray-900 text-lg mb-1">Delete Review?</h3>
             <p className="text-center text-sm text-gray-500 mb-6">This action cannot be undone.</p>

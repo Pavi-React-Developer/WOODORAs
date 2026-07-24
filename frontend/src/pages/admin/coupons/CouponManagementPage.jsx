@@ -396,11 +396,11 @@ export default function CouponManagementPage({ canCreate = true, canEdit = true,
                       <td className="px-4 py-3">{coupon.visible ? <span className="text-emerald-700">Visible</span> : <span className="text-slate-500">Hidden</span>}</td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-2">
-                          <button onClick={() => openView(coupon)} className="p-1.5 text-teal-600 hover:text-teal-700 transition-colors" title="View"><Eye size={15} /></button>
-                          {canEdit && <button onClick={() => openEdit(coupon)} className="p-1.5 text-blue-600 hover:text-blue-700 transition-colors" title="Edit"><Pencil size={15} /></button>}
-                          {canDelete && <button onClick={() => setConfirmDelete(coupon)} className="p-1.5 text-red-500 hover:text-red-700 transition-colors" title="Delete"><Trash2 size={15} /></button>}
+                          <button onClick={() => openView(coupon)} className="p-1.5 text-teal-600 hover:text-teal-700 hover:bg-teal-50 rounded transition-colors" title="View"><Eye size={15} /></button>
+                          {canEdit && <button onClick={() => openEdit(coupon)} className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors" title="Edit"><Pencil size={15} /></button>}
+                          {canDelete && <button onClick={() => setConfirmDelete(coupon)} className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Delete"><Trash2 size={15} /></button>}
                           {canEdit && <button onClick={() => handleToggleStatus(coupon)} className="p-1.5 text-amber-600 hover:text-amber-700 transition-colors" title="Enable/Disable">{coupon.status === 'active' ? <BadgeX size={15} /> : <BadgeCheck size={15} />}</button>}
-                          {canEdit && <button onClick={() => handleToggleVisibility(coupon)} className="p-1.5 text-indigo-600 hover:text-indigo-700 transition-colors" title="Visible/Invisible">{coupon.visible ? <XCircle size={15} /> : <CheckCircle2 size={15} />}</button>}
+                          {canEdit && <button onClick={() => handleToggleVisibility(coupon)} className="p-1.5 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded transition-colors" title="Visible/Invisible">{coupon.visible ? <XCircle size={15} /> : <CheckCircle2 size={15} />}</button>}
                         </div>
                       </td>
                     </tr>

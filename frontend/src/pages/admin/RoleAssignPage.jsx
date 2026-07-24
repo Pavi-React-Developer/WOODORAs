@@ -303,7 +303,7 @@ export default function RoleAssignPage({ onBack, targetStaff, currentUserPermiss
 
         {/* Role Name Field */}
         <div className="mb-5">
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Role Name <span className="text-red-500">*</span></label>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Role Name <span className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">*</span></label>
           <input
             type="text"
             value={roleName}
@@ -335,7 +335,7 @@ export default function RoleAssignPage({ onBack, targetStaff, currentUserPermiss
             {roleCreated}
           </p>
         )}
-        {roleError && <p className="text-sm text-red-500 mb-3">{roleError}</p>}
+        {roleError && <p className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">{roleError}</p>}
 
         {/* Create Button */}
         <div className="flex justify-end">
@@ -359,7 +359,7 @@ export default function RoleAssignPage({ onBack, targetStaff, currentUserPermiss
 
         {/* Staff Selector */}
         <div className="mb-5">
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Select Staff Member <span className="text-red-500">*</span></label>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Select Staff Member <span className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">*</span></label>
           <select
             value={selectedStaff?._id || ''}
             onChange={e => {

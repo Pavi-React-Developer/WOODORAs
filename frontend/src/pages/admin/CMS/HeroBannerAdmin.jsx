@@ -190,7 +190,7 @@ export default function HeroBannerAdmin() {
                 {(form.items || []).map((item, idx) => (
                   <div key={idx} className="p-4 border border-[#E6DFD4] rounded-xl bg-white relative">
                     <button type="button" onClick={() => setForm(f => ({ ...f, items: f.items.filter((_, i) => i !== idx) }))}
-                      className="absolute top-2 right-2 p-1 bg-red-50 text-red-500 rounded hover:bg-red-100">
+                      className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
                       <Trash2 className="w-4 h-4" />
                     </button>
                     <div className="mb-3 w-1/3">

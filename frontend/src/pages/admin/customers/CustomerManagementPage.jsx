@@ -430,7 +430,7 @@ export default function CustomerManagementPage() {
                       <td className="px-5 py-4 whitespace-nowrap">
                         <button
                           onClick={() => setDetail(c)}
-                          className="p-1.5 text-teal-600 hover:text-teal-700 transition-colors"
+                          className="p-1.5 text-teal-600 hover:text-teal-700 hover:bg-teal-50 rounded transition-colors"
                           title="View"
                         >
                           <Eye size={16} />

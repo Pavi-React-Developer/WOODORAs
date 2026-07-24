@@ -413,7 +413,7 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                                             {canEdit && (
                                             <button
                                                 onClick={() => handleOpenForm(attr)}
-                                                className="p-1.5 text-blue-600 hover:text-blue-700 transition-colors"
+                                                className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
                                                 title="Edit"
                                             >
                                                 <Edit2 size={16} />
@@ -692,7 +692,7 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                                                         <button
                                                             type="button"
                                                             onClick={() => handleRemoveValueOption(idx)}
-                                                            className="text-gray-400 hover:text-red-500 transition-colors p-0.5"
+                                                            className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                                                         >
                                                             ✕
                                                         </button>

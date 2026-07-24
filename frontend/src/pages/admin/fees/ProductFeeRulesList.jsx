@@ -185,7 +185,7 @@ export default function ProductFeeRulesList({ onBack, canCreate = true, canEdit 
                     <td className="px-4 py-3 text-center flex justify-center gap-3">
                       {canEdit && (
                         <>
-                          <button onClick={() => handleEdit(rule)} className="text-gray-400 hover:text-blue-500 transition-colors" title="Edit Rule">
+                          <button onClick={() => handleEdit(rule)} className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors" title="Edit Rule">
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button onClick={() => toggleStatus(rule)} className={`transition-colors ${rule.isActive ? 'text-green-500 hover:text-green-600' : 'text-gray-400 hover:text-gray-500'}`} title={rule.isActive ? 'Deactivate' : 'Activate'}>
@@ -194,7 +194,7 @@ export default function ProductFeeRulesList({ onBack, canCreate = true, canEdit 
                         </>
                       )}
                       {canDelete && (
-                      <button onClick={() => handleDelete(rule._id)} className="text-gray-400 hover:text-red-500 transition-colors" title="Delete Rule">
+                      <button onClick={() => handleDelete(rule._id)} className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Delete Rule">
                         <Trash2 className="w-4 h-4" />
                       </button>
                       )}

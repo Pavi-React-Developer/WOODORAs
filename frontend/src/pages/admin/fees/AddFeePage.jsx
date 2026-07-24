@@ -294,7 +294,7 @@ export default function AddFeePage({ onNavigate, editingFee }) {
         {/* Row 1: Fee Name & State */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-2">Fee Name <span className="text-red-500">*</span></label>
+            <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-2">Fee Name <span className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">*</span></label>
             <input
               type="text"
               value={feeName}
@@ -302,11 +302,11 @@ export default function AddFeePage({ onNavigate, editingFee }) {
               placeholder="e.g. Delivery Fee"
               className="w-full border border-[#E6DFD4] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-brand-medium"
             />
-            {errors.feeName && <p className="text-red-500 text-xs mt-1">{errors.feeName}</p>}
+            {errors.feeName && <p className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">{errors.feeName}</p>}
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-2">Application State <span className="text-red-500">*</span></label>
+            <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-2">Application State <span className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">*</span></label>
             <div className="flex items-center gap-6 mt-3">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -333,7 +333,7 @@ export default function AddFeePage({ onNavigate, editingFee }) {
                 <span className="text-sm font-medium text-brand-dark">Other State</span>
               </label>
             </div>
-            {errors.applicationState && <p className="text-red-500 text-xs mt-2">{errors.applicationState}</p>}
+            {errors.applicationState && <p className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">{errors.applicationState}</p>}
           </div>
         </div>
 
@@ -341,7 +341,7 @@ export default function AddFeePage({ onNavigate, editingFee }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="relative">
             <div className="flex justify-between items-center mb-2">
-              <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider">Fee Category <span className="text-red-500">*</span></label>
+              <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider">Fee Category <span className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">*</span></label>
               <button onClick={() => setShowCatModal(true)} className="text-[10px] text-brand-dark font-bold uppercase hover:underline">+ Add Category</button>
             </div>
 
@@ -385,7 +385,7 @@ export default function AddFeePage({ onNavigate, editingFee }) {
               </>
             )}
 
-            {errors.feeCategory && <p className="text-red-500 text-xs mt-1">{errors.feeCategory}</p>}
+            {errors.feeCategory && <p className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">{errors.feeCategory}</p>}
           </div>
 
           <div>
@@ -401,14 +401,14 @@ export default function AddFeePage({ onNavigate, editingFee }) {
               <option value="cod">COD</option>
               <option value="cashfree">CashFree</option>
             </select>
-            {errors.paymentMethod && <p className="text-red-500 text-xs mt-1">{errors.paymentMethod}</p>}
+            {errors.paymentMethod && <p className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">{errors.paymentMethod}</p>}
           </div>
         </div>
 
         {/* Row 3: Fee Type & Active */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-2">Fee Type <span className="text-red-500">*</span></label>
+            <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-2">Fee Type <span className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">*</span></label>
             <select
               value={feeType}
               onChange={(e) => setFeeType(e.target.value)}
@@ -417,7 +417,7 @@ export default function AddFeePage({ onNavigate, editingFee }) {
               <option value="Fixed Amount">Fixed Amount</option>
               <option value="Percentage">Percentage</option>
             </select>
-            {errors.feeType && <p className="text-red-500 text-xs mt-1">{errors.feeType}</p>}
+            {errors.feeType && <p className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">{errors.feeType}</p>}
           </div>
 
           <div className="flex items-center pt-8">
@@ -451,18 +451,18 @@ export default function AddFeePage({ onNavigate, editingFee }) {
                       <div className="flex-1">
                         <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Min Weight (kg)</label>
                         <input type="number" step="0.0001" min="0" value={slab.minWeight} onChange={e => handleSlabChange(index, 'minWeight', e.target.value)} className="w-full border border-[#E6DFD4] rounded-lg px-3 py-2 text-sm" placeholder="0.0001" />
-                        {errors.weightSlabs?.[index]?.minWeight && <p className="text-red-500 text-[10px] mt-1">{errors.weightSlabs[index].minWeight}</p>}
+                        {errors.weightSlabs?.[index]?.minWeight && <p className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">{errors.weightSlabs[index].minWeight}</p>}
                       </div>
                       <span className="hidden sm:block text-gray-400 font-bold px-2 pt-4">-</span>
                       <div className="flex-1">
                         <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Max Weight (kg)</label>
                         <input type="number" step="0.0001" min="0" value={slab.maxWeight} onChange={e => handleSlabChange(index, 'maxWeight', e.target.value)} className="w-full border border-[#E6DFD4] rounded-lg px-3 py-2 text-sm" placeholder="1.0000" />
-                        {errors.weightSlabs?.[index]?.maxWeight && <p className="text-red-500 text-[10px] mt-1">{errors.weightSlabs[index].maxWeight}</p>}
+                        {errors.weightSlabs?.[index]?.maxWeight && <p className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">{errors.weightSlabs[index].maxWeight}</p>}
                       </div>
                       <div className="flex-1">
                         <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Charge {feeType === 'Fixed Amount' ? '(₹)' : '(%)'}</label>
                         <input type="number" step="0.01" min="0" value={slab.charge ?? slab.feeValue ?? ''} onChange={e => handleSlabChange(index, 'charge', e.target.value)} className="w-full border border-[#E6DFD4] rounded-lg px-3 py-2 text-sm" placeholder="200" />
-                        {errors.weightSlabs?.[index]?.charge && <p className="text-red-500 text-[10px] mt-1">{errors.weightSlabs[index].charge}</p>}
+                        {errors.weightSlabs?.[index]?.charge && <p className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">{errors.weightSlabs[index].charge}</p>}
                       </div>
                       <div className="flex flex-col gap-2 pt-5">
                         <label className="flex items-center gap-2 text-xs font-semibold text-gray-600">
@@ -480,7 +480,7 @@ export default function AddFeePage({ onNavigate, editingFee }) {
                         </button>
                       )}
                     </div>
-                    {errors.weightSlabs?.[index]?.overlap && <p className="text-red-500 text-xs w-full mt-3 font-semibold">{errors.weightSlabs[index].overlap}</p>}
+                    {errors.weightSlabs?.[index]?.overlap && <p className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">{errors.weightSlabs[index].overlap}</p>}
                   </div>
                 ))}
               </div>
@@ -492,7 +492,7 @@ export default function AddFeePage({ onNavigate, editingFee }) {
           <>
             <hr className="border-[#E6DFD4]" />
             <div>
-              <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-2">Fee Value ({feeType === 'Fixed Amount' ? '₹' : '%'}) <span className="text-red-500">*</span></label>
+              <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-2">Fee Value ({feeType === 'Fixed Amount' ? '₹' : '%'}) <span className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">*</span></label>
               <input
                 type="number"
                 value={flatFeeValue}
@@ -500,7 +500,7 @@ export default function AddFeePage({ onNavigate, editingFee }) {
                 placeholder="e.g. 50"
                 className="w-full md:w-1/2 border border-[#E6DFD4] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-brand-medium"
               />
-              {errors.flatFeeValue && <p className="text-red-500 text-xs mt-1">{errors.flatFeeValue}</p>}
+              {errors.flatFeeValue && <p className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">{errors.flatFeeValue}</p>}
             </div>
           </>
         )}

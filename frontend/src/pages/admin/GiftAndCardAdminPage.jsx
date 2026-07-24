@@ -252,7 +252,7 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
                             isActive: rule.isActive
                           });
                           window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }} className="text-gray-400 hover:text-blue-500 transition-colors" title="Edit Rule">
+                        }} className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors" title="Edit Rule">
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button onClick={async () => {
@@ -278,7 +278,7 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
                       } catch (error) {
                         toast.error('Failed to delete rule');
                       }
-                    }} className="text-gray-400 hover:text-red-500 transition-colors" title="Delete Rule">
+                    }} className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Delete Rule">
                       <Trash2 className="w-4 h-4" />
                     </button>
                     )}

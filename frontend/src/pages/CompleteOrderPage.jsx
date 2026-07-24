@@ -131,7 +131,13 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
       volume = item.dimensions.length * item.dimensions.width * item.dimensions.height;
     }
 
-    // Product and Gift Fees
+    // Product Fee applies to all items (normal products and gift items)
+    const pRule = productFeeRules.find(r => r.isActive && volume >= r.minVolume && volume <= r.maxVolume);
+    if (pRule) {
+      dynamicProductFee += (pRule.fee * item.qty);
+    }
+
+    // Gift Fee only applies if it's a gift AND the wrapper is active
     if (item.isGift && item.isGiftWrapper !== false) {
       // Gift Fee
       const gRule = giftBoxRules.find(r => r.isActive && volume >= r.minVolume && volume <= r.maxVolume);
@@ -140,12 +146,6 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
       } else if (item.giftBox && item.giftBox.giftFee) {
          // Fallback to legacy
          dynamicGiftBoxFee += (Number(item.giftBox.giftFee) * item.qty);
-      }
-    } else {
-      // Product Fee (only applies if NOT a gift, or if gift wrapper is inactive)
-      const pRule = productFeeRules.find(r => r.isActive && volume >= r.minVolume && volume <= r.maxVolume);
-      if (pRule) {
-        dynamicProductFee += (pRule.fee * item.qty);
       }
     }
   });

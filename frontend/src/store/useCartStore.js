@@ -202,6 +202,7 @@ const useCartStore = create(
             maxStock: Math.max(1, maxStock),
             weight: selectedVariant?.weight ?? product.shippingWeight ?? product.weight ?? 0,
             isGift: product.isGift || false,
+            isGiftWrapper: product.isGiftWrapper !== undefined ? product.isGiftWrapper : true,
             giftBox: product.giftBox || null,
             dimensions: (selectedVariant?.length && selectedVariant?.width && selectedVariant?.height) 
               ? { length: selectedVariant.length, width: selectedVariant.width, height: selectedVariant.height }
@@ -316,6 +317,7 @@ function normalizeCartItem(item = {}) {
     maxStock: Number(item.maxStock) || 999,
     weight: Number(item.weight) || 0,
     isGift: item.isGift || false,
+    isGiftWrapper: item.isGiftWrapper !== undefined ? item.isGiftWrapper : true,
     giftBox: item.giftBox || null,
     dimensions: item.dimensions || null,
   };

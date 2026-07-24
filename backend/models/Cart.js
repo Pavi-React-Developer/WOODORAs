@@ -46,6 +46,10 @@ const cartItemSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  isGiftWrapper: {
+    type: Boolean,
+    default: true,
+  },
   giftBox: {
     volume: { type: Number },
     boxSize: { type: String },

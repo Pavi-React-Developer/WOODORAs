@@ -424,7 +424,7 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                                             {canEdit && (
                                             <button
                                                 onClick={() => handleOpenForm(sub)}
-                                                className="p-1.5 text-blue-600 hover:text-blue-700 transition-colors"
+                                                className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
                                                 title="Edit"
                                             >
                                                 <Edit2 size={16} />

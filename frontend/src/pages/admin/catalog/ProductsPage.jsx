@@ -648,7 +648,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                                 {canEdit && (
                                                     <button
                                                         onClick={() => handleOpenForm(prod)}
-                                                        className="p-1.5 text-blue-600 hover:text-blue-700 transition-colors"
+                                                        className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
                                                         title="Edit"
                                                     >
                                                         <Edit2 size={16} />
@@ -895,7 +895,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                             {/* Section 6: SEO */}
                             <div className="border-t border-gray-100 pt-6 mt-6">
                                 <h3 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
-                                    <Globe size={18} className="text-blue-600" />
+                                    <Globe size={18} className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors" />
                                     SEO & Search Indexing
                                 </h3>
                                 <div className="grid grid-cols-2 gap-4">

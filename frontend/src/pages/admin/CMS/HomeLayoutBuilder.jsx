@@ -189,7 +189,7 @@ export default function HomeLayoutBuilder() {
     };
 
     if (status === 'loading') return <div className="p-8 text-center text-brand-medium">Loading layout...</div>;
-    if (error) return <div className="p-8 text-center text-red-500">Error loading layout: {error}</div>;
+    if (error) return <div className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">Error loading layout: {error}</div>;
 
     const getSectionLabel = (section) => {
         const typeLabels = {

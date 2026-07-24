@@ -227,7 +227,7 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
           </div>
 
           <div className="bg-white rounded-[14px] border border-[#E9DED3] p-5 shadow-sm flex items-start gap-4">
-            <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-500 flex-shrink-0">
+            <div className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             </div>
             <div>
@@ -538,7 +538,7 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
               {processRefund.refundDestination && (
                 <div className="mb-4">
                   <p className="text-[11px] font-bold text-[#8A817C] uppercase tracking-wider mb-1">Customer UPI / Phone</p>
-                  <div className="inline-block bg-blue-50 border border-blue-100 rounded text-blue-600 px-3 py-1.5 text-sm font-bold tracking-wide">
+                  <div className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors">
                     {processRefund.refundDestination}
                   </div>
                 </div>
@@ -664,8 +664,8 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
                   <span className="text-[#141225] font-bold">₹{(activeViewRefund.amountPaid || 0).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-red-500 font-bold">Cancellation Fee</span>
-                  <span className="text-red-500 font-bold">-₹{(activeViewRefund.cancellationFee || 0).toFixed(2)}</span>
+                  <span className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">Cancellation Fee</span>
+                  <span className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">-₹{(activeViewRefund.cancellationFee || 0).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm pt-2 border-t border-dashed border-[#E9DED3]">
                   <span className="text-[#141225] font-bold">Estimated Refund</span>

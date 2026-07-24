@@ -209,7 +209,7 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-white rounded-[14px] border border-[#E9DED3] p-5 flex flex-col justify-between shadow-sm">
                 <div className="flex items-start justify-between">
-                  <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                  <div className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors">
                     <Check size={20} />
                   </div>
                 </div>
@@ -382,7 +382,7 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-bold text-[#4A403B]">Rule Name (Order Status) <span className="text-red-500">*</span></label>
+                  <label className="text-sm font-bold text-[#4A403B]">Rule Name (Order Status) <span className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">*</span></label>
                   <div className="relative">
                     <select 
                       value={formData.orderStatus}
@@ -400,7 +400,7 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-sm font-bold text-[#4A403B]">Cancellation Fee (₹) <span className="text-red-500">*</span></label>
+                  <label className="text-sm font-bold text-[#4A403B]">Cancellation Fee (₹) <span className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">*</span></label>
                   <input 
                     type="number" 
                     placeholder="Enter fee amount"
@@ -421,7 +421,7 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-bold text-[#4A403B]">Refund (%) <span className="text-red-500">*</span></label>
+                  <label className="text-sm font-bold text-[#4A403B]">Refund (%) <span className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">*</span></label>
                   <input 
                     type="number" 
                     placeholder="e.g. 100"
@@ -432,7 +432,7 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-sm font-bold text-[#4A403B]">SLA (Days) <span className="text-red-500">*</span></label>
+                  <label className="text-sm font-bold text-[#4A403B]">SLA (Days) <span className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">*</span></label>
                   <input 
                     type="number" 
                     placeholder="Enter SLA in days"

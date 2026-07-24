@@ -223,7 +223,7 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
                         {canEdit && (
                           <button
                             onClick={() => onEditFee(fee)}
-                            className="p-1.5 text-blue-600 hover:text-blue-700 transition-colors"
+                            className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
                             title="Edit"
                           >
                             <Edit3 className="w-4 h-4" />
@@ -232,7 +232,7 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
                         {canDelete && (
                           <button
                             onClick={() => handleDelete(fee._id)}
-                            className="p-1.5 text-red-500 hover:text-red-600 transition-colors"
+                            className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                             title="Delete"
                           >
                             <Trash2 className="w-4 h-4" />
