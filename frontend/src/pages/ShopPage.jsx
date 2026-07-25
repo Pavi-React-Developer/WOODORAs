@@ -302,8 +302,11 @@ export default function ShopPage({ onNavigate, onAddToCart, onAddToWishlist, use
     </div>
   );
 
+  const currentCategoryObj = categories.find(c => c._id === selectedCategory);
+  const pageTitle = currentCategoryObj ? currentCategoryObj.name : 'Woodora Toys';
+
   return (
-    <div className="bg-[#FDF9F1] min-h-screen pt-24 pb-16 font-sans text-[#141225]">
+    <div className="bg-[#FDF9F1] min-h-screen pt-32 pb-16 font-sans text-[#141225]">
 
       {/* Slide-in Drawer */}
       {drawerOpen && (
@@ -356,17 +359,19 @@ export default function ShopPage({ onNavigate, onAddToCart, onAddToWishlist, use
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-        {/* Breadcrumbs */}
-        <div className="text-xs text-gray-500 mb-6 flex items-center gap-2">
-          <span className="cursor-pointer hover:text-gray-900" onClick={() => onNavigate('/')}>Home</span>
+        {/* Breadcrumbs with mt-4/mt-6 margin top */}
+        <div className="text-xs text-gray-500 mt-4 mb-6 flex items-center gap-2">
+          <span className="cursor-pointer hover:text-gray-900 transition-colors" onClick={() => onNavigate('/')}>Home</span>
           <span>&gt;</span>
-          <span className="font-semibold text-gray-900">Wooden Toys</span>
+          <span className="cursor-pointer hover:text-gray-900 transition-colors" onClick={() => onNavigate('/categories')}>Woodora</span>
+          <span>&gt;</span>
+          <span className="font-semibold text-gray-900">{pageTitle}</span>
         </div>
 
         {/* Page Header Row */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 pb-6 border-b border-gray-200">
           <div>
-            <h1 className="text-3xl font-bold text-[#8B5E3C] mb-1">Wooden Toys</h1>
+            <h1 className="text-3xl font-bold text-[#8B5E3C] mb-1">{pageTitle}</h1>
             <p className="text-sm text-gray-500">Showing {filteredProducts.length} of {products.length} results</p>
           </div>
 

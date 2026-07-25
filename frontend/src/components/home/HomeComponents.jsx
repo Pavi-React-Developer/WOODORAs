@@ -527,7 +527,7 @@ function ProductGridBlock({ grid, onNavigate, onAddToCart, onAddToWishlist, user
             )}
           </motion.div>
 
-          <div className="relative group px-4 md:px-14 mt-4">
+          <div className="relative px-4 md:px-14 mt-4">
             <style>{`
               .custom-pagination-${grid._id} { position: relative; margin-top: 2rem; display: flex; justify-content: center; gap: 12px; }
               .custom-pagination-${grid._id} .swiper-pagination-bullet { width: 16px; height: 16px; background: #fff; border: 1px solid #999; opacity: 1; transition: all 0.2s; border-radius: 50%; cursor: pointer; }
@@ -707,7 +707,7 @@ function CategoriesGridBlock({ grid, onNavigate }) {
       : 'flex justify-between items-end mb-8';
 
   return (
-    <section className="py-16">
+    <section className="py-6">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
           <motion.div variants={fadeUp} className={ctaClass}>
@@ -719,25 +719,44 @@ function CategoriesGridBlock({ grid, onNavigate }) {
             )}
           </motion.div>
 
-          <div className="relative group px-4 md:px-14 mt-4">
+          <div className="relative px-4 md:px-14 mt-4">
             <style>{`
               .cat-pagination-${grid._id} { position: relative; margin-top: 2rem; display: flex; justify-content: center; gap: 12px; }
               .cat-pagination-${grid._id} .swiper-pagination-bullet { width: 16px; height: 16px; background: #fff; border: 1px solid #999; opacity: 1; transition: all 0.2s; border-radius: 50%; cursor: pointer; }
               .cat-pagination-${grid._id} .swiper-pagination-bullet-active { background: #8b7355; border: 4px solid #fff; box-shadow: 0 0 0 1px #8b7355; }
-              
+
               .cat-prev-${grid._id}, .cat-next-${grid._id} {
-                position: absolute; top: 50%; transform: translateY(-50%); z-index: 10;
-                width: 44px; height: 44px; border-radius: 50%; border: 1px solid #E6DFD4;
-                background: white; color: #333; display: flex; align-items: center; justify-content: center;
-                cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.2s;
+                position: absolute;
+                /* mobile: py-2(8px) + half of h-28(56px) = 64px, centre the 44px button */
+                top: 64px;
+                transform: translateY(-50%);
+                z-index: 10;
+                width: 44px; height: 44px; border-radius: 50%;
+                border: 1.5px solid #E6DFD4;
+                background: rgba(255,255,255,0.95);
+                color: #6B5344;
+                display: flex; align-items: center; justify-content: center;
+                cursor: pointer;
+                box-shadow: 0 4px 14px rgba(62,39,35,0.13);
+                transition: all 0.2s ease;
               }
-              .cat-prev-${grid._id}:hover, .cat-next-${grid._id}:hover { background: #F7F3EE; }
-              .cat-prev-${grid._id}.swiper-button-disabled, .cat-next-${grid._id}.swiper-button-disabled { opacity: 0.3; cursor: not-allowed; }
-              .cat-prev-${grid._id} { left: -12px; }
-              .cat-next-${grid._id} { right: -12px; }
+              .cat-prev-${grid._id}:hover, .cat-next-${grid._id}:hover {
+                background: #B0611C; color: #fff; border-color: #B0611C;
+                box-shadow: 0 6px 18px rgba(176,97,28,0.28);
+                transform: translateY(-50%) scale(1.08);
+              }
+              .cat-prev-${grid._id}.swiper-button-disabled, .cat-next-${grid._id}.swiper-button-disabled { opacity: 0.25; cursor: not-allowed; pointer-events: none; }
+              .cat-prev-${grid._id} { left: -4px; }
+              .cat-next-${grid._id} { right: -4px; }
+
               @media (min-width: 768px) {
-                .cat-prev-${grid._id} { left: -10px; }
-                .cat-next-${grid._id} { right: -10px; }
+                .cat-prev-${grid._id}, .cat-next-${grid._id} {
+                  /* desktop: py-2(8px) + half of h-36(72px) = 80px */
+                  top: 80px;
+                  width: 48px; height: 48px;
+                }
+                .cat-prev-${grid._id} { left: -6px; }
+                .cat-next-${grid._id} { right: -6px; }
               }
             `}</style>
 
@@ -762,13 +781,30 @@ function CategoriesGridBlock({ grid, onNavigate }) {
                   const imageSrc = c.image?.url || c.image || '/wood-placeholder.png';
                   return (
                     <SwiperSlide key={c._id || i} className="h-auto">
-                      <motion.div variants={fadeUp} className="h-full flex flex-col cursor-pointer" onClick={() => onNavigate(`/shop?category=${c._id}`)}>
-                        <div className="aspect-[4/5] bg-[#F7F3EE] rounded-2xl overflow-hidden shadow-sm relative">
-                          <img src={imageSrc} alt={c.name} className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" onError={e => e.target.src='/wood-placeholder.png'} />
+                      <motion.div
+                        variants={fadeUp}
+                        className="flex flex-col items-center gap-3 cursor-pointer group py-2"
+                        onClick={() => onNavigate(`/shop?category=${c._id}`)}
+                      >
+                        {/* Circle image */}
+                        <div className="relative w-28 h-28 md:w-36 md:h-36 rounded-full overflow-hidden ring-2 ring-[#E6DFD4] group-hover:ring-[#B0611C] transition-all duration-300 shadow-md group-hover:shadow-lg shrink-0">
+                          <img
+                            src={imageSrc}
+                            alt={c.name}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 group-hover:opacity-75"
+                            onError={e => e.target.src='/wood-placeholder.png'}
+                          />
+                          {/* Hover Overlay */}
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+                            <span className="bg-white text-[#B0611C] text-[11px] md:text-xs font-bold px-3 py-1.5 rounded-full shadow-md transform translate-y-3 group-hover:translate-y-0 transition-all duration-300">
+                              Shop me
+                            </span>
+                          </div>
                         </div>
-                        <div className="mt-3 text-center">
-                          <h3 className="font-semibold text-brand-dark text-sm md:text-base truncate">{c.name}</h3>
-                        </div>
+                        {/* Label */}
+                        <h3 className="font-semibold text-brand-dark text-sm md:text-base text-center leading-tight px-1 group-hover:text-[#B0611C] transition-colors duration-200">
+                          {c.name}
+                        </h3>
                       </motion.div>
                     </SwiperSlide>
                   );

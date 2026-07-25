@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { cmsService } from '../../../api/cmsService';
-import { Pencil, Trash2, Plus, Eye, EyeOff, Search, X , SquarePen , Trash } from 'lucide-react';
+import { Pencil, Trash2, Plus, Eye, EyeOff, Search, X, SquarePen, Trash } from 'lucide-react';
 import { categoryV2API } from '../../../api/catalogV2Service';
 
 function CategoryPicker({ selected, onChange, categoriesList }) {
@@ -78,7 +78,7 @@ export default function CategoriesGridAdmin() {
     e.preventDefault();
     if (!form.categories.length) return alert('Select at least one category.');
     setSaving(true);
-    
+
     // We only want to send category IDs to the backend
     const payload = {
       ...form,
@@ -100,20 +100,20 @@ export default function CategoriesGridAdmin() {
       return allCategories.find(x => x._id === cId) || { _id: cId, name: 'Unknown Category' };
     });
 
-    setForm({ 
-      title: item.title, 
-      categories: populatedCategories, 
-      mobileCount: item.mobileCount || 2, 
+    setForm({
+      title: item.title,
+      categories: populatedCategories,
+      mobileCount: item.mobileCount || 2,
       desktopCount: item.desktopCount || 4,
       ctaText: item.ctaText || '',
       ctaUrl: item.ctaUrl || '',
       ctaPosition: item.ctaPosition || 'right',
       showArrows: item.showArrows !== false,
       showDots: item.showDots || false,
-      status: item.status, 
-      sortOrder: item.sortOrder || 0 
+      status: item.status,
+      sortOrder: item.sortOrder || 0
     });
-    setEditId(item._id); 
+    setEditId(item._id);
     setShowForm(true);
   };
 
@@ -146,7 +146,7 @@ export default function CategoriesGridAdmin() {
         <div className="bg-white rounded-2xl border border-[#E6DFD4] p-6 shadow-sm">
           <h4 className="font-semibold text-brand-dark mb-5">{editId ? 'Edit Categories Grid' : 'New Categories Grid'}</h4>
           <form onSubmit={handleSubmit} className="space-y-6">
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-xs font-semibold text-brand-medium uppercase tracking-wider block mb-1">Section Title *</label>
@@ -234,7 +234,7 @@ export default function CategoriesGridAdmin() {
               <input type="checkbox" id="grid-status" checked={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.checked }))} />
               <label htmlFor="grid-status" className="text-sm text-brand-dark">Active</label>
             </div>
-            
+
             <div className="flex gap-3 justify-end pt-4 border-t border-[#E6DFD4]">
               <button type="button" onClick={() => setShowForm(false)}
                 className="px-4 py-2 text-sm border border-[#E6DFD4] rounded-lg text-brand-medium">Cancel</button>
@@ -248,20 +248,20 @@ export default function CategoriesGridAdmin() {
       )}
 
       <div className="space-y-3">
-        {loading ? [1,2].map(i => <div key={i} className="h-20 bg-gray-100 rounded-2xl animate-pulse" />) :
+        {loading ? [1, 2].map(i => <div key={i} className="h-20 bg-gray-100 rounded-2xl animate-pulse" />) :
           items.length === 0 ? (
             <div className="p-8 text-center text-brand-medium text-sm bg-white rounded-2xl border border-[#E6DFD4]">No categories grids yet.</div>
           ) : items.map(item => (
             <div key={item._id} className="bg-white rounded-2xl border border-[#E6DFD4] p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 shadow-sm">
               <div className="flex gap-1">
-                {(item.categories || []).slice(0,4).map((c, i) => {
+                {(item.categories || []).slice(0, 4).map((c, i) => {
                   const populated = typeof c === 'object' ? c : allCategories.find(x => x._id === c);
                   let src = populated?.image?.url || populated?.image || null;
                   if (src && typeof src === 'string' && src.startsWith('/uploads')) {
                     src = `http://localhost:5000${src}`;
                   }
                   if (!src) return <div key={i} className="w-10 h-10 rounded-lg border border-[#E6DFD4] bg-[#F7F3EE]" />;
-                  return <img key={i} src={src} alt="" onError={e => e.target.style.display='none'} className="w-10 h-10 rounded-lg object-cover border border-[#E6DFD4] bg-[#F7F3EE]" />;
+                  return <img key={i} src={src} alt="" onError={e => e.target.style.display = 'none'} className="w-10 h-10 rounded-lg object-cover border border-[#E6DFD4] bg-[#F7F3EE]" />;
                 })}
               </div>
               <div className="flex-1 w-full">

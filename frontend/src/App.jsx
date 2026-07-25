@@ -16,6 +16,7 @@ import CashfreeCallbackPage from './pages/CashfreeCallbackPage';
 import CustomerProfilePage from './pages/CustomerProfilePage';
 import WishlistPage from './pages/WishlistPage';
 import ShopPage from './pages/ShopPage';
+import CategoriesPage from './pages/CategoriesPage';
 import BulkOrderPage from './pages/BulkOrderPage';
 import GiftAndCardPage from './pages/GiftAndCardPage';
 import CustomizePage from './pages/CustomizePage';
@@ -319,6 +320,23 @@ export default function App() {
                 onAddToCart={handleAddToCart}
                 onAddToWishlist={handleAddToWishlist}
               />
+            </LayoutWithHeader>
+          }
+        />
+
+        <Route
+          path="/categories"
+          element={
+            <LayoutWithHeader
+              user={user}
+              cartItems={cartItems}
+              wishlistItems={wishlistItems}
+              onOpenCart={() => setIsCartOpen(true)}
+              onOpenWishlist={() => setIsWishlistOpen(true)}
+              onLogout={handleLogout}
+              onNavigate={handleNavigate}
+            >
+              <CategoriesPage onNavigate={handleNavigate} />
             </LayoutWithHeader>
           }
         />
