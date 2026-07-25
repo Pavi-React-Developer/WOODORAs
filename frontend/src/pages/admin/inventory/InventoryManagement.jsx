@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Boxes, AlertTriangle, XCircle, Search, Filter, Download, Plus, Eye, Edit2, Clock, X, RefreshCw , SquarePen } from 'lucide-react';
+import { Package, Boxes, AlertTriangle, XCircle, Search, Filter, Download, Eye, Edit2, Clock, X, RefreshCw , SquarePen } from 'lucide-react';
 import './InventoryManagement.css';
 import { catalogService } from '../../../api/catalogService';
 import { variantAPI } from '../../../api/catalogAdminService';
@@ -41,9 +41,6 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
   const [editCurrentStock, setEditCurrentStock] = useState(0);
   const [editReserveStock, setEditReserveStock] = useState(0);
 
-  const [addStockModalOpen, setAddStockModalOpen] = useState(false);
-  const [addStockItem, setAddStockItem] = useState(null);
-  const [addStockAmount, setAddStockAmount] = useState(0);
   const [selectedVariantId, setSelectedVariantId] = useState('');
 
   const [viewModalOpen, setViewModalOpen] = useState(false);
@@ -125,46 +122,7 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
     }
   };
 
-  const handleAddStock = async () => {
-    try {
-      if (addStockItem.type === 'product') {
-        const productVariants = getProductVariants(addStockItem.data);
-        if (productVariants.length > 0 && selectedVariantId) {
-          const selectedVar = productVariants.find(v => v._id === selectedVariantId);
-          const currentStock = selectedVar?.inventory || 0;
-          const newStock = Number(currentStock) + Number(addStockAmount);
-          await variantAPI.updateVariant(selectedVariantId, { inventory: newStock });
-          toast.success('Variant stock added successfully');
-        } else {
-          const productId = addStockItem.data._id;
-          const currentInv = addStockItem.data.inventory;
-          const newStock = Number(currentInv?.stockQuantity || 0) + Number(addStockAmount);
-          const sku = currentInv?.sku || `SKU-${productId.substring(0,6)}`;
-          const payload = { stockQuantity: newStock, sku };
-          
-          if (currentInv) {
-            await catalogService.updateInventory(productId, payload);
-          } else {
-            await catalogService.createInventory({ product: productId, stockQuantity: payload.stockQuantity, sku, warehouseLocation: 'Main', lowStockThreshold: 5 });
-          }
-          toast.success('Stock added successfully');
-        }
-      } else if (addStockItem.type === 'variant') {
-        const variantId = addStockItem.data._id;
-        const currentStock = addStockItem.data.inventory || 0;
-        const newStock = Number(currentStock) + Number(addStockAmount);
-        await variantAPI.updateVariant(variantId, { inventory: newStock });
-        toast.success('Variant stock added successfully');
-      }
-      setAddStockModalOpen(false);
-      setAddStockAmount(0);
-      setSelectedVariantId('');
-      fetchInventoryData();
-    } catch (error) {
-      toast.error('Failed to add stock');
-      console.error(error);
-    }
-  };
+
 
   const getStatus = (current, lowLimit = 5) => {
     if (current === 0 || !current) return { label: 'Out of Stock', class: 'status-out-of-stock' };
@@ -268,21 +226,7 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
     setEditModalOpen(true);
   };
 
-  const openAddStockModal = (item, type) => {
-    setAddStockItem({ type, data: item });
-    setAddStockAmount(0);
-    if (type === 'product') {
-      const productVariants = getProductVariants(item);
-      if (productVariants.length > 0) {
-        setSelectedVariantId(productVariants[0]._id);
-      } else {
-        setSelectedVariantId('');
-      }
-    } else {
-      setSelectedVariantId('');
-    }
-    setAddStockModalOpen(true);
-  };
+
 
   const openViewModal = (item) => {
     setViewProduct(item);
@@ -479,11 +423,6 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
 
                       <div className="variant-card-actions flex gap-3 mt-2">
                         {canEdit && (
-                        <button className="text-green-600 hover:text-green-700 transition-colors" title="Add Stock" onClick={() => openAddStockModal(v, 'variant')}>
-                          <Plus size={14}/>
-                        </button>
-                        )}
-                        {canEdit && (
                         <button className="text-blue-600 hover:text-blue-700 transition-colors" title="Edit Stock" onClick={() => openEditModal(v, 'variant')}>
                           <SquarePen size={14}/>
                         </button>
@@ -554,11 +493,7 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
                               </td>
                               <td>
                                 <div className="action-buttons">
-                                  {canEdit && (
-                                  <button className="text-green-600 hover:text-green-700 transition-colors" title="Add Stock" onClick={() => openAddStockModal(item, 'product')}>
-                                    <Plus size={16}/>
-                                  </button>
-                                  )}
+
                                   <button className="text-green-600 hover:text-green-700 transition-colors" title="View" onClick={() => openViewModal(item)}><Eye size={16}/></button>
                                   {canEdit && (
                                   <button className="text-blue-600 hover:text-blue-700 transition-colors" title="Edit Stock" onClick={() => openEditModal(item, 'product')}><SquarePen size={16}/></button>
@@ -695,57 +630,7 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
         </div>
       )}
 
-      {/* ADD STOCK MODAL */}
-      {addStockModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{maxWidth: '400px'}}>
-            <div className="modal-header flex justify-between items-center pb-3 border-b border-[#E6DFD4]">
-              <h3 className="modal-title font-bold">Add Stock</h3>
-              <button className="text-red-500 hover:text-red-600 transition-colors" onClick={() => setAddStockModalOpen(false)}>
-                <X size={20} />
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="p-6 space-y-4">
-                <p className="text-sm font-medium mb-4 text-gray-700">
-                  Adding stock for: <span className="font-bold">{addStockItem?.type === 'product' ? addStockItem?.data?.name : `${addStockItem?.data?.productName} (${addStockItem?.data?.sku})`}</span>
-                </p>
-                {addStockItem?.type === 'product' && getProductVariants(addStockItem?.data).length > 0 && (
-                  <div className="space-y-2 mb-4">
-                    <label className="text-xs font-bold uppercase tracking-widest text-brand-medium">Select Variant</label>
-                    <select
-                      value={selectedVariantId}
-                      onChange={(e) => setSelectedVariantId(e.target.value)}
-                      className="w-full border border-[#E6DFD4] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-medium bg-white"
-                    >
-                      {getProductVariants(addStockItem?.data).map(v => (
-                        <option key={v._id} value={v._id}>
-                          {v.variantCombination} ({v.sku || 'No SKU'})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-widest text-brand-medium">Quantity to Add</label>
-                  <input 
-                    type="number" 
-                    min="1"
-                    value={addStockAmount} 
-                    onChange={(e) => setAddStockAmount(e.target.value)}
-                    className="w-full border border-[#E6DFD4] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-medium"
-                    placeholder="e.g. 50"
-                  />
-                </div>
-                <div className="mt-6 flex justify-end gap-3">
-                  <button onClick={() => setAddStockModalOpen(false)} className="px-4 py-2.5 text-xs uppercase font-bold tracking-wider text-brand-dark bg-white border border-[#E6DFD4] hover:bg-gray-50 rounded-xl">Cancel</button>
-                  <button onClick={handleAddStock} className="px-5 py-2.5 text-xs uppercase font-bold tracking-wider bg-brand-dark text-white rounded-xl hover:bg-black transition-colors shadow-sm">Add Stock</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+
 
 
 

@@ -186,14 +186,7 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Box Size</label>
-                  <select name="boxSize" value={formData.boxSize} onChange={(e) => setFormData({...formData, boxSize: e.target.value})} className="w-full p-2 border rounded text-sm focus:ring-[#B0611C]">
-                    <option value="XS">XS</option>
-                    <option value="S">S</option>
-                    <option value="M">M</option>
-                    <option value="L">L</option>
-                    <option value="XL">XL</option>
-                    <option value="XXL">XXL</option>
-                  </select>
+                  <input type="text" name="boxSize" value={formData.boxSize} onChange={(e) => setFormData({...formData, boxSize: e.target.value})} required className="w-full p-2 border rounded text-sm focus:ring-[#B0611C]" placeholder="e.g. XS" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Fee (₹)</label>
