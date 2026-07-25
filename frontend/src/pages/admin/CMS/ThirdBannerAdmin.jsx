@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { cmsService } from '../../../api/cmsService';
-import { Pencil, Trash2, Plus, Eye, EyeOff, Upload, X } from 'lucide-react';
+import { Pencil, Trash2, Plus, Eye, EyeOff, Upload, X , SquarePen , Trash } from 'lucide-react';
 
 function MultiImageUploader({ label, images, onChange }) {
   const [uploading, setUploading] = useState(false);
@@ -35,7 +35,7 @@ function MultiImageUploader({ label, images, onChange }) {
           <div key={i} className="relative aspect-square">
             <img src={getMediaUrl(img)} alt="" className="w-full h-full object-cover rounded-lg" />
             <button type="button" onClick={() => removeImage(i)}
-              className="absolute top-0.5 right-0.5 bg-red-500 text-white rounded-full p-0.5">
+              className="text-red-500 hover:text-red-600 transition-colors">
               <X className="w-3 h-3" />
             </button>
           </div>
@@ -225,7 +225,7 @@ export default function ThirdBannerAdmin() {
               <button type="button" onClick={() => setShowForm(false)}
                 className="px-4 py-2 text-sm border border-[#E6DFD4] rounded-lg text-brand-medium hover:bg-gray-50">Cancel</button>
               <button type="submit" disabled={saving}
-                className="px-6 py-2 text-sm bg-brand-dark text-white rounded-lg hover:bg-black disabled:opacity-50">
+                className="p-1.5 text-[#6D625C] hover:text-[#9A6031] hover:bg-[#F2E3D1] rounded transition-colors">
                 {saving ? 'Saving...' : 'Save Banner'}
               </button>
             </div>
@@ -256,14 +256,14 @@ export default function ThirdBannerAdmin() {
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${item.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
                 {item.status ? 'Active' : 'Off'}
               </span>
-              <button onClick={() => handleToggle(item)} className="p-1.5 rounded-lg hover:bg-[#E6DFD4] text-brand-medium">
+              <button onClick={() => handleToggle(item)} className="text-green-600 hover:text-green-700 transition-colors">
                 {item.status ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
-              <button onClick={() => handleEdit(item)} className="p-1.5 rounded-lg hover:bg-[#E6DFD4] text-brand-medium">
-                <Pencil className="w-4 h-4" />
+              <button onClick={() => handleEdit(item)} className="text-blue-600 hover:text-blue-700 transition-colors">
+                <SquarePen className="w-4 h-4" />
               </button>
-              <button onClick={() => handleDelete(item._id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-400">
-                <Trash2 className="w-4 h-4" />
+              <button onClick={() => handleDelete(item._id)} className="text-red-500 hover:text-red-600 transition-colors">
+                <Trash className="w-4 h-4" />
               </button>
             </div>
           </div>

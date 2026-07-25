@@ -33,7 +33,7 @@ function LogoUploader({ value, onChange }) {
           <div className="relative">
             <img src={url} alt="logo" className="h-12 object-contain rounded" />
             <button type="button" onClick={() => onChange(null)}
-              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5"><X className="w-3 h-3" /></button>
+              className="text-red-500 hover:text-red-600 transition-colors"><X className="w-3 h-3" /></button>
           </div>
         ) : (
           <button type="button" onClick={() => inputRef.current.click()}
@@ -136,7 +136,7 @@ export default function FooterAdmin() {
                   <button type="button" onClick={() => {
                     const newCols = form.columns.filter((_, i) => i !== cIdx);
                     setForm(f => ({ ...f, columns: newCols }));
-                  }} className="mt-6 text-red-500 p-2 hover:bg-red-50 rounded-lg">
+                  }} className="text-red-500 hover:text-red-600 transition-colors">
                     <Trash className="w-4 h-4" />
                   </button>
                 </div>
@@ -159,7 +159,7 @@ export default function FooterAdmin() {
                         const newCols = [...form.columns];
                         newCols[cIdx].links = newCols[cIdx].links.filter((_, i) => i !== lIdx);
                         setForm(f => ({ ...f, columns: newCols }));
-                      }} className="text-red-500 p-1.5 hover:bg-red-50 rounded">
+                      }} className="text-red-500 hover:text-red-600 transition-colors">
                         <X className="w-4 h-4" />
                       </button>
                     </div>

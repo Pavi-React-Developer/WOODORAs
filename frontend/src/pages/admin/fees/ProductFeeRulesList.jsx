@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Trash2, Edit2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { ArrowLeft, Trash2, Edit2, ToggleLeft, ToggleRight , RefreshCw , SquarePen , Trash } from 'lucide-react';
 import { adminService } from '../../../api/adminService';
 import toast from 'react-hot-toast';
 import EditProductFeeRulePage from './EditProductFeeRulePage';
@@ -98,13 +98,17 @@ export default function ProductFeeRulesList({ onBack, canCreate = true, canEdit 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 mb-6">
-        <button onClick={onBack} className="p-2 hover:bg-[#E6DFD4] rounded-full transition-colors text-[#4A3326]">
+        <button onClick={onBack} className="p-1.5 text-[#6D625C] hover:text-[#9A6031] hover:bg-[#F2E3D1] rounded transition-colors">
           <ArrowLeft size={24} />
         </button>
         <div>
           <h2 className="text-3xl font-bold text-[#4A3326] font-serif">Product Fees</h2>
           <p className="text-[#8A817C] mt-1">Manage volume-based product fee rules</p>
         </div>
+          <button onClick={fetchRules} className="admin-secondary-btn flex items-center gap-2">
+            <RefreshCw size={16} /> Refresh
+          </button>
+          
       </div>
 
       <div className="bg-white rounded border border-[#E6DFD4] p-6">
@@ -185,8 +189,8 @@ export default function ProductFeeRulesList({ onBack, canCreate = true, canEdit 
                     <td className="px-4 py-3 text-center flex justify-center gap-3">
                       {canEdit && (
                         <>
-                          <button onClick={() => handleEdit(rule)} className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors" title="Edit Rule">
-                            <Edit2 className="w-4 h-4" />
+                          <button onClick={() => handleEdit(rule)} className="text-blue-600 hover:text-blue-700 transition-colors" title="Edit Rule">
+                            <SquarePen className="w-4 h-4" />
                           </button>
                           <button onClick={() => toggleStatus(rule)} className={`transition-colors ${rule.isActive ? 'text-green-500 hover:text-green-600' : 'text-gray-400 hover:text-gray-500'}`} title={rule.isActive ? 'Deactivate' : 'Activate'}>
                             {rule.isActive ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
@@ -194,8 +198,8 @@ export default function ProductFeeRulesList({ onBack, canCreate = true, canEdit 
                         </>
                       )}
                       {canDelete && (
-                      <button onClick={() => handleDelete(rule._id)} className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Delete Rule">
-                        <Trash2 className="w-4 h-4" />
+                      <button onClick={() => handleDelete(rule._id)} className="text-red-500 hover:text-red-600 transition-colors" title="Delete Rule">
+                        <Trash className="w-4 h-4" />
                       </button>
                       )}
                     </td>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { cmsService } from '../../../api/cmsService';
 import { productV2API, categoryV2API } from '../../../api/catalogV2Service';
-import { Pencil, Trash2, Plus, GripVertical, Eye, EyeOff, Loader2, Upload, X, ChevronDown } from 'lucide-react';
+import { Pencil, Trash2, Plus, GripVertical, Eye, EyeOff, Loader2, Upload, X, ChevronDown , SquarePen , Trash } from 'lucide-react';
 
 function LogoUploader({ value, onChange }) {
   const [uploading, setUploading] = useState(false);
@@ -33,7 +33,7 @@ function LogoUploader({ value, onChange }) {
           <div className="relative border border-[#E6DFD4] rounded-lg p-2 bg-gray-50">
             <img src={url} alt="logo" className="h-16 object-contain rounded" />
             <button type="button" onClick={() => onChange(null)}
-              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors shadow-sm"><X className="w-3 h-3" /></button>
+              className="text-red-500 hover:text-red-600 transition-colors"><X className="w-3 h-3" /></button>
           </div>
         ) : (
           <button type="button" onClick={() => inputRef.current.click()}
@@ -347,8 +347,8 @@ export default function NavbarAdmin() {
                       <button type="button" onClick={() => {
                         const newSubItems = currentItem.subItems.filter((_, i) => i !== sIdx);
                         setCurrentItem({ ...currentItem, subItems: newSubItems });
-                      }} className="text-red-500 hover:bg-red-50 p-1 rounded">
-                        <Trash2 className="w-4 h-4" />
+                      }} className="text-red-500 hover:text-red-600 transition-colors">
+                        <Trash className="w-4 h-4" />
                       </button>
                     </div>
                   ))}
@@ -359,7 +359,7 @@ export default function NavbarAdmin() {
               <button type="button" onClick={() => setShowItemForm(false)}
                 className="px-4 py-2 text-sm border border-[#E6DFD4] rounded-lg text-brand-medium hover:bg-gray-50">Cancel</button>
               <button type="submit"
-                className="px-6 py-2 text-sm bg-brand-dark text-white rounded-lg hover:bg-black">
+                className="p-1.5 text-[#6D625C] hover:text-[#9A6031] hover:bg-[#F2E3D1] rounded transition-colors">
                 {editIndex !== null ? 'Update Item' : 'Add Item'}
               </button>
             </div>
@@ -406,16 +406,16 @@ export default function NavbarAdmin() {
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <button onClick={() => handleToggleItemStatus(idx)} title="Toggle status"
-                        className="p-1.5 rounded-lg hover:bg-[#E6DFD4] text-brand-medium transition-colors">
+                        className="text-green-600 hover:text-green-700 transition-colors">
                         {item.status ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                       <button onClick={() => handleEditItem(item, idx)} title="Edit item"
-                        className="p-1.5 rounded-lg hover:bg-[#E6DFD4] text-brand-medium transition-colors">
-                        <Pencil className="w-4 h-4" />
+                        className="text-blue-600 hover:text-blue-700 transition-colors">
+                        <SquarePen className="w-4 h-4" />
                       </button>
                       <button onClick={() => handleDeleteItem(idx)} title="Delete item"
-                        className="p-1.5 rounded-lg hover:bg-red-50 text-red-400 transition-colors">
-                        <Trash2 className="w-4 h-4" />
+                        className="text-red-500 hover:text-red-600 transition-colors">
+                        <Trash className="w-4 h-4" />
                       </button>
                     </div>
                   </td>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { RefreshCw } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { catalogService } from '../api/catalogService';
 import { adminService } from '../api/adminService';
@@ -83,6 +84,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
   const [currentTab, setCurrentTab] = useState('dashboard'); // 'dashboard' | 'catalog' | 'products'
@@ -229,53 +231,54 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
     navigate(options.path || adminTabPaths[tab] || '/admin');
   };
 
-  const loadData = () => {
-    // Fetch products
-    catalogService.getProducts()
-      .then(data => {
-        if (data) {
-          setProducts(data);
-        }
-      })
-      .catch(err => console.error("Failed to load products in admin", err));
-
-    // Fetch categories
-    catalogService.getCategories()
-      .then(data => {
-        if (data) {
-          setCategories(data);
-          const topLevel = data.filter(c => !c.parentCategory);
-          if (topLevel.length > 0 && !selectedCategory) {
-            setSelectedCategory(topLevel[0]._id);
-          }
-        }
-      })
-      .catch(err => console.error("Failed to load categories in admin", err));
-
-    // Fetch subcategories separately (the backend stores them as a distinct collection)
-    catalogService.getSubCategories()
-      .then(data => {
-        if (Array.isArray(data)) {
-          setSubCategories(data);
-        } else if (data?.data) {
-          setSubCategories(data.data);
-        }
-      })
-      .catch(err => console.error("Failed to load subcategories in admin", err));
-
-    // Fetch dashboard stats
-    adminService.getDashboardStats()
-      .then(data => {
-        if (data) {
-          setTotalRevenue(data.totalRevenue || 0);
-          setTotalOrders(data.totalOrders || 0);
-          setTotalCustomers(data.totalCustomers || 0);
-          setTotalProducts(data.totalProducts || 0);
-          setRevenueAnalytics(data.revenueAnalytics || []);
-          setOrderVolume(data.orderVolume || []);
-        }
-      })
-      .catch(err => console.error("Failed to load dashboard stats", err));
+  const loadData = async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([
+        catalogService.getProducts()
+          .then(data => {
+            if (data) setProducts(data);
+          })
+          .catch(err => console.error("Failed to load products in admin", err)),
+        
+        catalogService.getCategories()
+          .then(data => {
+            if (data) {
+              setCategories(data);
+              const topLevel = data.filter(c => !c.parentCategory);
+              if (topLevel.length > 0 && !selectedCategory) {
+                setSelectedCategory(topLevel[0]._id);
+              }
+            }
+          })
+          .catch(err => console.error("Failed to load categories in admin", err)),
+        
+        catalogService.getSubCategories()
+          .then(data => {
+            if (Array.isArray(data)) {
+              setSubCategories(data);
+            } else if (data?.data) {
+              setSubCategories(data.data);
+            }
+          })
+          .catch(err => console.error("Failed to load subcategories in admin", err)),
+        
+        adminService.getDashboardStats()
+          .then(data => {
+            if (data) {
+              setTotalRevenue(data.totalRevenue || 0);
+              setTotalOrders(data.totalOrders || 0);
+              setTotalCustomers(data.totalCustomers || 0);
+              setTotalProducts(data.totalProducts || 0);
+              setRevenueAnalytics(data.revenueAnalytics || []);
+              setOrderVolume(data.orderVolume || []);
+            }
+          })
+          .catch(err => console.error("Failed to load dashboard stats", err))
+      ]);
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   const handleExportCSV = () => {
@@ -1226,6 +1229,9 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                   <p className="text-sm text-brand-medium mt-1">Welcome back. Here's what is happening today.</p>
                 </div>
                 <div className="flex items-center gap-3">
+                  <button onClick={() => window.location.reload()} disabled={isRefreshing} className="admin-secondary-btn flex items-center gap-2 disabled:opacity-60">
+                    <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} /> {isRefreshing ? 'Refreshing...' : 'Refresh'}
+                  </button>
                   <select className="bg-white border border-[#E6DFD4] text-brand-dark text-sm rounded-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-brand-medium cursor-pointer shadow-sm">
                     <option>Last 30 Days</option>
                     <option>Last 7 Days</option>
@@ -2224,7 +2230,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
           {canAccessCatalog && currentTab === 'v2-categories' && <CategoriesPage canCreate={hasPermission('catalog', 'create')} canEdit={hasPermission('catalog', 'edit')} canDelete={hasPermission('catalog', 'delete')} />}
           {canAccessCatalog && currentTab === 'v2-subcategories' && <SubCategoriesPage canCreate={hasPermission('catalog', 'create')} canEdit={hasPermission('catalog', 'edit')} canDelete={hasPermission('catalog', 'delete')} />}
           {canAccessCatalog && currentTab === 'v2-attributes' && <AttributesPage canCreate={hasPermission('catalog', 'create')} canEdit={hasPermission('catalog', 'edit')} canDelete={hasPermission('catalog', 'delete')} />}
-          {canAccessCatalog && currentTab === 'v2-products' && <ProductsPage canCreate={hasPermission('products', 'create') || hasPermission('catalog', 'create')} canEdit={hasPermission('products', 'edit') || hasPermission('catalog', 'edit')} canDelete={hasPermission('products', 'delete') || hasPermission('catalog', 'delete')} />}
+          {canAccessCatalog && currentTab === 'v2-products' && <ProductsPage canCreate={hasPermission('products', 'create') || hasPermission('catalog', 'create')} canEdit={hasPermission('products', 'edit') || hasPermission('catalog', 'edit')} canDelete={hasPermission('products', 'delete') || hasPermission('catalog', 'delete')} isAddMode={productSubTab === 'add'} onCancelAdd={() => openAdminTab('v2-products', { productSubTab: 'list', path: '/admin/products' })} />}
 
           {/* ── STAFF MANAGEMENT ── */}
           {canAccessStaff && currentTab === 'staff' && staffSubTab === 'list' && (

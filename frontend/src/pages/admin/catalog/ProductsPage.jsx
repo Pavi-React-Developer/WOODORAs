@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Settings, ToggleLeft, ToggleRight, List, Columns, ShieldAlert, Download, RefreshCw, Sparkles, Layers, Globe } from 'lucide-react';
+import { Plus, Edit2, Trash2, Settings, ToggleLeft, ToggleRight, List, Columns, ShieldAlert, Download, RefreshCw, Sparkles, Layers, Globe , SquarePen , Trash } from 'lucide-react';
 import { productV2API, categoryV2API, subCategoryV2API } from '../../../api/catalogV2Service';
 import { downloadExcelFile } from '../../../utils/exportUtils';
 import { SearchBar, Button, Badge, Card } from '../../../components/admin/CommonComponents';
@@ -9,7 +9,7 @@ import ImageUploader from '../../../components/admin/ImageUploader';
 import DynamicFormBuilder from '../../../components/admin/DynamicFormBuilder';
 import VariantManagement from '../../../components/admin/VariantManagement';
 
-export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = true }) => {
+export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = true, isAddMode = false, onCancelAdd = null }) => {
     // List/Table state
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -22,7 +22,35 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
     const [totalPages, setTotalPages] = useState(1);
 
     // Form/Modal state
-    const [isFormOpen, setIsFormOpen] = useState(false);
+    const [isFormOpen, setIsFormOpen] = useState(isAddMode);
+
+    useEffect(() => {
+        if (isAddMode) {
+            setIsFormOpen(true);
+            setEditId(null);
+            setFormData({
+                name: '',
+                description: '',
+                category: '',
+                subCategory: '',
+                price: 0,
+                stock: 0,
+                sku: '',
+                images: [],
+                isActive: true,
+                displayOrder: 1,
+                seoTitle: '',
+                seoDescription: '',
+                attributeValues: {},
+            });
+        }
+    }, [isAddMode]);
+
+    const handleCloseForm = () => {
+        setIsFormOpen(false);
+        if (onCancelAdd) onCancelAdd();
+    };
+
     const [editId, setEditId] = useState(null);
     const [formData, setFormData] = useState({
         name: '',
@@ -73,13 +101,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
         fetchSubCategories();
     }, [search, categoryFilter, subCategoryFilter, attributeFilters, page]);
 
-    // Auto-refresh every 30 seconds so MongoDB changes are reflected dynamically
-    useEffect(() => {
-        const interval = setInterval(() => {
-            fetchProducts();
-        }, 30000);
-        return () => clearInterval(interval);
-    }, [search, categoryFilter, subCategoryFilter, attributeFilters, page]);
+
 
     useEffect(() => {
         if (subCategoryFilter) {
@@ -273,7 +295,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                 }
             } catch (err) {
                 console.error(err);
-                setIsFormOpen(false);
+                handleCloseForm();
             } finally {
                 setFormLoading(false);
             }
@@ -353,7 +375,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
             if (createdProduct?.sku && !editId) {
                 setFormData(prev => ({ ...prev, sku: createdProduct.sku }));
             }
-            setIsFormOpen(false);
+            handleCloseForm();
             fetchProducts();
         } catch (err) {
             setErrorMsg(err.message || 'Failed to save product');
@@ -648,19 +670,19 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                                 {canEdit && (
                                                     <button
                                                         onClick={() => handleOpenForm(prod)}
-                                                        className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                                                        className="text-blue-600 hover:text-blue-700 transition-colors"
                                                         title="Edit"
                                                     >
-                                                        <Edit2 size={16} />
+                                                        <SquarePen size={16} />
                                                     </button>
                                                 )}
                                                 {canDelete && (
                                                     <button
                                                         onClick={() => handleDeleteClick(prod._id)}
-                                                        className="p-1.5 text-red-600 hover:text-red-700 transition-colors"
+                                                        className="text-red-500 hover:text-red-600 transition-colors"
                                                         title="Delete"
                                                     >
-                                                        <Trash2 size={16} />
+                                                        <Trash size={16} />
                                                     </button>
                                                 )}
                                             </td>
@@ -711,7 +733,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                 <p className="text-xs text-gray-500 mt-0.5">Build customized attributes and variants details.</p>
                             </div>
                             <button
-                                onClick={() => setIsFormOpen(false)}
+                                onClick={handleCloseForm}
                                 className="text-gray-400 hover:text-gray-600 p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
                             >
                                 ✕
@@ -845,9 +867,9 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                                     const newArr = formData.additionalInfo.filter((_, i) => i !== idx);
                                                     setFormData(prev => ({ ...prev, additionalInfo: newArr }));
                                                 }}
-                                                className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                                                className="text-red-500 hover:text-red-600 transition-colors"
                                             >
-                                                <Trash2 size={16} />
+                                                <Trash size={16} />
                                             </button>
                                         </div>
                                     ))}
@@ -934,7 +956,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
 
                             {/* Form Actions */}
                             <div className="flex justify-end gap-3 pt-6 border-t border-gray-100 bg-gray-50 -mx-6 -mb-6 p-6">
-                                <Button variant="secondary" type="button" onClick={() => setIsFormOpen(false)}>
+                                <Button variant="secondary" type="button" onClick={handleCloseForm}>
                                     Cancel
                                 </Button>
                                 <Button variant="primary" type="submit" loading={formLoading}>

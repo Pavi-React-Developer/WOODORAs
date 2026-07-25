@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { adminService } from '../../../api/adminService';
 import { catalogService } from '../../../api/catalogService';
-import { Plus, Search, FileDown, Eye, Pencil, Trash2, CheckCircle2, XCircle, Loader2, BadgeCheck, BadgeX, ChevronLeft, ChevronRight, Ticket } from 'lucide-react';
+import { Plus, Search, FileDown, Eye, Pencil, Trash2, CheckCircle2, XCircle, Loader2, BadgeCheck, BadgeX, ChevronLeft, ChevronRight, Ticket , RefreshCw , SquarePen , Trash , Check , X } from 'lucide-react';
 import { downloadExcelFile } from '../../../utils/exportUtils';
 
 const emptyForm = {
@@ -313,6 +313,10 @@ export default function CouponManagementPage({ canCreate = true, canEdit = true,
           <p className="text-sm text-gray-600 mt-1">Manage promotional offers, discount rules, and visibility.</p>
         </div>
         <div className="flex gap-2">
+          
+          <button onClick={loadCoupons} className="admin-secondary-btn flex items-center gap-2">
+            <RefreshCw size={16} /> Refresh
+          </button>
           <button onClick={exportExcel} className="admin-export-btn">
             <FileDown size={16} /> Export Excel
           </button>
@@ -396,11 +400,11 @@ export default function CouponManagementPage({ canCreate = true, canEdit = true,
                       <td className="px-4 py-3">{coupon.visible ? <span className="text-emerald-700">Visible</span> : <span className="text-slate-500">Hidden</span>}</td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-2">
-                          <button onClick={() => openView(coupon)} className="p-1.5 text-teal-600 hover:text-teal-700 hover:bg-teal-50 rounded transition-colors" title="View"><Eye size={15} /></button>
-                          {canEdit && <button onClick={() => openEdit(coupon)} className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors" title="Edit"><Pencil size={15} /></button>}
-                          {canDelete && <button onClick={() => setConfirmDelete(coupon)} className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Delete"><Trash2 size={15} /></button>}
+                          <button onClick={() => openView(coupon)} className="text-green-600 hover:text-green-700 transition-colors" title="View"><Eye size={15} /></button>
+                          {canEdit && <button onClick={() => openEdit(coupon)} className="text-blue-600 hover:text-blue-700 transition-colors" title="Edit"><SquarePen size={15} /></button>}
+                          {canDelete && <button onClick={() => setConfirmDelete(coupon)} className="text-red-500 hover:text-red-600 transition-colors" title="Delete"><Trash size={15} /></button>}
                           {canEdit && <button onClick={() => handleToggleStatus(coupon)} className="p-1.5 text-amber-600 hover:text-amber-700 transition-colors" title="Enable/Disable">{coupon.status === 'active' ? <BadgeX size={15} /> : <BadgeCheck size={15} />}</button>}
-                          {canEdit && <button onClick={() => handleToggleVisibility(coupon)} className="p-1.5 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded transition-colors" title="Visible/Invisible">{coupon.visible ? <XCircle size={15} /> : <CheckCircle2 size={15} />}</button>}
+                          {canEdit && <button onClick={() => handleToggleVisibility(coupon)} className="text-green-600 hover:text-green-700 transition-colors" title="Visible/Invisible">{coupon.visible ? <X size={15} /> : <Check size={15} />}</button>}
                         </div>
                       </td>
                     </tr>

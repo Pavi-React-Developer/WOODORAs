@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, CheckCircle, XCircle } from 'lucide-react';
+import { Plus, Edit2, Trash2, CheckCircle, XCircle , SquarePen , Trash , Check , X } from 'lucide-react';
 import { bulkOrderService } from '../../api/bulkOrderService';
 import { toast } from 'react-hot-toast';
 
@@ -188,9 +188,9 @@ export default function BulkOrderFieldsAdminPage({ canCreate = true, canEdit = t
                   </td>
                   <td className="p-4">
                     {field.isRequired ? (
-                      <span className="flex items-center gap-1 text-[#2E7D32] text-xs font-bold"><CheckCircle className="w-3.5 h-3.5" /> Yes</span>
+                      <span className="flex items-center gap-1 text-[#2E7D32] text-xs font-bold"><Check className="w-3.5 h-3.5" /> Yes</span>
                     ) : (
-                      <span className="flex items-center gap-1 text-[#8A817C] text-xs"><XCircle className="w-3.5 h-3.5" /> No</span>
+                      <span className="flex items-center gap-1 text-[#8A817C] text-xs"><X className="w-3.5 h-3.5" /> No</span>
                     )}
                   </td>
                   <td className="p-4">
@@ -202,19 +202,19 @@ export default function BulkOrderFieldsAdminPage({ canCreate = true, canEdit = t
                     {canEdit && (
                     <button 
                       onClick={() => handleOpenModal(field)}
-                      className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      className="text-blue-600 hover:text-blue-700 transition-colors"
                       title="Edit"
                     >
-                      <Edit2 className="w-4 h-4" />
+                      <SquarePen className="w-4 h-4" />
                     </button>
                     )}
                     {canDelete && (
                     <button 
                       onClick={() => handleDelete(field._id)}
-                      className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                      className="text-red-500 hover:text-red-600 transition-colors"
                       title="Delete"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash className="w-4 h-4" />
                     </button>
                     )}
                   </td>
@@ -232,8 +232,8 @@ export default function BulkOrderFieldsAdminPage({ canCreate = true, canEdit = t
               <h3 className="font-serif font-bold text-lg text-[#4A3326]">
                 {formData._id ? 'Edit Field' : 'Add New Field'}
               </h3>
-              <button onClick={handleCloseModal} className="text-[#8A817C] hover:text-[#4A3326] transition-colors p-1">
-                <XCircle className="w-5 h-5" />
+              <button onClick={handleCloseModal} className="text-red-500 hover:text-red-600 transition-colors">
+                <X className="w-5 h-5" />
               </button>
             </div>
             

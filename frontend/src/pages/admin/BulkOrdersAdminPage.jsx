@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Search, CheckCircle2, XCircle, Clock, Eye, X } from 'lucide-react';
+import { Package, Search, CheckCircle2, XCircle, Clock, Eye, X , RefreshCw , Check } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function BulkOrdersAdminPage({ canEdit = true }) {
@@ -113,6 +113,9 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
             <h1 className="text-2xl font-bold tracking-tight text-[#141225]">Bulk Orders Requests</h1>
             <p className="mt-1 text-sm text-[#6D625C]">Review and manage corporate and wholesale orders.</p>
           </div>
+          <button onClick={fetchOrders} className="admin-secondary-btn flex items-center gap-2">
+            <RefreshCw size={16} /> Refresh
+          </button>
         </div>
 
         <div className="rounded-[20px] bg-white border border-[#E9DED3] shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
@@ -196,8 +199,8 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                           order.status === 'Rejected' ? 'bg-red-100 text-red-700' :
                           'bg-amber-100 text-amber-700'
                         }`}>
-                          {order.status === 'Approved' && <CheckCircle2 className="w-3 h-3" />}
-                          {order.status === 'Rejected' && <XCircle className="w-3 h-3" />}
+                          {order.status === 'Approved' && <Check className="w-3 h-3" />}
+                          {order.status === 'Rejected' && <X className="w-3 h-3" />}
                           {order.status === 'Pending' && <Clock className="w-3 h-3" />}
                           {order.status || 'Pending'}
                         </span>
@@ -209,7 +212,7 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                         <div className="flex items-center justify-center gap-2">
                           <button
                             onClick={() => handleViewClick(order)}
-                            className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                            className="text-green-600 hover:text-green-700 transition-colors"
                             title="View Details"
                           >
                             <Eye className="w-4 h-4" />
@@ -247,7 +250,7 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-[400px] border border-[#E9DED3] overflow-hidden">
             <div className="p-5 border-b border-[#E9DED3] flex justify-between items-center bg-[#FAF8F5]">
               <h2 className="font-bold text-[#141225]">Reject Order Request</h2>
-              <button onClick={() => setIsRejectModalOpen(false)} className="text-[#8A817C] hover:text-[#141225]">
+              <button onClick={() => setIsRejectModalOpen(false)} className="text-red-500 hover:text-red-600 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -284,7 +287,7 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl border border-[#E9DED3] overflow-hidden flex flex-col max-h-[90vh]">
             <div className="p-5 border-b border-[#E9DED3] flex justify-between items-center bg-[#FAF8F5]">
               <h2 className="font-bold text-[#141225] text-lg">Bulk Order Details</h2>
-              <button onClick={() => setIsViewModalOpen(false)} className="text-[#8A817C] hover:text-[#141225]">
+              <button onClick={() => setIsViewModalOpen(false)} className="text-red-500 hover:text-red-600 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>

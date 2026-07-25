@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Plus, Pencil, Trash2, Eye, EyeOff, X, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, EyeOff, X, Search , SquarePen , Trash } from 'lucide-react';
 import { cmsService } from '../../../api/cmsService';
 import { categoryV2API, productV2API } from '../../../api/catalogV2Service';
 import { catalogService } from '../../../api/catalogService';
@@ -287,7 +287,7 @@ export default function CategoryGridAdmin() {
                   {form.products.map((product) => (
                     <div key={product._id} className="flex items-center gap-2 bg-white border border-[#E6DFD4] px-3 py-1.5 rounded-lg text-sm text-brand-dark shadow-sm">
                       <span className="truncate max-w-37.5">{product.name || 'Unknown Product'}</span>
-                      <button type="button" onClick={() => removeSelectedProduct(product._id)} className="text-red-400 hover:text-red-600">
+                      <button type="button" onClick={() => removeSelectedProduct(product._id)} className="text-red-500 hover:text-red-600 transition-colors">
                         <X className="w-4 h-4" />
                       </button>
                     </div>
@@ -303,7 +303,7 @@ export default function CategoryGridAdmin() {
 
             <div className="flex gap-3 justify-end pt-4 border-t border-[#E6DFD4]">
               <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-sm border border-[#E6DFD4] rounded-lg text-brand-medium">Cancel</button>
-              <button type="submit" disabled={saving} className="px-6 py-2 text-sm bg-brand-dark text-white rounded-lg hover:bg-black disabled:opacity-50">
+              <button type="submit" disabled={saving} className="p-1.5 text-[#6D625C] hover:text-[#9A6031] hover:bg-[#F2E3D1] rounded transition-colors">
                 {saving ? 'Saving...' : 'Save Grid'}
               </button>
             </div>
@@ -332,14 +332,14 @@ export default function CategoryGridAdmin() {
             </div>
             <div className="flex items-center gap-3 w-full sm:w-auto justify-end mt-2 sm:mt-0">
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${item.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>{item.status ? 'Active' : 'Off'}</span>
-              <button onClick={() => handleToggle(item)} className="p-1.5 rounded-lg hover:bg-[#E6DFD4] text-brand-medium">
+              <button onClick={() => handleToggle(item)} className="text-green-600 hover:text-green-700 transition-colors">
                 {item.status ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
-              <button onClick={() => handleEdit(item)} className="p-1.5 rounded-lg hover:bg-[#E6DFD4] text-brand-medium">
-                <Pencil className="w-4 h-4" />
+              <button onClick={() => handleEdit(item)} className="text-blue-600 hover:text-blue-700 transition-colors">
+                <SquarePen className="w-4 h-4" />
               </button>
-              <button onClick={() => handleDelete(item._id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-400">
-                <Trash2 className="w-4 h-4" />
+              <button onClick={() => handleDelete(item._id)} className="text-red-500 hover:text-red-600 transition-colors">
+                <Trash className="w-4 h-4" />
               </button>
             </div>
           </div>

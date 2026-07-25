@@ -374,7 +374,7 @@ export default function AddFeePage({ onNavigate, editingFee }) {
                       <span>{c.name}</span>
                       <button
                         onClick={(e) => handleDeleteCategory(e, c._id)}
-                        className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                        className="text-red-500 hover:text-red-600 transition-colors"
                         title="Delete category"
                       >
                         <X className="w-3.5 h-3.5" />

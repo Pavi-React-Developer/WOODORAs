@@ -32,7 +32,7 @@ function SortableItem({ id, visible, label }) {
             </div>
             <button
                 onClick={() => dispatch(setDraftVisibility({ id, visible: !visible }))}
-                className={`p-2 rounded-lg transition-colors ${visible ? 'text-green-600 bg-green-50 hover:bg-green-100' : 'text-gray-400 bg-gray-50 hover:bg-gray-100'}`}
+                className="text-green-600 hover:text-green-700 transition-colors"
                 title={visible ? 'Hide section' : 'Show section'}
             >
                 {visible ? <Eye size={18} /> : <EyeOff size={18} />}

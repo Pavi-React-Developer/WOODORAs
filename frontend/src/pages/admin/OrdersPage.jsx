@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { orderService, ORDER_STATUS_OPTIONS } from '../../api/orderService';
-import { Package, Search, Calendar, MapPin, Eye, Trash2, X, Edit, Save, Download, RefreshCw, Gift } from 'lucide-react';
+import { Package, Search, Calendar, MapPin, Eye, Trash2, X, Edit, Save, Download, RefreshCw, Gift , SquarePen , Trash } from 'lucide-react';
 import { downloadExcelFile } from '../../utils/exportUtils';
 import toast from 'react-hot-toast';
 
@@ -370,7 +370,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                     {canView && (
                       <button
                         onClick={() => handleViewOrder(order)}
-                        className="p-1.5 text-teal-600 hover:text-teal-700 hover:bg-teal-50 rounded transition-colors"
+                        className="text-green-600 hover:text-green-700 transition-colors"
                         title="View"
                       >
                         <Eye className="w-4 h-4" />
@@ -379,19 +379,19 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                     {canEdit && (
                       <button
                         onClick={() => handleEditOrder(order)}
-                        className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                        className="text-blue-600 hover:text-blue-700 transition-colors"
                         title="Edit"
                       >
-                        <Edit className="w-4 h-4" />
+                        <SquarePen className="w-4 h-4" />
                       </button>
                     )}
                     {canDelete && (
                       <button
                         onClick={() => handleDeleteOrder(order._id)}
-                        className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                        className="text-red-500 hover:text-red-600 transition-colors"
                         title="Delete"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash className="w-4 h-4" />
                       </button>
                     )}
                   </td>
@@ -412,7 +412,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
               <h1 className="text-2xl font-bold text-gray-900">Order Details</h1>
               <p className="text-sm text-gray-500">View information for order #{(selectedOrder._id || '').substring((selectedOrder._id || '').length - 8)}</p>
             </div>
-            <button onClick={closeViewModal} className="flex items-center gap-2 px-4 py-2 rounded-xl text-gray-700 bg-white border border-[#E6DFD4] hover:bg-gray-50 transition-colors font-semibold text-sm">
+            <button onClick={closeViewModal} className="flex items-center gap-2 px-3 py-1.5 text-[#6D625C] hover:text-[#9A6031] hover:bg-[#F2E3D1] rounded-lg transition-colors font-medium">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
               Back to Orders
             </button>
@@ -624,9 +624,10 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                   <p className="text-xs uppercase tracking-widest text-gray-500">Shipping To</p>
                   <button 
                     onClick={() => setIsEditingShipping(!isEditingShipping)}
-                    className="text-[#8B5E3C] hover:text-[#7A5234] text-xs font-bold uppercase tracking-widest flex items-center gap-1"
+                    className="text-blue-600 hover:text-blue-700 transition-colors"
+                    title={isEditingShipping ? 'Cancel Edit' : 'Edit Shipping Address'}
                   >
-                    <Edit className="w-3 h-3" /> {isEditingShipping ? 'Cancel Edit' : 'Edit'}
+                    <SquarePen className="w-4 h-4" />
                   </button>
                 </div>
                 {isEditingShipping ? (
@@ -847,7 +848,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
           <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl overflow-hidden flex flex-col">
             <div className="flex items-center justify-between px-6 py-4 border-b border-[#E6DFD4]">
               <h2 className="text-lg font-bold text-gray-900">Enter Shipping Details</h2>
-              <button onClick={() => setShowShippingModal(false)} className="text-gray-500 hover:text-gray-900">
+              <button onClick={() => setShowShippingModal(false)} className="text-red-500 hover:text-red-600 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>

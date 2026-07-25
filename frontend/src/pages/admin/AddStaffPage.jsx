@@ -422,7 +422,7 @@ export default function AddStaffPage({ onBack, onSuccess, editingStaff, currentU
                         <button
                           type="button"
                           onClick={(e) => handleDeleteRole(e, r._id)}
-                          className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                          className="text-red-500 hover:text-red-600 transition-colors"
                           title="Delete Role"
                         >
                           <X className="w-3.5 h-3.5" />

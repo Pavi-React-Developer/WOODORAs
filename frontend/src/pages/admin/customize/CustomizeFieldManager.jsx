@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { Plus, Trash2, Settings, X, PlusCircle } from 'lucide-react';
+import { Plus, Trash2, Settings, X, PlusCircle , Trash } from 'lucide-react';
 import { customizeService } from '../../../api/customizeService';
 
 export default function CustomizeFieldManager({ canCreate = true, canEdit = true, canDelete = true }) {
@@ -163,8 +163,8 @@ export default function CustomizeFieldManager({ canCreate = true, canEdit = true
                 </td>
                 <td className="px-6 py-4 text-right">
                   {canDelete && (
-                  <button onClick={() => handleDelete(field._id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                    <Trash2 className="w-4 h-4" />
+                  <button onClick={() => handleDelete(field._id)} className="text-red-500 hover:text-red-600 transition-colors">
+                    <Trash className="w-4 h-4" />
                   </button>
                   )}
                 </td>
@@ -240,7 +240,7 @@ export default function CustomizeFieldManager({ canCreate = true, canEdit = true
                         required
                       />
                       {newField.options.length > 1 && (
-                        <button type="button" onClick={() => removeOption(idx)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg">
+                        <button type="button" onClick={() => removeOption(idx)} className="text-red-500 hover:text-red-600 transition-colors">
                           <X className="w-5 h-5" />
                         </button>
                       )}

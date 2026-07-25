@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { Eye, CheckCircle, XCircle, X, Download, Image as ImageIcon } from 'lucide-react';
+import { Eye, CheckCircle, XCircle, X, Download, Image as ImageIcon , RefreshCw , Check } from 'lucide-react';
 import { customizeService } from '../../../api/customizeService';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
@@ -101,9 +101,14 @@ export default function CustomizeList() {
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-[#E6DFD4] p-6">
-      <div className="mb-6">
-        <h2 className="text-xl font-bold text-[#4A3326]">Customize Requests</h2>
-        <p className="text-sm text-gray-500 mt-1">Manage user custom order requests</p>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-xl font-bold text-[#4A3326]">Customize Requests</h2>
+          <p className="text-sm text-gray-500 mt-1">Manage user custom order requests</p>
+        </div>
+          <button onClick={fetchRequests} className="admin-secondary-btn flex items-center gap-2">
+            <RefreshCw size={16} /> Refresh
+          </button>
       </div>
 
       <div className="overflow-x-auto">
@@ -152,7 +157,7 @@ export default function CustomizeList() {
                   <div className="flex items-center justify-end gap-2">
                     <button
                       onClick={() => setSelectedRequest(req)}
-                      className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      className="text-green-600 hover:text-green-700 transition-colors"
                       title="View Details"
                     >
                       <Eye className="w-5 h-5" />
@@ -170,17 +175,17 @@ export default function CustomizeList() {
                       <>
                         <button
                           onClick={() => handleUpdateStatus(req._id, 'Approved')}
-                          className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                          className="text-green-600 hover:text-green-700 transition-colors"
                           title="Approve"
                         >
-                          <CheckCircle className="w-5 h-5" />
+                          <Check className="w-5 h-5" />
                         </button>
                         <button
                           onClick={() => openRejectModal(req)}
-                          className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          className="text-red-500 hover:text-red-600 transition-colors"
                           title="Reject"
                         >
-                          <XCircle className="w-5 h-5" />
+                          <X className="w-5 h-5" />
                         </button>
                       </>
                     )}
@@ -210,7 +215,7 @@ export default function CustomizeList() {
               </div>
               <button
                 onClick={() => setSelectedRequest(null)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+                className="text-red-500 hover:text-red-600 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -334,7 +339,7 @@ export default function CustomizeList() {
           <div className="bg-white rounded-2xl w-full max-w-md shadow-xl overflow-hidden">
             <div className="flex justify-between items-center p-5 border-b border-[#E6DFD4]">
               <h3 className="font-bold text-[#4A3326]">Reject Order Request</h3>
-              <button onClick={() => setRejectModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+              <button onClick={() => setRejectModalOpen(false)} className="text-red-500 hover:text-red-600 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>

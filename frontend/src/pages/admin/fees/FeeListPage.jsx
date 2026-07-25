@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Edit3, Trash2, Download, Plus, RefreshCw, Package } from 'lucide-react';
+import { Edit3, Trash2, Download, Plus, RefreshCw, Package , SquarePen , Trash } from 'lucide-react';
 import { feeAPI } from '../../../api/feeService';
 import { downloadExcelFile } from '../../../utils/exportUtils';
 import ProductFeeRulesList from './ProductFeeRulesList';
@@ -223,19 +223,19 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
                         {canEdit && (
                           <button
                             onClick={() => onEditFee(fee)}
-                            className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                            className="text-blue-600 hover:text-blue-700 transition-colors"
                             title="Edit"
                           >
-                            <Edit3 className="w-4 h-4" />
+                            <SquarePen className="w-4 h-4" />
                           </button>
                         )}
                         {canDelete && (
                           <button
                             onClick={() => handleDelete(fee._id)}
-                            className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                            className="text-red-500 hover:text-red-600 transition-colors"
                             title="Delete"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash className="w-4 h-4" />
                           </button>
                         )}
                       </div>

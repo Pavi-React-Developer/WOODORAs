@@ -26,6 +26,7 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
   const [currentPage, setCurrentPage] = useState(1);
 
   const fetchRefunds = async () => {
+    setLoading(true);
     try {
       const data = await adminService.getRefunds();
       if (Array.isArray(data)) {
@@ -366,7 +367,14 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E9DED3]">
-                {currentRefunds.map((refund, idx) => (
+                {loading ? (
+                  <tr>
+                    <td colSpan="8" className="text-center py-12 text-[#8A817C] text-sm">
+                      <div className="w-8 h-8 border-4 border-[#8B5E3C] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                      Loading refunds...
+                    </td>
+                  </tr>
+                ) : currentRefunds.map((refund, idx) => (
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
                     <td className="px-6 py-4 text-xs font-bold text-[#141225]">{refund.orderId}</td>
                     <td className="px-6 py-4 text-xs text-[#141225]">{refund.customerName}</td>
@@ -413,13 +421,13 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
                       )}
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <button onClick={() => openViewModal(refund)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                      <button onClick={() => openViewModal(refund)} className="text-green-600 hover:text-green-700 transition-colors">
                         <Eye size={16} />
                       </button>
                     </td>
                   </tr>
                 ))}
-                {currentRefunds.length === 0 && (
+                {!loading && currentRefunds.length === 0 && (
                   <tr>
                     <td colSpan="8" className="px-6 py-12 text-center text-[#6D625C] text-sm">
                       No refunds found matching the filters.
@@ -483,7 +491,7 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
           <div className="bg-[#FAF8F5] rounded-2xl shadow-xl w-full max-w-[420px] border border-[#E9DED3] overflow-hidden">
             <div className="flex items-center justify-between p-5 pb-4 bg-[#8B5E3C] text-white">
               <h2 className="text-lg font-bold">Approve Refund Request</h2>
-              <button onClick={() => setApproveRefund(null)} className="text-white/80 hover:text-white" disabled={approveLoading}>
+              <button onClick={() => setApproveRefund(null)} className="text-red-500 hover:text-red-600 transition-colors" disabled={approveLoading}>
                 <X size={20} />
               </button>
             </div>
@@ -525,7 +533,7 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
           <div className="bg-[#FAF8F5] rounded-2xl shadow-xl w-full max-w-[420px] border border-[#E9DED3] overflow-hidden">
             <div className="flex items-center justify-between p-5 pb-4 bg-[#647C5E] text-white">
               <h2 className="text-lg font-bold">Process Refund Payment</h2>
-              <button onClick={() => setProcessRefund(null)} className="text-white/80 hover:text-white" disabled={processLoading}>
+              <button onClick={() => setProcessRefund(null)} className="text-red-500 hover:text-red-600 transition-colors" disabled={processLoading}>
                 <X size={20} />
               </button>
             </div>
@@ -590,7 +598,7 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
               <h2 className="text-lg font-bold text-[#141225]">View Refund Details</h2>
               <button
                 onClick={() => setIsViewModalOpen(false)}
-                className="text-[#6D625C] hover:text-[#141225] transition-colors"
+                className="text-red-500 hover:text-red-600 transition-colors"
               >
                 <X size={20} />
               </button>

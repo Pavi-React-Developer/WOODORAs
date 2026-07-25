@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Boxes, AlertTriangle, XCircle, Search, Filter, Download, Plus, Eye, Edit2, Clock, X, RefreshCw } from 'lucide-react';
+import { Package, Boxes, AlertTriangle, XCircle, Search, Filter, Download, Plus, Eye, Edit2, Clock, X, RefreshCw , SquarePen } from 'lucide-react';
 import './InventoryManagement.css';
 import { catalogService } from '../../../api/catalogService';
 import { variantAPI } from '../../../api/catalogAdminService';
@@ -383,7 +383,7 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
         </div>
         <div className="summary-card danger-card group">
           <div className="card-icon-wrapper bg-red-100 text-red-600 group-hover:scale-110 transition-transform">
-            <XCircle size={24} />
+            <X size={24} />
           </div>
           <div className="card-content">
             <p className="card-title text-red-100">Out of Stock</p>
@@ -477,15 +477,15 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
                         </div>
                       </div>
 
-                      <div className="variant-card-actions">
+                      <div className="variant-card-actions flex gap-3 mt-2">
                         {canEdit && (
-                        <button className="variant-action-btn" title="Add Stock" onClick={() => openAddStockModal(v, 'variant')}>
-                          <Plus size={14}/> Add
+                        <button className="text-green-600 hover:text-green-700 transition-colors" title="Add Stock" onClick={() => openAddStockModal(v, 'variant')}>
+                          <Plus size={14}/>
                         </button>
                         )}
                         {canEdit && (
-                        <button className="variant-action-btn secondary" title="Edit Stock" onClick={() => openEditModal(v, 'variant')}>
-                          <Edit2 size={14}/> Edit
+                        <button className="text-blue-600 hover:text-blue-700 transition-colors" title="Edit Stock" onClick={() => openEditModal(v, 'variant')}>
+                          <SquarePen size={14}/>
                         </button>
                         )}
                       </div>
@@ -555,13 +555,13 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
                               <td>
                                 <div className="action-buttons">
                                   {canEdit && (
-                                  <button className="p-1.5 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded transition-colors" title="Add Stock" onClick={() => openAddStockModal(item, 'product')}>
+                                  <button className="text-green-600 hover:text-green-700 transition-colors" title="Add Stock" onClick={() => openAddStockModal(item, 'product')}>
                                     <Plus size={16}/>
                                   </button>
                                   )}
-                                  <button className="p-1.5 text-teal-600 hover:text-teal-700 hover:bg-teal-50 rounded transition-colors" title="View" onClick={() => openViewModal(item)}><Eye size={16}/></button>
+                                  <button className="text-green-600 hover:text-green-700 transition-colors" title="View" onClick={() => openViewModal(item)}><Eye size={16}/></button>
                                   {canEdit && (
-                                  <button className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors" title="Edit Stock" onClick={() => openEditModal(item, 'product')}><Edit2 size={16}/></button>
+                                  <button className="text-blue-600 hover:text-blue-700 transition-colors" title="Edit Stock" onClick={() => openEditModal(item, 'product')}><SquarePen size={16}/></button>
                                   )}
                                 </div>
                               </td>
@@ -615,7 +615,7 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
           <div className="modal-content" style={{maxWidth: '400px'}}>
             <div className="modal-header flex justify-between items-center pb-3 border-b border-[#E6DFD4]">
               <h3 className="modal-title font-bold">Edit Stock</h3>
-              <button className="text-gray-400 hover:text-gray-600" onClick={() => setEditModalOpen(false)}>
+              <button className="text-red-500 hover:text-red-600 transition-colors" onClick={() => setEditModalOpen(false)}>
                 <X size={20} />
               </button>
             </div>
@@ -701,7 +701,7 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
           <div className="modal-content" style={{maxWidth: '400px'}}>
             <div className="modal-header flex justify-between items-center pb-3 border-b border-[#E6DFD4]">
               <h3 className="modal-title font-bold">Add Stock</h3>
-              <button className="text-gray-400 hover:text-gray-600" onClick={() => setAddStockModalOpen(false)}>
+              <button className="text-red-500 hover:text-red-600 transition-colors" onClick={() => setAddStockModalOpen(false)}>
                 <X size={20} />
               </button>
             </div>

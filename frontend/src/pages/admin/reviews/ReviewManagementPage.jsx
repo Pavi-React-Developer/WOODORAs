@@ -5,8 +5,8 @@ import {
   MessageCircle, Star, Clock, AlertTriangle, Search, RefreshCw,
   Eye, Check, X, Trash2, ChevronLeft, ChevronRight,
   TrendingUp, BarChart2, Download, Calendar, Shield, User, Package,
-  CheckCircle, XCircle, Award, Zap, ArrowUpRight, RotateCcw,
-} from "lucide-react";
+  CheckCircle, XCircle, Award, Zap, ArrowUpRight, RotateCcw, Trash 
+} from 'lucide-react';
 import { downloadExcelFile } from '../../../utils/exportUtils';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -96,7 +96,7 @@ function ReviewDetailModal({ review, onClose, onStatusChange, onDelete, canEdit,
               <p className="text-xs text-gray-500">#{String(review._id).slice(-8).toUpperCase()}</p>
             </div>
           </div>
-          <button onClick={onClose} className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-xl flex items-center justify-center transition">
+          <button onClick={onClose} className="text-red-500 hover:text-red-600 transition-colors">
             <X size={16} className="text-gray-600" />
           </button>
         </div>
@@ -170,20 +170,20 @@ function ReviewDetailModal({ review, onClose, onStatusChange, onDelete, canEdit,
           <div className="flex gap-3 pt-2">
             {canEdit && (
             <button onClick={() => onStatusChange(review._id, "approved")}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold text-sm transition">
+              className="text-green-600 hover:text-green-700 transition-colors">
               <Check size={15}/> Approve
             </button>
             )}
             {canEdit && (
             <button onClick={() => onStatusChange(review._id, "rejected")}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold text-sm transition">
+              className="text-red-500 hover:text-red-600 transition-colors">
               <X size={15}/> Reject
             </button>
             )}
             {canDelete && (
             <button onClick={() => onDelete(review._id)}
-              className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold text-sm transition flex items-center gap-2">
-              <Trash2 size={15}/> Delete
+              className="text-red-500 hover:text-red-600 transition-colors">
+              <Trash size={15}/> Delete
             </button>
             )}
           </div>
@@ -460,25 +460,25 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
                       <td className="px-5 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-1.5">
                           <button onClick={() => setDetail(r)} title="View"
-                            className="p-1.5 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded transition-colors">
+                            className="text-green-600 hover:text-green-700 transition-colors">
                             <Eye size={14}/>
                           </button>
                           {canEdit && r.status !== "approved" && (
                             <button onClick={() => handleStatusChange(r._id, "approved")} title="Approve"
-                              className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-emerald-100 hover:text-emerald-600 flex items-center justify-center transition">
+                              className="text-green-600 hover:text-green-700 transition-colors">
                               <Check size={14}/>
                             </button>
                           )}
                           {canEdit && r.status !== "rejected" && (
                             <button onClick={() => handleStatusChange(r._id, "rejected")} title="Reject"
-                              className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
+                              className="text-red-500 hover:text-red-600 transition-colors">
                               <X size={14}/>
                             </button>
                           )}
                           {canDelete && (
                           <button onClick={() => setConfirm({ id: r._id })} title="Delete"
-                            className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
-                            <Trash2 size={14}/>
+                            className="text-red-500 hover:text-red-600 transition-colors">
+                            <Trash size={14}/>
                           </button>
                           )}
                         </div>
@@ -563,7 +563,7 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full">
             <div className="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Trash2 size={22} className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"/>
+              <Trash size={22} className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"/>
             </div>
             <h3 className="text-center font-bold text-gray-900 text-lg mb-1">Delete Review?</h3>
             <p className="text-center text-sm text-gray-500 mb-6">This action cannot be undone.</p>

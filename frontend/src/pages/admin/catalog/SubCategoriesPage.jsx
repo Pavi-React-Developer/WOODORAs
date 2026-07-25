@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Settings, ToggleLeft, ToggleRight, List, Columns, ShieldAlert, Download, RefreshCw } from 'lucide-react';
+import { Plus, Edit2, Trash2, Settings, ToggleLeft, ToggleRight, List, Columns, ShieldAlert, Download, RefreshCw , SquarePen , Trash } from 'lucide-react';
 import { subCategoryV2API, categoryV2API, attributeV2API } from '../../../api/catalogV2Service';
 import { downloadExcelFile } from '../../../utils/exportUtils';
 import { SearchBar, Button, Badge, Card } from '../../../components/admin/CommonComponents';
@@ -424,19 +424,19 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                                             {canEdit && (
                                             <button
                                                 onClick={() => handleOpenForm(sub)}
-                                                className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                                                className="text-blue-600 hover:text-blue-700 transition-colors"
                                                 title="Edit"
                                             >
-                                                <Edit2 size={16} />
+                                                <SquarePen size={16} />
                                             </button>
                                             )}
                                             {canDelete && (
                                             <button
                                                 onClick={() => handleDeleteClick(sub._id)}
-                                                className="p-1.5 text-red-600 hover:text-red-700 transition-colors"
+                                                className="text-red-500 hover:text-red-600 transition-colors"
                                                 title="Delete"
                                             >
-                                                <Trash2 size={16} />
+                                                <Trash size={16} />
                                             </button>
                                             )}
                                         </td>

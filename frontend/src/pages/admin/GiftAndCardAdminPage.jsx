@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { adminService } from '../../api/adminService';
 import { toast } from 'react-hot-toast';
 import CustomCalendar from '../../components/CustomCalendar';
-import { Eye, X, Edit2, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react';
+import { Eye, X, Edit2, ToggleLeft, ToggleRight, Trash2, SquarePen, Trash } from 'lucide-react';
 import { getImageSrc } from '../../utils/imageUtils';
 import EditGiftBoxRulePage from './fees/EditGiftBoxRulePage';
 
@@ -207,7 +207,7 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
                   </select>
                 </div>
                 <div>
-                  <button type="submit" className="w-full bg-[#B0611C] text-white p-2 rounded text-sm font-medium hover:bg-[#8B5E3C] transition-colors">
+                  <button type="submit" className="w-full bg-[#B0611C] text-white p-2.5 rounded font-bold hover:bg-[#8B5E3C] transition-colors shadow-sm">
                     Add Rule
                   </button>
                 </div>
@@ -252,8 +252,8 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
                             isActive: rule.isActive
                           });
                           window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }} className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors" title="Edit Rule">
-                          <Edit2 className="w-4 h-4" />
+                        }} className="text-blue-600 hover:text-blue-700 transition-colors" title="Edit Rule">
+                          <SquarePen className="w-4 h-4" />
                         </button>
                         <button onClick={async () => {
                           try {
@@ -278,8 +278,8 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
                       } catch (error) {
                         toast.error('Failed to delete rule');
                       }
-                    }} className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Delete Rule">
-                      <Trash2 className="w-4 h-4" />
+                    }} className="text-red-500 hover:text-red-600 transition-colors" title="Delete Rule">
+                      <Trash className="w-4 h-4" />
                     </button>
                     )}
                   </td>
@@ -354,7 +354,7 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order.status}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <button onClick={() => setSelectedOrder(order)} className="text-[#8B5E3C] hover:text-[#7A5234]">
+                      <button onClick={() => setSelectedOrder(order)} className="text-green-600 hover:text-green-700 transition-colors">
                         <Eye size={18} />
                       </button>
                     </td>
@@ -372,7 +372,7 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
           <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center p-6 border-b border-gray-200">
               <h2 className="text-xl font-bold text-gray-800">Gift Order Details</h2>
-              <button onClick={() => setSelectedOrder(null)} className="text-gray-500 hover:text-gray-700">
+              <button onClick={() => setSelectedOrder(null)} className="text-red-500 hover:text-red-600 transition-colors">
                 <X size={24} />
               </button>
             </div>

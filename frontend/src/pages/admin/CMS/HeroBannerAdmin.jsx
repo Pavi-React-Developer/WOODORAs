@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { cmsService } from '../../../api/cmsService';
-import { Pencil, Trash2, Plus, Eye, EyeOff, Upload, X } from 'lucide-react';
+import { Pencil, Trash2, Plus, Eye, EyeOff, Upload, X , SquarePen , Trash } from 'lucide-react';
 
 const emptyForm = {
   title: '', subtitle: '', description: '', buttonText: 'Shop Now',
@@ -44,7 +44,7 @@ function MediaUploader({ label, value, onChange, accept = "image/*,video/mp4,vid
               <img src={url} alt="preview" className="w-full h-36 object-cover rounded-lg" />
             )}
             <button type="button" onClick={() => onChange(null)}
-              className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5"><X className="w-3 h-3" /></button>
+              className="text-red-500 hover:text-red-600 transition-colors"><X className="w-3 h-3" /></button>
           </div>
         ) : (
           <div className="text-center py-4">
@@ -190,8 +190,8 @@ export default function HeroBannerAdmin() {
                 {(form.items || []).map((item, idx) => (
                   <div key={idx} className="p-4 border border-[#E6DFD4] rounded-xl bg-white relative">
                     <button type="button" onClick={() => setForm(f => ({ ...f, items: f.items.filter((_, i) => i !== idx) }))}
-                      className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
-                      <Trash2 className="w-4 h-4" />
+                      className="text-red-500 hover:text-red-600 transition-colors">
+                      <Trash className="w-4 h-4" />
                     </button>
                     <div className="mb-3 w-1/3">
                       <label className="text-xs font-semibold text-brand-medium uppercase tracking-wider block mb-1">Type</label>
@@ -235,7 +235,7 @@ export default function HeroBannerAdmin() {
               <button type="button" onClick={() => setShowForm(false)}
                 className="px-4 py-2 text-sm border border-[#E6DFD4] rounded-lg text-brand-medium hover:bg-gray-50">Cancel</button>
               <button type="submit" disabled={saving}
-                className="px-6 py-2 text-sm bg-brand-dark text-white rounded-lg hover:bg-black disabled:opacity-50">
+                className="p-1.5 text-[#6D625C] hover:text-[#9A6031] hover:bg-[#F2E3D1] rounded transition-colors">
                 {saving ? 'Saving...' : 'Save Banner'}
               </button>
             </div>
@@ -284,17 +284,18 @@ export default function HeroBannerAdmin() {
                 </p>
                 <div className="flex gap-2">
                   <button onClick={() => handleToggle(item)}
-                    className="flex-1 flex items-center justify-center gap-1 py-1.5 border border-[#E6DFD4] rounded-lg text-xs text-brand-medium hover:bg-[#F7F3EE] transition-colors">
-                    {item.status ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                    {item.status ? 'Disable' : 'Enable'}
+                    className="text-green-600 hover:text-green-700 transition-colors"
+                    title={item.status ? 'Disable' : 'Enable'}>
+                    {item.status ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                   <button onClick={() => handleEdit(item)}
-                    className="flex-1 flex items-center justify-center gap-1 py-1.5 border border-[#E6DFD4] rounded-lg text-xs text-brand-medium hover:bg-[#F7F3EE] transition-colors">
-                    <Pencil className="w-3 h-3" /> Edit
+                    className="text-blue-600 hover:text-blue-700 transition-colors"
+                    title="Edit">
+                    <SquarePen className="w-4 h-4" />
                   </button>
                   <button onClick={() => handleDelete(item._id)}
-                    className="p-1.5 border border-red-100 rounded-lg text-red-400 hover:bg-red-50 transition-colors">
-                    <Trash2 className="w-3.5 h-3.5" />
+                    className="text-red-500 hover:text-red-600 transition-colors">
+                    <Trash className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>

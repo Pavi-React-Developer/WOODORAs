@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Pencil, Trash2, Download, Plus, Search, ChevronDown, Check, X, Lock, AlertCircle, RefreshCw } from 'lucide-react';
+import { Pencil, Trash2, Download, Plus, Search, ChevronDown, Check, X, Lock, AlertCircle, RefreshCw , SquarePen , Trash } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { downloadExcelFile } from '../../../utils/exportUtils';
 
@@ -21,6 +21,7 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
   });
 
   const fetchRules = async () => {
+    setLoading(true);
     try {
       const data = await adminService.getCancellationRules();
       if (Array.isArray(data)) {
@@ -277,7 +278,14 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#E9DED3]">
-                    {filteredRules.map((rule, idx) => (
+                    {loading ? (
+                      <tr>
+                        <td colSpan="7" className="text-center py-12 text-[#8A817C] text-sm">
+                          <div className="w-8 h-8 border-4 border-[#8B5E3C] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                          Loading rules...
+                        </td>
+                      </tr>
+                    ) : filteredRules.map((rule, idx) => (
                       <tr key={idx} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
@@ -322,13 +330,13 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
                           {rule.status !== 'Locked' ? (
                             <div className="flex items-center justify-end gap-2">
                               {canEdit && (
-                              <button onClick={() => handleEditRule(rule)} className="p-1.5 text-[#6D625C] hover:text-[#9A6031] hover:bg-[#F2E3D1] rounded transition-colors border border-[#E9DED3]">
-                                <Pencil size={14} />
+                              <button onClick={() => handleEditRule(rule)} className="text-blue-600 hover:text-blue-700 transition-colors">
+                                <SquarePen size={14} />
                               </button>
                               )}
                               {canDelete && (
-                              <button onClick={() => handleDeleteRule(rule._id)} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors border border-[#E9DED3]">
-                                <Trash2 size={14} />
+                              <button onClick={() => handleDeleteRule(rule._id)} className="text-red-500 hover:text-red-600 transition-colors">
+                                <Trash size={14} />
                               </button>
                               )}
                             </div>
@@ -337,8 +345,8 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
                           )}
                         </td>
                       </tr>
-                    ))}
-                    {filteredRules.length === 0 && (
+                      ))}
+                      {!loading && filteredRules.length === 0 && (
                       <tr>
                         <td colSpan="7" className="px-6 py-8 text-center text-[#6D625C] text-sm">
                           No rules configured for {activeTab}. Click "Export" &gt; "Seed Rules" or "Add Rule".
@@ -371,7 +379,7 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
               </div>
               <button 
                 onClick={() => setIsModalOpen(false)}
-                className="text-[#6D625C] hover:text-[#141225] transition-colors"
+                className="text-red-500 hover:text-red-600 transition-colors"
               >
                 <X size={20} />
               </button>

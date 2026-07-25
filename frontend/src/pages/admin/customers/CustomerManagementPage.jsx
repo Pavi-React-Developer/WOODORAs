@@ -53,7 +53,7 @@ function CustomerDetailPage({ customer, onBack }) {
       <div className="px-6 py-3 flex items-center gap-3 text-sm text-[#334155]">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 font-semibold text-[#475569] hover:text-[#0f172a] transition"
+          className="p-1.5 text-[#6D625C] hover:text-[#9A6031] hover:bg-[#F2E3D1] rounded transition-colors"
         >
           <ArrowLeft size={16} /> Back to Customers
         </button>
@@ -430,7 +430,7 @@ export default function CustomerManagementPage() {
                       <td className="px-5 py-4 whitespace-nowrap">
                         <button
                           onClick={() => setDetail(c)}
-                          className="p-1.5 text-teal-600 hover:text-teal-700 hover:bg-teal-50 rounded transition-colors"
+                          className="text-green-600 hover:text-green-700 transition-colors"
                           title="View"
                         >
                           <Eye size={16} />
