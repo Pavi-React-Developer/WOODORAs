@@ -137,7 +137,7 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         
         {/* Top Hero Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="max-w-4xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
           <div className="relative bg-[#8f827a] text-white p-10 h-80 flex flex-col justify-end overflow-hidden group rounded-sm">
             <img src="/gift-box-custom.png" alt="Build Your Own Box" className="absolute inset-0 w-full h-full object-cover z-0 group-hover:scale-105 transition-transform duration-700" />
             <div className="absolute inset-0 bg-black/40 z-0"></div>
@@ -145,7 +145,7 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
               <span className="bg-white text-black px-2 py-1 text-xs font-bold tracking-widest uppercase mb-4 inline-block">CUSTOM CURATION</span>
               <h2 className="text-4xl font-semibold mb-2">Build Your Own Box</h2>
               <p className="text-sm opacity-90 mb-6 max-w-sm">Choose from our curated collection of wooden toys and organic textiles to create a unique, meaningful gift.</p>
-              <button className="bg-black text-white px-6 py-3 text-sm font-semibold tracking-wider hover:bg-gray-800 transition-colors">START BUILDING</button>
+              <button className="bg-[#A66C1C] text-white px-6 py-3 text-sm font-semibold tracking-wider hover:bg-[#8B5E3C] transition-colors">START BUILDING</button>
             </div>
           </div>
           <div className="relative bg-[#e6e2df] text-white p-10 h-80 flex flex-col justify-end overflow-hidden group rounded-sm">
@@ -155,7 +155,7 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
               <span className="bg-white text-black px-2 py-1 text-xs font-bold tracking-widest uppercase mb-4 inline-block">INSTANT DELIVERY</span>
               <h2 className="text-4xl font-semibold mb-2">Digital Gift Cards</h2>
               <p className="text-sm opacity-90 mb-6 max-w-sm">Let them choose their favorite treasures. Available instantly and valid on all collections.</p>
-              <button className="bg-white text-black px-6 py-3 text-sm font-semibold tracking-wider hover:bg-gray-100 transition-colors">PURCHASE CARD</button>
+              <button className="bg-white text-[#A66C1C] px-6 py-3 text-sm font-semibold tracking-wider hover:bg-[#F9F6F0] transition-colors">PURCHASE CARD</button>
             </div>
           </div>
         </div>
@@ -163,7 +163,7 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
         {/* Categories Section - Replaced with Product Selection */}
         <div className="bg-white p-8 shadow-sm rounded-sm border border-gray-100 max-w-4xl mx-auto w-full">
           <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">SELECT YOUR GIFT</p>
-          <h3 className="text-2xl font-semibold text-gray-900 mb-6">Choose a Product</h3>
+          <h3 className="text-2xl font-semibold text-[#A66C1C] mb-6">Choose a Product</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div>
@@ -171,7 +171,7 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
               <select
                 value={selectedCategory}
                 onChange={(e) => { setSelectedCategory(e.target.value); setSelectedSubCategory(''); setSelectedProduct(null); }}
-                className="w-full p-3 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-black bg-gray-50"
+                className="w-full p-3 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-[#A66C1C] bg-gray-50"
               >
                 <option value="">All Categories</option>
                 {categories.map(cat => (
@@ -184,7 +184,7 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
               <select
                 value={selectedSubCategory}
                 onChange={(e) => { setSelectedSubCategory(e.target.value); setSelectedProduct(null); }}
-                className="w-full p-3 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-black bg-gray-50"
+                className="w-full p-3 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-[#A66C1C] bg-gray-50"
                 disabled={!selectedCategory}
               >
                 <option value="">All Subcategories</option>
@@ -200,7 +200,7 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full p-3 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-black bg-gray-50"
+                className="w-full p-3 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-[#A66C1C] bg-gray-50"
               />
             </div>
           </div>
@@ -212,19 +212,45 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
                 <div 
                   key={product._id}
                   onClick={() => setSelectedProduct(product)}
-                  className={`cursor-pointer border rounded-sm p-3 flex flex-col items-center text-center transition-all ${
-                    selectedProduct?._id === product._id ? 'border-black ring-1 ring-black bg-gray-50' : 'border-gray-200 hover:border-gray-400'
+                  className={`group cursor-pointer bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col border ${
+                    selectedProduct?._id === product._id ? 'border-[#A66C1C] ring-1 ring-[#A66C1C]' : 'border-[#E6DFD4]'
                   }`}
                 >
-                  <div className="w-full aspect-square bg-gray-100 rounded-sm mb-3 overflow-hidden">
+                  <div className="aspect-square bg-[#F7F3EE] relative overflow-hidden shrink-0">
                     {product.images?.[0] ? (
-                      <img src={getImageSrc(product.images[0])} alt={product.name} className="w-full h-full object-cover" />
+                      <img src={getImageSrc(product.images[0])} alt={product.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">No Image</div>
+                      <div className="w-full h-full flex items-center justify-center text-[#C8B9A0]">
+                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
                     )}
+                    <button className="absolute top-2 right-2 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-sm text-gray-400 hover:text-[#A66C1C] hover:scale-110 transition-all z-10" onClick={(e) => e.stopPropagation()}>
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+                    </button>
                   </div>
-                  <h4 className="text-xs font-semibold text-gray-900 line-clamp-2 mb-1">{product.name}</h4>
-                  <p className="text-xs font-bold text-[#8B5E3C]">₹{(product.discountPrice || product.price || 0).toLocaleString()}</p>
+                  
+                  <div className="p-3 flex flex-col flex-grow text-left">
+                    <h3 className="text-[13px] font-medium text-gray-900 truncate mb-1.5">{product.name}</h3>
+                    <div className="flex flex-col gap-1 mt-auto">
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-[13px] font-bold text-[#A66C1C]">₹{(product.salePrice || product.discountPrice || product.price || 0).toLocaleString()}</p>
+                        {(product.price > (product.salePrice || product.discountPrice || product.price)) && (
+                          <p className="text-[10px] text-gray-400 line-through">₹{product.price.toLocaleString()}</p>
+                        )}
+                        {(product.price > (product.salePrice || product.discountPrice || product.price)) && (
+                          <span className="inline-flex items-center rounded-full bg-[#EFE6DB] px-1.5 py-0.5 text-[9px] font-bold text-[#A66C1C]">
+                            -{Math.round(((product.price - (product.salePrice || product.discountPrice)) / product.price) * 100)}%
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <svg className="w-3 h-3 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                        <span className="text-[10px] font-medium text-gray-500">{(product.rating || 0).toFixed(1)} ({(product.reviews?.length || 0)})</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ))}
               {products.length === 0 && (
@@ -245,7 +271,7 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
               <div className="flex-1">
                 <p className="text-xs font-bold tracking-wider text-gray-500 uppercase">SELECTED GIFT</p>
                 <p className="text-sm font-medium text-gray-900 line-clamp-1">{selectedProduct.name}</p>
-                <p className="text-sm font-bold text-[#8B5E3C] mt-0.5">₹{(selectedProduct.discountPrice || selectedProduct.price || 0).toLocaleString()}</p>
+                <p className="text-sm font-bold text-[#A66C1C] mt-0.5">₹{(selectedProduct.discountPrice || selectedProduct.price || 0).toLocaleString()}</p>
               </div>
             </div>
           )}
@@ -257,7 +283,7 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
           {/* Personalized Message */}
           <div className="bg-white p-6 shadow-sm rounded-sm border border-gray-100">
             <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">TOUCH OF THOUGHT</p>
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">Personalized Message</h3>
+            <h3 className="text-xl font-semibold text-[#A66C1C] mb-4">Personalized Message</h3>
             
             <div className="mb-6 flex items-center justify-between bg-gray-50 p-4 rounded-sm border border-gray-100">
               <div>
@@ -266,7 +292,7 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
               </div>
               <button 
                 onClick={() => setIsGiftWrapper(!isGiftWrapper)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isGiftWrapper ? 'bg-black' : 'bg-gray-300'}`}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isGiftWrapper ? 'bg-[#A66C1C]' : 'bg-gray-300'}`}
               >
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isGiftWrapper ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
@@ -278,7 +304,7 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Write your heartfelt message here..."
-              className="w-full border border-gray-200 p-3 text-sm focus:ring-black focus:border-black resize-none mb-4 rounded-sm"
+              className="w-full border border-gray-200 p-3 text-sm focus:ring-[#A66C1C] focus:border-[#A66C1C] resize-none mb-4 rounded-sm"
             ></textarea>
             
             <div className="flex gap-2 mb-6">
@@ -286,7 +312,7 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
                 <button
                   key={s}
                   onClick={() => setStyle(s)}
-                  className={`px-3 py-1.5 text-xs font-bold tracking-wider uppercase border ${style === s ? 'border-black text-black' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}
+                  className={`px-3 py-1.5 text-xs font-bold tracking-wider uppercase border ${style === s ? 'border-[#A66C1C] text-[#A66C1C]' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}
                 >
                   {s}
                 </button>
@@ -303,7 +329,7 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
           {/* Schedule Delivery */}
           <div className="bg-white p-6 shadow-sm rounded-sm border border-gray-100 flex flex-col">
             <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">PERFECT TIMING</p>
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">Schedule Delivery</h3>
+            <h3 className="text-xl font-semibold text-[#A66C1C] mb-4">Schedule Delivery</h3>
             
             <div className="mb-6 flex-1 flex gap-4">
               <div className="flex-1">
@@ -326,7 +352,7 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
                     <span className={selectedDate ? "text-gray-900" : "text-gray-400"}>
                       {selectedDate ? new Date(selectedDate).toLocaleDateString('en-GB') : 'Select a date'}
                     </span>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-[#A66C1C]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                   </div>
@@ -345,7 +371,7 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
               </div>
             </div>
 
-            <button onClick={handleConfirm} className="w-full bg-black text-white px-6 py-3 text-sm font-bold tracking-widest uppercase hover:bg-gray-800 transition-colors mt-auto">
+            <button onClick={handleConfirm} className="w-full bg-[#A66C1C] text-white px-6 py-3 text-sm font-bold tracking-widest uppercase hover:bg-[#8B5E3C] transition-colors mt-auto">
               Confirm Preferences
             </button>
           </div>

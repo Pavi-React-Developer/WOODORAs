@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, ShieldCheck, Truck, Droplets } from 'lucide-react';
+import { Package, ShieldCheck, Truck, Droplets, Headset, Mail } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { catalogService } from '../api/catalogService';
@@ -191,16 +191,16 @@ export default function BulkOrderPage() {
     <div className="min-h-screen bg-[#F9F6F0] py-16 px-4 font-sans">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-serif font-bold text-[#4A3326] mb-4">Bulk & Wholesale Orders</h1>
+          <h1 className="text-4xl md:text-5xl font-serif font-bold text-[#A66C1C] mb-4">Bulk & Wholesale Orders</h1>
           <p className="text-lg text-[#7C7370] max-w-2xl mx-auto">
             Elevate your corporate gifting, schools, and retail with eco-friendly, handcrafted wooden treasures.
             Designed for endurance, masterfully finished, and delivered with professional precision.
           </p>
           <div className="flex justify-center gap-8 mt-6">
-            <div className="flex items-center gap-2 text-sm font-semibold text-[#4A3326]">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[#A66C1C]">
               <ShieldCheck className="w-5 h-5" /> SUSTAINABLY SOURCED
             </div>
-            <div className="flex items-center gap-2 text-sm font-semibold text-[#4A3326]">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[#A66C1C]">
               <Package className="w-5 h-5" /> MASTER CRAFTSMANSHIP
             </div>
           </div>
@@ -209,12 +209,12 @@ export default function BulkOrderPage() {
         <div className="grid md:grid-cols-2 gap-12 items-start">
           {/* Form Section */}
           <div className="bg-white p-8 rounded-2xl shadow-xl border border-[#E9DED3]">
-            <h2 className="text-2xl font-serif font-bold text-[#4A3326] mb-6 border-b border-[#E9DED3] pb-4">Quick Bulk Order Form</h2>
+            <h2 className="text-2xl font-serif font-bold text-[#A66C1C] mb-6 border-b border-[#E9DED3] pb-4">Quick Bulk Order Form</h2>
             <form onSubmit={handleSubmit} className="space-y-6">
               
               {/* Product Selection */}
               <div className="space-y-4 bg-[#FAF4EF] p-4 rounded-xl border border-[#E9DED3]">
-                <h3 className="text-sm font-bold text-[#4A3326] uppercase tracking-wider">Select Product</h3>
+                <h3 className="text-sm font-bold text-[#A66C1C] uppercase tracking-wider">Select Product</h3>
                 
                 <div>
                   <label className="block text-[11px] font-bold text-[#8A817C] uppercase tracking-wider mb-2">Category</label>
@@ -271,7 +271,7 @@ export default function BulkOrderPage() {
               {/* Dynamic Fields */}
               {dynamicFields.length > 0 && (
                 <div className="pt-4 border-t border-[#E9DED3] space-y-4">
-                  <h3 className="text-sm font-bold text-[#4A3326] uppercase tracking-wider mb-2">Additional Information</h3>
+                  <h3 className="text-sm font-bold text-[#A66C1C] uppercase tracking-wider mb-2">Additional Information</h3>
                   {dynamicFields.map(field => {
                     const fieldValue = formData.customFields?.find(cf => cf.fieldId === field._id)?.value || (field.type === 'checkbox' ? false : '');
                     
@@ -284,7 +284,7 @@ export default function BulkOrderPage() {
                             name={`customField_${field._id}`}
                             checked={fieldValue}
                             onChange={handleChange}
-                            className="w-5 h-5 text-[#4A3326] border-gray-300 rounded focus:ring-[#4A3326]"
+                            className="w-5 h-5 text-[#A66C1C] border-gray-300 rounded focus:ring-[#A66C1C]"
                           />
                           <label htmlFor={`customField_${field._id}`} className="text-sm text-[#7C7370]">
                             {field.label} {field.isRequired && <span className="text-red-500">*</span>}
@@ -338,7 +338,7 @@ export default function BulkOrderPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-[#4A3326] text-white py-4 rounded-xl font-bold tracking-wider hover:bg-[#3A281E] transition-colors disabled:opacity-70 disabled:cursor-not-allowed uppercase"
+                className="w-full bg-[#A66C1C] text-white py-4 rounded-xl font-bold tracking-wider hover:bg-[#3A281E] transition-colors disabled:opacity-70 disabled:cursor-not-allowed uppercase"
               >
                 {isSubmitting ? 'Submitting...' : 'Submit Inquiry'}
               </button>
@@ -386,7 +386,7 @@ export default function BulkOrderPage() {
                     );
                   })()}
                 </div>
-                <h4 className="font-bold text-[#4A3326] text-lg">{selectedProductDetails.name}</h4>
+                <h4 className="font-bold text-[#A66C1C] text-lg">{selectedProductDetails.name}</h4>
                 <p className="text-sm text-[#7C7370] mt-2 line-clamp-2">{selectedProductDetails.shortDescription || selectedProductDetails.description || 'Premium handcrafted wooden product.'}</p>
                 <div className="mt-4 flex flex-col gap-1">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -402,23 +402,21 @@ export default function BulkOrderPage() {
                   </div>
                 </div>
                 <div className="mt-4 flex gap-4">
-                  <div className="px-3 py-1 bg-[#F9F6F0] rounded text-xs font-bold text-[#4A3326]">SKU: {selectedProductDetails.sku || 'N/A'}</div>
+                  <div className="px-3 py-1 bg-[#F9F6F0] rounded text-xs font-bold text-[#A66C1C]">SKU: {selectedProductDetails.sku || 'N/A'}</div>
                 </div>
               </div>
             ) : (
-              <div className="mt-8 rounded-2xl overflow-hidden relative group">
-                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors z-10"></div>
-                <img src="/wood-placeholder.png" alt="Premium Black Walnut" className="w-full h-64 object-cover scale-105 group-hover:scale-100 transition-transform duration-700" />
-                <div className="absolute bottom-6 left-6 z-20 text-white">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-white/80 mb-1">Standard Material</p>
-                  <p className="font-serif text-2xl font-bold">Premium Black Walnut</p>
-                  <p className="text-sm mt-2 text-white/90">Select a product to view specific details.</p>
-                </div>
+              <div className="rounded-3xl overflow-hidden relative shadow-sm border border-[#E9DED3] group">
+                <img 
+                  src="/bulk-orderbanner.jpeg" 
+                  alt="Bulk Orders Banner" 
+                  className="w-full h-auto object-cover group-hover:scale-[1.02] transition-transform duration-700" 
+                />
               </div>
             )}
 
             <div className="bg-[#EBF3F8] p-6 rounded-2xl flex items-start gap-4">
-              <div className="bg-[#4A3326] text-white p-3 rounded-xl shrink-0">
+              <div className="bg-[#A66C1C] text-white p-3 rounded-xl shrink-0">
                 <Package className="w-6 h-6" />
               </div>
               <div>
@@ -428,7 +426,7 @@ export default function BulkOrderPage() {
             </div>
 
             <div className="bg-[#EBF3F8] p-6 rounded-2xl flex items-start gap-4">
-              <div className="bg-[#4A3326] text-white p-3 rounded-xl shrink-0">
+              <div className="bg-[#A66C1C] text-white p-3 rounded-xl shrink-0">
                 <Droplets className="w-6 h-6" />
               </div>
               <div>
@@ -438,7 +436,7 @@ export default function BulkOrderPage() {
             </div>
 
             <div className="bg-[#EBF3F8] p-6 rounded-2xl flex items-start gap-4">
-              <div className="bg-[#4A3326] text-white p-3 rounded-xl shrink-0">
+              <div className="bg-[#A66C1C] text-white p-3 rounded-xl shrink-0">
                 <Truck className="w-6 h-6" />
               </div>
               <div>

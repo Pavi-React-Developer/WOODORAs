@@ -137,7 +137,7 @@ const CustomCalendar = ({ selectedDate, onSelectDate, config, isAdminMode, onTog
             if (status === 'available-baseline' || status === 'available-manual') {
               btnClass += "cursor-pointer font-medium hover:bg-gray-100 ";
               if (isSelected) {
-                btnClass += "bg-black text-white hover:bg-gray-800 ";
+                btnClass += "bg-[#A66C1C] text-white hover:bg-[#8B5E3C] ";
               } else {
                 btnClass += "text-gray-800 bg-gray-50 ";
               }
