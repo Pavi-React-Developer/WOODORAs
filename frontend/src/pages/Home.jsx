@@ -172,10 +172,12 @@ export default function Home({ user, cartItems, wishlistItems, onOpenCart, onOpe
     onOpenWishlist
   };
 
+  const renderedTypes = new Set();
+
   return (
-    <div className="flex flex-col min-h-screen bg-brand-beige/10 font-sans text-brand-dark">
+    <div className="flex flex-col min-h-screen bg-[#FDF9F1] font-sans text-brand-dark">
       {layout.map(section => (
-        <SectionRenderer key={section.id} section={section} context={context} />
+        <SectionRenderer key={section.id} section={section} context={context} renderedTypes={renderedTypes} />
       ))}
     </div>
   );

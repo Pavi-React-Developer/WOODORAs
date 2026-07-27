@@ -4,10 +4,13 @@ import toast from 'react-hot-toast';
 import { productV2API } from '../api/catalogV2Service';
 import ProductReviewSection from '../components/ProductReviewSection';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation } from 'swiper/modules';
+import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
+import 'swiper/css/pagination';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import ProductCard from '../components/ProductCard';
+import { IoLeaf } from 'react-icons/io5';
 
 const finishOptions = ['Natural Maple', 'Oak Tint'];
 const featureBullets = [
@@ -317,7 +320,7 @@ const findMatchingVariant = (product, selectedAttributes) => {
   return null;
 };
 
-export default function ProductDetails({ product: initialProduct, user, onNavigate, onAddToCart, onBuyNow, onAddToWishlist }) {
+export default function ProductDetails({ product: initialProduct, user, onNavigate, onAddToCart, onBuyNow, onAddToWishlist, onRemoveFromWishlist, wishlistItems = [] }) {
   const { id: routeId } = useParams();
   const productId = initialProduct?._id || initialProduct?.id || routeId;
 
@@ -332,7 +335,18 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [expandedFields, setExpandedFields] = useState({});
   const [loadingProduct, setLoadingProduct] = useState(!initialProduct && !!productId);
+  const [recPrevEl, setRecPrevEl] = useState(null);
+  const [recNextEl, setRecNextEl] = useState(null);
+  const [recPaginationEl, setRecPaginationEl] = useState(null);
   const LIVE_REFRESH_MS = 8000;
+
+  const isWishlisted = wishlistItems.some((item) => {
+    const isSameProduct = (item._id && product?._id && item._id === product._id) || (item.id && product?.id && item.id === product.id);
+    if (!isSameProduct) return false;
+    const itemVariantId = item.selectedVariant?._id || item.selectedVariant?.id;
+    const productVariantId = selectedVariant?._id || selectedVariant?.id;
+    return itemVariantId === productVariantId;
+  });
 
   useEffect(() => {
     if (!productId) {
@@ -560,7 +574,7 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
     // Warn user if attributes are required but not selected
     const totalAttributes = Object.keys(variantAttributeOptions).length;
     if (totalAttributes > 0 && !selectedVariant) {
-      alert('Please select all required attributes (variant) to continue.');
+      toast.error('Please select all required attributes (variant) to continue.');
       return;
     }
 
@@ -610,7 +624,7 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
 
   return (
     <>
-      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-[#FDF9F1] min-h-screen font-sans">
+      <section className="py-6 px-4 sm:px-6 lg:px-8 bg-[#FDF9F1] min-h-screen font-sans">
         <div className="mx-auto max-w-7xl">
           <div className="mb-8">
             <button
@@ -633,11 +647,11 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                   <img
                     src={selectedImage}
                     alt={product.name}
-                    className="w-full h-auto max-h-[600px] object-cover"
+                    className="w-full h-auto max-h-[460px] object-cover"
                     onError={(e) => { e.target.src = '/wood-placeholder.png'; }}
                   />
                 ) : (
-                  <div className="h-[600px] flex items-center justify-center text-slate-500">No image available</div>
+                  <div className="h-[460px] flex items-center justify-center text-slate-500">No image available</div>
                 )}
               </div>
 
@@ -649,7 +663,7 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                       key={`${src}-${index}`}
                       type="button"
                       onClick={() => setSelectedImage(src)}
-                      className={`overflow-hidden rounded-[1.5rem] border-[3px] transition shrink-0 w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 bg-white snap-start ${isSelected ? 'border-slate-800' : 'border-transparent hover:border-slate-300 shadow-sm'
+                      className={`cursor-pointer overflow-hidden rounded-[1.5rem] border-[3px] transition shrink-0 w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 bg-white snap-start ${isSelected ? 'border-[#AA7327]' : 'border-transparent hover:border-[#AA7327] shadow-sm'
                         }`}
                     >
                       <img
@@ -665,25 +679,40 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
             </div>
 
             {/* RIGHT COLUMN: CONTENT */}
-            <div className="rounded-[2.5rem] bg-white p-6 sm:p-8 md:p-10 shadow-sm border border-slate-100 relative h-fit min-w-0 w-full">
+            <div className="relative h-fit min-w-0 w-full sm:pt-2">
 
               {/* Wishlist and Share absolute top right */}
-              <div className="absolute top-4 right-4 sm:top-8 sm:right-8 md:top-10 md:right-10 flex gap-2 sm:gap-3 z-10">
+              <div className="absolute top-0 right-0 flex gap-2 sm:gap-3 z-10">
                 <button
                   type="button"
-                  onClick={() => handleAction('Wishlist')}
-                  className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 transition hover:bg-[#FDF9F1] hover:text-[#8B5E3C] hover:border-[#8B5E3C] shadow-sm"
+                  onClick={() => {
+                    if (isWishlisted) {
+                      const index = wishlistItems.findIndex(item => 
+                        ((item._id && product?._id && item._id === product._id) || (item.id && product?.id && item.id === product.id)) &&
+                        ((item.selectedVariant?._id || item.selectedVariant?.id) === (selectedVariant?._id || selectedVariant?.id))
+                      );
+                      if (index !== -1 && onRemoveFromWishlist) {
+                        onRemoveFromWishlist(index);
+                      }
+                    } else {
+                      handleAction('Wishlist');
+                    }
+                  }}
+                  className={`flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border bg-transparent transition ${isWishlisted
+                      ? 'border-red-500 text-red-500'
+                      : 'border-[#AA7327] text-[#AA7327] hover:text-[#AA7327] hover:border-[#AA7327]'
+                    }`}
                   aria-label="Add to Wishlist"
                   title="Add to Wishlist"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" fill={isWishlisted ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                   </svg>
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowSharePopup(true)}
-                  className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 transition hover:bg-[#FDF9F1] hover:text-[#8B5E3C] hover:border-[#8B5E3C] shadow-sm"
+                  className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-[#AA7327] bg-transparent text-[#AA7327] transition hover:text-[#AA7327] hover:border-[#AA7327]"
                   aria-label="Share Product"
                   title="Share"
                 >
@@ -695,38 +724,53 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
 
               {/* Title & Starting From */}
               <div className="pr-24 sm:pr-32">
-                <p className="text-[11px] font-medium uppercase tracking-[0.25em] text-[#B0611C] mb-4">{product.name}</p>
+                <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-2">{product.category?.name || 'EDUCATIONAL TOYS'}</p>
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-[#141225] mb-4 leading-tight">{product.name}</h1>
+
+                {/* Reviews */}
+                <div className="flex items-center gap-2 text-sm text-[#141225] font-medium mb-6">
+                  <div className="flex text-[#F5C518]">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <svg key={star} className={`w-4 h-4 ${star <= (product.averageRating || 5) ? 'text-[#F5C518]' : 'text-slate-300'}`} fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    ))}
+                  </div>
+                  <span>({product.reviewCount || 0} Reviews)</span>
+                  <span className="text-slate-300">|</span>
+                  <span>{product.soldCount > 1000 ? (product.soldCount / 1000).toFixed(1) + 'k+' : (product.soldCount || 0)} Sold</span>
+                </div>
 
                 <div className="flex flex-col gap-2 mb-8">
                   {(() => {
                     const priceSource = selectedVariant || (Array.isArray(product?.variants) && product.variants.length === 1 ? product.variants[0] : null) || product;
                     const pricing = getPricingInfo(priceSource);
-                    const showStartingFrom = !selectedVariant && Array.isArray(product?.variants) && product.variants.length > 1;
 
                     return (
                       <>
-                        <div className="flex flex-wrap items-baseline gap-2 sm:gap-4 mt-1">
-                          <p className="text-[2rem] sm:text-[2.5rem] font-medium tracking-tight text-[#333333] leading-none">
-                            ₹{(pricing.salePrice * quantity).toFixed(2)}
+                        <div className="flex flex-wrap items-center gap-3 sm:gap-4 mt-1">
+                          {pricing.hasDiscount && (
+                            <span className="text-2xl sm:text-3xl text-[#5C2E0E] line-through shrink-0 font-medium tracking-tight opacity-70">
+                              ₹{(pricing.listPrice * quantity).toFixed(0)}
+                            </span>
+                          )}
+                          <p className="text-[2.5rem] sm:text-[3rem] font-medium tracking-tight text-[#141225] leading-none">
+                            ₹{(pricing.salePrice * quantity).toFixed(0)}
                           </p>
                           {pricing.hasDiscount && (
-                            <div className="flex items-center gap-2 sm:gap-4">
-                              <span className="text-lg sm:text-xl text-[#999999] line-through shrink-0">
-                                ₹{(pricing.listPrice * quantity).toFixed(2)}
-                              </span>
-                              <span className="inline-flex items-center rounded-full bg-[#B1621F]/15 px-2.5 py-0.5 text-xs font-semibold text-[#B1621F] shrink-0 whitespace-nowrap">
-                                -{pricing.discountPercent}%
-                              </span>
-                            </div>
+                            <span className="inline-flex items-center rounded-full bg-[#9B4136] px-3 py-1 text-xs font-bold text-white shrink-0 whitespace-nowrap ml-2">
+                              {pricing.discountPercent}% OFF
+                            </span>
                           )}
                         </div>
+                        <p className="text-sm text-[#141225] mt-1 font-medium">Inclusive of all taxes</p>
                       </>
                     );
                   })()}
                 </div>
               </div>
 
-              <div className="space-y-8">
+              <div className="space-y-6">
                 {/* Attributes */}
                 {productAttributes.length > 0 && (
                   <div>
@@ -743,29 +787,36 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
 
                         return (
                           <div key={attribute._id || label}>
-                            <p className="text-[15px] font-semibold text-slate-800 mb-3 capitalize">{label}</p>
-                            <div className="flex flex-wrap gap-3">
+                            <p className="text-sm font-semibold text-[#141225] mb-4">Choose {label}</p>
+                            <div className="flex flex-wrap gap-4">
                               {values.map((value) => {
                                 const isSelected = selectedValue === value;
-                                
+
                                 if (isColorAttribute) {
+                                  let bgStyle = value.toLowerCase().replace(/\s+/g, '');
+                                  if (bgStyle === 'natural') bgStyle = '#A67B5B';
+                                  if (bgStyle === 'sagegreen') bgStyle = '#839773';
+                                  if (bgStyle === 'oceanblue') bgStyle = '#4A7596';
+                                  if (bgStyle === 'pastelpink') bgStyle = '#D78B85';
+                                  if (bgStyle === 'mustardyellow') bgStyle = '#D49B42';
+
                                   return (
-                                    <button
-                                      type="button"
+                                    <div
                                       key={`${label}-${value}`}
+                                      className="flex flex-col items-center gap-2 cursor-pointer group w-16"
                                       onClick={() => handleToggleAttributeValue(label, value)}
-                                      title={value}
-                                      className={`w-10 h-10 rounded-full flex items-center justify-center transition p-0.5 ${
-                                        isSelected
-                                          ? 'border-2 border-[#8B5E3C] shadow-sm shadow-[#8B5E3C]/20'
-                                          : 'border-2 border-transparent hover:border-slate-300'
-                                      }`}
                                     >
-                                      <div 
-                                        className="w-full h-full rounded-full border border-black/10" 
-                                        style={{ backgroundColor: value.toLowerCase().replace(/\s+/g, '') }} 
-                                      />
-                                    </button>
+                                      <div className={`w-12 h-12 rounded-full flex items-center justify-center transition p-1 ${isSelected
+                                          ? 'border-2 border-[#AA7327]'
+                                          : 'border-2 border-transparent group-hover:border-[#AA7327]'
+                                        }`}>
+                                        <div
+                                          className="w-full h-full rounded-full border border-black/10"
+                                          style={{ backgroundColor: bgStyle }}
+                                        />
+                                      </div>
+                                      <span className="text-[11px] font-medium text-slate-700 text-center leading-tight">{value}</span>
+                                    </div>
                                   );
                                 }
 
@@ -774,9 +825,9 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                                     type="button"
                                     key={`${label}-${value}`}
                                     onClick={() => handleToggleAttributeValue(label, value)}
-                                    className={`inline-flex items-center rounded-full px-6 py-2.5 text-sm transition ${isSelected
-                                        ? 'bg-[#8B5E3C] text-white font-medium shadow-md shadow-[#8B5E3C]/20'
-                                        : 'bg-[#F1F5F9] text-slate-600 hover:bg-[#FDF9F1] hover:text-[#8B5E3C]'
+                                    className={`inline-flex items-center rounded-full px-6 py-2.5 text-sm transition border ${isSelected
+                                      ? 'border-[#AA7327] bg-transparent text-[#AA7327] font-medium shadow-sm'
+                                      : 'border-slate-300 bg-transparent text-slate-700 hover:border-[#AA7327] hover:text-[#AA7327]'
                                       }`}
                                   >
                                     {value}
@@ -794,57 +845,17 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                 {/* Age Group fallback */}
                 {productAttributes.length === 0 && product.ageGroup && (
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400 mb-5">ATTRIBUTES</p>
-                    <p className="text-[15px] font-semibold text-slate-800 mb-3">Age Group</p>
+                    <p className="text-sm font-semibold text-[#141225] mb-4">Choose Age Group</p>
                     <div className="flex flex-wrap gap-3">
-                      <span className="inline-flex items-center rounded-full bg-[#F1F5F9] px-6 py-2.5 text-sm text-slate-600">
+                      <span className="inline-flex items-center rounded-full border border-slate-300 bg-transparent px-6 py-2.5 text-sm text-slate-700">
                         {product.ageGroup}
                       </span>
                     </div>
                   </div>
                 )}
 
-                {/* Quantity */}
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400 mb-5">QUANTITY</p>
-                  {(() => {
-                    const productVariants = product?.variants || [];
-                    const maxAllowedQty = selectedVariant
-                      ? Math.max(0, (selectedVariant.inventory || 0) - (selectedVariant.reserveStock || 0))
-                      : productVariants.length > 0
-                        ? productVariants.reduce((sum, v) => sum + Math.max(0, (v.inventory || 0) - (v.reserveStock || 0)), 0)
-                        : (product?.inventory?.stockQuantity || product?.stock || 0);
-
-                    if (maxAllowedQty > 0 && quantity > maxAllowedQty) {
-                      setTimeout(() => setQuantity(maxAllowedQty), 0);
-                    }
-
-                    return (
-                      <div className="inline-flex items-center justify-between rounded-full border border-slate-200 bg-white shadow-sm w-40 h-[3.25rem]">
-                        <button
-                          type="button"
-                          onClick={() => setQuantity((value) => Math.max(1, value - 1))}
-                          disabled={maxAllowedQty === 0}
-                          className="flex items-center justify-center w-14 h-full text-slate-500 hover:text-slate-900 disabled:opacity-50"
-                        >
-                          -
-                        </button>
-                        <span className="text-[15px] font-medium text-slate-900">{maxAllowedQty === 0 ? 0 : quantity}</span>
-                        <button
-                          type="button"
-                          onClick={() => setQuantity((value) => Math.min(maxAllowedQty, value + 1))}
-                          disabled={quantity >= maxAllowedQty || maxAllowedQty === 0}
-                          className="flex items-center justify-center w-14 h-full text-slate-500 hover:text-slate-900 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          +
-                        </button>
-                      </div>
-                    );
-                  })()}
-                </div>
-
-                {/* Actions */}
-                <div className="grid gap-4 sm:grid-cols-2 pt-4">
+                {/* Actions & Quantity */}
+                <div className="pt-2">
                   {(() => {
                     const productVariants = product?.variants || [];
                     const maxAllowedQty = selectedVariant
@@ -858,21 +869,50 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                     const isDisabled = isOutOfStock || isVariantRequiredButNotSelected;
 
                     return (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (isOutOfStock) toast.error('Product is out of stock!');
-                            else handleAction('Cart');
-                          }}
-                          disabled={isVariantRequiredButNotSelected}
-                          className={`inline-flex h-[3.5rem] w-full items-center justify-center rounded-full px-6 text-sm font-semibold uppercase tracking-[0.15em] transition shadow-lg ${isDisabled
-                              ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
-                              : 'bg-[#8B5E3C] text-white shadow-[#8B5E3C]/20 hover:bg-[#724a2e] hover:shadow-[#8B5E3C]/40'
-                            }`}
-                        >
-                          {isOutOfStock ? 'Out of Stock' : 'ADD TO CART'}
-                        </button>
+                      <div className="flex flex-col gap-4">
+                        <div className="grid grid-cols-[auto_1fr] gap-4 items-end">
+                          <div className="flex flex-col gap-3">
+                            <p className="text-sm font-semibold text-[#141225]">Quantity</p>
+                            <div className="inline-flex h-[3.5rem] items-center justify-between rounded-full border border-slate-300 bg-transparent px-2 w-[120px]">
+                              <button
+                                type="button"
+                                onClick={() => setQuantity((value) => Math.max(1, value - 1))}
+                                disabled={maxAllowedQty === 0}
+                                className="flex items-center justify-center w-10 h-full text-slate-500 hover:text-slate-900 disabled:opacity-50"
+                              >
+                                -
+                              </button>
+                              <span className="text-[15px] font-medium text-slate-900 w-6 text-center">{maxAllowedQty === 0 ? 0 : quantity}</span>
+                              <button
+                                type="button"
+                                onClick={() => setQuantity((value) => Math.min(maxAllowedQty, value + 1))}
+                                disabled={quantity >= maxAllowedQty || maxAllowedQty === 0}
+                                className="flex items-center justify-center w-10 h-full text-slate-500 hover:text-slate-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (isOutOfStock) toast.error('Product is out of stock!');
+                              else handleAction('Cart');
+                            }}
+                            disabled={isVariantRequiredButNotSelected}
+                            className={`inline-flex h-[3.5rem] w-full items-center justify-center gap-2 rounded-full px-6 text-[15px] font-medium transition ${isDisabled
+                              ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                              : 'bg-[#6D3D14] text-white hover:bg-[#522c0e]'
+                              }`}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+                          </button>
+                        </div>
+
                         <button
                           type="button"
                           onClick={() => {
@@ -880,18 +920,17 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                             else handleAction('Buy');
                           }}
                           disabled={isVariantRequiredButNotSelected}
-                          className={`inline-flex h-[3.5rem] w-full items-center justify-center rounded-full px-6 text-sm font-semibold uppercase tracking-[0.15em] transition border-2 ${isDisabled
-                              ? 'bg-slate-50 text-slate-300 border-slate-200 cursor-not-allowed'
-                              : 'bg-white text-[#8B5E3C] border-[#8B5E3C] hover:bg-[#FDF9F1]'
+                          className={`inline-flex h-[3.5rem] w-full items-center justify-center rounded-full px-6 text-[15px] font-medium transition border ${isDisabled
+                            ? 'bg-slate-50 text-slate-300 border-slate-200 cursor-not-allowed'
+                            : 'bg-transparent text-[#141225] border-slate-300 hover:border-[#141225]'
                             }`}
                         >
-                          BUY NOW
+                          Buy Now
                         </button>
-                      </>
+                      </div>
                     );
                   })()}
                 </div>
-
               </div>
             </div>
           </div>
@@ -908,29 +947,33 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
             const tabsArray = ['Description', ...extraTabNames];
 
             return (
-              <div className="mt-16 bg-white rounded-[2rem] p-8 md:p-12 shadow-sm border border-slate-200">
-                <div className="flex flex-wrap gap-3 justify-center border-b border-slate-100 pb-6">
+              <div className="mt-16 bg-[#F6F1E5] rounded-3xl p-6 md:p-8">
+                <div className="flex flex-wrap gap-4 justify-around border-b border-[#EADFCB] pb-4">
                   {tabsArray.map((tab) => {
                     const isActive = activeTab === tab;
                     return (
                       <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
-                        className={`px-5 py-2 text-sm font-medium rounded-full border transition-colors ${isActive
-                            ? 'bg-[#8B5E3C] border-[#8B5E3C] text-white shadow-md shadow-[#8B5E3C]/20'
-                            : 'bg-white border-slate-300 text-slate-600 hover:border-slate-400'
+                        className={`flex items-center gap-2 px-6 py-3 text-[15px] font-semibold transition-colors ${isActive
+                          ? 'text-[#141225] border-b-2 border-[#141225]'
+                          : 'text-[#666666] hover:text-[#141225]'
                           }`}
                       >
+                        {/* We use a generic icon since we don't have the specific SVGs for all dynamic tabs */}
+                        <svg className="w-5 h-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
                         {tab}
                       </button>
                     );
                   })}
                 </div>
 
-                <div className="py-8 text-sm md:text-base leading-relaxed text-slate-600 max-w-4xl mx-auto">
+                <div className="pt-8 pb-4 text-sm md:text-base leading-relaxed text-slate-700 max-w-5xl mx-auto">
                   {activeTab === 'Description' && (
                     <div className="whitespace-pre-line">
-                      <h3 className="font-bold text-[#B0611C] mb-4 text-lg md:text-xl md:text-left">About {product.name}</h3>
+                      <h3 className="font-bold text-[#A97225] mb-4 text-lg md:text-xl md:text-left">About {product.name}</h3>
                       <p className="text-slate-600 leading-relaxed">{descriptionText}</p>
                     </div>
                   )}
@@ -939,28 +982,28 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                   {displayFields.map((field) => (
                     activeTab === field.key && (
                       <div key={field.key} className="whitespace-pre-line">
-                        <h3 className="font-bold text-[#B0611C] mb-4 text-lg md:text-xl md:text-left">{field.key}</h3>
+                        <h3 className="font-bold text-[#A97225] mb-4 text-lg md:text-xl md:text-left">{field.key}</h3>
                         <p className="text-slate-600 leading-relaxed">{field.value}</p>
                       </div>
                     )
                   ))}
                   {activeTab === 'Why Play' && (
                     <div className="whitespace-pre-line">
-                      <h3 className="font-bold text-[#B0611C] mb-4 text-lg md:text-xl md:text-left">Why {product.name}?</h3>
+                      <h3 className="font-bold text-[#A97225] mb-4 text-lg md:text-xl md:text-left">Why {product.name}?</h3>
                       {product.additionalInfo?.find(info => info.key.toLowerCase() === 'why play')?.value ||
                         "• Engages children and aids in their developmental milestones.\n• Made with non-toxic, child-safe materials.\n• Encourages open-ended, imaginative play."}
                     </div>
                   )}
                   {activeTab === 'How Play' && (
                     <div className="whitespace-pre-line">
-                      <h3 className="font-bold text-[#B0611C] mb-4 text-lg md:text-xl md:text-left">How to Play</h3>
+                      <h3 className="font-bold text-[#A97225] mb-4 text-lg md:text-xl md:text-left">How to Play</h3>
                       {product.additionalInfo?.find(info => info.key.toLowerCase() === 'how play')?.value ||
                         "• Let your child explore the textures and shapes.\n• Demonstrate once, then step back and let their imagination take over.\n• Perfect for independent play or guided activities."}
                     </div>
                   )}
                   {activeTab === 'Details' && (
                     <div className="space-y-3">
-                      <h3 className="font-bold text-[#B0611C] mb-4 text-lg md:text-xl md:text-left">Product Details</h3>
+                      <h3 className="font-bold text-[#A97225] mb-4 text-lg md:text-xl md:text-left">Product Details</h3>
                       {product.dimensions && (product.dimensions.length || product.dimensions.width || product.dimensions.height) && (
                         <p><strong>Dimensions:</strong> {product.dimensions.length || 0} x {product.dimensions.width || 0} x {product.dimensions.height || 0} cm</p>
                       )}
@@ -1025,73 +1068,67 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
       {recommendedProducts.length > 0 && (
         <div className="bg-[#FDF9F1] px-4 py-10 md:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
-            <div className="flex items-center justify-center gap-4 mb-12">
-              <svg width="40" height="20" viewBox="0 0 40 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#D4C3A3] shrink-0">
-                <path d="M2 10C10 10 18 5 28 10C32 12 36 12 38 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                <path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8"/>
-                <path d="M24 8C21 2 15 2 15 10C21 10 24 8 24 8Z" fill="currentColor" opacity="0.5"/>
-              </svg>
-              <h2 className="text-3xl font-serif text-[#B0611C] tracking-wide text-center">You May Also Like</h2>
-              <svg width="40" height="20" viewBox="0 0 40 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#D4C3A3] transform scale-x-[-1] shrink-0">
-                <path d="M2 10C10 10 18 5 28 10C32 12 36 12 38 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                <path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8"/>
-                <path d="M24 8C21 2 15 2 15 10C21 10 24 8 24 8Z" fill="currentColor" opacity="0.5"/>
-              </svg>
+            <div className="relative flex flex-col md:flex-row items-center justify-center mb-8 min-h-[40px]">
+              <div className="flex justify-center items-center gap-3 sm:gap-4">
+                <IoLeaf className="text-[#B0611C] w-6 h-6 sm:w-8 sm:h-8" />
+                <h2 className="text-2xl md:text-3xl font-serif text-[#B0611C] tracking-widest uppercase text-center">You May Also Like</h2>
+                <IoLeaf className="text-[#B0611C] transform scale-x-[-1] w-6 h-6 sm:w-8 sm:h-8" />
+              </div>
             </div>
-            <div className="relative group/slider px-2 md:px-6">
+            
+            <div className="relative px-2 md:px-14">
+              <style>{`
+                .custom-pagination-related { position: relative; margin-top: 2rem; display: flex; justify-content: center; gap: 12px; }
+                .custom-pagination-related .swiper-pagination-bullet { width: 16px; height: 16px; background: #fff; border: 1px solid #999; opacity: 1; transition: all 0.2s; border-radius: 50%; cursor: pointer; }
+                .custom-pagination-related .swiper-pagination-bullet-active { background: #8b7355; border: 4px solid #fff; box-shadow: 0 0 0 1px #8b7355; }
+                
+                .rec-prev, .rec-next {
+                  position: absolute; top: 50%; transform: translateY(-50%); z-index: 10;
+                  width: 44px; height: 44px; border-radius: 50%; border: 1px solid #E6DFD4;
+                  background: white; color: #333; display: flex; align-items: center; justify-content: center;
+                  cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.2s;
+                }
+                .rec-prev:hover, .rec-next:hover { background: #F7F3EE; }
+                .rec-prev.swiper-button-disabled, .rec-next.swiper-button-disabled { opacity: 0.3; cursor: not-allowed; }
+                .rec-prev { left: -12px; }
+                .rec-next { right: -12px; }
+                @media (min-width: 768px) {
+                  .rec-prev { left: -10px; }
+                  .rec-next { right: -10px; }
+                }
+              `}</style>
+
+              <button type="button" ref={setRecPrevEl} className="rec-prev"><ChevronLeft className="w-5 h-5" /></button>
+              <button type="button" ref={setRecNextEl} className="rec-next"><ChevronRight className="w-5 h-5" /></button>
+
               <Swiper
-                modules={[Navigation]}
-                navigation={{
-                  prevEl: '.rec-prev',
-                  nextEl: '.rec-next',
-                }}
+                modules={[Navigation, Pagination]}
+                navigation={{ prevEl: recPrevEl, nextEl: recNextEl }}
+                pagination={{ clickable: true, el: recPaginationEl }}
                 spaceBetween={16}
                 slidesPerView={1}
                 breakpoints={{
-                  480: { slidesPerView: 2, spaceBetween: 16 },
-                  768: { slidesPerView: 3, spaceBetween: 24 },
-                  1024: { slidesPerView: 4, spaceBetween: 24 }
+                  480: { slidesPerView: 2 },
+                  768: { slidesPerView: 3 },
+                  1024: { slidesPerView: 4 }
                 }}
-                className="w-full"
+                className="w-full pb-4"
               >
-                {recommendedProducts.map((p) => {
-                  const recPricing = getPricingInfo(p);
-                  return (
-                    <SwiperSlide key={p._id}>
-                      <div className="group cursor-pointer" onClick={() => onNavigate(`/product/${p._id}`)}>
-                        <div className="aspect-square bg-slate-100 rounded-2xl overflow-hidden mb-4 border border-slate-200">
-                          <img
-                            src={p.images?.find(img => img.isThumbnail)?.url || p.images?.[0]?.url || (p.image && p.image.trim() !== '' ? p.image : '/wood-placeholder.png') || '/wood-placeholder.png'}
-                            alt={p.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            onError={(e) => { e.target.src = '/wood-placeholder.png'; }}
-                          />
-                        </div>
-                        <h3 className="font-semibold text-[#B0611C] text-sm mb-1 truncate">{p.name}</h3>
-                        <div className="flex flex-col gap-2">
-                          <div className="flex items-center gap-2">
-                            <p className="text-slate-600 text-sm font-bold">₹{recPricing.salePrice.toFixed(2)}</p>
-                            {recPricing.hasDiscount && (
-                              <p className="text-[10px] text-slate-500 line-through">₹{recPricing.listPrice.toFixed(2)}</p>
-                            )}
-                          </div>
-                          {recPricing.hasDiscount && (
-                            <span className="inline-flex items-center w-fit rounded-full bg-[#B1621F]/15 px-2 py-1 text-[10px] font-semibold text-[#B1621F]">
-                              -{recPricing.discountPercent}%
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </SwiperSlide>
-                  );
-                })}
+                {recommendedProducts.map((p) => (
+                  <SwiperSlide key={p._id} className="h-auto">
+                    <div className="h-full py-2">
+                      <ProductCard 
+                        product={p} 
+                        user={user} 
+                        onNavigate={onNavigate} 
+                        onAddToCart={() => {}} 
+                        onAddToWishlist={() => {}} 
+                      />
+                    </div>
+                  </SwiperSlide>
+                ))}
               </Swiper>
-              <button type="button" className="rec-prev absolute top-1/3 -left-2 z-10 w-10 h-10 flex items-center justify-center bg-white shadow-md hover:bg-[#8B5E3C] hover:text-white text-slate-700 rounded-full transition-colors disabled:opacity-50 md:-left-4">
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <button type="button" className="rec-next absolute top-1/3 -right-2 z-10 w-10 h-10 flex items-center justify-center bg-white shadow-md hover:bg-[#8B5E3C] hover:text-white text-slate-700 rounded-full transition-colors disabled:opacity-50 md:-right-4">
-                <ChevronRight className="w-5 h-5" />
-              </button>
+              <div ref={setRecPaginationEl} className="custom-pagination-related" />
             </div>
           </div>
         </div>

@@ -378,6 +378,8 @@ export default function App() {
                 onAddToCart={handleAddToCart}
                 onBuyNow={handleBuyNow}
                 onAddToWishlist={handleAddToWishlist}
+                onRemoveFromWishlist={handleRemoveFromWishlist}
+                wishlistItems={wishlistItems}
               />
             </LayoutWithHeader>
           }

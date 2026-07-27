@@ -23,6 +23,7 @@ export default function ShopPage({ onNavigate, onAddToCart, onAddToWishlist, use
 
   const [priceRange, setPriceRange] = useState(0);
   const [sortBy, setSortBy] = useState('Most Popular');
+  const [sortOpen, setSortOpen] = useState(false);
   const [viewMode, setViewMode] = useState('grid');
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -128,10 +129,45 @@ export default function ShopPage({ onNavigate, onAddToCart, onAddToWishlist, use
     }
     for (const [attrId, selectedVals] of Object.entries(selectedAttributes)) {
       if (selectedVals.length > 0) {
-        const pAttr = p.attributes?.find(a => (a.attribute?._id || a.attribute) === attrId);
-        if (!pAttr) return false;
-        const valId = pAttr.value?._id || pAttr.value;
-        if (!selectedVals.includes(valId)) return false;
+        const attrDef = dynamicAttributes.find(da => (da.attribute?._id || da.attribute) === attrId);
+        if (!attrDef || !attrDef.attribute) return false;
+        
+        // Map selected object IDs from the filter UI to their string values
+        const selectedStringValues = selectedVals.map(valId => {
+          const valObj = (attrDef.attribute.values || []).find(v => v._id === valId);
+          return valObj ? (valObj.name || valObj.value) : valId;
+        });
+
+        const pAttrs = p.attributeValues || p.attributes || [];
+        const pAttr = pAttrs.find(a => (a.attribute?._id || a.attribute) === attrId);
+
+        if (!pAttr) {
+          // Check inside variants if product has them
+          if (p.variants && p.variants.length > 0) {
+            const hasVariantWithAttr = p.variants.some(v => {
+              // If options are populated, check them
+              if (v.options && v.options.length > 0) {
+                return v.options.some(opt => 
+                  (opt.attribute?._id || opt.attribute) === attrId &&
+                  selectedStringValues.includes(opt.value)
+                );
+              }
+              // Fallback to checking the variantCombination string (e.g. "Yellow", "Maple-Neem")
+              if (v.variantCombination) {
+                return selectedStringValues.some(val => v.variantCombination.includes(val));
+              }
+              return false;
+            });
+            if (!hasVariantWithAttr) return false;
+            continue;
+          }
+          return false;
+        }
+
+        // Check if the product attribute matches any of the selected string values
+        const pAttrVals = Array.isArray(pAttr.values) ? pAttr.values : [pAttr.value?._id || pAttr.value];
+        const hasMatch = selectedStringValues.some(val => pAttrVals.includes(val));
+        if (!hasMatch) return false;
       }
     }
     return true;
@@ -306,7 +342,7 @@ export default function ShopPage({ onNavigate, onAddToCart, onAddToWishlist, use
   const pageTitle = currentCategoryObj ? currentCategoryObj.name : 'Woodora Toys';
 
   return (
-    <div className="bg-[#FDF9F1] min-h-screen pt-32 pb-16 font-sans text-[#141225]">
+    <div className="bg-[#FDF9F1] min-h-screen pt-4 pb-16 font-sans text-[#141225]">
 
       {/* Slide-in Drawer */}
       {drawerOpen && (
@@ -391,18 +427,36 @@ export default function ShopPage({ onNavigate, onAddToCart, onAddToWishlist, use
             </button>
 
             {/* Sort */}
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-gray-500">Sort by:</span>
-              <select 
-                value={sortBy} 
-                onChange={(e) => setSortBy(e.target.value)}
-                className="border-none bg-transparent font-medium focus:ring-0 cursor-pointer pr-8 text-gray-900 outline-none"
+            <div 
+              className="relative flex items-center gap-3 text-sm z-30"
+              onMouseLeave={() => setSortOpen(false)}
+            >
+              <span className="text-[#5C2E0E] font-medium hidden sm:inline-block">Sort by:</span>
+              <button 
+                onClick={() => setSortOpen(!sortOpen)}
+                className="relative flex items-center justify-between w-40 px-4 py-2 bg-transparent border border-[#8B5E3C] text-[#8B5E3C] rounded-xl text-sm font-semibold hover:bg-[#8B5E3C] hover:text-white transition-all duration-200"
               >
-                <option>Most Popular</option>
-                <option>Newest</option>
-                <option>Price: Low to High</option>
-                <option>Price: High to Low</option>
-              </select>
+                {sortBy}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform duration-200 ${sortOpen ? 'rotate-180' : ''}`}><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </button>
+              
+              {sortOpen && (
+                <div className="absolute top-full mt-2 right-0 w-48 bg-[#FDF9F1] border border-[#8B5E3C]/20 rounded-xl shadow-lg py-2 overflow-hidden flex flex-col">
+                  {['Most Popular', 'Newest', 'Price: Low to High', 'Price: High to Low'].map(option => (
+                    <button 
+                      key={option}
+                      onClick={() => { setSortBy(option); setSortOpen(false); }}
+                      className={`text-left px-4 py-2.5 cursor-pointer transition-colors text-sm ${
+                        sortBy === option 
+                          ? 'bg-[#8B5E3C] text-white font-semibold' 
+                          : 'text-[#5C2E0E] hover:bg-[#8B5E3C]/10 hover:text-[#8B5E3C] font-medium'
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Grid / List toggles */}

@@ -1,8 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
 export default function ProductCard({ product, viewMode = 'grid', onNavigate, onAddToCart, onAddToWishlist, user }) {
   const [isAdding, setIsAdding] = useState(false);
+  const isInWishlist = user?.wishlist?.some?.((w) => (w._id || w) === product._id) || product.isWishlisted;
+  const [localWishlist, setLocalWishlist] = useState(isInWishlist);
+
+  useEffect(() => {
+    setLocalWishlist(isInWishlist);
+  }, [isInWishlist]);
 
   const getPricingInfo = (p) => {
     let listPrice = 0, salePrice = 0;
@@ -29,6 +35,7 @@ export default function ProductCard({ product, viewMode = 'grid', onNavigate, on
         setIsAdding(false);
       }
     } else {
+      setLocalWishlist(!localWishlist);
       onAddToWishlist?.(p);
     }
   };
@@ -46,7 +53,7 @@ export default function ProductCard({ product, viewMode = 'grid', onNavigate, on
       onClick={() => onNavigate(`/product/${product._id}`)}
       className={`group cursor-pointer bg-white rounded-2xl overflow-hidden border border-[#E6DFD4] shadow-sm hover:shadow-md transition-shadow flex ${viewMode === 'list' ? 'flex-col sm:flex-row h-auto' : 'flex-col h-full'}`}
     >
-      <div className={`relative overflow-hidden shrink-0 ${viewMode === 'list' ? 'w-full sm:w-[240px] aspect-[4/3] sm:aspect-square' : 'aspect-square'}`}>
+      <div className={`relative overflow-hidden shrink-0 ${viewMode === 'list' ? 'w-full sm:w-[320px] aspect-[4/3] sm:aspect-[4/3]' : 'aspect-[4/3]'}`}>
         {imgSrc ? (
           <motion.img
             src={imgSrc}
@@ -68,29 +75,29 @@ export default function ProductCard({ product, viewMode = 'grid', onNavigate, on
         )}
         <button
           onClick={(e) => { e.stopPropagation(); handleAction('Wishlist', product, e); }}
-          className="absolute top-2 right-2 w-8 h-8 bg-white rounded-full flex items-center justify-center text-[#999999] hover:text-[#B1621F] hover:shadow-md transition-all shadow-sm z-10"
+          className={`absolute bg-white rounded-full flex items-center justify-center hover:shadow-md transition-all shadow-sm z-10 ${viewMode === 'list' ? 'top-3 right-3 w-10 h-10' : 'top-2 right-2 w-8 h-8'}`}
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className={`transition-colors ${localWishlist ? 'text-red-500 fill-red-500' : 'text-[#999999] hover:text-[#B1621F] fill-none'} ${viewMode === 'list' ? 'w-5 h-5' : 'w-4 h-4'}`} stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
           </svg>
         </button>
       </div>
-      <div className={`flex flex-col flex-1 bg-white ${viewMode === 'list' ? 'p-4 sm:p-6 justify-center' : 'p-4'}`}>
-        <h3 className="text-sm font-semibold text-[#B0611C] mb-2 line-clamp-1">{product.name || 'Untitled Product'}</h3>
-        <div className="flex items-center gap-2 mb-3 flex-wrap">
-          <span className="text-sm font-bold text-[#333333]">₹{pricing.salePrice.toLocaleString()}</span>
+      <div className={`flex flex-col flex-1 bg-white ${viewMode === 'list' ? 'p-4 sm:p-8 justify-center gap-2' : 'p-4'}`}>
+        <h3 className={`font-semibold text-[#B0611C] ${viewMode === 'list' ? 'text-lg sm:text-2xl mb-1 line-clamp-2' : 'text-sm mb-2 line-clamp-1'}`}>{product.name || 'Untitled Product'}</h3>
+        <div className={`flex items-center flex-wrap ${viewMode === 'list' ? 'gap-3 mb-4' : 'gap-2 mb-3'}`}>
+          <span className={`font-bold text-[#333333] ${viewMode === 'list' ? 'text-xl sm:text-3xl' : 'text-sm'}`}>₹{pricing.salePrice.toLocaleString()}</span>
           {pricing.hasDiscount && (
             <>
-              <span className="text-[11px] text-[#999999] line-through">₹{pricing.listPrice.toLocaleString()}</span>
-              <span className="inline-flex items-center self-start rounded-full bg-[#B1621F]/15 px-2 py-0.5 text-[10px] font-semibold text-[#B1621F]">
+              <span className={`text-[#999999] line-through ${viewMode === 'list' ? 'text-base sm:text-lg' : 'text-[11px]'}`}>₹{pricing.listPrice.toLocaleString()}</span>
+              <span className={`inline-flex items-center self-start rounded-full bg-[#B1621F]/15 font-semibold text-[#B1621F] ${viewMode === 'list' ? 'px-3 py-1 text-sm' : 'px-2 py-0.5 text-[10px]'}`}>
                 -{pricing.discountPercent}%
               </span>
             </>
           )}
         </div>
         <div className="flex items-center gap-1 mt-auto">
-          <svg className="w-3.5 h-3.5 text-[#F5C518]" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-          <span className="text-[11px] font-medium text-[#666666]">{product.averageRating !== undefined ? product.averageRating : 0} <span className="text-[#999999] font-normal">({product.reviewCount !== undefined ? product.reviewCount : 0})</span></span>
+          <svg className={`text-[#F5C518] ${viewMode === 'list' ? 'w-5 h-5' : 'w-3.5 h-3.5'}`} fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+          <span className={`font-medium text-[#666666] ${viewMode === 'list' ? 'text-sm sm:text-base' : 'text-[11px]'}`}>{product.averageRating !== undefined ? product.averageRating : 0} <span className="text-[#999999] font-normal">({product.reviewCount !== undefined ? product.reviewCount : 0})</span></span>
         </div>
       </div>
     </motion.div>

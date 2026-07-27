@@ -305,6 +305,8 @@ export default function AppRouter() {
                 onAddToCart={handleAddToCart}
                 onBuyNow={handleBuyNow}
                 onAddToWishlist={handleAddToWishlist}
+                onRemoveFromWishlist={handleRemoveFromWishlist}
+                wishlistItems={wishlistItems}
               />
             </PageLayout>
           }

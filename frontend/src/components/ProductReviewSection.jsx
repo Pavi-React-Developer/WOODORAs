@@ -298,12 +298,24 @@ function WriteReviewForm({ productId, user, onSuccess }) {
    SINGLE REVIEW CARD
 ═══════════════════════════════════════════════════ */
 function ReviewCard({ review, user, onVote, onOpenImage }) {
+  const [imgSlide, setImgSlide] = useState(0);
+  
+  const nextImg = (e) => {
+    e.stopPropagation();
+    if (review.images?.length) setImgSlide((prev) => (prev + 1) % review.images.length);
+  };
+  
+  const prevImg = (e) => {
+    e.stopPropagation();
+    if (review.images?.length) setImgSlide((prev) => (prev - 1 + review.images.length) % review.images.length);
+  };
+
   return (
-    <div className="bg-white rounded-2xl border border-[#E9DED3] shadow-sm p-5 space-y-3 h-full">
+    <div className="bg-white rounded-xl border border-[#E9DED3] shadow-sm p-3 space-y-2">
       {/* Header */}
-      <div className="flex items-start gap-3">
+      <div className="flex items-start justify-between">
         <Avatar user={review.user} size={42} />
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 ml-3">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-bold text-[#141225]">{review.user?.name || 'Customer'}</span>
             {review.isVerifiedPurchase && (
@@ -323,17 +335,42 @@ function ReviewCard({ review, user, onVote, onOpenImage }) {
       {review.title && <h4 className="font-bold text-[#141225] text-sm break-all">{review.title}</h4>}
       {review.description && <p className="text-sm text-[#6D625C] leading-relaxed break-all whitespace-pre-wrap">{review.description}</p>}
 
-      {/* Images */}
+      {/* Images Slider */}
       {review.images?.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {review.images.map((img, i) => (
-            <div key={i} className="relative group cursor-pointer" onClick={() => onOpenImage(review.images, i)}>
-              <img src={normalizeMediaUrl(img)} alt="" className="w-20 h-20 object-cover rounded-xl border border-[#E9DED3] group-hover:opacity-90 transition" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/animal_balance_maze.png'; }} />
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-                <ZoomIn size={18} className="text-white drop-shadow" />
+        <div className="relative group/reviewimg overflow-hidden rounded-lg border border-[#E9DED3] h-12 md:h-16">
+          <div 
+            className="flex transition-transform duration-500 ease-in-out h-full"
+            style={{ transform: `translateX(-${imgSlide * 100}%)` }}
+          >
+            {review.images.map((img, i) => (
+              <div key={i} className="w-full h-full shrink-0 relative cursor-pointer" onClick={() => onOpenImage(review.images, i)}>
+                <img src={normalizeMediaUrl(img)} alt="" className="w-full h-full object-cover group-hover/reviewimg:opacity-90 transition" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/animal_balance_maze.png'; }} />
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/reviewimg:opacity-100 transition">
+                  <ZoomIn size={24} className="text-white drop-shadow-md" />
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+
+          {/* Arrows */}
+          {review.images.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={prevImg}
+                className="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/95 border border-[#E9DED3] text-[#141225] hover:text-[#B0611C] shadow-md flex items-center justify-center transition-all opacity-0 group-hover/reviewimg:opacity-100 z-10"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={nextImg}
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/95 border border-[#E9DED3] text-[#141225] hover:text-[#B0611C] shadow-md flex items-center justify-center transition-all opacity-0 group-hover/reviewimg:opacity-100 z-10"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </>
+          )}
         </div>
       )}
 
@@ -386,21 +423,10 @@ export default function ProductReviewSection({ product, user }) {
   const [hasMore, setHasMore]     = useState(false);
   const [lightbox, setLightbox]   = useState(null); // { images, index }
   const [reviewSlide, setReviewSlide] = useState(0);
+  const [gallerySlide, setGallerySlide] = useState(0);
+  const [sortOpen, setSortOpen] = useState(false);
   const statsBoxRef = useRef(null);
-  const galleryRef = useRef(null);
   const LIMIT = 5;
-
-  useEffect(() => {
-    const syncHeight = () => {
-      if (statsBoxRef.current && galleryRef.current) {
-        statsBoxRef.current.style.minHeight = `${galleryRef.current.offsetHeight}px`;
-      }
-    };
-    syncHeight();
-    window.addEventListener('resize', syncHeight);
-    return () => window.removeEventListener('resize', syncHeight);
-  }, [gallery]);
-
   const productId = product?._id;
 
   /* ── load reviews ────────────────── */
@@ -487,177 +513,220 @@ export default function ProductReviewSection({ product, user }) {
   const prevReview = () => setReviewSlide(prev => (prev - 1 + reviewPages.length) % reviewPages.length);
   const nextReview = () => setReviewSlide(prev => (prev + 1) % reviewPages.length);
 
+  /* ── gallery slider ──────────────── */
+  const galleryPages = [];
+  for (let i = 0; i < gallery.length; i += 4) {
+    galleryPages.push(gallery.slice(i, i + 4));
+  }
+  const hasGallerySlider = galleryPages.length > 1;
+  const prevGallery = () => setGallerySlide(prev => (prev - 1 + galleryPages.length) % galleryPages.length);
+  const nextGallery = () => setGallerySlide(prev => (prev + 1) % galleryPages.length);
+
   /* ──────────────────────────────────
      RENDER
   ────────────────────────────────── */
   return (
-    <div className="py-12 px-4">
-      <div className="max-w-7xl mx-auto space-y-10">
-        <div className="flex items-center justify-center gap-4 mb-12">
-          <svg width="40" height="20" viewBox="0 0 40 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#D4C3A3] shrink-0">
-            <path d="M2 10C10 10 18 5 28 10C32 12 36 12 38 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            <path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8"/>
-            <path d="M24 8C21 2 15 2 15 10C21 10 24 8 24 8Z" fill="currentColor" opacity="0.5"/>
-          </svg>
-          <h2 className="text-3xl font-serif text-[#B0611C] tracking-wide text-center">Customer Reviews</h2>
-          <svg width="40" height="20" viewBox="0 0 40 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#D4C3A3] transform scale-x-[-1] shrink-0">
-            <path d="M2 10C10 10 18 5 28 10C32 12 36 12 38 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            <path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8"/>
-            <path d="M24 8C21 2 15 2 15 10C21 10 24 8 24 8Z" fill="currentColor" opacity="0.5"/>
-          </svg>
-        </div>
-        <div className="grid items-stretch gap-8 xl:grid-cols-[420px_minmax(0,1fr)]">
-
-        {/* ── RATING SUMMARY ── */}
-        {stats?.total > 0 && (
-          <div ref={statsBoxRef} className="bg-white rounded-3xl border border-[#E9DED3] shadow-sm overflow-hidden xl:sticky xl:top-28 h-full">
-            <div className="p-5 border-b border-[#F2EBE4]">
-              <h2 className="text-xl font-bold text-[#141225] flex items-center gap-2">
-                <Star size={18} className="text-amber-400" fill="currentColor" />
-                Customer Ratings &amp; Reviews
-              </h2>
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)]">
-              {/* Left: Big score box */}
-              <div className="shrink-0 flex flex-col items-center justify-center p-8 gap-1 border-b border-[#E9DED3] lg:border-b-0 lg:border-r lg:border-[#E9DED3]">
-                <span className="text-6xl font-black text-[#141225] leading-none">{fmt(stats.avg)}</span>
-                <Star size={28} className="text-amber-400 mt-1" fill="currentColor" />
-                <span className="text-sm font-semibold text-[#6D625C] mt-2">{stats.total} ratings</span>
-              </div>
-
-              {/* Right: Labeled bars */}
-              <div className="p-6 space-y-3">
-                {(stats.dist || []).map(d => (
-                  <RatingBar key={d.star} star={d.star} pct={d.pct} count={d.count} />
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-
-
-        {/* ── CUSTOMER REVIEWS ── */}
-        <div className="flex h-full flex-col min-w-0 overflow-hidden">
-          <div className="flex items-center justify-end mb-4 flex-wrap gap-3">
-            <div className="flex items-center gap-2">
-              {hasReviewSlider && (
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={prevReview}
-                    className="w-9 h-9 rounded-full border border-[#E9DED3] bg-white text-[#6D625C] hover:border-[#9A6031] hover:text-[#9A6031] transition flex items-center justify-center"
-                    aria-label="Previous customer review"
-                  >
-                    <ChevronLeft size={16} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={nextReview}
-                    className="w-9 h-9 rounded-full border border-[#E9DED3] bg-white text-[#6D625C] hover:border-[#9A6031] hover:text-[#9A6031] transition flex items-center justify-center"
-                    aria-label="Next customer review"
-                  >
-                    <ChevronRight size={16} />
-                  </button>
-                </div>
-              )}
-              <div className="relative">
-                <select value={sort} onChange={e => handleSort(e.target.value)}
-                  className="appearance-none bg-white border border-[#E9DED3] rounded-xl pl-3 pr-8 py-2 text-sm text-[#141225] focus:outline-none focus:border-[#9A6031] cursor-pointer">
-                  <option value="newest">Newest</option>
-                  <option value="oldest">Oldest</option>
-                  <option value="highest_rating">Highest Rating</option>
-                  <option value="lowest_rating">Lowest Rating</option>
-                </select>
-                <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-[#8A817C] pointer-events-none" />
-              </div>
-            </div>
-          </div>
-
-          {/* Review List */}
-          {loading && reviews.length === 0 ? (
-            <div className="py-12 text-center text-[#8A817C] text-sm">Loading reviews…</div>
-          ) : reviews.length === 0 ? (
-            /* Empty State */
-            <div className="bg-white rounded-3xl border border-[#E9DED3] shadow-sm py-16 text-center">
-              <div className="w-20 h-20 bg-[#F8F4EC] rounded-full flex items-center justify-center mx-auto mb-4">
-                <MessageSquare size={32} className="text-[#C4B9B0]" />
-              </div>
-              <h3 className="text-lg font-bold text-[#141225]">No Reviews Yet</h3>
-              <p className="text-sm text-[#8A817C] mt-1">Be the first customer to review this product.</p>
-            </div>
-          ) : (
-            <div className="flex flex-1 flex-col space-y-5">
-              <div className="flex-1 overflow-hidden">
-                <div
-                  className="flex h-full transition-transform duration-500 ease-in-out"
-                  style={{ transform: `translateX(-${reviewSlide * 100}%)` }}
+    <div className="py-4 lg:py-6 px-4">
+      <div className="max-w-7xl mx-auto space-y-2">
+        <div className="bg-[#FAF7F2] rounded-xl border border-[#E9DED3] p-2 md:p-3 shadow-sm mt-2">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-2 px-2 pt-1">
+            <h2 className="text-2xl lg:text-3xl font-serif text-[#141225] font-bold">Customer Reviews</h2>
+            <div className="flex items-center gap-4">
+              <div 
+                className="relative hidden md:block z-30"
+                onMouseLeave={() => setSortOpen(false)}
+              >
+                <button 
+                  onClick={() => setSortOpen(!sortOpen)}
+                  className="relative flex items-center justify-between w-40 px-4 py-2 bg-[#9A6031] text-white rounded-xl text-sm font-semibold hover:bg-[#7E4B25] transition-all duration-200"
                 >
-                  {reviewPages.map((pageReviews, pageIndex) => (
-                    <div key={pageReviews.map(r => r._id).join('-') || pageIndex} className="w-full shrink-0 px-0.5">
-                      <div className="grid h-full gap-5 md:grid-cols-3">
-                        {pageReviews.map(r => (
-                          <ReviewCard
-                            key={r._id}
-                            review={r}
-                            user={user}
-                            onVote={handleVote}
-                            onOpenImage={(imgs, i) => setLightbox({ images: imgs, index: i })}
-                          />
+                  {sort === 'newest' ? 'Newest' : sort === 'oldest' ? 'Oldest' : sort === 'highest_rating' ? 'Highest Rating' : 'Lowest Rating'}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform duration-200 ${sortOpen ? 'rotate-180' : ''}`}><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+                
+                {sortOpen && (
+                  <div className="absolute top-full mt-2 right-0 w-48 bg-[#FDF9F1] border border-[#9A6031]/20 rounded-xl shadow-lg py-2 overflow-hidden flex flex-col">
+                    {[
+                      { value: 'newest', label: 'Newest' },
+                      { value: 'oldest', label: 'Oldest' },
+                      { value: 'highest_rating', label: 'Highest Rating' },
+                      { value: 'lowest_rating', label: 'Lowest Rating' }
+                    ].map(option => (
+                      <button 
+                        key={option.value}
+                        onClick={() => { handleSort(option.value); setSortOpen(false); }}
+                        className={`text-left px-4 py-2.5 cursor-pointer transition-colors text-sm ${
+                          sort === option.value 
+                            ? 'bg-[#9A6031] text-white font-semibold' 
+                            : 'text-[#5C2E0E] hover:bg-[#9A6031]/10 hover:text-[#9A6031] font-medium'
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <button className="text-sm font-bold text-[#141225] hover:text-[#B0611C] transition whitespace-nowrap">
+                View All Reviews &rarr;
+              </button>
+            </div>
+          </div>
+
+          <div className="grid lg:grid-cols-[260px_1fr] xl:grid-cols-[280px_1fr] gap-4 lg:gap-6 items-start px-2 pb-2">
+            {/* RATING SUMMARY (Left Column) */}
+            {stats?.total > 0 && (
+              <div ref={statsBoxRef} className="flex flex-col items-center shrink-0 w-full lg:border-r lg:border-[#E9DED3] lg:pr-6">
+                <div className="relative flex flex-col items-center justify-center">
+                  {/* Big brown star */}
+                  <svg viewBox="0 0 24 24" className="w-44 h-44 md:w-48 md:h-48 text-[#B0611C]" fill="currentColor">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-white mt-3">
+                    <span className="text-4xl md:text-5xl font-black leading-none">{fmt(stats.avg)}</span>
+                    <span className="text-xs md:text-sm font-medium opacity-90 mt-1">Out of 5</span>
+                  </div>
+                </div>
+                <p className="mt-4 text-sm font-bold text-[#141225]">Based on {stats.total} reviews</p>
+                <div className="mt-6 w-full space-y-3">
+                  {(stats.dist || []).map(d => (
+                    <RatingBar key={d.star} star={d.star} pct={d.pct} count={d.count} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* RIGHT COLUMN (Two Rows) */}
+            <div className="relative flex-1 min-w-0 flex flex-col gap-0">
+              
+              {/* ── CUSTOMER REVIEWS SLIDER (Row 1) ── */}
+              <div className="relative">
+                {/* Review List */}
+                {loading && reviews.length === 0 ? (
+                  <div className="py-12 text-center text-[#8A817C] text-sm h-full flex items-center justify-center">Loading reviews…</div>
+                ) : reviews.length === 0 ? (
+                  /* Empty State */
+                  <div className="bg-white rounded-3xl border border-[#E9DED3] shadow-sm py-10 text-center h-full flex flex-col items-center justify-center">
+                    <div className="w-16 h-16 bg-[#F8F4EC] rounded-full flex items-center justify-center mx-auto mb-4">
+                      <MessageSquare size={24} className="text-[#C4B9B0]" />
+                    </div>
+                    <h3 className="text-lg font-bold text-[#141225]">No Reviews Yet</h3>
+                    <p className="text-sm text-[#8A817C] mt-1">Be the first customer to review this product.</p>
+                  </div>
+                ) : (
+                  <div className="relative group">
+                    <div className="overflow-hidden rounded-2xl">
+                      <div
+                        className="flex transition-transform duration-500 ease-in-out"
+                        style={{ transform: `translateX(-${reviewSlide * 100}%)` }}
+                      >
+                        {reviewPages.map((pageReviews, pageIndex) => (
+                          <div key={pageReviews.map(r => r._id).join('-') || pageIndex} className="w-full shrink-0 px-1 py-1">
+                            <div className="grid gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-start">
+                              {pageReviews.map(r => (
+                                <ReviewCard
+                                  key={r._id}
+                                  review={r}
+                                  user={user}
+                                  onVote={handleVote}
+                                  onOpenImage={(imgs, i) => setLightbox({ images: imgs, index: i })}
+                                />
+                              ))}
+                            </div>
+                          </div>
                         ))}
                       </div>
                     </div>
-                  ))}
-                </div>
+
+                    {/* Left & Right Arrows Positioned on edges vertically centered */}
+                    {hasReviewSlider && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={prevReview}
+                          className="absolute -left-4 md:-left-6 lg:-left-8 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full border border-[#E9DED3] bg-white text-[#141225] hover:text-[#B0611C] hover:border-[#B0611C] shadow-md flex items-center justify-center transition-colors z-10"
+                          aria-label="Previous customer review"
+                        >
+                          <ChevronLeft size={24} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={nextReview}
+                          className="absolute -right-4 md:-right-6 lg:-right-8 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full border border-[#E9DED3] bg-white text-[#141225] hover:text-[#B0611C] hover:border-[#B0611C] shadow-md flex items-center justify-center transition-colors z-10"
+                          aria-label="Next customer review"
+                        >
+                          <ChevronRight size={24} />
+                        </button>
+                      </>
+                    )}
+
+                    {hasMore && (
+                      <div className="text-center pt-6 mt-auto">
+                        <button onClick={loadMore}
+                          className="px-8 py-2.5 border border-[#E9DED3] rounded-full text-sm font-bold text-[#6D625C] hover:border-[#9A6031] hover:text-[#9A6031] bg-white transition">
+                          Load More Reviews
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
-              {hasReviewSlider && (
-                <div className="flex items-center justify-center gap-2">
-                  {reviewPages.map((pageReviews, index) => (
-                    <button
-                      key={pageReviews.map(r => r._id).join('-') || index}
-                      type="button"
-                      onClick={() => setReviewSlide(index)}
-                      className={`h-2 rounded-full transition-all ${index === reviewSlide ? 'w-7 bg-[#9A6031]' : 'w-2 bg-[#D8C9BC]'}`}
-                      aria-label={`Go to customer review page ${index + 1}`}
-                    />
-                  ))}
-                </div>
-              )}
+              {/* ── PHOTO GALLERY (Row 2) ── */}
+              {gallery.length > 0 && (
+                <div className="relative group/gallery border-t border-[#E9DED3] pt-2 mt-2">
+                  <h2 className="text-base lg:text-lg font-serif font-bold text-[#141225] mb-2 flex items-center gap-1.5">
+                    <Camera size={20} className="text-[#B0611C]" /> Customer Photo Gallery
+                  </h2>
+                  
+                  <div className="relative overflow-hidden rounded-2xl mx-auto px-1 py-1">
+                    <div
+                      className="flex transition-transform duration-500 ease-in-out"
+                      style={{ transform: `translateX(-${gallerySlide * 100}%)` }}
+                    >
+                      {galleryPages.map((pagePhotos, pageIndex) => (
+                        <div key={pageIndex} className="w-full shrink-0 flex gap-4">
+                          {pagePhotos.map((g, i) => (
+                            <div key={i} onClick={() => setLightbox({ images: gallery.map(x => x.url), index: pageIndex * 4 + i })}
+                              className="relative group cursor-pointer h-20 md:h-24 w-[calc(25%-12px)] min-w-[80px] overflow-hidden rounded-2xl border border-[#E9DED3] shrink-0 shadow-sm">
+                              <img src={normalizeMediaUrl(g.url)} alt="" className="w-full h-full object-cover group-hover:scale-105 transition duration-500" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/animal_balance_maze.png'; }} />
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
+                                <ZoomIn size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 drop-shadow-md scale-75 group-hover:scale-100" />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
 
-              {hasMore && (
-                <div className="text-center pt-2">
-                  <button onClick={loadMore}
-                    className="px-8 py-3 border border-[#E9DED3] rounded-full text-sm font-bold text-[#6D625C] hover:border-[#9A6031] hover:text-[#9A6031] bg-white transition">
-                    Load More Reviews
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* ── PHOTO GALLERY ── */}
-        </div>
-
-        {gallery.length > 0 && (
-          <div>
-            <h2 className="text-xl font-bold text-[#141225] mb-4 flex items-center gap-2">
-              <Camera size={18} className="text-[#9A6031]" /> Customer Photo Gallery
-            </h2>
-            <div ref={galleryRef} className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 animate-fade-in">
-              {gallery.map((g, i) => (
-                <div key={i} onClick={() => setLightbox({ images: gallery.map(x => x.url), index: i })}
-                  className="relative group cursor-pointer aspect-square overflow-hidden rounded-xl border border-[#E9DED3]">
-                  <img src={normalizeMediaUrl(g.url)} alt="" className="w-full h-full object-cover group-hover:scale-105 transition duration-300" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/animal_balance_maze.png'; }} />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition flex items-center justify-center">
-                    <ZoomIn size={18} className="text-white opacity-0 group-hover:opacity-100 transition drop-shadow" />
+                    {/* Slider Arrows */}
+                    {hasGallerySlider && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={prevGallery}
+                          className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/95 backdrop-blur border border-[#E9DED3] text-[#141225] hover:text-[#B0611C] hover:border-[#B0611C] shadow-md flex items-center justify-center transition-all z-10 opacity-0 group-hover/gallery:opacity-100"
+                          aria-label="Previous photos"
+                        >
+                          <ChevronLeft size={20} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={nextGallery}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/95 backdrop-blur border border-[#E9DED3] text-[#141225] hover:text-[#B0611C] hover:border-[#B0611C] shadow-md flex items-center justify-center transition-all z-10 opacity-0 group-hover/gallery:opacity-100"
+                          aria-label="Next photos"
+                        >
+                          <ChevronRight size={20} />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+              )}
+            </div> {/* Closes Right Column */}
+          </div> {/* Closes Grid */}
+        </div> {/* Closes Beige Container */}
 
       </div>
 

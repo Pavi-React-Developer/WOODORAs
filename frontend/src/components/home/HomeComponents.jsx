@@ -4,6 +4,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, EffectFade, EffectCreative, Navigation, Controller } from 'swiper/modules';
 import { ChevronLeft, ChevronRight, Truck, Package, ShieldCheck, Banknote, Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { IoLeaf } from 'react-icons/io5';
 import ProductCard from '../ProductCard';
 import Header from '../Header';
 import Footer from '../Footer';
@@ -116,12 +117,12 @@ export function HomeReviews({ context = {} }) {
 
   const renderReviewCard = (t, i) => (
     <motion.div key={i} whileHover={{ scale: 1.02 }}
-      className="bg-white border border-gray-100 p-8 flex flex-col justify-between rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 w-full min-h-[220px]">
+      className="bg-white border border-gray-100 p-5 flex flex-col justify-between rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 w-full min-h-[160px]">
       <div>
-        <div className="mb-4"><Stars rating={t?.rating || 5} /></div>
-        <p className="text-sm italic text-brand-dark leading-relaxed line-clamp-4">"{t?.description || t?.title || t?.quote}"</p>
+        <div className="mb-2"><Stars rating={t?.rating || 5} /></div>
+        <p className="text-xs italic text-brand-dark leading-relaxed line-clamp-3">"{t?.description || t?.title || t?.quote}"</p>
       </div>
-      <div className="flex items-center gap-3 mt-8">
+      <div className="flex items-center gap-2 mt-4">
         <div className="w-9 h-9 bg-[#E6DFD4] rounded-full flex items-center justify-center text-xs font-bold text-brand-dark shrink-0">
           {(t?.user?.name || t?.author || 'G').charAt(0)}
         </div>
@@ -134,22 +135,14 @@ export function HomeReviews({ context = {} }) {
   );
 
   return (
-    <section className="py-24 bg-[#EAE6E1]">
+    <section className="py-5 bg-[#FDF9F1]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
-          <motion.div variants={fadeUp} className="flex flex-col items-center gap-4 mb-10">
-            <div className="flex justify-center items-center gap-4">
-              <svg width="40" height="20" viewBox="0 0 40 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#D4C3A3]">
-                <path d="M2 10C10 10 18 5 28 10C32 12 36 12 38 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                <path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8" />
-                <path d="M24 8C21 2 15 2 15 10C21 10 24 8 24 8Z" fill="currentColor" opacity="0.5" />
-              </svg>
-              <h2 className="text-3xl font-serif text-[#B0611C] tracking-wide">What Parents Love</h2>
-              <svg width="40" height="20" viewBox="0 0 40 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#D4C3A3] transform scale-x-[-1]">
-                <path d="M2 10C10 10 18 5 28 10C32 12 36 12 38 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                <path d="M14 8C11 2 5 2 5 10C11 10 14 8 14 8Z" fill="currentColor" opacity="0.8" />
-                <path d="M24 8C21 2 15 2 15 10C21 10 24 8 24 8Z" fill="currentColor" opacity="0.5" />
-              </svg>
+          <motion.div variants={fadeUp} className="relative flex flex-col md:flex-row items-center justify-center mb-5 min-h-[40px]">
+            <div className="flex justify-center items-center gap-3 sm:gap-4">
+              <IoLeaf className="text-[#B0611C] w-6 h-6 sm:w-8 sm:h-8" />
+              <h2 className="text-xl md:text-2xl font-serif text-[#B0611C] tracking-widest uppercase text-center">What Parents Love</h2>
+              <IoLeaf className="text-[#B0611C] transform scale-x-[-1] w-6 h-6 sm:w-8 sm:h-8" />
             </div>
           </motion.div>
 
@@ -411,15 +404,20 @@ function ThirdBannerItem({ bannerData, onNavigate }) {
   const rightCtaLabel = bannerData.rightButtonText || 'Explore Here';
 
   return (
-    <section className="py-16 bg-[#FDF9F1]">
+    <section className="py-5 bg-[#FDF9F1]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {bannerData.title && (
-          <motion.h2 initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}
-            className="text-center text-3xl font-serif text-brand-dark mb-12 tracking-wide">{bannerData.title}</motion.h2>
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="relative flex flex-col md:flex-row items-center justify-center mb-10 min-h-[40px]">
+            <div className="flex justify-center items-center gap-3 sm:gap-4">
+              <IoLeaf className="text-[#B0611C] w-6 h-6 sm:w-8 sm:h-8" />
+              <h2 className="text-xl md:text-2xl font-serif text-[#B0611C] tracking-widest uppercase text-center">{bannerData.title}</h2>
+              <IoLeaf className="text-[#B0611C] transform scale-x-[-1] w-6 h-6 sm:w-8 sm:h-8" />
+            </div>
+          </motion.div>
         )}
         <div className="relative">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
-            <div className="overflow-hidden rounded-2xl shadow-sm relative group h-[30vh] md:h-[70vh] min-h-[220px] md:min-h-[400px] max-h-[600px]">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 max-w-5xl mx-auto">
+            <div className="overflow-hidden rounded-2xl shadow-sm relative group h-[30vh] md:h-[50vh] min-h-[220px] md:min-h-[350px] max-h-[500px]">
               {paginationEl ? (
                 <Swiper
                   modules={[Autoplay, Pagination, Controller, EffectFade, EffectCreative]}
@@ -450,7 +448,7 @@ function ThirdBannerItem({ bannerData, onNavigate }) {
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-2xl shadow-sm relative group h-[30vh] md:h-[70vh] min-h-[220px] md:min-h-[400px] max-h-[600px]">
+            <div className="overflow-hidden rounded-2xl shadow-sm relative group h-[30vh] md:h-[50vh] min-h-[220px] md:min-h-[350px] max-h-[500px]">
               <Swiper
                 modules={[Controller, EffectFade, EffectCreative]}
                 effect={currentEffect}
@@ -506,24 +504,23 @@ function ProductGridBlock({ grid, onNavigate, onAddToCart, onAddToWishlist, user
   
   const showArrows = grid.showArrows !== false;
   const showDots = grid.showDots || false;
-  const ctaPosition = grid.ctaPosition || 'right';
-
-  const ctaClass = ctaPosition === 'center' 
-    ? 'flex flex-col items-center gap-2 text-center mb-8' 
-    : ctaPosition === 'left' 
-      ? 'flex flex-col items-start gap-2 mb-8' 
-      : 'flex justify-between items-end mb-8';
 
   return (
-    <section className="py-16">
+    <section className="py-5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
-          <motion.div variants={fadeUp} className={ctaClass}>
-            <h2 className="text-xl font-bold tracking-tight text-brand-dark">{grid.title}</h2>
+          <motion.div variants={fadeUp} className="relative flex flex-col md:flex-row items-center justify-center mb-5 min-h-[40px]">
+            <div className="flex justify-center items-center gap-3 sm:gap-4">
+              <IoLeaf className="text-[#B0611C] w-6 h-6 sm:w-8 sm:h-8" />
+              <h2 className="text-xl md:text-2xl font-serif text-[#B0611C] tracking-widest uppercase text-center">{grid.title}</h2>
+              <IoLeaf className="text-[#B0611C] transform scale-x-[-1] w-6 h-6 sm:w-8 sm:h-8" />
+            </div>
             {grid.ctaText && (
-              <button onClick={() => onNavigate(grid.ctaUrl || '/')} className="text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full border border-[#B0611B] text-[#B0611B] hover:bg-[#B0611B] hover:text-white transition-colors">
-                {grid.ctaText} &gt;
-              </button>
+              <div className="mt-4 md:mt-0 md:absolute md:right-0">
+                <button onClick={() => onNavigate(grid.ctaUrl || '/')} className="text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full border border-[#B0611B] text-[#B0611B] hover:bg-[#B0611B] hover:text-white transition-colors">
+                  {grid.ctaText} &gt;
+                </button>
+              </div>
             )}
           </motion.div>
 
@@ -606,83 +603,117 @@ export function HomeProductGrid({ context = {}, specificData }) {
 }
 
 export function HomeCategoryGrid({ context = {}, specificData }) {
-  const { shopCategories, onNavigate, onAddToCart, onAddToWishlist, user } = context;
-  
-  const [catPrev, setCatPrev] = useState(null);
-  const [catNext, setCatNext] = useState(null);
+  const { onNavigate, onAddToCart, onAddToWishlist, user } = context;
+  const [activeIdx, setActiveIdx] = useState(0);
 
-  const activeSection = specificData || (context.categoryGrids ? context.categoryGrids[0] : null);
+  const allSections = specificData
+    ? [specificData]
+    : (context.categoryGrids || []);
 
-  const activeProducts = Array.isArray(activeSection?.products) ? activeSection.products : [];
-  const activeImage = activeSection?.images?.find((image) => image.isThumbnail)?.url || activeSection?.images?.[0]?.url || '';
-  const animationVariant = activeSection?.animation === 'slide' ? { initial: { opacity: 0, x: 24 }, animate: { opacity: 1, x: 0 } } : activeSection?.animation === 'zoom' ? { initial: { opacity: 0, scale: 0.96 }, animate: { opacity: 1, scale: 1 } } : { initial: { opacity: 0, y: 15 }, animate: { opacity: 1, y: 0 } };
+  if (!allSections.length) return null;
+
+  const activeSection = allSections[activeIdx];
+  const activeProducts = Array.isArray(activeSection?.products) ? activeSection.products.filter(Boolean) : [];
 
   return (
-    <>
-      {/* SHOP BY CATEGORIES (Top slider) - only rendered if no specificData is provided (legacy mode) or if explicitly requested. We'll leave it here for now if specificData is null. But actually, if they want separate blocks, maybe we should just render the grid itself. Let's assume shopCategories is a separate block or rendered before. */}
-      
-      {/* CATEGORY PRODUCTS */}
-      {activeSection && (
-        <section className="py-16 border-y border-[#EFE5DA]">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
-              <motion.div variants={fadeUp} className="flex justify-between items-end mb-8">
-                <div>
-                  <h2 className="text-3xl md:text-4xl font-serif text-[#333333] mb-4 tracking-tight leading-tight">{activeSection.title}</h2>
-                  <p className="text-[#5A5A5A] text-lg leading-relaxed">{activeSection.subtitle}</p>
-                </div>
-                <button onClick={() => onNavigate('/shop')} className="text-[10px] font-bold uppercase tracking-widest text-brand-medium hover:text-brand-dark">View All &gt;</button>
-              </motion.div>
+    <section className="py-5">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
 
-              <div className="grid grid-cols-1 md:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] gap-6 rounded-3xl border border-[#E6DFD4] bg-[#FDFCFB] p-4 sm:p-6">
-                <div className="relative overflow-hidden rounded-2xl bg-[#F7F3EE] min-h-[250px]">
-                  {activeImage ? (
-                    <div className="absolute inset-0">
-                      <motion.img
-                        src={activeImage}
-                        alt={activeSection.title}
-                        className="w-full h-full object-cover"
-                        initial={{ opacity: 0, scale: 1.03 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.35 }}
+          {/* Header */}
+          <motion.div variants={fadeUp} className="relative flex flex-col md:flex-row items-center justify-center mb-8 min-h-[40px]">
+            <div className="flex justify-center items-center gap-3">
+              <IoLeaf className="text-[#B0611C] w-5 h-5 sm:w-7 sm:h-7" />
+              <h2 className="text-xl md:text-2xl font-serif text-[#B0611C] tracking-widest uppercase text-center">
+                {activeSection?.title || 'Our Products'}
+              </h2>
+              <IoLeaf className="text-[#B0611C] transform scale-x-[-1] w-5 h-5 sm:w-7 sm:h-7" />
+            </div>
+            <div className="mt-3 md:mt-0 md:absolute md:right-0">
+              <button
+                onClick={() => onNavigate('/shop')}
+                className="text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full border border-[#B0611B] text-[#B0611B] hover:bg-[#B0611B] hover:text-white transition-colors"
+              >
+                View All &gt;
+              </button>
+            </div>
+          </motion.div>
+
+          {/* Main two-column container */}
+          <motion.div variants={fadeUp} className="flex flex-col sm:flex-row rounded-2xl border border-[#E6DFD4] overflow-hidden shadow-sm">
+
+            {/* LEFT: Category list */}
+            <div className="w-full sm:w-[200px] md:w-[220px] shrink-0 border-b sm:border-b-0 sm:border-r border-[#E6DFD4] bg-[#FDFAF7]">
+              <div className="flex sm:flex-col overflow-x-auto sm:overflow-visible">
+                {allSections.map((section, i) => {
+                  const imgUrl = section?.images?.find(img => img.isThumbnail)?.url || section?.images?.[0]?.url || '';
+                  const isActive = i === activeIdx;
+                  return (
+                    <button
+                      key={section._id || i}
+                      onClick={() => setActiveIdx(i)}
+                      className={`flex items-center gap-3 px-4 py-3 text-left transition-all duration-200 shrink-0 sm:w-full border-r sm:border-r-0 sm:border-b border-[#E6DFD4] last:border-0 ${
+                        isActive
+                          ? 'bg-[#B0611C] text-white'
+                          : 'hover:bg-[#F3EDE4] text-brand-dark'
+                      }`}
+                    >
+                      {/* Small category thumbnail */}
+                      <div className={`w-10 h-10 rounded-lg overflow-hidden shrink-0 ${isActive ? 'ring-2 ring-white/60' : 'ring-1 ring-[#E6DFD4]'}`}>
+                        {imgUrl ? (
+                          <img
+                            src={imgUrl}
+                            alt={section.title}
+                            className="w-full h-full object-cover"
+                            onError={e => e.target.src = '/wood-placeholder.png'}
+                          />
+                        ) : (
+                          <div className={`w-full h-full flex items-center justify-center text-xs ${isActive ? 'bg-white/20 text-white' : 'bg-[#F7F3EE] text-[#C8B9A0]'}`}>?</div>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold truncate">{section.title}</p>
+                        <p className={`text-[10px] truncate mt-0.5 ${isActive ? 'text-white/70' : 'text-brand-medium'}`}>
+                          {Array.isArray(section?.products) ? section.products.length : 0} products
+                        </p>
+                      </div>
+                      {isActive && (
+                        <div className="ml-auto shrink-0 w-1.5 h-1.5 rounded-full bg-white/80" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* RIGHT: Products of selected category */}
+            <div className="flex-1 min-w-0 p-4 sm:p-5 bg-white">
+              {activeProducts.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {activeProducts.slice(0, 6).map((product) => (
+                    <div key={product._id} className="h-full">
+                      <ProductCard
+                        product={product}
+                        onNavigate={onNavigate}
+                        onAddToCart={onAddToCart}
+                        onAddToWishlist={onAddToWishlist}
+                        user={user}
                       />
                     </div>
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-brand-medium">No image</div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
-                    <p className="text-xs uppercase tracking-[0.3em] opacity-80">{activeSection?.category?.name || 'Featured'}</p>
-                    <h3 className="text-xl font-semibold mt-2">{activeSection?.title}</h3>
-                    {activeSection?.ctaText && (
-                      <button onClick={() => activeSection?.ctaUrl && onNavigate(activeSection.ctaUrl)} className="mt-4 inline-flex items-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-brand-dark">
-                        {activeSection.ctaText}
-                      </button>
-                    )}
-                  </div>
+                  ))}
                 </div>
+              ) : (
+                <div className="flex h-full min-h-[180px] items-center justify-center rounded-xl border border-dashed border-[#E6DFD4] text-sm text-brand-medium">
+                  No products added to this category yet.
+                </div>
+              )}
+            </div>
 
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-brand-dark">{activeSection?.category?.name || 'Category Products'}</p>
-                      <p className="text-xs text-brand-medium">{activeProducts.length} products in this collection</p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-3 sm:gap-4">
-                    {activeProducts.length ? activeProducts.slice(0, 4).map((product) => (
-                      <div key={product._id} className="h-full">
-                        <ProductCard product={product} onNavigate={onNavigate} onAddToCart={onAddToCart} onAddToWishlist={onAddToWishlist} user={user} />
-                      </div>
-                    )) : <div className="col-span-2 rounded-xl border border-dashed border-[#E6DFD4] p-6 text-sm text-brand-medium">No products selected for this category yet.</div>}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </section>
-      )}
-    </>
+          </motion.div>
+
+        </motion.div>
+      </div>
+    </section>
   );
 }
 
@@ -698,24 +729,23 @@ function CategoriesGridBlock({ grid, onNavigate }) {
   
   const showArrows = grid.showArrows !== false;
   const showDots = grid.showDots || false;
-  const ctaPosition = grid.ctaPosition || 'right';
-
-  const ctaClass = ctaPosition === 'center' 
-    ? 'flex flex-col items-center gap-2 text-center mb-8' 
-    : ctaPosition === 'left' 
-      ? 'flex flex-col items-start gap-2 mb-8' 
-      : 'flex justify-between items-end mb-8';
 
   return (
-    <section className="py-6">
+    <section className="py-4">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
-          <motion.div variants={fadeUp} className={ctaClass}>
-            <h2 className="text-xl font-bold tracking-tight text-brand-dark">{grid.title}</h2>
+          <motion.div variants={fadeUp} className="relative flex flex-col md:flex-row items-center justify-center mb-5 min-h-[40px]">
+            <div className="flex justify-center items-center gap-3 sm:gap-4">
+              <IoLeaf className="text-[#B0611C] w-6 h-6 sm:w-8 sm:h-8" />
+              <h2 className="text-xl md:text-2xl font-serif text-[#B0611C] tracking-widest uppercase text-center">{grid.title}</h2>
+              <IoLeaf className="text-[#B0611C] transform scale-x-[-1] w-6 h-6 sm:w-8 sm:h-8" />
+            </div>
             {grid.ctaText && (
-              <button onClick={() => onNavigate(grid.ctaUrl || '/')} className="text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full border border-[#B0611B] text-[#B0611B] hover:bg-[#B0611B] hover:text-white transition-colors">
-                {grid.ctaText} &gt;
-              </button>
+              <div className="mt-4 md:mt-0 md:absolute md:right-0">
+                <button onClick={() => onNavigate(grid.ctaUrl || '/')} className="text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full border border-[#B0611B] text-[#B0611B] hover:bg-[#B0611B] hover:text-white transition-colors">
+                  {grid.ctaText} &gt;
+                </button>
+              </div>
             )}
           </motion.div>
 

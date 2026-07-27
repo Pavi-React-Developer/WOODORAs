@@ -114,7 +114,7 @@ export default function Header({
       }}
     >
       {/* ── DESKTOP ROW 1: Logo | Wide Search Bar | Icon + Label Buttons ── */}
-      <div className="hidden lg:flex mx-auto max-w-[1500px] items-center gap-6 px-10 py-2">
+      <div className="hidden lg:flex mx-auto max-w-[1500px] items-center justify-between gap-6 px-10 py-2">
 
         {/* Logo */}
         <button
@@ -125,12 +125,12 @@ export default function Header({
           <img
             src={navbarConfig?.logo?.url || "/woodora-logo.png"}
             alt="Woodora Logo"
-            className="h-10 w-auto object-contain"
+            className="h-10 w-[160px] object-contain scale-125 origin-left"
           />
         </button>
 
         {/* Wide Persistent Search Bar */}
-        <div className="relative flex-1">
+        <div className="relative flex-1 max-w-2xl mx-auto">
           <div className="flex items-center rounded-lg border border-[#E6D9CE] bg-[#FAF4EF] px-4 py-1.5 gap-3 focus-within:border-[#B0611C] transition-colors">
             <input
               type="text"

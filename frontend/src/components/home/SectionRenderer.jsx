@@ -1,11 +1,18 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { HomeNavbar, HomeHeroBanner, HomeThirdBanner, HomeCategoryGrid, HomeCategoriesGrid, HomeProductGrid, HomeReviews, HomeFooter } from './HomeComponents';
 
-export default function SectionRenderer({ section, context, isPreview = false }) {
+export default function SectionRenderer({ section, context, isPreview = false, renderedTypes = null }) {
     if (!section || !section.visible) return null;
 
     const type = section.sectionType || section.id;
     const instanceId = section.id.includes('_') ? section.id.split('_')[1] : null;
+
+    // For categoryGrid: only render the FIRST occurrence, skip the rest
+    // (all grids are collected in context.categoryGrids and shown in one container)
+    if (type === 'categoryGrid' && renderedTypes) {
+        if (renderedTypes.has('categoryGrid')) return null;
+        renderedTypes.add('categoryGrid');
+    }
 
     let specificData = null;
     switch (type) {
@@ -17,11 +24,6 @@ export default function SectionRenderer({ section, context, isPreview = false })
         case 'thirdBanner':
             if (instanceId && context.thirdBanners) {
                 specificData = context.thirdBanners.find(b => b._id === instanceId);
-            }
-            break;
-        case 'categoryGrid':
-            if (instanceId && context.categoryGrids) {
-                specificData = context.categoryGrids.find(b => b._id === instanceId);
             }
             break;
         case 'categoriesGrid':
@@ -46,7 +48,8 @@ export default function SectionRenderer({ section, context, isPreview = false })
         case 'thirdBanner':
             return <HomeThirdBanner {...props} />;
         case 'categoryGrid':
-            return <HomeCategoryGrid {...props} />;
+            // Always pass null specificData so HomeCategoryGrid uses all context.categoryGrids
+            return <HomeCategoryGrid context={context} section={section} specificData={null} isPreview={isPreview} />;
         case 'categoriesGrid':
             return <HomeCategoriesGrid {...props} />;
         case 'productGrid':

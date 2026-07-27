@@ -4,14 +4,14 @@
   --color-brand-dark: #3E2723;     /* Deep Mahogany */
   --color-brand-medium: #5D4037;   /* Walnut */
   --color-brand-light: #D7CCC8;    /* Ash Wood */
-  --color-brand-beige: #EFEBE9;    /* Light Birch */
+  --color-brand-beige: #FDF9F1;    /* Light Birch */
   --color-brand-green: #33691E;    /* Leaf Green */
   --font-serif: 'Playfair Display', Georgia, serif;
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 body {
-  background-color: var(--color-brand-beige);
+  background-color: #FDF9F1;
   color: var(--color-brand-dark);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   margin: 0;
