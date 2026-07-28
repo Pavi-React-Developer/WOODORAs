@@ -1,30 +1,17 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
-
-const api = axios.create({
-    baseURL: 'http://localhost:5000/api', // adjust if needed, but relative url could also work if proxy is set, using relative for standard practice or relying on existing apiService structure. Let's use relative with standard withCredentials
-    withCredentials: true
-});
-
-api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-});
+import apiClient from '../api/apiClient';
 
 export const fetchLayout = createAsyncThunk('layout/fetchLayout', async () => {
-    const response = await api.get('/cms/layout');
+    const response = await apiClient.get('/cms/layout');
     return response.data.data;
 });
 
 export const publishLayout = createAsyncThunk('layout/publishLayout', async (sections, { rejectWithValue }) => {
     try {
-        const response = await api.put('/cms/layout', { sections });
+        const response = await apiClient.put('/cms/layout', { sections });
         return response.data.data;
     } catch (err) {
-        return rejectWithValue(err.response?.data?.message || 'Failed to publish layout');
+        return rejectWithValue(err.response?.data?.message || err.message || 'Failed to publish layout');
     }
 });
 

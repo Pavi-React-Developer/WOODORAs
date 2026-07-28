@@ -13,7 +13,7 @@ import { getImageSrc } from '../utils/imageUtils';
 import CouponSection from '../components/CouponSection';
 import LoginModal from '../components/LoginModal';
 
-export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
+export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onAddressUpdated }) {
   const { cartItems, getSubtotal, clearCart, updateQuantity } = useCartStore();
 
   const handleQtyChange = (productId, newQty, variant = null, maxStock = 999) => {
@@ -242,9 +242,14 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
     setSavedAddresses(updatedAddresses);
     localStorage.setItem('wooden_toys_addresses', JSON.stringify(updatedAddresses));
 
-    // Sync with profile
+    // Sync with profile backend
     if (authService.isAuthenticated()) {
-      authService.updateProfile({ addresses: updatedAddresses }).catch(err => console.error('Failed to sync address to profile:', err));
+      authService.updateProfile({ addresses: updatedAddresses })
+        .then(() => {
+          // Notify AppRouter to re-fetch the full profile so profile page stays in sync
+          if (onAddressUpdated) onAddressUpdated();
+        })
+        .catch(err => console.error('Failed to sync address to profile:', err));
     }
 
     setSelectedAddressIndex(editingAddressIndex !== null ? editingAddressIndex : updatedAddresses.length - 1);
@@ -316,12 +321,29 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
     try {
       setLoading(true);
       
-      const giftItem = cartItems.find(item => item.isGift) || {};
+      const giftItem = cartItems.find(item => item.isGift) || null;
+      const isGiftOrder = cartItems.some(item => item.isGift);
+      let savedGiftPreferences = null;
+      try {
+        const storedPreferences = localStorage.getItem('giftCardPreferences');
+        savedGiftPreferences = storedPreferences ? JSON.parse(storedPreferences) : null;
+      } catch {
+        // A corrupt saved preference must never prevent checkout.
+        localStorage.removeItem('giftCardPreferences');
+      }
+      const selectedDeliveryDate = giftItem?.deliveryDate
+        || giftItem?.scheduledDeliveryDate
+        || savedGiftPreferences?.deliveryDate
+        || null;
       const giftProps = {
-        isGiftOrder: cartItems.some(item => item.isGift),
-        giftMessage: giftItem.giftMessage || '',
-        giftMessageStyle: giftItem.giftCardStyle || '',
+        isGiftOrder,
+        // Read giftMessage directly (may be empty string if user typed nothing — that's valid)
+        giftMessage: giftItem?.giftMessage ?? savedGiftPreferences?.message ?? '',
+        // Cart stores style as giftCardStyle — map to order field giftMessageStyle
+        giftMessageStyle: giftItem?.giftCardStyle ?? savedGiftPreferences?.style ?? 'Classic',
         giftWrapFee: appliedFees.find(f => f.name === 'Gift Box Fee')?.amount || 0,
+        deliveryDate: isGiftOrder ? selectedDeliveryDate : null,
+        scheduledDeliveryDate: isGiftOrder ? selectedDeliveryDate : null,
       };
 
       const orderData = {
@@ -334,7 +356,9 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess }) {
           variant: item.variant,
           weight: item.weight,
           isGift: item.isGift,
-          giftMessage: item.giftMessage
+          giftMessage: item.giftMessage,
+          giftMessageStyle: item.giftCardStyle,
+          deliveryDate: item.deliveryDate || item.scheduledDeliveryDate || null,
         })),
         shippingAddress,
         paymentMethod,

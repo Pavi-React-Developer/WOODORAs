@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
@@ -43,6 +43,9 @@ import { reviewService } from '../api/reviewService';
 import { walletService } from '../api/walletService';
 import { refundService } from '../api/refundService';
 import { customizeService } from '../api/customizeService';
+import { bulkOrderService } from '../api/bulkOrderService';
+import { API_ORIGIN } from '../api/apiClient';
+import { formatDeliveryDate, getDeliveryDate } from '../utils/deliveryDate';
 import useCartStore from '../store/useCartStore';
 import WriteReviewModal from '../components/WriteReviewModal';
 
@@ -68,14 +71,10 @@ const modules = [
   { id: 'bulk-orders', label: 'Bulk Orders', icon: Package },
   { id: 'customize-orders', label: 'Customize Orders', icon: Settings },
   { id: 'reviews', label: 'Reviews & Ratings', icon: Star },
-  { id: 'addresses', label: 'Addresses', icon: MapPin },
   { id: 'cart', label: 'Cart', icon: ShoppingBag },
   { id: 'wallet', label: 'Wallet', icon: CreditCard },
   { id: 'wishlist', label: 'Wishlist', icon: Heart },
   { id: 'saved', label: 'Saved Products', icon: Bookmark },
-  { id: 'rewards', label: 'Loyalty Rewards', icon: Star },
-  { id: 'password', label: 'Change Password', icon: LockKeyhole },
-  { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'refunds', label: 'Refunds', icon: ExternalLink },
   { id: 'gift-card', label: 'Gift & Card', icon: Gift },
 ];
@@ -162,6 +161,11 @@ export default function CustomerProfilePage({
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   
+  // Drag-to-scroll ref and state
+  const navRef = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
   // State for password change form
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
@@ -246,7 +250,16 @@ export default function CustomerProfilePage({
       emailNotifications: profile.preferences?.emailNotifications !== false,
       addresses: profile.addresses?.length ? profile.addresses : [{ ...emptyAddress, fullName: profile.name || '', phone: profile.phone || '' }],
     });
-  }, [profile._id, profile.name, profile.phone, profile.dateOfBirth, profile.gender, profile.profileImage, profile.addresses, profile.preferences]);
+  }, [
+    profile._id, 
+    profile.name, 
+    profile.phone, 
+    profile.dateOfBirth, 
+    profile.gender, 
+    profile.profileImage, 
+    JSON.stringify(profile.addresses), 
+    JSON.stringify(profile.preferences)
+  ]);
 
   useEffect(() => {
     if (activeModule === 'wallet') {
@@ -276,18 +289,15 @@ export default function CustomerProfilePage({
       const fetchBulkOrders = async () => {
         try {
           setBulkOrdersLoading(true);
-          const token = localStorage.getItem('token');
-          const res = await fetch('http://localhost:5000/api/bulk-orders/my-requests', {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-          const data = await res.json();
+          // Uses bulkOrderService → apiClient → VITE_API_BASE_URL (no hardcoded localhost)
+          const data = await bulkOrderService.getMyBulkOrders();
           if (data.success) {
-            setBulkOrders(data.data);
+            setBulkOrders(data.data || []);
+          } else {
+            toast.error(data.message || 'Failed to load bulk orders');
           }
         } catch (err) {
-          toast.error('Failed to load bulk orders');
+          toast.error(err.message || 'Failed to load bulk orders');
         } finally {
           setBulkOrdersLoading(false);
         }
@@ -346,9 +356,10 @@ export default function CustomerProfilePage({
             Promise.all(
               deliveredProductIds.map(async (productId) => {
                 try {
-                  const res = await fetch(`http://localhost:5000/api/reviews/${productId}/stats`);
-                  const stats = await res.json();
-                  return [productId, stats?.avg ?? 0];
+                  // Use reviewService (which uses apiClient + VITE_API_BASE_URL)
+                  const stats = await reviewService.getReviews(productId, { limit: 1 }).catch(() => null)
+                    || await fetch(`${API_ORIGIN}/api/reviews/${productId}/stats`).then(r => r.json()).catch(() => ({}));
+                  return [productId, stats?.avg ?? stats?.stats?.avg ?? 0];
                 } catch { return [productId, 0]; }
               })
             ),
@@ -398,7 +409,8 @@ export default function CustomerProfilePage({
     if (typeof image !== 'string') return '/animal_balance_maze.png';
     if (image.startsWith('http') || image.startsWith('data:')) return image;
     if (image.startsWith('/uploads') || image.startsWith('uploads/')) {
-      return `http://localhost:5000${image.startsWith('/') ? '' : '/'}${image}`;
+      // Use API_ORIGIN from apiClient (reads VITE_API_BASE_URL) — no hardcoded localhost
+      return `${API_ORIGIN}${image.startsWith('/') ? '' : '/'}${image}`;
     }
     return image;
   };
@@ -484,9 +496,67 @@ export default function CustomerProfilePage({
 
   const handleSaveProfile = async (event) => {
     event.preventDefault();
+
+    // --- Full Name ---
     if (!form.name.trim()) {
-      toast.error('Name is required');
+      toast.error('Full name is required.');
       return;
+    }
+    if (form.name.trim().length < 2) {
+      toast.error('Full name must be at least 2 characters.');
+      return;
+    }
+
+    // --- Phone Number ---
+    if (form.phone && form.phone.trim()) {
+      const phoneDigits = form.phone.replace(/\D/g, '');
+      if (phoneDigits.length < 6 || phoneDigits.length > 15) {
+        toast.error('Phone number must be between 6 and 15 digits.');
+        return;
+      }
+    }
+
+    // --- Date of Birth ---
+    if (form.dateOfBirth) {
+      const dob = new Date(form.dateOfBirth);
+      const today = new Date();
+      const minAge = new Date();
+      minAge.setFullYear(today.getFullYear() - 120);
+      if (isNaN(dob.getTime())) {
+        toast.error('Please enter a valid date of birth.');
+        return;
+      }
+      if (dob >= today) {
+        toast.error('Date of birth cannot be in the future.');
+        return;
+      }
+      if (dob < minAge) {
+        toast.error('Please enter a valid date of birth.');
+        return;
+      }
+    }
+
+    // --- Shipping Addresses ---
+    for (let i = 0; i < form.addresses.length; i++) {
+      const addr = form.addresses[i];
+      if (addr.fullName && !addr.fullName.trim()) {
+        toast.error(`Address ${i + 1}: Full name cannot be blank.`);
+        return;
+      }
+      if (addr.phone && addr.phone.trim()) {
+        const addrPhone = addr.phone.replace(/\D/g, '');
+        if (addrPhone.length < 6 || addrPhone.length > 15) {
+          toast.error(`Address ${i + 1}: Phone number must be between 6 and 15 digits.`);
+          return;
+        }
+      }
+      if (addr.pinCode && addr.pinCode.trim()) {
+        const pinDigits = addr.pinCode.replace(/\D/g, '');
+        if (pinDigits.length < 5 || pinDigits.length > 10) {
+          toast.error(`Address ${i + 1}: PIN code must be between 5 and 10 digits.`);
+          return;
+        }
+      }
     }
 
     try {
@@ -508,7 +578,7 @@ export default function CustomerProfilePage({
       const response = await authService.updateProfile(payload);
       onProfileUpdated?.(response.user);
       setIsEditing(false);
-      toast.success('Profile updated');
+      toast.success('Profile updated successfully!');
     } catch (error) {
       toast.error(error.message || 'Failed to update profile');
     } finally {
@@ -1997,11 +2067,9 @@ export default function CustomerProfilePage({
                          <p className="text-xs text-gray-400 mt-2">Style: {order.giftMessageStyle || 'Classic'}</p>
                        </div>
                     )}
-                    {order.scheduledDeliveryDate && (
-                      <p className="text-sm text-gray-700 mt-3 font-semibold bg-gray-50 inline-block px-3 py-1.5 rounded-[6px] border border-gray-100">
-                        Scheduled Delivery: {new Date(order.scheduledDeliveryDate).toLocaleDateString()}
-                      </p>
-                    )}
+                    <p className="text-sm text-gray-700 mt-3 font-semibold bg-gray-50 inline-block px-3 py-1.5 rounded-[6px] border border-gray-100">
+                      Scheduled Delivery: {formatDeliveryDate(getDeliveryDate(order))}
+                    </p>
                   </div>
                   <div className="flex flex-col items-end gap-2">
                      <p className="font-bold text-[#141225] text-lg">₹{Number(order.totalPrice || 0).toLocaleString()}</p>
@@ -2015,54 +2083,57 @@ export default function CustomerProfilePage({
     );
   };
 
+  const handleMouseDown = (e) => {
+    setIsDragging(true);
+    setStartX(e.pageX - navRef.current.offsetLeft);
+    setScrollLeft(navRef.current.scrollLeft);
+  };
+
+  const handleMouseLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    const x = e.pageX - navRef.current.offsetLeft;
+    const walk = (x - startX) * 2; // Scroll-fast
+    navRef.current.scrollLeft = scrollLeft - walk;
+  };
+
   return (
     <section className="min-h-screen bg-[#FAF8F5] px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
-      <div className="mx-auto grid max-w-[1440px] gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
-        <aside className="rounded-[18px] border border-[#E9DED3] bg-white/90 p-3 shadow-[0_18px_60px_rgba(62,39,35,0.08)] lg:sticky lg:top-28 lg:h-fit lg:p-5">
-          <div className="flex items-center gap-4 border-b border-[#EFE6DD] px-2 pb-6 pt-3">
-            <div className="h-20 w-20 overflow-hidden rounded-[22px] bg-[#F3E7D7] shadow-inner">
-              <img src={profileImage} alt="Customer profile" className="h-full w-full object-cover" />
-            </div>
-            <div className="min-w-0">
-              <h2 className="truncate text-lg font-bold text-[#221914]">{displayName}</h2>
-              <p className="truncate text-sm text-[#6D625C]">{displayEmail}</p>
-              <span className="mt-2 inline-flex rounded-full bg-[#F2E3D1] px-3 py-1 text-xs font-bold text-[#8B5E3C]">
-                {profile.loyalty?.tier || 'Premium Member'}
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-5 grid grid-cols-3 gap-2 px-2">
-            <MiniStat label="Orders" value={stats.orders} />
-            <MiniStat label="Cart" value={stats.cart} />
-            <MiniStat label="Points" value={stats.rewards} />
-          </div>
-
-          <nav className="mt-5 space-y-2">
-            {modules.map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => openProfileModule(id)}
-                className={`flex w-full items-center gap-4 rounded-[10px] px-4 py-4 text-left text-sm font-semibold transition ${
-                  activeModule === id
-                    ? 'bg-[#F4EBE2] text-[#2E2E2E]'
-                    : 'text-[#3E3A37] hover:bg-[#FAF4EF] hover:text-[#8B5E3C]'
-                }`}
-              >
-                <Icon className="h-5 w-5 text-[#A7632E]" strokeWidth={1.8} />
-                {label}
-              </button>
-            ))}
-          </nav>
-
-          <div className="mt-6 border-t border-[#EFE6DD] pt-4">
-            <button type="button" onClick={onLogout} className="flex w-full items-center gap-4 rounded-[10px] px-4 py-4 text-left text-sm font-bold text-red-600 transition hover:bg-red-50">
-              <LogOut className="h-5 w-5" strokeWidth={1.8} />
-              Sign Out
+      <div className="mx-auto flex max-w-[1440px] flex-col gap-6">
+        
+        {/* Top Horizontal Drag-to-Scroll Navigation */}
+        <nav 
+          ref={navRef}
+          onMouseDown={handleMouseDown}
+          onMouseLeave={handleMouseLeave}
+          onMouseUp={handleMouseUp}
+          onMouseMove={handleMouseMove}
+          className="flex overflow-x-auto gap-4 hide-scrollbar bg-white rounded-[18px] p-3 shadow-[0_18px_60px_rgba(62,39,35,0.08)] cursor-grab active:cursor-grabbing select-none"
+        >
+          {modules.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => openProfileModule(id)}
+              className={`flex shrink-0 whitespace-nowrap items-center gap-2 lg:gap-3 rounded-[10px] px-4 py-3 text-left text-sm font-semibold transition ${
+                activeModule === id
+                  ? 'bg-[#F4EBE2] text-[#2E2E2E] shadow-sm border border-[#E9DED3]'
+                  : 'text-[#6D625C] hover:bg-[#FAF4EF] hover:text-[#8B5E3C]'
+              }`}
+            >
+              <Icon className="h-4 w-4 text-[#A7632E]" strokeWidth={2} />
+              {label}
             </button>
-          </div>
-        </aside>
+          ))}
+        </nav>
 
         <div className="overflow-hidden rounded-[18px] border border-[#E9DED3] bg-white shadow-[0_18px_70px_rgba(62,39,35,0.07)]">
           <header className="flex flex-col gap-5 border-b border-[#E9DED3] px-5 py-7 sm:flex-row sm:items-center sm:justify-between lg:px-7">

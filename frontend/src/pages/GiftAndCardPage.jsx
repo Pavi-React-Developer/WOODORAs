@@ -98,22 +98,42 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
       toast.error('Please select a delivery date.');
       return;
     }
-    // Assign preferences to selected product
-    selectedProduct.giftMessage = message;
-    selectedProduct.giftMessageStyle = style;
-    selectedProduct.scheduledDeliveryDate = selectedDate;
-    selectedProduct.isGift = true;
-    selectedProduct.isGiftWrapper = isGiftWrapper;
-    
+
+    // Build a cart-compatible product object with ALL gift preferences embedded.
+    // The useCartStore.addToCart() picks up these fields directly from the product arg.
+    const productWithGiftPrefs = {
+      ...selectedProduct,
+      // Core product identity fields required by addToCart
+      _id: selectedProduct._id,
+      name: selectedProduct.name,
+      price: selectedProduct.salePrice || selectedProduct.discountPrice || selectedProduct.price || 0,
+      images: selectedProduct.images,
+      // Gift preference fields – picked up by addToCart & stored in cart item
+      isGift: true,
+      isGiftWrapper: isGiftWrapper,
+      giftMessage: message || '',
+      giftMessageStyle: style,       // cart store maps this → giftCardStyle on the item
+      deliveryDate: selectedDate,
+      scheduledDeliveryDate: selectedDate,
+    };
+
+    localStorage.setItem('giftCardPreferences', JSON.stringify({
+      productId: selectedProduct._id,
+      message: message || '',
+      style,
+      deliveryDate: selectedDate,
+    }));
+
     // Add product to cart and navigate
     if (onAddToCart && onNavigate) {
-      await onAddToCart(selectedProduct);
+      await onAddToCart(productWithGiftPrefs);
       toast.success('Gift preferences saved! Added to cart.');
       onNavigate('/cart');
     } else {
        toast.error('Navigation error. Please try again.');
     }
   };
+
 
   const handleDateSelect = (dStr) => {
     // Prevent selecting today's date based on user request

@@ -1,81 +1,65 @@
-const API_URL = 'http://localhost:5000/api/bulk-orders';
+/**
+ * Bulk Order API service.
+ *
+ * Uses the centralised apiClient so that VITE_API_BASE_URL is always
+ * respected — no hardcoded localhost URLs.
+ */
+import apiClient from './apiClient';
 
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('token');
-  return {
-    'Content-Type': 'application/json',
-    ...(token && { Authorization: `Bearer ${token}` })
-  };
-};
+const PREFIX = '/bulk-orders';
 
 export const bulkOrderService = {
-  // Bulk Order Requests
+  // ── Customer-facing ────────────────────────────────────────────────────────
+
+  /** Submit a new bulk order request (authenticated customer) */
   createBulkOrder: async (data) => {
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    return res.json();
+    const res = await apiClient.post(PREFIX, data);
+    return res.data;
   },
 
-  getAllBulkOrders: async () => {
-    const res = await fetch(API_URL, {
-      method: 'GET',
-      headers: getAuthHeaders()
-    });
-    return res.json();
-  },
-
+  /** Fetch the current user's own bulk order history */
   getMyBulkOrders: async () => {
-    const res = await fetch(`${API_URL}/my-requests`, {
-      method: 'GET',
-      headers: getAuthHeaders()
-    });
-    return res.json();
+    const res = await apiClient.get(`${PREFIX}/my-requests`);
+    return res.data;
   },
 
+  // ── Admin ──────────────────────────────────────────────────────────────────
+
+  /** Fetch all bulk orders (admin only) */
+  getAllBulkOrders: async () => {
+    const res = await apiClient.get(PREFIX);
+    return res.data;
+  },
+
+  /** Approve or reject a bulk order (admin only) */
   updateBulkOrderStatus: async (id, data) => {
-    const res = await fetch(`${API_URL}/${id}/status`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    return res.json();
+    const res = await apiClient.put(`${PREFIX}/${id}/status`, data);
+    return res.data;
   },
 
-  // Dynamic Fields
+  // ── Dynamic form fields (admin manages, public reads) ──────────────────────
+
+  /** Fetch all configured bulk-order custom form fields */
   getAllFields: async () => {
-    const res = await fetch(`${API_URL}/fields`, {
-      method: 'GET',
-      headers: getAuthHeaders()
-    });
-    return res.json();
+    const res = await apiClient.get(`${PREFIX}/fields`);
+    return res.data;
   },
 
+  /** Create a new custom field (admin only) */
   createField: async (data) => {
-    const res = await fetch(`${API_URL}/fields`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    return res.json();
+    const res = await apiClient.post(`${PREFIX}/fields`, data);
+    return res.data;
   },
 
+  /** Update an existing custom field (admin only) */
   updateField: async (id, data) => {
-    const res = await fetch(`${API_URL}/fields/${id}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    return res.json();
+    const res = await apiClient.put(`${PREFIX}/fields/${id}`, data);
+    return res.data;
   },
 
+  /** Delete a custom field (admin only) */
   deleteField: async (id) => {
-    const res = await fetch(`${API_URL}/fields/${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    });
-    return res.json();
-  }
+    const res = await apiClient.delete(`${PREFIX}/fields/${id}`);
+    return res.data;
+  },
 };

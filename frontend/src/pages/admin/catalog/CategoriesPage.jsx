@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { categoryV2API } from '../../../api/catalogV2Service';
 import { Download, RefreshCw, Plus } from 'lucide-react';
 import { downloadExcelFile } from '../../../utils/exportUtils';
+import { API_BASE } from '../../../api/apiClient';
 
 // ─── Reusable Badge ───────────────────────────────────────────────────────────
 const StatusBadge = ({ active }) => (
@@ -224,8 +225,7 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
     formDataUpload.append('images', file);
 
     const token = localStorage.getItem('token');
-    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-    const uploadUrl = `${API_BASE_URL.replace(/\/api$/, '')}/api/catalog/upload`;
+    const uploadUrl = `${API_BASE}/catalog/upload`;
 
     const response = await fetch(uploadUrl, {
       method: 'POST',

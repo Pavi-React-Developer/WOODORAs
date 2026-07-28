@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { API_ORIGIN } from '../api/apiClient';
 
 export default function ProductCard({ product, viewMode = 'grid', onNavigate, onAddToCart, onAddToWishlist, user }) {
   const [isAdding, setIsAdding] = useState(false);
@@ -41,7 +42,7 @@ export default function ProductCard({ product, viewMode = 'grid', onNavigate, on
   };
 
   let imgSrc = product.images?.find(img => img.isThumbnail)?.url || product.images?.[0]?.url || (typeof product.images?.[0] === 'string' ? product.images[0] : null) || (typeof product.image === 'object' ? product.image?.url : product.image) || null;
-  if (imgSrc && typeof imgSrc === 'string' && imgSrc.startsWith('/uploads')) imgSrc = `http://localhost:5000${imgSrc}`;
+  if (imgSrc && typeof imgSrc === 'string' && imgSrc.startsWith('/uploads')) imgSrc = `${API_ORIGIN}${imgSrc}`;
   
   const pricing = getPricingInfo(product);
 

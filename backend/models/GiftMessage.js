@@ -9,7 +9,7 @@ const giftMessageSchema = new mongoose.Schema(
     },
     message: {
       type: String,
-      required: true,
+      default: '',
     },
     style: {
       type: String,

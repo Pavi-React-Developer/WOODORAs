@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { catalogService } from '../api/catalogService';
 import { productV2API } from '../api/catalogV2Service';
 import { bulkOrderService } from '../api/bulkOrderService';
+import { API_ORIGIN } from '../api/apiClient';
 
 export default function BulkOrderPage() {
   const navigate = useNavigate();
@@ -115,51 +116,36 @@ export default function BulkOrderPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        toast.error('Please login to submit a bulk order request');
-        setIsSubmitting(false);
-        return;
-      }
-      
-      if (!formData.category || !formData.subCategory || !formData.product) {
-        toast.error('Please select Category, Subcategory, and Product');
-        setIsSubmitting(false);
-        return;
-      }
 
-      // Validate dynamic fields
-      for (const field of dynamicFields) {
-        if (field.isRequired) {
-          const submittedField = formData.customFields?.find(cf => cf.fieldId === field._id);
-          if (!submittedField || submittedField.value === '' || submittedField.value === false) {
-            toast.error(`${field.label} is required`);
-            setIsSubmitting(false);
-            return;
-          }
+    const token = localStorage.getItem('token');
+    if (!token) {
+      toast.error('Please login to submit a bulk order request');
+      return;
+    }
+
+    if (!formData.category || !formData.subCategory || !formData.product) {
+      toast.error('Please select Category, Subcategory, and Product');
+      return;
+    }
+
+    // Validate required dynamic fields before hitting the network
+    for (const field of dynamicFields) {
+      if (field.isRequired) {
+        const submittedField = formData.customFields?.find(cf => cf.fieldId === field._id);
+        if (!submittedField || submittedField.value === '' || submittedField.value === false) {
+          toast.error(`${field.label} is required`);
+          return;
         }
       }
+    }
 
-      const res = await fetch('http://localhost:5000/api/bulk-orders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await res.json();
+    setIsSubmitting(true);
+    try {
+      // Uses bulkOrderService → apiClient → VITE_API_BASE_URL (no hardcoded localhost)
+      const data = await bulkOrderService.createBulkOrder(formData);
       if (data.success) {
         toast.success('Bulk order request submitted successfully!');
-        setFormData({
-          category: '',
-          subCategory: '',
-          product: '',
-          customFields: []
-        });
+        setFormData({ category: '', subCategory: '', product: '', customFields: [] });
         setFilteredSubCategories([]);
         setFilteredProducts([]);
         setSelectedProductDetails(null);
@@ -167,7 +153,7 @@ export default function BulkOrderPage() {
         toast.error(data.message || 'Failed to submit request');
       }
     } catch (err) {
-      toast.error('An error occurred. Please try again.');
+      toast.error(err.message || 'An error occurred. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -182,7 +168,8 @@ export default function BulkOrderPage() {
               || (typeof prod.image === 'string' ? prod.image : null) 
               || null;
     if (imgSrc && typeof imgSrc === 'string' && imgSrc.startsWith('/uploads')) {
-      imgSrc = `http://localhost:5000${imgSrc}`;
+      // Use API_ORIGIN from apiClient (reads VITE_API_BASE_URL) — no hardcoded localhost
+      imgSrc = `${API_ORIGIN}${imgSrc}`;
     }
     return typeof imgSrc === 'string' ? imgSrc.trim() : null;
   };

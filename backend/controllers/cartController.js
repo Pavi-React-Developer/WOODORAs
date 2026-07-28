@@ -20,6 +20,10 @@ const normalizeItem = (item = {}) => ({
   variantOptions: item.variantOptions || null,
   isGift: Boolean(item.isGift) || false,
   isGiftWrapper: item.isGiftWrapper !== undefined ? item.isGiftWrapper : true,
+  giftMessage: item.giftMessage || null,
+  giftCardStyle: item.giftCardStyle || null,
+  deliveryDate: item.deliveryDate || item.scheduledDeliveryDate || null,
+  scheduledDeliveryDate: item.scheduledDeliveryDate || null,
   giftBox: item.giftBox
     ? {
         volume: Number(item.giftBox.volume) || 0,
@@ -168,9 +172,7 @@ const replaceCart = async (req, res) => {
  */
 const addCartItem = async (req, res) => {
   try {
-    console.log('[API addCartItem] Incoming body:', req.body);
     const incoming = normalizeItem(req.body);
-    console.log('[API addCartItem] Normalized item:', incoming);
     if (!incoming.product || !incoming.name) {
       return res.status(400).json({ success: false, message: 'Product and name are required' });
     }
@@ -259,6 +261,12 @@ const addCartItem = async (req, res) => {
     if (existingItem) {
       existingItem.qty = totalDesiredQty;
       existingItem.isGift = incoming.isGift;
+      // Persist all gift preference fields so they are saved to MongoDB
+      existingItem.isGiftWrapper = incoming.isGiftWrapper !== undefined ? incoming.isGiftWrapper : existingItem.isGiftWrapper;
+      existingItem.giftMessage = incoming.giftMessage !== undefined ? incoming.giftMessage : existingItem.giftMessage;
+      existingItem.giftCardStyle = incoming.giftCardStyle !== undefined ? incoming.giftCardStyle : existingItem.giftCardStyle;
+      existingItem.deliveryDate = incoming.deliveryDate !== undefined ? incoming.deliveryDate : existingItem.deliveryDate;
+      existingItem.scheduledDeliveryDate = incoming.scheduledDeliveryDate !== undefined ? incoming.scheduledDeliveryDate : existingItem.scheduledDeliveryDate;
       if (incoming.giftBox) existingItem.giftBox = incoming.giftBox;
     } else {
       cart.items.push({ ...incoming, maxStock: liveMaxStock });

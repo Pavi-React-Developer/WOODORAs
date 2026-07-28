@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { cmsService } from '../../../api/cmsService';
 import { Pencil, Trash2, Plus, Eye, EyeOff, Search, X , SquarePen , Trash } from 'lucide-react';
 import { categoryV2API, subCategoryV2API, productV2API } from '../../../api/catalogV2Service';
+import { API_ORIGIN } from '../../../api/apiClient';
 
 function ProductPicker({ selected, onChange, productsList }) {
   const [categories, setCategories] = useState([]);
@@ -308,7 +309,7 @@ export default function ProductGridAdmin() {
                   const populated = typeof p === 'object' ? p : allProducts.find(x => x._id === p);
                   let src = populated?.images?.[0]?.url || populated?.images?.[0] || (typeof populated?.image === 'object' ? populated?.image?.url : populated?.image) || null;
                   if (src && typeof src === 'string' && src.startsWith('/uploads')) {
-                    src = `http://localhost:5000${src}`;
+                    src = `${API_ORIGIN}${src}`;
                   }
                   if (!src) return <div key={i} className="w-10 h-10 rounded-lg border border-[#E6DFD4] bg-[#F7F3EE]" />;
                   return <img key={i} src={src} alt="" onError={e => e.target.style.display='none'} className="w-10 h-10 rounded-lg object-cover border border-[#E6DFD4] bg-[#F7F3EE]" />;

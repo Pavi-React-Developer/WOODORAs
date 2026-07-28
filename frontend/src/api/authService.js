@@ -106,6 +106,7 @@ export const authService = {
           'Content-Type': 'application/json',
           ...getAuthHeaders(),
         },
+        cache: 'no-cache'
       });
 
       const data = await response.json();

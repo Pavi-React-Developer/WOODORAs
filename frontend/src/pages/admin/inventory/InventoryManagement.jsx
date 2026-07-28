@@ -5,8 +5,7 @@ import { catalogService } from '../../../api/catalogService';
 import { variantAPI } from '../../../api/catalogAdminService';
 import toast from 'react-hot-toast';
 import { downloadExcelFile } from '../../../utils/exportUtils';
-
-const API_ORIGIN = 'http://localhost:5000';
+import { API_ORIGIN } from '../../../api/apiClient';
 
 function ProductThumbnail({ src, alt, className = 'product-thumb' }) {
   const [hasError, setHasError] = useState(false);

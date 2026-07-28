@@ -72,6 +72,9 @@ const orderSchema = new mongoose.Schema(
     scheduledDeliveryDate: {
       type: Date,
     },
+    deliveryDate: {
+      type: Date,
+    },
     giftWrapFee: {
       type: Number,
       default: 0,
@@ -163,6 +166,14 @@ const orderSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    toJSON: {
+      transform: (_doc, ret) => {
+        if (ret.deliveryDate == null && ret.scheduledDeliveryDate != null) {
+          ret.deliveryDate = ret.scheduledDeliveryDate;
+        }
+        return ret;
+      },
+    },
   }
 );
 

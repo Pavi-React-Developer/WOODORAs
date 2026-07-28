@@ -55,7 +55,22 @@ const reviewSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
-// Allow one review per delivered order item, even if the same product is purchased again later
+// ─────────────────────────────────────────────────────────────────────────────
+// Indexes
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Unique constraint: one review per user per order item.
+// sparse: true means documents where orderId/orderItemId are absent are excluded
+// from the uniqueness check (allows users to leave reviews without an order context).
 reviewSchema.index({ user: 1, orderId: 1, orderItemId: 1 }, { unique: true, sparse: true });
+
+// Speeds up the main public-facing query: approved reviews for a product sorted by date
+reviewSchema.index({ product: 1, status: 1, createdAt: -1 });
+
+// Speeds up admin listing (filter by status)
+reviewSchema.index({ status: 1, createdAt: -1 });
+
+// Speeds up the stats aggregation pipeline
+reviewSchema.index({ product: 1, status: 1, rating: 1 });
 
 module.exports = mongoose.model('Review', reviewSchema);

@@ -5,7 +5,7 @@ import {
   MessageCircle, Star, Clock, AlertTriangle, Search, RefreshCw,
   Eye, Check, X, Trash2, ChevronLeft, ChevronRight,
   TrendingUp, BarChart2, Download, Calendar, Shield, User, Package,
-  CheckCircle, XCircle, Award, Zap, ArrowUpRight, RotateCcw, Trash 
+  CheckCircle, XCircle, Award, Zap, ArrowUpRight, RotateCcw, Trash
 } from 'lucide-react';
 import { downloadExcelFile } from '../../../utils/exportUtils';
 import {
@@ -13,7 +13,13 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar,
 } from "recharts";
 
-const API = "http://localhost:5000/api";
+// ─────────────────────────────────────────────────────────────────────────────
+// FIX: Use VITE_API_BASE_URL env variable so this works in both local dev and
+// production. Previously this was hardcoded to "http://localhost:5000/api",
+// which caused ERR_CONNECTION_REFUSED in the production preview build.
+// ─────────────────────────────────────────────────────────────────────────────
+const API = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api`;
+
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const getToken = () => localStorage.getItem("token");
 const authHeader = () => ({ Authorization: `Bearer ${getToken()}` });
@@ -83,21 +89,22 @@ function ReviewDetailModal({ review, onClose, onStatusChange, onDelete, canEdit,
   if (!review) return null;
   const p = review.product || {};
   const u = review.user || {};
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
-              <MessageCircle size={18} className="p-1.5 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded transition-colors" />
+              <MessageCircle size={18} className="text-indigo-600" />
             </div>
             <div>
               <h2 className="font-bold text-gray-900 text-lg">Review Details</h2>
               <p className="text-xs text-gray-500">#{String(review._id).slice(-8).toUpperCase()}</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-red-500 hover:text-red-600 transition-colors">
-            <X size={16} className="text-gray-600" />
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+            <X size={20} />
           </button>
         </div>
         <div className="p-6 space-y-5">
@@ -116,6 +123,7 @@ function ReviewDetailModal({ review, onClose, onStatusChange, onDelete, canEdit,
             <div className="bg-gray-50 rounded-2xl p-4">
               <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-1.5"><Package size={11}/>Product</p>
               <div className="flex items-center gap-3">
+                {/* Product thumbnail — p.images is a string[] from attachProductImages */}
                 {p.images?.[0] ? (
                   <img src={p.images[0]} alt={p.name} className="w-11 h-11 rounded-xl object-cover border border-gray-200 shrink-0" />
                 ) : (
@@ -151,16 +159,56 @@ function ReviewDetailModal({ review, onClose, onStatusChange, onDelete, canEdit,
               {review.description || <span className="italic text-gray-400">No text provided.</span>}
             </p>
           </div>
+
+          {/* ── FIX: review.images is an array of Cloudinary objects {url, public_id, ...}
+               Previously rendered as <img src={img}/> where img was the whole object.
+               Must use img.url to get the actual URL string. ── */}
           {review.images?.length > 0 && (
             <div>
               <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Review Images</p>
               <div className="flex flex-wrap gap-2">
-                {review.images.map((img, i) => (
-                  <img key={i} src={img} alt={`img-${i}`} className="w-20 h-20 rounded-xl object-cover border border-gray-200 hover:scale-105 transition cursor-pointer" />
-                ))}
+                {review.images.map((img, i) => {
+                  const src = typeof img === 'string' ? img : img?.url;
+                  return src ? (
+                    <img
+                      key={i}
+                      src={src}
+                      alt={`Review image ${i + 1}`}
+                      className="w-20 h-20 rounded-xl object-cover border border-gray-200 hover:scale-105 transition cursor-pointer"
+                      onError={e => { e.currentTarget.style.display = 'none'; }}
+                    />
+                  ) : null;
+                })}
               </div>
             </div>
           )}
+
+          {review.videos?.length > 0 && (
+            <div>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Review Videos</p>
+              <div className="flex flex-wrap gap-2">
+                {review.videos.map((vid, i) => {
+                  const src = typeof vid === 'string' ? vid : vid?.url;
+                  return src ? (
+                    <video
+                      key={i}
+                      src={src}
+                      controls
+                      className="w-40 h-24 rounded-xl object-cover border border-gray-200"
+                    />
+                  ) : null;
+                })}
+              </div>
+            </div>
+          )}
+
+          {review.adminReply?.text && (
+            <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4">
+              <p className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-1">Admin Reply</p>
+              <p className="text-sm text-indigo-700">{review.adminReply.text}</p>
+            </div>
+          )}
+
           <div>
             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Admin Note</p>
             <textarea value={note} onChange={e => setNote(e.target.value)} rows={2}
@@ -168,23 +216,23 @@ function ReviewDetailModal({ review, onClose, onStatusChange, onDelete, canEdit,
               className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-300" />
           </div>
           <div className="flex gap-3 pt-2">
-            {canEdit && (
-            <button onClick={() => onStatusChange(review._id, "approved")}
-              className="text-green-600 hover:text-green-700 transition-colors">
-              <Check size={15}/> Approve
-            </button>
+            {canEdit && review.status !== 'approved' && (
+              <button onClick={() => onStatusChange(review._id, "approved")}
+                className="flex items-center gap-1.5 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-sm font-semibold transition">
+                <Check size={14}/> Approve
+              </button>
             )}
-            {canEdit && (
-            <button onClick={() => onStatusChange(review._id, "rejected")}
-              className="text-red-500 hover:text-red-600 transition-colors">
-              <X size={15}/> Reject
-            </button>
+            {canEdit && review.status !== 'rejected' && (
+              <button onClick={() => onStatusChange(review._id, "rejected")}
+                className="flex items-center gap-1.5 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-sm font-semibold transition">
+                <X size={14}/> Reject
+              </button>
             )}
             {canDelete && (
-            <button onClick={() => onDelete(review._id)}
-              className="text-red-500 hover:text-red-600 transition-colors">
-              <Trash size={15}/> Delete
-            </button>
+              <button onClick={() => onDelete(review._id)}
+                className="flex items-center gap-1.5 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-semibold transition ml-auto">
+                <Trash size={14}/> Delete
+              </button>
             )}
           </div>
         </div>
@@ -231,8 +279,9 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
     try {
       const { data } = await axios.get(`${API}/reviews/admin/stats`, { headers: authHeader() });
       setStats(data);
-    } catch (_) {
-      // silent fail for stats
+    } catch (err) {
+      console.warn('Failed to load review stats:', err.message);
+      // silent fail — stats are supplementary, don't block the main table
     } finally { setStatsLoad(false); }
   }, []);
 
@@ -279,7 +328,7 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
     return stats.monthly.map(m => ({
       name: MONTHS[(m._id.month - 1)],
       reviews: m.count,
-      rating: Math.round(m.avgRating * 10) / 10,
+      rating: Math.round((m.avgRating || 0) * 10) / 10,
     }));
   }, [stats]);
 
@@ -317,6 +366,39 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
           </div>
         </div>
 
+        {/* ── KPI Cards ─────────────────────────────────────── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <KpiCard
+            label="Total Reviews"
+            value={statsLoad ? "—" : (stats?.total ?? 0).toLocaleString()}
+            icon={MessageCircle}
+            iconBg="bg-indigo-50 text-indigo-600"
+            loading={statsLoad}
+          />
+          <KpiCard
+            label="Pending Moderation"
+            value={statsLoad ? "—" : (stats?.pending ?? 0).toLocaleString()}
+            icon={Clock}
+            iconBg="bg-amber-50 text-amber-500"
+            badge={stats?.pending > 0 ? "Action needed" : undefined}
+            badgeColor="bg-amber-100 text-amber-700"
+            loading={statsLoad}
+          />
+          <KpiCard
+            label="Approved"
+            value={statsLoad ? "—" : (stats?.approved ?? 0).toLocaleString()}
+            icon={CheckCircle}
+            iconBg="bg-emerald-50 text-emerald-500"
+            loading={statsLoad}
+          />
+          <KpiCard
+            label="Avg Rating"
+            value={statsLoad ? "—" : `${stats?.avgRating ?? 0} ★`}
+            icon={Star}
+            iconBg="bg-yellow-50 text-yellow-500"
+            loading={statsLoad}
+          />
+        </div>
 
         {/* Top Products Bar Chart */}
         {stats?.topProducts?.length > 0 && (
@@ -333,6 +415,26 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
                 <Tooltip contentStyle={{ borderRadius: 10, fontSize: 12 }}/>
                 <Bar dataKey="reviewCount" fill="#6366f1" radius={[0,6,6,0]} name="Reviews"/>
               </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        {/* Monthly Trend Chart */}
+        {monthlyData.length > 0 && (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <TrendingUp size={16} className="text-indigo-500"/>
+              <h3 className="font-bold text-gray-800 text-sm">Monthly Review Trend</h3>
+            </div>
+            <ResponsiveContainer width="100%" height={160}>
+              <LineChart data={monthlyData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0"/>
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false}/>
+                <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false}/>
+                <Tooltip contentStyle={{ borderRadius: 10, fontSize: 12 }}/>
+                <Line type="monotone" dataKey="reviews" stroke="#6366f1" strokeWidth={2} dot={{ r: 3, fill: "#6366f1" }} name="Reviews"/>
+                <Line type="monotone" dataKey="rating" stroke="#f59e0b" strokeWidth={2} dot={{ r: 3, fill: "#f59e0b" }} name="Avg Rating"/>
+              </LineChart>
             </ResponsiveContainer>
           </div>
         )}
@@ -460,26 +562,26 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
                       <td className="px-5 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-1.5">
                           <button onClick={() => setDetail(r)} title="View"
-                            className="text-green-600 hover:text-green-700 transition-colors">
+                            className="p-1.5 text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors">
                             <Eye size={14}/>
                           </button>
                           {canEdit && r.status !== "approved" && (
                             <button onClick={() => handleStatusChange(r._id, "approved")} title="Approve"
-                              className="text-green-600 hover:text-green-700 transition-colors">
+                              className="p-1.5 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors">
                               <Check size={14}/>
                             </button>
                           )}
                           {canEdit && r.status !== "rejected" && (
                             <button onClick={() => handleStatusChange(r._id, "rejected")} title="Reject"
-                              className="text-red-500 hover:text-red-600 transition-colors">
+                              className="p-1.5 text-amber-500 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-colors">
                               <X size={14}/>
                             </button>
                           )}
                           {canDelete && (
-                          <button onClick={() => setConfirm({ id: r._id })} title="Delete"
-                            className="text-red-500 hover:text-red-600 transition-colors">
-                            <Trash size={14}/>
-                          </button>
+                            <button onClick={() => setConfirm({ id: r._id })} title="Delete"
+                              className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                              <Trash size={14}/>
+                            </button>
                           )}
                         </div>
                       </td>
@@ -522,7 +624,7 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
           )}
         </div>
 
-        {/* Bottom Widgets */}
+        {/* Bottom — Recent Reviews widget */}
         <div className="grid grid-cols-1 gap-5">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <div className="flex items-center gap-2 mb-4">
@@ -554,7 +656,7 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
       {/* Detail Modal */}
       {detailReview && (
         <ReviewDetailModal review={detailReview} onClose={() => setDetail(null)}
-          onStatusChange={handleStatusChange} onDelete={id => setConfirm({ id })} 
+          onStatusChange={handleStatusChange} onDelete={id => setConfirm({ id })}
           canEdit={canEdit} canDelete={canDelete} />
       )}
 
@@ -563,7 +665,7 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full">
             <div className="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Trash size={22} className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"/>
+              <Trash size={22} className="text-red-500"/>
             </div>
             <h3 className="text-center font-bold text-gray-900 text-lg mb-1">Delete Review?</h3>
             <p className="text-center text-sm text-gray-500 mb-6">This action cannot be undone.</p>

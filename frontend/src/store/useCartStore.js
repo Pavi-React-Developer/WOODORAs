@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { API_ORIGIN } from '../api/apiClient';
 import { cartService } from '../api/cartService';
 import { toast } from 'react-hot-toast';
 
@@ -158,7 +159,7 @@ const useCartStore = create(
             finalImage = selectedVariant.images[0]?.url || selectedVariant.images[0] || finalImage;
           }
           if (finalImage && finalImage.startsWith('/uploads')) {
-            finalImage = `http://localhost:5000${finalImage}`;
+            finalImage = `${API_ORIGIN}${finalImage}`;
           }
 
           // ── Variant Label ───────────────────────────────────────────────────
@@ -207,6 +208,11 @@ const useCartStore = create(
             dimensions: (selectedVariant?.length && selectedVariant?.width && selectedVariant?.height) 
               ? { length: selectedVariant.length, width: selectedVariant.width, height: selectedVariant.height }
               : product.dimensions || null,
+            // Gift order fields – set by GiftAndCardPage before calling addToCart
+            giftMessage: product.giftMessage || null,
+            giftCardStyle: product.giftMessageStyle || null,
+            deliveryDate: product.deliveryDate || product.scheduledDeliveryDate || null,
+            scheduledDeliveryDate: product.scheduledDeliveryDate || null,
           };
 
           const existIndex = state.cartItems.findIndex(
@@ -226,10 +232,19 @@ const useCartStore = create(
                 toast.error(`Only ${x.maxStock} item(s) available. Added remaining.`);
                 return { ...x, qty: x.maxStock, variantOptions: variantOptions || x.variantOptions };
               }
-              // Toast success for increment
+              // Toast success for increment and update gift fields in case they changed
               const vLabel = variantOptions ? ` (${variantOptions})` : '';
               toast.success(`Increased quantity of ${newItem.name}${vLabel}`);
-              return { ...x, qty: newQty, variantOptions: variantOptions || x.variantOptions };
+              return {
+                ...x,
+                qty: newQty,
+                variantOptions: variantOptions || x.variantOptions,
+                isGift: newItem.isGift ?? x.isGift,
+                giftMessage: newItem.giftMessage ?? x.giftMessage,
+                giftCardStyle: newItem.giftCardStyle ?? x.giftCardStyle,
+                deliveryDate: newItem.deliveryDate ?? x.deliveryDate,
+                scheduledDeliveryDate: newItem.scheduledDeliveryDate ?? x.scheduledDeliveryDate,
+              };
             });
           } else {
             const clampedQty = maxStock > 0 ? Math.min(qty, maxStock) : qty;
@@ -320,6 +335,10 @@ function normalizeCartItem(item = {}) {
     isGiftWrapper: item.isGiftWrapper !== undefined ? item.isGiftWrapper : true,
     giftBox: item.giftBox || null,
     dimensions: item.dimensions || null,
+    giftMessage: item.giftMessage || null,
+    giftCardStyle: item.giftCardStyle || null,
+    deliveryDate: item.deliveryDate || item.scheduledDeliveryDate || null,
+    scheduledDeliveryDate: item.scheduledDeliveryDate || null,
   };
 }
 

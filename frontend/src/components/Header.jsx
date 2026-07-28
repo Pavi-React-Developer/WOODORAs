@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { ChevronDown, Heart, Search, ShoppingCart, User, X, Loader2, Menu } from 'lucide-react';
+import { ChevronDown, Heart, Search, ShoppingCart, User, X, Loader2, Menu, LogOut, Settings } from 'lucide-react';
 import { catalogService } from '../api/catalogService';
 import { cmsService } from '../api/cmsService';
 import { productV2API, categoryV2API } from '../api/catalogV2Service';
@@ -209,16 +209,29 @@ export default function Header({
               <span className="text-[11px] font-medium leading-none">Account</span>
             </button>
             {dropdownOpen && user && (
-              <div className="absolute right-0 top-14 z-[60] w-56 overflow-hidden rounded-xl border border-[#E9DED3] bg-white shadow-lg">
-                <div className="border-b border-[#EFE6DD] px-4 py-3">
-                  <p className="truncate text-sm font-bold text-[#2E2E2E]">{user.name}</p>
-                  <p className="truncate text-xs text-[#7C7370]">{user.email}</p>
+              <div className="absolute right-0 top-12 z-[60] mt-2 w-[220px] overflow-hidden rounded-xl border border-[#E9DED3] bg-white shadow-xl">
+                <div className="border-b border-[#EFE6DD] px-5 py-4">
+                  <p className="text-xs text-[#7C7370]">Logged in as</p>
+                  <p className="truncate text-base font-bold text-[#206945] mt-0.5">{user.name}</p>
                 </div>
-                {user.role === 'admin' && (
-                  <button type="button" onClick={() => { onNavigate('/admin'); setDropdownOpen(false); }} className="block w-full px-4 py-3 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF]">Admin Dashboard</button>
-                )}
-                <button type="button" onClick={() => { onNavigate('/profile'); setDropdownOpen(false); }} className="block w-full px-4 py-3 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF]">My Profile</button>
-                <button type="button" onClick={() => { onLogout(); setDropdownOpen(false); }} className="block w-full px-4 py-3 text-left text-sm font-semibold text-red-600 hover:bg-red-50">Sign Out</button>
+                <div className="py-2">
+                  {user.role === 'admin' && (
+                    <button type="button" onClick={() => { onNavigate('/admin'); setDropdownOpen(false); }} className="flex w-full items-center gap-3 px-5 py-3 text-left text-[15px] text-[#4A403B] hover:bg-[#FAF4EF] transition-colors">
+                      <Settings className="h-[18px] w-[18px] text-[#6D625C]" />
+                      Admin Dashboard
+                    </button>
+                  )}
+                  <button type="button" onClick={() => { onNavigate('/profile'); setDropdownOpen(false); }} className="flex w-full items-center gap-3 px-5 py-3 text-left text-[15px] text-[#4A403B] hover:bg-[#FAF4EF] transition-colors">
+                    <User className="h-[18px] w-[18px] text-[#6D625C]" />
+                    Profile & Dashboard
+                  </button>
+                </div>
+                <div className="border-t border-[#EFE6DD] py-2">
+                  <button type="button" onClick={() => { onLogout(); setDropdownOpen(false); }} className="flex w-full items-center gap-3 px-5 py-3 text-left text-[15px] font-semibold text-[#DC2626] hover:bg-red-50 transition-colors">
+                    <LogOut className="h-[18px] w-[18px]" />
+                    Sign Out
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -372,6 +385,46 @@ export default function Header({
           <img src={navbarConfig?.logo?.url || "/woodora-logo.png"} alt="Woodora Logo" className="h-14 w-auto object-contain" />
         </button>
         <div className="flex items-center gap-3 text-[#B0611C]">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => (user ? setDropdownOpen((open) => !open) : onNavigate('/login'))}
+              className="flex items-center justify-center rounded-full transition hover:opacity-80"
+              aria-label="Account"
+            >
+              {(user?.profileImage?.url || user?.avatar) ? (
+                <img src={user.profileImage?.url || user.avatar} alt={user.name} className="h-[22px] w-[22px] rounded-full object-cover" />
+              ) : (
+                <User className="h-[22px] w-[22px]" strokeWidth={1.5} />
+              )}
+            </button>
+            {dropdownOpen && user && (
+              <div className="absolute right-0 top-10 z-[60] mt-2 w-[220px] overflow-hidden rounded-xl border border-[#E9DED3] bg-white shadow-xl">
+                <div className="border-b border-[#EFE6DD] px-5 py-4">
+                  <p className="text-xs text-[#7C7370]">Logged in as</p>
+                  <p className="truncate text-base font-bold text-[#206945] mt-0.5">{user.name}</p>
+                </div>
+                <div className="py-2">
+                  {user.role === 'admin' && (
+                    <button type="button" onClick={() => { onNavigate('/admin'); setDropdownOpen(false); }} className="flex w-full items-center gap-3 px-5 py-3 text-left text-[15px] text-[#4A403B] hover:bg-[#FAF4EF] transition-colors">
+                      <Settings className="h-[18px] w-[18px] text-[#6D625C]" />
+                      Admin Dashboard
+                    </button>
+                  )}
+                  <button type="button" onClick={() => { onNavigate('/profile'); setDropdownOpen(false); }} className="flex w-full items-center gap-3 px-5 py-3 text-left text-[15px] text-[#4A403B] hover:bg-[#FAF4EF] transition-colors">
+                    <User className="h-[18px] w-[18px] text-[#6D625C]" />
+                    Profile & Dashboard
+                  </button>
+                </div>
+                <div className="border-t border-[#EFE6DD] py-2">
+                  <button type="button" onClick={() => { onLogout(); setDropdownOpen(false); }} className="flex w-full items-center gap-3 px-5 py-3 text-left text-[15px] font-semibold text-[#DC2626] hover:bg-red-50 transition-colors">
+                    <LogOut className="h-[18px] w-[18px]" />
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
           <button type="button" onClick={() => onOpenWishlist?.()} className="relative" aria-label="Wishlist">
             <Heart className="h-[22px] w-[22px]" strokeWidth={1.5} />
             {wishlistCount > 0 && <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#9C755A] px-1 text-[9px] font-bold text-white shadow-sm">{wishlistCount}</span>}
@@ -534,22 +587,29 @@ export default function Header({
             </button>
 
             {dropdownOpen && user && (
-              <div className="absolute right-0 top-8 z-[60] mt-2 w-56 overflow-hidden rounded-xl border border-[#E9DED3] bg-white shadow-lg">
-                <div className="border-b border-[#EFE6DD] px-4 py-3">
-                  <p className="truncate text-sm font-bold text-[#2E2E2E]">{user.name}</p>
-                  <p className="truncate text-xs text-[#7C7370]">{user.email}</p>
+              <div className="absolute right-0 top-12 z-[60] mt-2 w-[220px] overflow-hidden rounded-xl border border-[#E9DED3] bg-white shadow-xl">
+                <div className="border-b border-[#EFE6DD] px-5 py-4">
+                  <p className="text-xs text-[#7C7370]">Logged in as</p>
+                  <p className="truncate text-base font-bold text-[#206945] mt-0.5">{user.name}</p>
                 </div>
-                {user.role === 'admin' && (
-                  <button type="button" onClick={() => { onNavigate('/admin'); setDropdownOpen(false); }} className="block w-full px-4 py-3 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF]">
-                    Admin Dashboard
+                <div className="py-2">
+                  {user.role === 'admin' && (
+                    <button type="button" onClick={() => { onNavigate('/admin'); setDropdownOpen(false); }} className="flex w-full items-center gap-3 px-5 py-3 text-left text-[15px] text-[#4A403B] hover:bg-[#FAF4EF] transition-colors">
+                      <Settings className="h-[18px] w-[18px] text-[#6D625C]" />
+                      Admin Dashboard
+                    </button>
+                  )}
+                  <button type="button" onClick={() => { onNavigate('/profile'); setDropdownOpen(false); }} className="flex w-full items-center gap-3 px-5 py-3 text-left text-[15px] text-[#4A403B] hover:bg-[#FAF4EF] transition-colors">
+                    <User className="h-[18px] w-[18px] text-[#6D625C]" />
+                    Profile & Dashboard
                   </button>
-                )}
-                <button type="button" onClick={() => { onNavigate('/profile'); setDropdownOpen(false); }} className="block w-full px-4 py-3 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF]">
-                  My Profile
-                </button>
-                <button type="button" onClick={() => { onLogout(); setDropdownOpen(false); }} className="block w-full px-4 py-3 text-left text-sm font-semibold text-red-600 hover:bg-red-50">
-                  Sign Out
-                </button>
+                </div>
+                <div className="border-t border-[#EFE6DD] py-2">
+                  <button type="button" onClick={() => { onLogout(); setDropdownOpen(false); }} className="flex w-full items-center gap-3 px-5 py-3 text-left text-[15px] font-semibold text-[#DC2626] hover:bg-red-50 transition-colors">
+                    <LogOut className="h-[18px] w-[18px]" />
+                    Sign Out
+                  </button>
+                </div>
               </div>
             )}
           </div>

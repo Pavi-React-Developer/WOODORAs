@@ -50,6 +50,22 @@ const cartItemSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  giftMessage: {
+    type: String,
+    default: null,
+  },
+  giftCardStyle: {
+    type: String,
+    default: null,
+  },
+  scheduledDeliveryDate: {
+    type: String,
+    default: null,
+  },
+  deliveryDate: {
+    type: String,
+    default: null,
+  },
   giftBox: {
     volume: { type: Number },
     boxSize: { type: String },

@@ -4,7 +4,10 @@ import { toast } from 'react-hot-toast';
 import CustomCalendar from '../../components/CustomCalendar';
 import { Eye, X, Edit2, ToggleLeft, ToggleRight, Trash2, SquarePen, Trash } from 'lucide-react';
 import { getImageSrc } from '../../utils/imageUtils';
+import { formatDeliveryDate, getDeliveryDate } from '../../utils/deliveryDate';
 import EditGiftBoxRulePage from './fees/EditGiftBoxRulePage';
+
+const formatDate = formatDeliveryDate;
 
 export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate = true, canEdit = true, canDelete = true }) {
   const [activeTab, setActiveTab] = useState(activeSubTab);
@@ -324,8 +327,9 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order ID & Date</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order ID</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order Date</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Delivery Date</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
@@ -333,17 +337,38 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {orders.length === 0 ? (
-                <tr><td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">No gift orders found.</td></tr>
+                <tr><td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">No gift orders found.</td></tr>
               ) : (
                 orders.map(order => (
                   <tr key={order._id}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {order._id.substring(0, 8)}<br />
-                      <span className="text-xs text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</span>
+                      {order._id.substring(0, 8)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order.user?.name || order.user?.fullName || 'N/A'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {order.user ? (
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-gray-900">
+                            {order.user.name || order.user.fullName}
+                          </span>
+                          <span className="text-xs text-gray-500">{order.user.email}</span>
+                        </div>
+                      ) : order.shippingAddress ? (
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-gray-900 flex items-center gap-2">
+                            {order.shippingAddress.fullName}
+                            <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-bold">Guest</span>
+                          </span>
+                          <span className="text-xs text-gray-500">{order.shippingAddress.phone}</span>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-gray-500 italic">N/A</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatDate(order.createdAt)}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#B0611C]">
-                      {order.scheduledDeliveryDate ? new Date(order.scheduledDeliveryDate).toLocaleDateString() : 'N/A'}
+                      {formatDeliveryDate(getDeliveryDate(order))}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order.status}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -414,18 +439,60 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
                 </div>
               </div>
 
+              {/* Payment Summary */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase">Payment Summary</h3>
+                <div className="bg-gray-50 p-4 rounded-lg text-sm text-gray-600">
+                  <div className="flex justify-between mb-2">
+                    <span>Subtotal</span>
+                    <span>₹{selectedOrder.itemsPrice || 0}</span>
+                  </div>
+                  {selectedOrder.giftWrapFee > 0 && (
+                    <div className="flex justify-between mb-2">
+                      <span>Gift Wrap Fee</span>
+                      <span>₹{selectedOrder.giftWrapFee}</span>
+                    </div>
+                  )}
+                  {selectedOrder.fees?.map((fee, idx) => (
+                    <div key={idx} className="flex justify-between mb-2">
+                      <span>{fee.name}</span>
+                      <span>₹{fee.amount}</span>
+                    </div>
+                  ))}
+                  {selectedOrder.codAdvance > 0 && (
+                    <div className="flex justify-between mb-2 text-red-600">
+                      <span>Advance Payment</span>
+                      <span>-₹{selectedOrder.codAdvance}</span>
+                    </div>
+                  )}
+                  {selectedOrder.discountAmount > 0 && (
+                    <div className="flex justify-between mb-2 text-green-600">
+                      <span>Discount</span>
+                      <span>-₹{selectedOrder.discountAmount}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-bold text-gray-800 pt-2 border-t mt-2">
+                    <span>Total Paid</span>
+                    <span>₹{selectedOrder.totalPrice || 0}</span>
+                  </div>
+                </div>
+              </div>
+
               {/* Gift Details */}
               <div className="bg-[#FAF4EF] p-4 rounded-lg border border-[#E6DFD4]">
                 <h3 className="text-sm font-semibold text-gray-700 mb-2 uppercase">Gift Preferences</h3>
                 <div className="space-y-2 text-sm text-gray-600">
-                  <p><span className="font-medium text-gray-800">Delivery Date:</span> {selectedOrder.scheduledDeliveryDate ? new Date(selectedOrder.scheduledDeliveryDate).toLocaleDateString() : 'N/A'}</p>
+                  <p><span className="font-medium text-gray-800">Order Date:</span> {formatDate(selectedOrder.createdAt)}</p>
+                  <p><span className="font-medium text-gray-800">Delivery Date:</span> {formatDeliveryDate(getDeliveryDate(selectedOrder))}</p>
                   <p><span className="font-medium text-gray-800">Style:</span> {selectedOrder.giftMessageStyle || 'Classic'}</p>
-                  <div className="mt-2">
-                    <span className="font-medium text-gray-800 block mb-1">Message:</span>
-                    <p className="italic bg-white p-3 rounded border border-gray-200">
-                      {selectedOrder.giftMessage || "No message provided."}
-                    </p>
-                  </div>
+                  {selectedOrder.giftMessage && (
+                    <div className="mt-2">
+                      <span className="font-medium text-gray-800 block mb-1">Message:</span>
+                      <p className="italic bg-white p-3 rounded border border-gray-200">
+                        {selectedOrder.giftMessage}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 

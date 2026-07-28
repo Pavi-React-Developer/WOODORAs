@@ -7,6 +7,14 @@ const Product = require('../models/Product');
 const { calculateOrderFees } = require('../utils/feeCalculator');
 const ProductVariant = require('../models/ProductVariant');
 
+const normalizeDeliveryDate = (value) => {
+  if (value == null || value === '') return null;
+  const date = typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)
+    ? new Date(`${value}T00:00:00.000Z`)
+    : new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date;
+};
+
 const updateVariantStock = async (variantId, qty, type) => {
   if (!variantId) return;
   try {
@@ -64,13 +72,23 @@ const addOrderItems = async (req, res) => {
       giftMessage,
       giftMessageStyle,
       scheduledDeliveryDate,
+      deliveryDate,
       giftWrapFee
     } = req.body;
 
     if (orderItems && orderItems.length === 0) {
       return res.status(400).json({ message: 'No order items' });
     } else {
-      console.log('--- RECEIVED ORDER ITEMS ---', JSON.stringify(orderItems, null, 2));
+      const giftOrderItem = orderItems?.find((item) => item.isGift);
+      const normalizedDeliveryDate = normalizeDeliveryDate(
+        deliveryDate
+        ?? scheduledDeliveryDate
+        ?? giftOrderItem?.deliveryDate
+        ?? giftOrderItem?.scheduledDeliveryDate
+      );
+      if (normalizedDeliveryDate === undefined) {
+        return res.status(400).json({ message: 'Delivery date must be a valid date' });
+      }
 
       const configuredFees = await Fee.find({ active: true })
         .populate('feeCategory', 'name')
@@ -112,9 +130,10 @@ const addOrderItems = async (req, res) => {
         discountAmount: Number(req.body.discountAmount || 0),
         coupon: null,
         isGiftOrder: isGiftOrder || false,
-        giftMessage,
-        giftMessageStyle,
-        scheduledDeliveryDate,
+        giftMessage: giftMessage ?? giftOrderItem?.giftMessage ?? '',
+        giftMessageStyle: giftMessageStyle ?? giftOrderItem?.giftMessageStyle ?? 'Classic',
+        deliveryDate: normalizedDeliveryDate,
+        scheduledDeliveryDate: normalizedDeliveryDate,
         giftWrapFee: giftWrapFee || 0,
         giftWrapping: req.body.giftWrapping || { enabled: false }
       });

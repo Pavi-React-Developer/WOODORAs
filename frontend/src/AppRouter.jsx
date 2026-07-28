@@ -118,6 +118,16 @@ export default function AppRouter() {
   };
 
   const resolveProductForCart = async (product) => {
+    // Preserve gift-specific fields set before calling addToCart
+    const giftPrefs = {
+      isGift: product.isGift,
+      isGiftWrapper: product.isGiftWrapper,
+      giftMessage: product.giftMessage,
+      giftMessageStyle: product.giftMessageStyle,
+      deliveryDate: product.deliveryDate,
+      scheduledDeliveryDate: product.scheduledDeliveryDate,
+    };
+
     let productToAdd = { ...product };
 
     // Always fetch full details to ensure we have variants with stock info
@@ -125,7 +135,8 @@ export default function AppRouter() {
       try {
         const res = await productV2API.getById(productToAdd._id || productToAdd.id);
         const fullProduct = res.product || res;
-        productToAdd = { ...productToAdd, ...fullProduct };
+        // Merge API data but restore gift fields so they aren't overwritten
+        productToAdd = { ...productToAdd, ...fullProduct, ...giftPrefs };
       } catch (err) {
         console.error('[Cart] Failed to fetch full product details:', err);
       }
@@ -222,6 +233,26 @@ export default function AppRouter() {
     }
   }, [user, hydrateCartFromBackend]);
 
+  // Fetch full profile from backend whenever user is logged in (persists across refresh)
+  useEffect(() => {
+    if (!user) {
+      setProfileData(null);
+      return;
+    }
+    const fetchFullProfile = async () => {
+      try {
+        setProfileLoading(true);
+        const data = await authService.getProfile();
+        setProfileData(data);
+      } catch (err) {
+        setProfileError(err.message || 'Failed to load profile');
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+    fetchFullProfile();
+  }, [user?.id]);
+
   const handleProfileUpdated = (updatedUser) => {
     setUser((current) => ({
       ...current,
@@ -235,6 +266,17 @@ export default function AppRouter() {
       ...(current || {}),
       user: updatedUser,
     }));
+  };
+
+  // Re-fetch full profile from backend after address change from order page
+  const handleAddressUpdated = async () => {
+    if (!user) return;
+    try {
+      const data = await authService.getProfile();
+      setProfileData(data);
+    } catch (err) {
+      console.error('Failed to refresh profile after address update:', err);
+    }
   };
 
   return (
@@ -379,7 +421,7 @@ export default function AppRouter() {
                 wishlistCount={wishlistItems.length}
                 onOpenWishlist={() => setIsWishlistOpen(true)}
               />
-              <CompleteOrderPage onNavigate={handleNavigate} user={user} onAuthSuccess={handleAuthSuccess} />
+              <CompleteOrderPage onNavigate={handleNavigate} user={user} onAuthSuccess={handleAuthSuccess} onAddressUpdated={handleAddressUpdated} />
             </PageLayout>
           }
         />

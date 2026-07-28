@@ -4,6 +4,7 @@ import { RefreshCw } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { catalogService } from '../api/catalogService';
 import { adminService } from '../api/adminService';
+import apiClient from '../api/apiClient';
 import CategoriesPage from './admin/catalog/CategoriesPage';
 import SubCategoriesPage from './admin/catalog/SubCategoriesPage';
 import AttributesPage from './admin/catalog/AttributesPage';
@@ -432,18 +433,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
         await catalogService.updateCategory(editCategoryId, payload);
         setSuccessMsg('Category updated successfully!');
       } else {
-        const created = await fetch('http://localhost:5000/api/catalog/category', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-          body: JSON.stringify(payload)
-        });
-        if (!created.ok) {
-          const data = await created.json();
-          throw new Error(data.message || 'Failed to create category');
-        }
+        // Use apiClient (reads VITE_API_BASE_URL) — no hardcoded localhost
+        await apiClient.post('/catalog/category', payload);
         setSuccessMsg('Category created successfully!');
       }
 

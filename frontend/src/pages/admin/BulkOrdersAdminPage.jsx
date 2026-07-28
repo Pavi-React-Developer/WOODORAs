@@ -1,33 +1,42 @@
-import React, { useState, useEffect } from 'react';
-import { Package, Search, CheckCircle2, XCircle, Clock, Eye, X , RefreshCw , Check } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Package, Search, Clock, Eye, X, RefreshCw, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { bulkOrderService } from '../../api/bulkOrderService';
 
 export default function BulkOrdersAdminPage({ canEdit = true }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
-  
+
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [rejectingOrder, setRejectingOrder] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
-  
+
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingOrder, setViewingOrder] = useState(null);
 
+  // AbortController ref — cancels in-flight requests if the component unmounts
+  const abortRef = useRef(null);
+
   const fetchOrders = async () => {
+    // Cancel any previous in-flight request
+    if (abortRef.current) abortRef.current.abort();
+    abortRef.current = new AbortController();
+
+    setLoading(true);
     try {
-      setLoading(true);
-      const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/bulk-orders', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
+      const data = await bulkOrderService.getAllBulkOrders();
       if (data.success) {
-        setOrders(data.data);
+        setOrders(data.data || []);
+      } else {
+        toast.error(data.message || 'Failed to load bulk orders');
       }
     } catch (err) {
-      toast.error('Failed to load bulk orders');
+      // Don't show error toast if the request was intentionally cancelled
+      if (err.name !== 'CanceledError' && err.name !== 'AbortError') {
+        toast.error(err.message || 'Failed to load bulk orders');
+      }
     } finally {
       setLoading(false);
     }
@@ -35,26 +44,23 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
 
   useEffect(() => {
     fetchOrders();
+    return () => {
+      // Cancel request when component unmounts to prevent state updates on dead component
+      if (abortRef.current) abortRef.current.abort();
+    };
   }, []);
 
   const handleApprove = async (id) => {
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/bulk-orders/${id}/status`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ status: 'Approved' })
-      });
-      const data = await res.json();
+      const data = await bulkOrderService.updateBulkOrderStatus(id, { status: 'Approved' });
       if (data.success) {
-        toast.success('Bulk order approved');
+        toast.success('Bulk order approved ✓');
         fetchOrders();
+      } else {
+        toast.error(data.message || 'Failed to approve order');
       }
     } catch (err) {
-      toast.error('Failed to approve order');
+      toast.error(err.message || 'Failed to approve order');
     }
   };
 
@@ -70,24 +76,20 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
       return;
     }
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/bulk-orders/${rejectingOrder._id}/status`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ status: 'Rejected', rejectionReason })
+      const data = await bulkOrderService.updateBulkOrderStatus(rejectingOrder._id, {
+        status: 'Rejected',
+        rejectionReason,
       });
-      const data = await res.json();
       if (data.success) {
         toast.success('Bulk order rejected');
         fetchOrders();
         setIsRejectModalOpen(false);
         setRejectingOrder(null);
+      } else {
+        toast.error(data.message || 'Failed to reject order');
       }
     } catch (err) {
-      toast.error('Failed to reject order');
+      toast.error(err.message || 'Failed to reject order');
     }
   };
 
@@ -98,9 +100,12 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
 
   const filteredOrders = orders.filter(order => {
     const searchLower = searchTerm.toLowerCase();
-    const matchesSearch = searchTerm === '' || (order.customFields && order.customFields.some(cf => 
-      cf.value && typeof cf.value === 'string' && cf.value.toLowerCase().includes(searchLower)
-    ));
+    const matchesSearch =
+      searchTerm === '' ||
+      (order.customFields &&
+        order.customFields.some(
+          cf => cf.value && typeof cf.value === 'string' && cf.value.toLowerCase().includes(searchLower)
+        ));
     const matchesStatus = statusFilter === 'All' || order.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -113,8 +118,8 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
             <h1 className="text-2xl font-bold tracking-tight text-[#141225]">Bulk Orders Requests</h1>
             <p className="mt-1 text-sm text-[#6D625C]">Review and manage corporate and wholesale orders.</p>
           </div>
-          <button onClick={fetchOrders} className="admin-secondary-btn flex items-center gap-2">
-            <RefreshCw size={16} /> Refresh
+          <button onClick={fetchOrders} disabled={loading} className="admin-secondary-btn flex items-center gap-2">
+            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Refresh
           </button>
         </div>
 
@@ -144,7 +149,9 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
 
           <div className="overflow-x-auto">
             {loading ? (
-              <div className="p-8 text-center text-[#6D625C]">Loading...</div>
+              <div className="p-8 text-center text-[#6D625C] flex items-center justify-center gap-2">
+                <RefreshCw className="w-4 h-4 animate-spin" /> Loading bulk orders…
+              </div>
             ) : filteredOrders.length === 0 ? (
               <div className="p-12 text-center">
                 <div className="w-16 h-16 bg-[#FAF8F5] rounded-full flex items-center justify-center mx-auto mb-4 border border-dashed border-[#E9DED3]">
@@ -157,7 +164,7 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
               <table className="w-full text-left text-sm whitespace-nowrap">
                 <thead className="bg-[#FAF8F5] text-xs font-bold uppercase tracking-wider text-[#6D625C] border-b border-[#E9DED3]">
                   <tr>
-                    <th className="px-6 py-4">Date & ID</th>
+                    <th className="px-6 py-4">Date &amp; ID</th>
                     <th className="px-6 py-4">Selected Product</th>
                     <th className="px-6 py-4">Custom Fields Preview</th>
                     <th className="px-6 py-4 text-center">Status</th>
@@ -168,13 +175,19 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                   {filteredOrders.map(order => (
                     <tr key={order._id} className="hover:bg-[#FAF8F5]/50 transition-colors">
                       <td className="px-6 py-4">
-                        <p className="font-bold text-[#141225]">Order #{order._id.substring(order._id.length - 6).toUpperCase()}</p>
-                        <p className="text-xs text-[#6D625C] mt-0.5">{new Date(order.createdAt).toLocaleDateString()}</p>
+                        <p className="font-bold text-[#141225]">
+                          Order #{order._id.substring(order._id.length - 6).toUpperCase()}
+                        </p>
+                        <p className="text-xs text-[#6D625C] mt-0.5">
+                          {new Date(order.createdAt).toLocaleDateString()}
+                        </p>
                       </td>
                       <td className="px-6 py-4">
                         {order.product ? (
                           <>
-                            <p className="font-bold text-[#4A3326] max-w-[150px] truncate" title={order.product?.name}>{order.product?.name}</p>
+                            <p className="font-bold text-[#4A3326] max-w-[150px] truncate" title={order.product?.name}>
+                              {order.product?.name}
+                            </p>
                             <p className="text-xs text-[#8A817C]">{order.category?.name || 'N/A'}</p>
                           </>
                         ) : (
@@ -183,29 +196,39 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                       </td>
                       <td className="px-6 py-4 whitespace-normal min-w-[200px]">
                         <div className="space-y-1">
-                          {order.customFields && order.customFields.slice(0, 2).map((cf, idx) => (
-                            <p key={idx} className="text-xs text-[#6D625C] truncate max-w-[250px]">
-                              <span className="font-semibold">{cf.label}:</span> {typeof cf.value === 'boolean' ? (cf.value ? 'Yes' : 'No') : cf.value}
-                            </p>
-                          ))}
+                          {order.customFields &&
+                            order.customFields.slice(0, 2).map((cf, idx) => (
+                              <p key={idx} className="text-xs text-[#6D625C] truncate max-w-[250px]">
+                                <span className="font-semibold">{cf.label}:</span>{' '}
+                                {typeof cf.value === 'boolean' ? (cf.value ? 'Yes' : 'No') : cf.value}
+                              </p>
+                            ))}
                           {order.customFields && order.customFields.length > 2 && (
-                            <p className="text-[10px] text-[#9A6031] font-bold">+ {order.customFields.length - 2} more fields</p>
+                            <p className="text-[10px] text-[#9A6031] font-bold">
+                              + {order.customFields.length - 2} more fields
+                            </p>
                           )}
                         </div>
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                          order.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' :
-                          order.status === 'Rejected' ? 'bg-red-100 text-red-700' :
-                          'bg-amber-100 text-amber-700'
-                        }`}>
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                            order.status === 'Approved'
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : order.status === 'Rejected'
+                              ? 'bg-red-100 text-red-700'
+                              : 'bg-amber-100 text-amber-700'
+                          }`}
+                        >
                           {order.status === 'Approved' && <Check className="w-3 h-3" />}
                           {order.status === 'Rejected' && <X className="w-3 h-3" />}
-                          {order.status === 'Pending' && <Clock className="w-3 h-3" />}
+                          {(!order.status || order.status === 'Pending') && <Clock className="w-3 h-3" />}
                           {order.status || 'Pending'}
                         </span>
                         {order.status === 'Rejected' && order.rejectionReason && (
-                          <p className="text-[10px] text-red-600 mt-1 max-w-[150px] mx-auto truncate" title={order.rejectionReason}>{order.rejectionReason}</p>
+                          <p className="text-[10px] text-red-600 mt-1 max-w-[150px] mx-auto truncate" title={order.rejectionReason}>
+                            {order.rejectionReason}
+                          </p>
                         )}
                       </td>
                       <td className="px-6 py-4 text-center">
@@ -244,7 +267,7 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
         </div>
       </div>
 
-      {/* Reject Modal */}
+      {/* ── Reject Modal ───────────────────────────────────────────────── */}
       {isRejectModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-[400px] border border-[#E9DED3] overflow-hidden">
@@ -255,7 +278,10 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
               </button>
             </div>
             <div className="p-5">
-              <p className="text-sm text-[#4A403B] mb-4">Please provide a reason for rejecting the bulk order <strong>#{rejectingOrder?._id.substring(rejectingOrder._id.length - 6).toUpperCase()}</strong>.</p>
+              <p className="text-sm text-[#4A403B] mb-4">
+                Please provide a reason for rejecting the bulk order{' '}
+                <strong>#{rejectingOrder?._id.substring(rejectingOrder._id.length - 6).toUpperCase()}</strong>.
+              </p>
               <textarea
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
@@ -281,7 +307,7 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
         </div>
       )}
 
-      {/* View Modal */}
+      {/* ── View Modal ────────────────────────────────────────────────── */}
       {isViewModalOpen && viewingOrder && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl border border-[#E9DED3] overflow-hidden flex flex-col max-h-[90vh]">
@@ -291,22 +317,36 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <div className="p-6 overflow-y-auto">
               <div className="grid md:grid-cols-2 gap-6">
-                
                 <div className="space-y-4">
                   <div className="bg-[#FAF8F5] p-4 rounded-xl border border-[#E9DED3]">
                     <h3 className="text-xs font-bold text-[#8A817C] uppercase tracking-wider mb-3">Order Status</h3>
                     <div className="space-y-2 text-sm">
-                      <p><span className="text-[#6D625C] w-28 inline-block">Order ID:</span> <span className="font-bold text-[#141225]">#{viewingOrder._id.substring(viewingOrder._id.length - 6).toUpperCase()}</span></p>
-                      <p><span className="text-[#6D625C] w-28 inline-block">Date:</span> <span className="font-bold text-[#141225]">{new Date(viewingOrder.createdAt).toLocaleString()}</span></p>
-                      <p><span className="text-[#6D625C] w-28 inline-block">Status:</span> 
-                        <span className={`ml-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                          viewingOrder.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' :
-                          viewingOrder.status === 'Rejected' ? 'bg-red-100 text-red-700' :
-                          'bg-amber-100 text-amber-700'
-                        }`}>
+                      <p>
+                        <span className="text-[#6D625C] w-28 inline-block">Order ID:</span>
+                        <span className="font-bold text-[#141225]">
+                          #{viewingOrder._id.substring(viewingOrder._id.length - 6).toUpperCase()}
+                        </span>
+                      </p>
+                      <p>
+                        <span className="text-[#6D625C] w-28 inline-block">Date:</span>
+                        <span className="font-bold text-[#141225]">
+                          {new Date(viewingOrder.createdAt).toLocaleString()}
+                        </span>
+                      </p>
+                      <p>
+                        <span className="text-[#6D625C] w-28 inline-block">Status:</span>
+                        <span
+                          className={`ml-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                            viewingOrder.status === 'Approved'
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : viewingOrder.status === 'Rejected'
+                              ? 'bg-red-100 text-red-700'
+                              : 'bg-amber-100 text-amber-700'
+                          }`}
+                        >
                           {viewingOrder.status || 'Pending'}
                         </span>
                       </p>
@@ -325,25 +365,29 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                   {viewingOrder.product ? (
                     <div className="space-y-3">
                       <div className="w-full aspect-video bg-[#FAF8F5] rounded-lg overflow-hidden border border-[#E9DED3] flex items-center justify-center">
-                        {(viewingOrder.product.images && viewingOrder.product.images.length > 0) || viewingOrder.category?.image || viewingOrder.subCategory?.image ? (
-                          <img 
+                        {(viewingOrder.product.images && viewingOrder.product.images.length > 0) ||
+                        viewingOrder.category?.image ||
+                        viewingOrder.subCategory?.image ? (
+                          <img
                             src={
-                              (viewingOrder.product.images && viewingOrder.product.images.length > 0)
-                                ? (viewingOrder.product.images[0]?.url || viewingOrder.product.images[0])
-                                : (viewingOrder.category?.image?.url || viewingOrder.subCategory?.image?.url)
-                            } 
+                              viewingOrder.product.images && viewingOrder.product.images.length > 0
+                                ? viewingOrder.product.images[0]?.url || viewingOrder.product.images[0]
+                                : viewingOrder.category?.image?.url || viewingOrder.subCategory?.image?.url
+                            }
                             alt={viewingOrder.product.name}
                             className="w-full h-full object-contain"
+                            onError={e => { e.currentTarget.style.display = 'none'; }}
                           />
                         ) : (
                           <Package className="w-10 h-10 text-[#C4B9B0]" />
                         )}
                       </div>
-                      
+
                       <div className="space-y-1 text-sm">
                         <p className="font-bold text-[#141225] text-lg">{viewingOrder.product.name}</p>
-                        {viewingOrder.product.sku && <p className="text-xs text-[#8A817C] font-mono">SKU: {viewingOrder.product.sku}</p>}
-                        
+                        {viewingOrder.product.sku && (
+                          <p className="text-xs text-[#8A817C] font-mono">SKU: {viewingOrder.product.sku}</p>
+                        )}
                         <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-[#E9DED3]">
                           <span className="px-2 py-1 bg-[#FAF8F5] text-[#6D625C] rounded text-xs border border-[#E9DED3]">
                             Category: {viewingOrder.category?.name || 'Unknown'}
@@ -360,9 +404,7 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                     </div>
                   )}
                 </div>
-
               </div>
-              {/* Removed Customization Details */}
 
               {/* Dynamic Fields */}
               {viewingOrder.customFields && viewingOrder.customFields.length > 0 && (
@@ -381,7 +423,7 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                 </div>
               )}
             </div>
-            
+
             <div className="p-5 border-t border-[#E9DED3] bg-[#FAF8F5] flex justify-end">
               <button
                 onClick={() => setIsViewModalOpen(false)}
