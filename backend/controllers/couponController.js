@@ -66,7 +66,11 @@ const couponMatchesCartItem = (coupon, item = {}) => {
 
 const isCouponApplicableToCart = (coupon, items = []) => {
   if (!coupon) return false;
-  if (coupon.usageLimit && coupon.usageCount >= coupon.usageLimit) return false;
+  if (coupon.usageLimit > 0) {
+    // Stale usageCount from DB may lag; the strict check is done live in applyCoupon/getEligibleCoupons
+    // Here we only skip if the stored count already confirms exhaustion
+    if (Number(coupon.usageCount || 0) >= coupon.usageLimit) return false;
+  }
 
   const minimumQty = Number(coupon.minimumQuantity || 1);
   const matchingItems = (items || []).filter((item) => {
@@ -288,8 +292,27 @@ exports.getEligibleCoupons = async (req, res) => {
       minOrderValue: { $lte: Number(subtotal || 0) },
     }).sort({ createdAt: -1 });
 
+    let userOrderUsageMap = {};
+    let globalOrderUsageMap = {};
+    if (coupons.length > 0) {
+      // Count actual paid orders per coupon code to get live global usage
+      const couponCodes = coupons.map(c => c.couponCode);
+      const paidOrders = await Order.find({ couponCode: { $in: couponCodes }, isPaid: true }).select('couponCode user').lean();
+      paidOrders.forEach(order => {
+        if (order.couponCode) {
+          const code = String(order.couponCode).trim().toUpperCase();
+          // Global count across all users
+          globalOrderUsageMap[code] = (globalOrderUsageMap[code] || 0) + 1;
+        }
+      });
+    }
+
     const eligible = coupons.filter((coupon) => {
-      if (coupon.usageLimit && coupon.usageCount >= coupon.usageLimit) return false;
+      if (coupon.usageLimit > 0) {
+        // Check global usage against the limit dynamically from actual paid orders
+        const globalUsage = globalOrderUsageMap[coupon.couponCode] || 0;
+        if (globalUsage >= coupon.usageLimit) return false;
+      }
       if (Number(subtotal) < Number(coupon.minOrderValue || 0)) return false;
       return isCouponApplicableToCart(coupon, cartItems);
     });
@@ -318,15 +341,16 @@ exports.applyCoupon = async (req, res) => {
     // This enables manual application from checkout even when admin visibility is toggled.
     if (coupon.startDate && new Date(coupon.startDate) > new Date()) return res.status(400).json({ message: 'Coupon has not started yet' });
     if (coupon.endDate && new Date(coupon.endDate) < new Date()) return res.status(400).json({ message: 'Coupon has expired' });
-    let effectiveUsageCount = Number(coupon.usageCount || 0);
-    if (coupon.usageLimit) {
-      const orderUsage = await Order.countDocuments({
+    if (coupon.usageLimit > 0) {
+      // Count globally across ALL users from actual paid orders dynamically
+      const globalOrderUsage = await Order.countDocuments({
         couponCode: coupon.couponCode,
         isPaid: true,
       });
-      effectiveUsageCount = Math.max(effectiveUsageCount, orderUsage);
+      if (globalOrderUsage >= coupon.usageLimit) {
+        return res.status(400).json({ message: 'Sorry, this coupon has reached its total usage limit' });
+      }
     }
-    if (coupon.usageLimit && effectiveUsageCount >= coupon.usageLimit) return res.status(400).json({ message: 'Coupon usage limit reached' });
     if (Number(subtotal) < Number(coupon.minOrderValue || 0)) return res.status(400).json({ message: 'Minimum order value not met' });
     if (!isCouponApplicableToCart(coupon, cartItems)) return res.status(400).json({ message: 'Coupon is not applicable to the items in your cart' });
 

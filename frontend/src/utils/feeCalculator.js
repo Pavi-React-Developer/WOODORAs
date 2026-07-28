@@ -161,7 +161,8 @@ export const calculateOrderFees = ({ fees = [], subtotal = 0, items = [], state 
 
       if (isAdvance && normalizePaymentMethod(paymentMethod) === 'cod') {
         result.codAdvance += charge;
-        result.appliedFees.push({ name: feeName, amount: charge });
+        // Do NOT push advance payment into appliedFees — it is a payment, not a charge.
+        // It is tracked separately in codAdvance and shown in the Paid row.
       } else {
         const appliedFee = { name: feeName, amount: charge };
         result.extraFeesList.push(appliedFee);

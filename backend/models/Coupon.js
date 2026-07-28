@@ -48,10 +48,7 @@ const couponSchema = new mongoose.Schema({
   },
   remainingCount: {
     type: Number,
-    default: function () {
-      return Math.max(0, Number(this.usageLimit || 0) - Number(this.usageCount || 0));
-    },
-    min: 0,
+    default: null,
   },
   category: {
     type: mongoose.Schema.Types.ObjectId,
@@ -120,14 +117,16 @@ const couponSchema = new mongoose.Schema({
 
 couponSchema.pre('save', function () {
   this.usageCount = Math.max(0, Number(this.usageCount || 0));
+  // Auto-exhaust the coupon when its global usage count reaches the limit
   if (Number(this.usageLimit) > 0) {
-    this.remainingCount = Math.max(0, Number(this.usageLimit || 0) - Number(this.usageCount || 0));
+    this.remainingCount = Math.max(0, Number(this.usageLimit) - Number(this.usageCount));
     if (this.remainingCount === 0 && this.status === 'active') {
       this.status = 'exhausted';
     } else if (this.remainingCount > 0 && this.status === 'exhausted') {
       this.status = 'active';
     }
   } else {
+    // usageLimit = 0 means unlimited — always keep active unless admin set inactive
     this.remainingCount = null;
     if (this.status === 'exhausted') {
       this.status = 'active';

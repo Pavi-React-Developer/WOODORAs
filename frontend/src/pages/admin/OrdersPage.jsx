@@ -475,59 +475,6 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                 <div className="mt-6 rounded-3xl bg-[#F8F4EC] p-6">
                   <h4 className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-wider">Payment Summary</h4>
                   <OrderPricingSummary order={selectedOrder} />
-                  {false && <>
-                  <div className="space-y-3 text-sm mb-6 border-b border-[#E6DFD4] pb-6">
-                    <div className="flex justify-between text-gray-600">
-                      <span>Subtotal</span>
-                      <span className="text-gray-900 font-medium">₹{selectedOrder.itemsPrice?.toLocaleString() ?? ((selectedOrder.totalPrice || 0) - (selectedOrder.shippingPrice||0)).toLocaleString()}</span>
-                    </div>
-
-                    {selectedOrder.shippingPrice > 0 && !selectedOrder.fees?.some(f => f.isWeightFee) && (
-                      <div className="flex justify-between text-gray-600">
-                        <span>Weight Charge ({(selectedOrder.orderItems?.reduce((acc, item) => acc + (parseFloat(item.weight) || 0) * (parseInt(item.qty) || 1), 0)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 3 })} kg)</span>
-                        <span className="text-gray-900 font-medium">₹{(selectedOrder.shippingPrice || 0).toLocaleString()}</span>
-                      </div>
-                    )}
-
-                    {selectedOrder.fees && selectedOrder.fees.length > 0 && (
-                      selectedOrder.fees
-                        .filter(fee => !fee.name.toLowerCase().includes('advance'))
-                        .map((fee, idx) => (
-                          <div key={idx} className="flex justify-between text-gray-600">
-                            <span>{fee.name} {fee.isWeightFee ? `(${(selectedOrder.orderItems?.reduce((acc, item) => acc + (parseFloat(item.weight) || 0) * (parseInt(item.qty) || 1), 0)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 3 })} kg)` : ''}</span>
-                            <span className="text-gray-900 font-medium">₹{(fee.amount || 0).toLocaleString()}</span>
-                          </div>
-                        ))
-                    )}
-
-                    <div className="flex justify-between font-bold text-gray-800 pt-2 border-t border-[#E6DFD4]/50">
-                      <span>Order Total</span>
-                      <span>₹{(selectedOrder.totalPrice || 0).toLocaleString()}</span>
-                    </div>
-                  </div>
-
-                  {(selectedOrder.codAdvance > 0 || selectedOrder.paymentMethod === 'COD') ? (
-                    <>
-                      <div className="flex justify-between text-[#8B5E3C] font-bold mb-2 text-sm">
-                        <span>Advance to Pay Now</span>
-                        <span>₹{(selectedOrder.codAdvance || 0).toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between text-gray-600 mb-6 font-medium text-sm">
-                        <span>Balance to Pay on Delivery</span>
-                        <span>₹{(selectedOrder.balanceAmount || 0).toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between items-end">
-                        <span className="text-lg font-bold text-gray-900">Total Paid</span>
-                        <span className="text-2xl font-black text-[#8B5E3C]">₹{(selectedOrder.codAdvance || 0).toLocaleString()}</span>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="flex justify-between items-end">
-                      <span className="text-lg font-bold text-gray-900">Total Paid</span>
-                      <span className="text-2xl font-black text-[#8B5E3C]">₹{(selectedOrder.totalPrice || 0).toLocaleString()}</span>
-                    </div>
-                  )}
-                  </>}
                 </div>
               </div>
 
@@ -722,58 +669,6 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
               {/* Order Totals Summary */}
               <div className="mt-4 rounded-3xl bg-[#F8F4EC] p-4">
                 <OrderPricingSummary order={selectedOrder} />
-              </div>
-              <div className="hidden mt-4 rounded-3xl bg-[#F8F4EC] p-4 flex flex-wrap gap-6 overflow-x-auto">
-                <div className="min-w-30">
-                  <p className="text-xs uppercase tracking-widest text-gray-500">Subtotal</p>
-                  <p className="mt-2 font-semibold text-gray-900">₹{selectedOrder.itemsPrice?.toLocaleString() ?? (selectedOrder.totalPrice - (selectedOrder.shippingPrice||0)).toLocaleString()}</p>
-                </div>
-                
-                {selectedOrder.fees && selectedOrder.fees.length > 0 ? (
-                  selectedOrder.fees
-                    .filter(fee => !(selectedOrder.paymentMethod === 'COD' && fee.name.toLowerCase() === 'advance'))
-                    .map((fee, idx) => (
-                      <div key={idx} className="min-w-30">
-                        <p className="text-xs uppercase tracking-widest text-gray-500">{fee.name}</p>
-                        <p className="mt-2 font-semibold text-gray-900">₹{(fee.amount || 0).toLocaleString()}</p>
-                      </div>
-                    ))
-                ) : (
-                  selectedOrder.shippingPrice > 0 && (
-                    <div className="min-w-30">
-                      <p className="text-xs uppercase tracking-widest text-gray-500">Weight Charge</p>
-                      <p className="mt-2 font-semibold text-gray-900">₹{(selectedOrder.shippingPrice || 0).toLocaleString()}</p>
-                    </div>
-                  )
-                )}
-
-                {(selectedOrder.codAdvance > 0 || selectedOrder.paymentMethod === 'COD') && (
-                  <>
-                    <div className="min-w-30">
-                      <p className="text-xs uppercase tracking-widest text-gray-500">Advance (Paid)</p>
-                      <p className="mt-2 font-semibold text-gray-900">₹{(selectedOrder.codAdvance || 0).toLocaleString()}</p>
-                    </div>
-                    <div className="min-w-30">
-                      <p className="text-xs uppercase tracking-widest text-gray-500">Balance Amount</p>
-                      <p className="mt-2 font-semibold text-gray-900">₹{(selectedOrder.balanceAmount || 0).toLocaleString()}</p>
-                    </div>
-                  </>
-                )}
-                
-                {selectedOrder.paymentMethod !== 'COD' && (
-                    <div className="min-w-30">
-                      <p className="text-xs uppercase tracking-widest text-gray-500">Total Paid</p>
-                      <p className="mt-2 font-semibold text-gray-900">₹{(
-                        (selectedOrder.itemsPrice ?? (selectedOrder.totalPrice - (selectedOrder.shippingPrice||0))) +
-                        (selectedOrder.fees && selectedOrder.fees.length > 0
-                          ? selectedOrder.fees
-                              .filter(fee => !(selectedOrder.paymentMethod === 'COD' && fee.name.toLowerCase() === 'advance'))
-                              .reduce((sum, f) => sum + f.amount, 0)
-                          : (selectedOrder.shippingPrice || 0)
-                        )
-                      ).toLocaleString()}</p>
-                    </div>
-                )}
               </div>
 
               <hr className="border-[#E6DFD4]" />

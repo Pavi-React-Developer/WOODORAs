@@ -46,8 +46,8 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
   const exportFeesExcel = () => {
     const header = ['Fee Name', 'Category', 'Fee Type', 'Payment Method', 'State', 'Weight Limits / Amount', 'Status'];
     const rows = fees.map((fee) => [
-      fee.name || '',
-      fee.category?.name || '',
+      fee.feeName || '',
+      fee.feeCategory?.name || '',
       fee.feeType || '',
       fee.paymentMethod || '',
       fee.state || 'All States',
@@ -75,7 +75,7 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
     }
     if (categoryFilter) {
       result = result.filter(f => {
-        const catId = typeof f.category === 'object' ? f.category?._id : f.category;
+        const catId = typeof f.feeCategory === 'object' ? f.feeCategory?._id : f.feeCategory;
         return catId === categoryFilter;
       });
     }

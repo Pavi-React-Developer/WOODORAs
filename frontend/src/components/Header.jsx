@@ -221,10 +221,12 @@ export default function Header({
                       Admin Dashboard
                     </button>
                   )}
-                  <button type="button" onClick={() => { onNavigate('/profile'); setDropdownOpen(false); }} className="flex w-full items-center gap-3 px-5 py-3 text-left text-[15px] text-[#4A403B] hover:bg-[#FAF4EF] transition-colors">
-                    <User className="h-[18px] w-[18px] text-[#6D625C]" />
-                    Profile & Dashboard
-                  </button>
+                  {user.role !== 'admin' && (
+                    <button type="button" onClick={() => { onNavigate('/profile'); setDropdownOpen(false); }} className="flex w-full items-center gap-3 px-5 py-3 text-left text-[15px] text-[#4A403B] hover:bg-[#FAF4EF] transition-colors">
+                      <User className="h-[18px] w-[18px] text-[#6D625C]" />
+                      Profile & Dashboard
+                    </button>
+                  )}
                 </div>
                 <div className="border-t border-[#EFE6DD] py-2">
                   <button type="button" onClick={() => { onLogout(); setDropdownOpen(false); }} className="flex w-full items-center gap-3 px-5 py-3 text-left text-[15px] font-semibold text-[#DC2626] hover:bg-red-50 transition-colors">
@@ -411,10 +413,12 @@ export default function Header({
                       Admin Dashboard
                     </button>
                   )}
-                  <button type="button" onClick={() => { onNavigate('/profile'); setDropdownOpen(false); }} className="flex w-full items-center gap-3 px-5 py-3 text-left text-[15px] text-[#4A403B] hover:bg-[#FAF4EF] transition-colors">
-                    <User className="h-[18px] w-[18px] text-[#6D625C]" />
-                    Profile & Dashboard
-                  </button>
+                  {user.role !== 'admin' && (
+                    <button type="button" onClick={() => { onNavigate('/profile'); setDropdownOpen(false); }} className="flex w-full items-center gap-3 px-5 py-3 text-left text-[15px] text-[#4A403B] hover:bg-[#FAF4EF] transition-colors">
+                      <User className="h-[18px] w-[18px] text-[#6D625C]" />
+                      Profile & Dashboard
+                    </button>
+                  )}
                 </div>
                 <div className="border-t border-[#EFE6DD] py-2">
                   <button type="button" onClick={() => { onLogout(); setDropdownOpen(false); }} className="flex w-full items-center gap-3 px-5 py-3 text-left text-[15px] font-semibold text-[#DC2626] hover:bg-red-50 transition-colors">
@@ -599,10 +603,12 @@ export default function Header({
                       Admin Dashboard
                     </button>
                   )}
-                  <button type="button" onClick={() => { onNavigate('/profile'); setDropdownOpen(false); }} className="flex w-full items-center gap-3 px-5 py-3 text-left text-[15px] text-[#4A403B] hover:bg-[#FAF4EF] transition-colors">
-                    <User className="h-[18px] w-[18px] text-[#6D625C]" />
-                    Profile & Dashboard
-                  </button>
+                  {user.role !== 'admin' && (
+                    <button type="button" onClick={() => { onNavigate('/profile'); setDropdownOpen(false); }} className="flex w-full items-center gap-3 px-5 py-3 text-left text-[15px] text-[#4A403B] hover:bg-[#FAF4EF] transition-colors">
+                      <User className="h-[18px] w-[18px] text-[#6D625C]" />
+                      Profile & Dashboard
+                    </button>
+                  )}
                 </div>
                 <div className="border-t border-[#EFE6DD] py-2">
                   <button type="button" onClick={() => { onLogout(); setDropdownOpen(false); }} className="flex w-full items-center gap-3 px-5 py-3 text-left text-[15px] font-semibold text-[#DC2626] hover:bg-red-50 transition-colors">

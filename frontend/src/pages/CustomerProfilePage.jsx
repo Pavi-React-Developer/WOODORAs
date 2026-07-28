@@ -50,6 +50,7 @@ import useCartStore from '../store/useCartStore';
 import useAddressStore from '../store/useAddressStore';
 import WriteReviewModal from '../components/WriteReviewModal';
 import CustomerAddressManager from '../components/CustomerAddressManager';
+import OrderPricingSummary from '../components/OrderPricingSummary';
 
 const getProductName = (details) => {
   if (!details) return 'Custom Order';
@@ -1542,42 +1543,7 @@ export default function CustomerProfilePage({
 
           <div className="rounded-[14px] border border-[#E9DED3] bg-white p-5">
             <h3 className="font-bold text-[#141225] mb-4">Payment Summary</h3>
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-[#6D625C]">Items Total</span>
-                <span className="font-semibold text-[#141225]">Rs. {Number(activeOrder.itemsPrice || 0).toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[#6D625C]">Shipping</span>
-                <span className="font-semibold text-[#141225]">{Number(activeOrder.shippingPrice) === 0 ? 'Free' : `Rs. ${Number(activeOrder.shippingPrice).toLocaleString()}`}</span>
-              </div>
-              {activeOrder.taxPrice > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-[#6D625C]">Tax</span>
-                  <span className="font-semibold text-[#141225]">Rs. {Number(activeOrder.taxPrice).toLocaleString()}</span>
-                </div>
-              )}
-              {activeOrder.fees?.map((fee, idx) => (
-                <div key={idx} className="flex justify-between">
-                  <span className="text-[#6D625C]">{fee.name}</span>
-                  <span className="font-semibold text-[#141225]">Rs. {Number(fee.amount).toLocaleString()}</span>
-                </div>
-              ))}
-              <div className="border-t border-[#E9DED3] pt-3 mt-2 flex justify-between text-[15px]">
-                <span className="font-bold text-[#141225]">Total Amount</span>
-                <span className="font-black text-[#9A6031]">Rs. {Number(activeOrder.totalPrice || 0).toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-[15px]">
-                <span className="font-bold text-emerald-600">Paid ({activeOrder.paymentMethod})</span>
-                <span className="font-bold text-emerald-600">Rs. {Number(activeOrder.paymentMethod === 'COD' ? (activeOrder.codAdvance || 200) : activeOrder.totalPrice).toLocaleString()}</span>
-              </div>
-              {activeOrder.paymentMethod === 'COD' && (
-                <div className="flex justify-between border-t border-[#E9DED3] pt-3 mt-1 text-[15px]">
-                  <span className="font-bold text-red-500">Balance to Pay (at delivery)</span>
-                  <span className="font-black text-red-500">Rs. {Number(activeOrder.balanceAmount || Math.max(0, activeOrder.totalPrice - (activeOrder.codAdvance || 200))).toLocaleString()}</span>
-                </div>
-              )}
-            </div>
+            <OrderPricingSummary order={activeOrder} />
           </div>
 
           <div className="rounded-[14px] border border-[#E9DED3] bg-white p-5">

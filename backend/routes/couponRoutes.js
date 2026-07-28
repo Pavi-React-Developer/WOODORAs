@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const couponController = require('../controllers/couponController');
-const { protect, authorize } = require('../middleware/authMiddleware');
+const { protect, authorize, optionalAuth } = require('../middleware/authMiddleware');
 
-router.get('/eligible', couponController.getEligibleCoupons);
-router.post('/eligible', couponController.getEligibleCoupons);
-router.post('/apply', couponController.applyCoupon);
+router.get('/eligible', optionalAuth, couponController.getEligibleCoupons);
+router.post('/eligible', optionalAuth, couponController.getEligibleCoupons);
+router.post('/apply', optionalAuth, couponController.applyCoupon);
 
 router.use(protect);
 

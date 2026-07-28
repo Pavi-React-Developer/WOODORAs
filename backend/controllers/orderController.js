@@ -44,9 +44,17 @@ const buildPricingSnapshot = ({ pricing = {}, subtotal, discountAmount, fees, sh
     platform_fee: amount(pricing.platform_fee ?? pricing.platformFee ?? feeAmount(fees, 'platform', 'plaftform')),
     advance_payment: amount(pricing.advance_payment ?? pricing.advancePayment ?? codAdvance),
   };
-  snapshot.total_amount = Math.max(0, snapshot.subtotal - snapshot.coupon_discount
-    + snapshot.product_fee + snapshot.gift_fee + snapshot.shipping_fee
-    + snapshot.weight_fee + snapshot.platform_fee);
+  const ADVANCE_KEYWORDS = ['advance', 'advance payment', 'cod advance'];
+  const isAdvanceFee = (name) => ADVANCE_KEYWORDS.some(kw => String(name || '').toLowerCase().includes(kw));
+
+  // Advance-payment is a payment, not an additional charge — exclude it from the order total.
+  const billableFees = (Array.isArray(fees) ? fees : []).filter(fee => !isAdvanceFee(fee.name));
+  const dynamicFeesTotal = billableFees.reduce((sum, fee) => sum + amount(fee.amount), 0);
+  const totalFees = dynamicFeesTotal > 0
+    ? dynamicFeesTotal
+    : (snapshot.product_fee + snapshot.gift_fee + snapshot.shipping_fee + snapshot.weight_fee + snapshot.platform_fee);
+
+  snapshot.total_amount = Math.max(0, snapshot.subtotal - snapshot.coupon_discount + totalFees);
   snapshot.paid_amount = paymentMethod === 'COD' ? Math.min(snapshot.advance_payment, snapshot.total_amount) : 0;
   snapshot.balance_amount = Math.max(0, snapshot.total_amount - snapshot.paid_amount);
   return snapshot;
@@ -199,6 +207,12 @@ const addOrderItems = async (req, res) => {
           const found = await Coupon.findOne({ couponCode: normalized, deleted: false });
           if (found) {
             order.coupon = found._id;
+            // For COD orders: consume coupon immediately since payment is deferred.
+            // For Cashfree orders: coupon is consumed in the payment callback after verification.
+            if (req.body.paymentMethod === 'COD') {
+              found.usageCount = (Number(found.usageCount) || 0) + 1;
+              await found.save();
+            }
           }
         } catch (err) {
           console.error('Failed to link coupon to order:', err.message || err);
