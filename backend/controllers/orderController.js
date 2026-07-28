@@ -15,6 +15,43 @@ const normalizeDeliveryDate = (value) => {
   return Number.isNaN(date.getTime()) ? undefined : date;
 };
 
+const amount = (value) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+};
+
+const feeAmount = (fees, ...tokens) => (Array.isArray(fees) ? fees : [])
+  .filter((fee) => {
+    const feeName = String(fee.name || '').toLowerCase();
+    return tokens.some(token => feeName.includes(token));
+  })
+  .reduce((sum, fee) => sum + amount(fee.amount), 0);
+
+// The checkout sends one pricing snapshot.  We only derive its total from its
+// components, never from current fee rules, so the saved order is immutable.
+const buildPricingSnapshot = ({ pricing = {}, subtotal, discountAmount, fees, shippingPrice, codAdvance, paymentMethod }) => {
+  const weightFee = amount(pricing.weight_fee ?? pricing.weightFee ?? shippingPrice);
+  // A weight fee is this storefront's shipping charge. Never store/add the
+  // same charge in both fields, even if an older client sends both values.
+  const shippingFee = weightFee > 0 ? 0 : amount(pricing.shipping_fee ?? pricing.shippingFee);
+  const snapshot = {
+    subtotal: amount(pricing.subtotal ?? subtotal),
+    coupon_discount: amount(pricing.coupon_discount ?? pricing.couponDiscount ?? discountAmount),
+    product_fee: amount(pricing.product_fee ?? pricing.productFee ?? feeAmount(fees, 'product')),
+    gift_fee: amount(pricing.gift_fee ?? pricing.giftFee ?? feeAmount(fees, 'gift')),
+    shipping_fee: shippingFee,
+    weight_fee: weightFee,
+    platform_fee: amount(pricing.platform_fee ?? pricing.platformFee ?? feeAmount(fees, 'platform', 'plaftform')),
+    advance_payment: amount(pricing.advance_payment ?? pricing.advancePayment ?? codAdvance),
+  };
+  snapshot.total_amount = Math.max(0, snapshot.subtotal - snapshot.coupon_discount
+    + snapshot.product_fee + snapshot.gift_fee + snapshot.shipping_fee
+    + snapshot.weight_fee + snapshot.platform_fee);
+  snapshot.paid_amount = paymentMethod === 'COD' ? Math.min(snapshot.advance_payment, snapshot.total_amount) : 0;
+  snapshot.balance_amount = Math.max(0, snapshot.total_amount - snapshot.paid_amount);
+  return snapshot;
+};
+
 const updateVariantStock = async (variantId, qty, type) => {
   if (!variantId) return;
   try {
@@ -107,35 +144,51 @@ const addOrderItems = async (req, res) => {
         paymentMethod,
       });
 
-      const extraChargeSum = feeSummary.extraFeesList.reduce((sum, fee) => sum + fee.amount, 0);
-      const calculatedTotalPrice = subtotal + feeSummary.shippingCharge + extraChargeSum;
-      const calculatedBalanceAmount = paymentMethod === 'COD' && feeSummary.codAdvance > 0
-        ? calculatedTotalPrice - feeSummary.codAdvance
-        : 0;
+      const resolvedFees = Array.isArray(fees) && fees.length > 0 ? fees : feeSummary.appliedFees;
+      const pricing = buildPricingSnapshot({
+        pricing: req.body.pricing,
+        subtotal,
+        discountAmount: req.body.discountAmount,
+        fees: resolvedFees,
+        shippingPrice: feeSummary.shippingCharge,
+        codAdvance: feeSummary.codAdvance,
+        paymentMethod,
+      });
+      console.debug('[order pricing]', {
+        subtotal: pricing.subtotal,
+        coupon_discount: pricing.coupon_discount,
+        product_fee: pricing.product_fee,
+        gift_fee: pricing.gift_fee,
+        shipping_fee: pricing.shipping_fee,
+        weight_fee: pricing.weight_fee,
+        platform_fee: pricing.platform_fee,
+        calculated_grand_total: pricing.total_amount,
+      });
 
       const order = new Order({
         orderItems,
         user: req.user._id,
         shippingAddress,
         paymentMethod,
-        itemsPrice: subtotal,
+        itemsPrice: pricing.subtotal,
         taxPrice,
-        shippingPrice: feeSummary.shippingCharge,
-        totalPrice: calculatedTotalPrice,
-        codAdvance: feeSummary.codAdvance,
-        balanceAmount: calculatedBalanceAmount,
+        shippingPrice: pricing.shipping_fee + pricing.weight_fee,
+        totalPrice: pricing.total_amount,
+        codAdvance: pricing.advance_payment,
+        balanceAmount: pricing.balance_amount,
         orderNotes,
-        fees: feeSummary.appliedFees.length > 0 ? feeSummary.appliedFees : (Array.isArray(fees) ? fees : []),
+        fees: resolvedFees,
         couponCode: req.body.couponCode || null,
-        discountAmount: Number(req.body.discountAmount || 0),
+        discountAmount: pricing.coupon_discount,
         coupon: null,
         isGiftOrder: isGiftOrder || false,
         giftMessage: giftMessage ?? giftOrderItem?.giftMessage ?? '',
         giftMessageStyle: giftMessageStyle ?? giftOrderItem?.giftMessageStyle ?? 'Classic',
         deliveryDate: normalizedDeliveryDate,
         scheduledDeliveryDate: normalizedDeliveryDate,
-        giftWrapFee: giftWrapFee || 0,
-        giftWrapping: req.body.giftWrapping || { enabled: false }
+        giftWrapFee: pricing.gift_fee || giftWrapFee || 0,
+        giftWrapping: req.body.giftWrapping || { enabled: false },
+        ...pricing,
       });
 
       // If a couponCode was provided, attempt to link the coupon ObjectId for stronger referential integrity
@@ -153,6 +206,16 @@ const addOrderItems = async (req, res) => {
       }
 
       const createdOrder = await order.save();
+      console.debug('[order pricing saved]', {
+        subtotal: createdOrder.subtotal,
+        coupon_discount: createdOrder.coupon_discount,
+        product_fee: createdOrder.product_fee,
+        gift_fee: createdOrder.gift_fee,
+        platform_fee: createdOrder.platform_fee,
+        shipping_fee: createdOrder.shipping_fee,
+        weight_fee: createdOrder.weight_fee,
+        grand_total: createdOrder.total_amount,
+      });
 
       // Reserve stock when order is placed
       for (const item of createdOrder.orderItems) {
@@ -214,7 +277,11 @@ const updateOrderToPaid = async (req, res) => {
     const order = await Order.findById(req.params.id);
 
     if (order) {
-      order.isPaid = true;
+      const totalAmount = Number(order.total_amount || order.totalPrice || 0);
+      const advancePayment = Number(order.advance_payment || order.codAdvance || 0);
+      const isCodAdvancePayment = order.paymentMethod === 'COD';
+      const paidAmount = isCodAdvancePayment ? Math.min(advancePayment, totalAmount) : totalAmount;
+      order.isPaid = !isCodAdvancePayment || paidAmount >= totalAmount;
       order.paidAt = Date.now();
       order.paymentResult = {
         id: req.body.id,
@@ -223,6 +290,9 @@ const updateOrderToPaid = async (req, res) => {
         email_address: req.body.email_address,
       };
       order.status = 'Packed';
+      order.paid_amount = paidAmount;
+      order.balance_amount = Math.max(0, totalAmount - paidAmount);
+      order.balanceAmount = order.balance_amount;
 
       const updatedOrder = await order.save();
       // If order had a coupon applied, consume it now (increment usageCount)
@@ -309,6 +379,9 @@ const updateOrderStatus = async (req, res) => {
       if (order.paymentMethod === 'COD' && !order.isPaid) {
         order.isPaid = true;
         order.paidAt = Date.now();
+        order.paid_amount = order.total_amount || order.totalPrice || 0;
+        order.balance_amount = 0;
+        order.balanceAmount = 0;
       }
 
       // Deduct stock when delivered
@@ -368,6 +441,9 @@ const updateOrderToDelivered = async (req, res) => {
     if (order.paymentMethod === 'COD' && !order.isPaid) {
       order.isPaid = true;
       order.paidAt = Date.now();
+      order.paid_amount = order.total_amount || order.totalPrice || 0;
+      order.balance_amount = 0;
+      order.balanceAmount = 0;
     }
 
     const updatedOrder = await order.save();

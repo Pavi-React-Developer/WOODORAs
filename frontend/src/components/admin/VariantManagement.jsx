@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Layers, ChevronDown, ChevronRight } from 'lucide-react';
 import { Button } from './CommonComponents';
 import ImageUploader from './ImageUploader';
@@ -26,8 +26,14 @@ export const VariantManagement = ({
     const [bulkPrice, setBulkPrice] = useState('');
     const [bulkInventory, setBulkInventory] = useState('');
 
+    const variantsRef = useRef(variants);
+    useEffect(() => {
+        variantsRef.current = variants;
+    }, [variants]);
+
     // Re-generate combinations based on attributeValues
     useEffect(() => {
+        const currentVariants = variantsRef.current;
         if (!mappedAttributes.length) return;
         
         const variantAttrs = mappedAttributes.filter(m => m.attribute?.isVariant);
@@ -56,7 +62,7 @@ export const VariantManagement = ({
         });
 
         if (optionsByAttr.length === 0) {
-            if (variants.length > 0) {
+            if (currentVariants.length > 0) {
                 onChange([]);
             }
             return;
@@ -75,7 +81,7 @@ export const VariantManagement = ({
         const newVariants = combinations.map((combo, idx) => {
             const comboString = combo.map(c => c.value).join('-');
             
-            const existing = variants.find(v => v.variantCombination === comboString);
+            const existing = currentVariants.find(v => v.variantCombination === comboString);
             
             if (existing) {
                 const vol = (Number(existing.length) || 0) * (Number(existing.width) || 0) * (Number(existing.height) || 0);
@@ -115,7 +121,7 @@ export const VariantManagement = ({
         });
 
         const newCombos = new Set(newVariants.map(v => v.variantCombination));
-        const removedVariants = variants.filter(v => !newCombos.has(v.variantCombination));
+        const removedVariants = currentVariants.filter(v => !newCombos.has(v.variantCombination));
         
         if (removedVariants.length > 0) {
             const confirm = window.confirm(`You unselected options which removes ${removedVariants.length} variant(s). Are you sure?`);
@@ -131,16 +137,17 @@ export const VariantManagement = ({
     }, [attributeValues, mappedAttributes, baseSku, basePrice, baseCostPrice, baseWeight]);
 
     const handleFieldChange = (index, field, value) => {
-        const updated = [...variants];
-        updated[index] = { ...updated[index], [field]: value };
-        
-        if (['length', 'width', 'height'].includes(field)) {
-            const v = updated[index];
-            const vol = (Number(v.length) || 0) * (Number(v.width) || 0) * (Number(v.height) || 0);
-            updated[index].volume = vol > 0 ? Number(vol.toFixed(2)) : 0;
-        }
-        
-        onChange(updated);
+        onChange(prevVariants => {
+            const updated = [...prevVariants];
+            updated[index] = { ...updated[index], [field]: value };
+            
+            if (['length', 'width', 'height'].includes(field)) {
+                const v = updated[index];
+                const vol = (Number(v.length) || 0) * (Number(v.width) || 0) * (Number(v.height) || 0);
+                updated[index].volume = vol > 0 ? Number(vol.toFixed(2)) : 0;
+            }
+            return updated;
+        });
     };
 
     const getDiscountPercentage = (variant) => {
@@ -152,8 +159,7 @@ export const VariantManagement = ({
 
     const handleBulkApply = (field, val) => {
         if (val === '') return;
-        const updated = variants.map(v => ({ ...v, [field]: Number(val) }));
-        onChange(updated);
+        onChange(prevVariants => prevVariants.map(v => ({ ...v, [field]: Number(val) })));
     };
 
     const toggleRow = (idx) => {
@@ -250,7 +256,7 @@ export const VariantManagement = ({
                                             <td className="px-4 py-3">
                                                 <input
                                                     type="number"
-                                                    value={variant.basePrice}
+                                                    value={variant.basePrice ?? ''}
                                                     onChange={(e) => handleFieldChange(idx, 'basePrice', e.target.value)}
                                                     className="w-full px-2 py-1.5 border border-gray-200 rounded text-xs focus:ring-1 focus:ring-amber-500"
                                                 />
@@ -258,7 +264,7 @@ export const VariantManagement = ({
                                             <td className="px-4 py-3">
                                                 <input
                                                     type="number"
-                                                    value={variant.inventory}
+                                                    value={variant.inventory ?? ''}
                                                     onChange={(e) => handleFieldChange(idx, 'inventory', e.target.value)}
                                                     className="w-full px-2 py-1.5 border border-gray-200 rounded text-xs focus:ring-1 focus:ring-amber-500"
                                                 />
@@ -282,15 +288,15 @@ export const VariantManagement = ({
                                                         <div className="space-y-4">
                                                             <h4 className="text-sm font-bold text-gray-900 border-b pb-2">Pricing & Logistics</h4>
                                                             <div className="grid grid-cols-2 gap-4">
-                                                                <div className="flex flex-col gap-1"><span className="text-xs text-gray-500">Discount Price</span><input type="number" value={variant.discountPrice || ''} onChange={e => handleFieldChange(idx, 'discountPrice', e.target.value)} className="p-2 border rounded text-sm"/></div>
+                                                                <div className="flex flex-col gap-1"><span className="text-xs text-gray-500">Discount Price</span><input type="number" value={variant.discountPrice ?? ''} onChange={e => handleFieldChange(idx, 'discountPrice', e.target.value)} className="p-2 border rounded text-sm"/></div>
                                                                 <div className="flex flex-col gap-1"><span className="text-xs text-gray-500">Discount %</span><input type="text" value={getDiscountPercentage(variant)} readOnly className="p-2 border rounded text-sm bg-slate-50 text-slate-700"/></div>
-                                                                <div className="flex flex-col gap-1"><span className="text-xs text-gray-500">Barcode</span><input type="text" value={variant.barcode || ''} onChange={e => handleFieldChange(idx, 'barcode', e.target.value)} className="p-2 border rounded text-sm"/></div>
-                                                                <div className="flex flex-col gap-1"><span className="text-xs text-gray-500">Weight (kg)</span><input type="number" step="0.0001" min="0" value={variant.weight || ''} onChange={e => handleFieldChange(idx, 'weight', e.target.value)} onBlur={e => handleFieldChange(idx, 'weight', formatWeightInput(e.target.value))} className="p-2 border rounded text-sm"/></div>
-                                                                <div className="flex flex-col gap-1"><span className="text-xs text-gray-500">Length (cm)</span><input type="number" value={variant.length || ''} onChange={e => handleFieldChange(idx, 'length', e.target.value)} className="p-2 border rounded text-sm"/></div>
-                                                                <div className="flex flex-col gap-1"><span className="text-xs text-gray-500">Width (cm)</span><input type="number" value={variant.width || ''} onChange={e => handleFieldChange(idx, 'width', e.target.value)} className="p-2 border rounded text-sm"/></div>
-                                                                <div className="flex flex-col gap-1"><span className="text-xs text-gray-500">Height (cm)</span><input type="number" value={variant.height || ''} onChange={e => handleFieldChange(idx, 'height', e.target.value)} className="p-2 border rounded text-sm"/></div>
-                                                                <div className="flex flex-col gap-1"><span className="text-xs text-gray-500">Volume (cm³)</span><input type="text" value={variant.volume || 0} readOnly className="p-2 border rounded text-sm bg-slate-50 text-slate-700"/></div>
-                                                                <div className="flex flex-col gap-1"><span className="text-xs text-gray-500">Low Stock Alert</span><input type="number" value={variant.lowStockAlert !== undefined ? variant.lowStockAlert : ''} onChange={e => handleFieldChange(idx, 'lowStockAlert', e.target.value)} className="p-2 border rounded text-sm"/></div>
+                                                                <div className="flex flex-col gap-1"><span className="text-xs text-gray-500">Barcode</span><input type="text" value={variant.barcode ?? ''} onChange={e => handleFieldChange(idx, 'barcode', e.target.value)} className="p-2 border rounded text-sm"/></div>
+                                                                <div className="flex flex-col gap-1"><span className="text-xs text-gray-500">Weight (kg)</span><input type="number" step="0.0001" min="0" value={variant.weight ?? ''} onChange={e => handleFieldChange(idx, 'weight', e.target.value)} onBlur={e => handleFieldChange(idx, 'weight', formatWeightInput(e.target.value))} className="p-2 border rounded text-sm"/></div>
+                                                                <div className="flex flex-col gap-1"><span className="text-xs text-gray-500">Length (cm)</span><input type="number" value={variant.length ?? ''} onChange={e => handleFieldChange(idx, 'length', e.target.value)} className="p-2 border rounded text-sm"/></div>
+                                                                <div className="flex flex-col gap-1"><span className="text-xs text-gray-500">Width (cm)</span><input type="number" value={variant.width ?? ''} onChange={e => handleFieldChange(idx, 'width', e.target.value)} className="p-2 border rounded text-sm"/></div>
+                                                                <div className="flex flex-col gap-1"><span className="text-xs text-gray-500">Height (cm)</span><input type="number" value={variant.height ?? ''} onChange={e => handleFieldChange(idx, 'height', e.target.value)} className="p-2 border rounded text-sm"/></div>
+                                                                <div className="flex flex-col gap-1"><span className="text-xs text-gray-500">Volume (cm³)</span><input type="text" value={variant.volume ?? 0} readOnly className="p-2 border rounded text-sm bg-slate-50 text-slate-700"/></div>
+                                                                <div className="flex flex-col gap-1"><span className="text-xs text-gray-500">Low Stock Alert</span><input type="number" value={variant.lowStockAlert ?? ''} onChange={e => handleFieldChange(idx, 'lowStockAlert', e.target.value)} className="p-2 border rounded text-sm"/></div>
                                                             </div>
                                                         </div>
                                                         <div className="space-y-4">
@@ -337,11 +343,11 @@ export const VariantManagement = ({
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="flex flex-col gap-1">
                                             <label className="text-xs text-gray-500">Base Price</label>
-                                            <input type="number" value={variant.basePrice} onChange={e => handleFieldChange(idx, 'basePrice', e.target.value)} className="p-2 border rounded text-sm focus:ring-1 focus:ring-amber-500 focus:outline-none"/>
+                                            <input type="number" value={variant.basePrice ?? ''} onChange={e => handleFieldChange(idx, 'basePrice', e.target.value)} className="p-2 border rounded text-sm focus:ring-1 focus:ring-amber-500 focus:outline-none"/>
                                         </div>
                                         <div className="flex flex-col gap-1">
                                             <label className="text-xs text-gray-500">Discount Price</label>
-                                            <input type="number" value={variant.discountPrice || ''} onChange={e => handleFieldChange(idx, 'discountPrice', e.target.value)} className="p-2 border rounded text-sm focus:ring-1 focus:ring-amber-500 focus:outline-none"/>
+                                            <input type="number" value={variant.discountPrice ?? ''} onChange={e => handleFieldChange(idx, 'discountPrice', e.target.value)} className="p-2 border rounded text-sm focus:ring-1 focus:ring-amber-500 focus:outline-none"/>
                                         </div>
                                         <div className="flex flex-col gap-1">
                                             <label className="text-xs text-gray-500">Discount %</label>
@@ -349,39 +355,39 @@ export const VariantManagement = ({
                                         </div>
                                         <div className="flex flex-col gap-1">
                                             <label className="text-xs text-gray-500">Inventory</label>
-                                            <input type="number" value={variant.inventory} onChange={e => handleFieldChange(idx, 'inventory', e.target.value)} className="p-2 border rounded text-sm focus:ring-1 focus:ring-amber-500 focus:outline-none"/>
+                                            <input type="number" value={variant.inventory ?? ''} onChange={e => handleFieldChange(idx, 'inventory', e.target.value)} className="p-2 border rounded text-sm focus:ring-1 focus:ring-amber-500 focus:outline-none"/>
                                         </div>
                                         <div className="flex flex-col gap-1">
                                             <label className="text-xs text-gray-500">Low Stock Alert</label>
-                                            <input type="number" value={variant.lowStockAlert !== undefined ? variant.lowStockAlert : ''} onChange={e => handleFieldChange(idx, 'lowStockAlert', e.target.value)} className="p-2 border rounded text-sm focus:ring-1 focus:ring-amber-500 focus:outline-none"/>
+                                            <input type="number" value={variant.lowStockAlert ?? ''} onChange={e => handleFieldChange(idx, 'lowStockAlert', e.target.value)} className="p-2 border rounded text-sm focus:ring-1 focus:ring-amber-500 focus:outline-none"/>
                                         </div>
                                         <div className="flex flex-col gap-1">
                                             <label className="text-xs text-gray-500">SKU</label>
-                                            <input type="text" value={variant.sku} onChange={e => handleFieldChange(idx, 'sku', e.target.value.toUpperCase())} className="p-2 border rounded text-sm font-mono focus:ring-1 focus:ring-amber-500 focus:outline-none"/>
+                                            <input type="text" value={variant.sku ?? ''} onChange={e => handleFieldChange(idx, 'sku', e.target.value.toUpperCase())} className="p-2 border rounded text-sm font-mono focus:ring-1 focus:ring-amber-500 focus:outline-none"/>
                                         </div>
                                         <div className="flex flex-col gap-1">
                                             <label className="text-xs text-gray-500">Barcode</label>
-                                            <input type="text" value={variant.barcode || ''} onChange={e => handleFieldChange(idx, 'barcode', e.target.value)} className="p-2 border rounded text-sm focus:ring-1 focus:ring-amber-500 focus:outline-none"/>
+                                            <input type="text" value={variant.barcode ?? ''} onChange={e => handleFieldChange(idx, 'barcode', e.target.value)} className="p-2 border rounded text-sm focus:ring-1 focus:ring-amber-500 focus:outline-none"/>
                                         </div>
                                         <div className="flex flex-col gap-1">
                                             <label className="text-xs text-gray-500">Weight (kg)</label>
-                                            <input type="number" step="0.0001" min="0" value={variant.weight || ''} onChange={e => handleFieldChange(idx, 'weight', e.target.value)} onBlur={e => handleFieldChange(idx, 'weight', formatWeightInput(e.target.value))} className="p-2 border rounded text-sm focus:ring-1 focus:ring-amber-500 focus:outline-none"/>
+                                            <input type="number" step="0.0001" min="0" value={variant.weight ?? ''} onChange={e => handleFieldChange(idx, 'weight', e.target.value)} onBlur={e => handleFieldChange(idx, 'weight', formatWeightInput(e.target.value))} className="p-2 border rounded text-sm focus:ring-1 focus:ring-amber-500 focus:outline-none"/>
                                         </div>
                                         <div className="flex flex-col gap-1">
                                             <label className="text-xs text-gray-500">Length (cm)</label>
-                                            <input type="number" value={variant.length || ''} onChange={e => handleFieldChange(idx, 'length', e.target.value)} className="p-2 border rounded text-sm focus:ring-1 focus:ring-amber-500 focus:outline-none"/>
+                                            <input type="number" value={variant.length ?? ''} onChange={e => handleFieldChange(idx, 'length', e.target.value)} className="p-2 border rounded text-sm focus:ring-1 focus:ring-amber-500 focus:outline-none"/>
                                         </div>
                                         <div className="flex flex-col gap-1">
                                             <label className="text-xs text-gray-500">Width (cm)</label>
-                                            <input type="number" value={variant.width || ''} onChange={e => handleFieldChange(idx, 'width', e.target.value)} className="p-2 border rounded text-sm focus:ring-1 focus:ring-amber-500 focus:outline-none"/>
+                                            <input type="number" value={variant.width ?? ''} onChange={e => handleFieldChange(idx, 'width', e.target.value)} className="p-2 border rounded text-sm focus:ring-1 focus:ring-amber-500 focus:outline-none"/>
                                         </div>
                                         <div className="flex flex-col gap-1">
                                             <label className="text-xs text-gray-500">Height (cm)</label>
-                                            <input type="number" value={variant.height || ''} onChange={e => handleFieldChange(idx, 'height', e.target.value)} className="p-2 border rounded text-sm focus:ring-1 focus:ring-amber-500 focus:outline-none"/>
+                                            <input type="number" value={variant.height ?? ''} onChange={e => handleFieldChange(idx, 'height', e.target.value)} className="p-2 border rounded text-sm focus:ring-1 focus:ring-amber-500 focus:outline-none"/>
                                         </div>
                                         <div className="flex flex-col gap-1">
                                             <label className="text-xs text-gray-500">Volume (cm³)</label>
-                                            <input type="text" value={variant.volume || 0} readOnly className="p-2 border rounded text-sm bg-slate-50 text-slate-700 focus:outline-none"/>
+                                            <input type="text" value={variant.volume ?? 0} readOnly className="p-2 border rounded text-sm bg-slate-50 text-slate-700 focus:outline-none"/>
                                         </div>
                                     </div>
                                 </div>

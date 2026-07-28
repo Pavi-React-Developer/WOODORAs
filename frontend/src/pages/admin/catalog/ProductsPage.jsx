@@ -903,7 +903,10 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                     </div>
                                     <VariantManagement 
                                         variants={formData.variants}
-                                        onChange={(variants) => setFormData(prev => ({ ...prev, variants }))}
+                                        onChange={(updater) => setFormData(prev => ({ 
+                                            ...prev, 
+                                            variants: typeof updater === 'function' ? updater(prev.variants) : updater 
+                                        }))}
                                         mappedAttributes={mappedAttributes}
                                         attributeValues={formData.attributeValues}
                                         baseSku={formData.sku}

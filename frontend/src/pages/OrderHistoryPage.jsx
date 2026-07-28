@@ -4,6 +4,7 @@ import { ShoppingBag, Loader2, Package, Calendar, MapPin, ExternalLink } from 'l
 import toast from 'react-hot-toast';
 import { API_ORIGIN } from '../api/apiClient';
 import { formatDeliveryDate, getDeliveryDate } from '../utils/deliveryDate';
+import OrderPricingSummary from '../components/OrderPricingSummary';
 
 export default function OrderHistoryPage({ onNavigate }) {
   const [orders, setOrders] = useState([]);
@@ -178,6 +179,9 @@ export default function OrderHistoryPage({ onNavigate }) {
                       </div>
                     </div>
                   )}
+                </div>
+                <div className="px-5 sm:px-8 pb-5 border-t border-[#E6DFD4]/50 pt-4">
+                  <OrderPricingSummary order={order} />
                 </div>
               </div>
             ))}

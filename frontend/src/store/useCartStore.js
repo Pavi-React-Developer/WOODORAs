@@ -24,18 +24,17 @@ const itemMatches = (item, productId, variantId = undefined) => {
 
 /**
  * Calculate the effective stock for a variant object.
- * Supports multiple field names used across your codebase.
  */
 const calcVariantStock = (variant) => {
   if (!variant) return 0;
-  // Support both field-naming conventions
   const total = variant.inventory ?? variant.currentStock ?? variant.stock ?? 0;
   const reserved = variant.reserveStock ?? 0;
   return Math.max(0, Number(total) - Number(reserved));
 };
 
 /**
- * Debounced backend sync - prevents rapid repeated PUT requests.
+ * Debounced backend sync — prevents rapid repeated PUT requests.
+ * Only fires if the user is logged in (token exists).
  */
 let syncTimer = null;
 const syncCartDebounced = (items, getStore) => {
@@ -44,17 +43,15 @@ const syncCartDebounced = (items, getStore) => {
   syncTimer = setTimeout(async () => {
     try {
       const updatedCart = await cartService.replaceCart(items);
-      // The backend may have filtered out invalid/corrupt items (like ones exceeding stock or missing variants)
-      // So we must update our local state to perfectly match what the backend saved.
+      // Backend may have filtered out invalid/corrupt items — keep in sync
       if (getStore && updatedCart && Array.isArray(updatedCart.items)) {
-        // Prevent infinite loop by directly setting the zustand state without triggering another sync
         useCartStore.setState({ cartItems: updatedCart.items.map(normalizeCartItem) });
       }
     } catch (error) {
       console.error('[Cart Sync] Failed:', error.message);
       if (getStore) {
-        toast.error('Cart sync failed. Refreshing with actual stock data...');
-        getStore().hydrateCartFromBackend(); // Revert optimistic UI update
+        toast.error('Cart sync failed. Refreshing cart...');
+        getStore().hydrateCartFromBackend();
       }
     }
   }, 500);
@@ -68,45 +65,40 @@ const useCartStore = create(
       cartItems: [],
       isCartHydrated: false,
 
-      // ─── Hydrate cart from backend on login ──────────────────────────────
+      /**
+       * Fetch only the logged-in user's cart from the backend.
+       * Called after login and on page load when a token exists.
+       * STRICTLY replaces local state — no merging, no cross-user data bleed.
+       */
       hydrateCartFromBackend: async () => {
         if (!localStorage.getItem('token')) {
-          set({ isCartHydrated: true });
+          // No token → clear any leftover cart data and mark hydrated
+          set({ cartItems: [], isCartHydrated: true });
           return;
         }
         try {
           const backendCart = await cartService.getCart();
           const backendItems = (backendCart.items || []).map(normalizeCartItem);
-          const localItems = get().cartItems || [];
-
-          if (backendItems.length > 0 && localItems.length > 0) {
-            // Merge strategy: backend is source of truth, local adds missing items
-            const merged = [...backendItems];
-            let changed = false;
-            for (const local of localItems) {
-              const exists = merged.find(
-                (x) => toStr(x.product) === toStr(local.product) && toStr(x.variant) === toStr(local.variant)
-              );
-              if (!exists) {
-                merged.push(local);
-                changed = true;
-              }
-            }
-            set({ cartItems: merged, isCartHydrated: true });
-            if (changed) syncCartDebounced(merged, get);
-          } else if (backendItems.length > 0) {
-            set({ cartItems: backendItems, isCartHydrated: true });
-          } else {
-            set({ isCartHydrated: true });
-            if (localItems.length > 0) syncCartDebounced(localItems, get);
-          }
+          // Backend is the SINGLE SOURCE OF TRUTH for logged-in users.
+          // Do NOT merge with local state to prevent cross-user contamination.
+          set({ cartItems: backendItems, isCartHydrated: true });
         } catch (error) {
           console.error('[Cart] Failed to hydrate from backend:', error.message);
           set({ isCartHydrated: true });
         }
       },
 
-      // ─── Core Add to Cart (handles FIFO Variant Resolution) ───────────────
+      /**
+       * Immediately clear the cart STATE only (no backend call).
+       * Called during logout to wipe the previous user's cart from memory.
+       * The backend cart data is preserved in MongoDB for when the user logs back in.
+       */
+      clearCartState: () => {
+        clearTimeout(syncTimer);
+        set({ cartItems: [], isCartHydrated: false });
+      },
+
+      // ─── Core Add to Cart ─────────────────────────────────────────────────
       addToCart: (product, qty = 1) => {
         const productId = toStr(product._id || product.id || product.productId || '');
         if (!productId) return;
@@ -115,7 +107,7 @@ const useCartStore = create(
           let selectedVariant = product.selectedVariant || null;
           const variants = product.variants || [];
 
-          // ── 1. FIFO Variant Resolution (Only if no variant is pre-selected) ──
+          // ── FIFO Variant Resolution (only if no variant is pre-selected) ──
           if (!selectedVariant && variants.length > 0) {
             for (const variant of variants) {
               if (variant.isActive === false) continue;
@@ -127,7 +119,6 @@ const useCartStore = create(
               if (variantStock <= 0) continue;
 
               const variantIdStr = toStr(variant._id || variant.id);
-              
               const qtyInCart = state.cartItems
                 .filter(item => toStr(item.product) === productId && toStr(item.variant) === variantIdStr)
                 .reduce((sum, item) => sum + item.qty, 0);
@@ -140,11 +131,11 @@ const useCartStore = create(
 
             if (!selectedVariant) {
               toast.error('All available stock has already been added to your cart.');
-              return state; // No state change
+              return state;
             }
           }
 
-          // ── 2. Calculate Final Details ──────────────────────────────────────
+          // ── Calculate Final Details ────────────────────────────────────────
           const variantId = toStr(selectedVariant?._id || selectedVariant?.id || '');
           const variantPrice = selectedVariant?.discountPrice ?? selectedVariant?.basePrice ?? selectedVariant?.price;
           const finalPrice = variantPrice != null ? Number(variantPrice) : Number(product.discountPrice ?? product.price ?? 0);
@@ -162,7 +153,7 @@ const useCartStore = create(
             finalImage = `${API_ORIGIN}${finalImage}`;
           }
 
-          // ── Variant Label ───────────────────────────────────────────────────
+          // ── Variant Label ──────────────────────────────────────────────────
           const cap = (s) => (typeof s === 'string' ? s.charAt(0).toUpperCase() + s.slice(1) : s);
           const optParts = [];
           if (selectedVariant) {
@@ -180,16 +171,16 @@ const useCartStore = create(
           }
           const variantOptions = optParts.join(', ') || null;
 
-          // ── Max Stock Calculation ───────────────────────────────────────────
+          // ── Max Stock ──────────────────────────────────────────────────────
           const maxStock = selectedVariant
             ? calcVariantStock(selectedVariant)
             : (product.variants && product.variants.length > 0)
-              ? 0 // If it expects variants but selectedVariant is null (shouldn't happen due to above), maxStock is 0
+              ? 0
               : Number(product.inventory?.stockQuantity ?? product.stock ?? 999);
 
           if (maxStock <= 0 && !selectedVariant) {
-             toast.error('Product is out of stock.');
-             return state;
+            toast.error('Product is out of stock.');
+            return state;
           }
 
           const newItem = {
@@ -205,10 +196,9 @@ const useCartStore = create(
             isGift: product.isGift || false,
             isGiftWrapper: product.isGiftWrapper !== undefined ? product.isGiftWrapper : true,
             giftBox: product.giftBox || null,
-            dimensions: (selectedVariant?.length && selectedVariant?.width && selectedVariant?.height) 
+            dimensions: (selectedVariant?.length && selectedVariant?.width && selectedVariant?.height)
               ? { length: selectedVariant.length, width: selectedVariant.width, height: selectedVariant.height }
               : product.dimensions || null,
-            // Gift order fields – set by GiftAndCardPage before calling addToCart
             giftMessage: product.giftMessage || null,
             giftCardStyle: product.giftMessageStyle || null,
             deliveryDate: product.deliveryDate || product.scheduledDeliveryDate || null,
@@ -232,7 +222,6 @@ const useCartStore = create(
                 toast.error(`Only ${x.maxStock} item(s) available. Added remaining.`);
                 return { ...x, qty: x.maxStock, variantOptions: variantOptions || x.variantOptions };
               }
-              // Toast success for increment and update gift fields in case they changed
               const vLabel = variantOptions ? ` (${variantOptions})` : '';
               toast.success(`Increased quantity of ${newItem.name}${vLabel}`);
               return {
@@ -249,7 +238,6 @@ const useCartStore = create(
           } else {
             const clampedQty = maxStock > 0 ? Math.min(qty, maxStock) : qty;
             updatedItems = [...state.cartItems, { ...newItem, qty: clampedQty }];
-            // Toast success for new addition
             const vLabel = variantOptions ? ` (${variantOptions})` : '';
             toast.success(`Added ${newItem.name}${vLabel} to cart`);
           }
@@ -267,7 +255,6 @@ const useCartStore = create(
 
             const newQty = Number(qty);
 
-            // Validate against maxStock
             if (item.maxStock != null && item.maxStock > 0 && newQty > item.maxStock) {
               toast.error(`Only ${item.maxStock} item(s) available in stock.`);
               return { ...item, qty: item.maxStock };
@@ -281,7 +268,11 @@ const useCartStore = create(
         });
       },
 
-      // ─── Remove a specific item from cart ─────────────────────────────────
+      /**
+       * Remove a specific item from cart.
+       * Uses the MongoDB subdocument _id when available (preferred), falls
+       * back to product+variant matching for items without an _id (e.g. guest).
+       */
       removeFromCart: (productId, variantId = undefined) => {
         set((state) => {
           const updatedItems = state.cartItems.filter(
@@ -292,10 +283,38 @@ const useCartStore = create(
         });
       },
 
-      // ─── Clear entire cart ─────────────────────────────────────────────────
+      /**
+       * Remove a cart item by its MongoDB subdocument _id.
+       * Preferred method for logged-in users — zero ambiguity.
+       */
+      removeFromCartById: async (itemId) => {
+        // Optimistic update: remove from local state immediately
+        set((state) => ({
+          cartItems: state.cartItems.filter(
+            (item) => toStr(item._id) !== toStr(itemId)
+          ),
+        }));
+
+        // Sync removal to backend
+        if (localStorage.getItem('token')) {
+          try {
+            await cartService.removeItemById(itemId);
+          } catch (error) {
+            console.error('[Cart] Failed to remove item from backend:', error.message);
+            toast.error('Failed to remove item. Refreshing cart...');
+            get().hydrateCartFromBackend();
+          }
+        }
+      },
+
+      // ─── Clear cart (local state + backend) ───────────────────────────────
       clearCart: () => {
         set({ cartItems: [] });
-        syncCartDebounced([], get);
+        if (localStorage.getItem('token')) {
+          cartService.clearCart().catch((err) =>
+            console.error('[Cart] Failed to clear cart on backend:', err.message)
+          );
+        }
       },
 
       // ─── Directly set cart items (used after order placement) ─────────────
@@ -311,9 +330,16 @@ const useCartStore = create(
 
       getTotalItems: () =>
         get().cartItems.reduce((acc, item) => acc + item.qty, 0),
+
+      /**
+       * Count of UNIQUE PRODUCTS in cart — used for the navbar badge.
+       * Changing quantity or variant of the same product does NOT increase this.
+       */
+      getUniqueProductCount: () =>
+        new Set(get().cartItems.map((item) => toStr(item.product))).size,
     }),
     {
-      name: 'woodora-cart-v3', // Changed key to forcefully purge corrupt local storage
+      name: 'woodora-cart-v4', // Bumped version to purge old persisted state
       version: 1,
     }
   )
@@ -322,6 +348,7 @@ const useCartStore = create(
 // ─── Normalize cart items coming from the backend ────────────────────────────
 function normalizeCartItem(item = {}) {
   return {
+    _id: item._id ? toStr(item._id) : undefined, // Preserve MongoDB subdocument _id
     product: toStr(item.product),
     name: item.name || 'Product',
     image: item.image || '',
@@ -331,10 +358,10 @@ function normalizeCartItem(item = {}) {
     variantOptions: item.variantOptions || null,
     maxStock: Number(item.maxStock) || 999,
     weight: Number(item.weight) || 0,
+    dimensions: item.dimensions || null,
     isGift: item.isGift || false,
     isGiftWrapper: item.isGiftWrapper !== undefined ? item.isGiftWrapper : true,
     giftBox: item.giftBox || null,
-    dimensions: item.dimensions || null,
     giftMessage: item.giftMessage || null,
     giftCardStyle: item.giftCardStyle || null,
     deliveryDate: item.deliveryDate || item.scheduledDeliveryDate || null,

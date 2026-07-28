@@ -38,7 +38,7 @@ export default function CashfreeCallbackPage({ onNavigate }) {
 
         const result = await verifyCashfreePayment(orderId, cfOrderId);
 
-        if (result.isPaid) {
+        if (result.success || result.isPaid) {
           localStorage.removeItem('cf_pending_order_id');
           localStorage.removeItem('cf_pending_cf_order_id');
           window.history.replaceState({}, document.title, window.location.pathname);

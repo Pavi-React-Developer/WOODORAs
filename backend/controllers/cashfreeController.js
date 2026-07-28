@@ -9,7 +9,6 @@
 const Order = require('../models/Order');
 const { createCashfreeOrder, verifyCashfreePayment, getCashfreeDiagnostics } = require('../services/cashfreeService');
 
-
 const diagnostics = async (req, res) => {
   try {
     res.json(getCashfreeDiagnostics());
@@ -45,10 +44,25 @@ const createPaymentSession = async (req, res) => {
     const frontendUrl = req.headers.origin || process.env.FRONTEND_URL || 'http://localhost:5173';
     const returnUrl = `${frontendUrl}/cashfree-callback?app_order_id=${order._id}&order_id={order_id}&cf_id={cf_order_id}`;
 
+    const gatewayAmount = order.paymentMethod === 'COD'
+      ? Number(order.advance_payment || order.codAdvance || 0)
+      : Number(order.total_amount || order.totalPrice || 0);
+    console.debug('[cashfree pricing]', {
+      subtotal: order.subtotal,
+      coupon_discount: order.coupon_discount,
+      product_fee: order.product_fee,
+      gift_fee: order.gift_fee,
+      platform_fee: order.platform_fee,
+      shipping_fee: order.shipping_fee,
+      weight_fee: order.weight_fee,
+      grand_total: order.total_amount,
+      gatewayAmount,
+    });
+
     // Create Cashfree order/session
     const cfOrder = await createCashfreeOrder({
       orderId: order._id.toString(),
-      orderAmount: (order.paymentMethod === 'COD' && order.codAdvance > 0) ? order.codAdvance : order.totalPrice,
+      orderAmount: parseFloat(gatewayAmount.toFixed(2)),
       customer: {
         id: req.user._id.toString(),
         name: order.shippingAddress?.fullName || req.user.name || 'Customer',
@@ -104,8 +118,18 @@ const verifyPayment = async (req, res) => {
         return res.status(404).json({ message: 'Order not found' });
       }
 
-      order.isPaid = true;
+      const totalAmount = Number(order.total_amount || order.totalPrice || 0);
+      const advancePayment = Number(order.advance_payment || order.codAdvance || 0);
+      const isCodAdvancePayment = order.paymentMethod === 'COD';
+      const paidAmount = isCodAdvancePayment ? Math.min(advancePayment, totalAmount) : totalAmount;
+
+      // Cashfree receives only the advance for COD. It must not turn a
+      // partial COD payment into a fully-paid order.
+      order.isPaid = !isCodAdvancePayment || paidAmount >= totalAmount;
       order.paidAt = Date.now();
+      order.paid_amount = paidAmount;
+      order.balance_amount = Math.max(0, totalAmount - paidAmount);
+      order.balanceAmount = order.balance_amount;
       order.paymentResult = {
         id: cfOrder.cf_order_id,
         status: cfOrder.order_status,
@@ -118,7 +142,7 @@ const verifyPayment = async (req, res) => {
 
       return res.json({
         success: true,
-        isPaid: true,
+        isPaid: updatedOrder.isPaid,
         order: updatedOrder,
         cashfreeStatus: cfOrder.order_status,
       });

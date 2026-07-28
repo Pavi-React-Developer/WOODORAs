@@ -32,26 +32,37 @@ const withAuthRetry = async (requestFn, fallbackMessage) => {
 };
 
 export const cartService = {
+  /** GET /api/cart - Fetch the authenticated user's cart */
   getCart: async () => withAuthRetry(
     (config) => axios.get(API_URL, config),
     'Failed to fetch cart'
   ),
 
+  /** PUT /api/cart - Replace entire cart (sync) */
   replaceCart: async (items) => withAuthRetry(
     (config) => axios.put(API_URL, { items }, config),
     'Failed to sync cart'
   ),
 
+  /** POST /api/cart/items - Add an item (increments qty if product+variant already exists) */
   addItem: async (item) => withAuthRetry(
     (config) => axios.post(`${API_URL}/items`, item, config),
     'Failed to add item to cart'
   ),
 
+  /** PUT /api/cart/items/:productId - Update quantity for a product (+ optional variant) */
   updateItem: async (productId, qty, variant = null) => withAuthRetry(
     (config) => axios.put(`${API_URL}/items/${productId}`, { qty, variant }, config),
     'Failed to update cart item'
   ),
 
+  /** DELETE /api/cart/item/:itemId - Remove item by MongoDB subdocument _id (precise) */
+  removeItemById: async (itemId) => withAuthRetry(
+    (config) => axios.delete(`${API_URL}/item/${itemId}`, config),
+    'Failed to remove cart item'
+  ),
+
+  /** DELETE /api/cart/items/:productId - Fallback: remove by productId + variant query */
   removeItem: async (productId, variant = null) => withAuthRetry(
     (config) => axios.delete(`${API_URL}/items/${productId}`, {
       ...config,
@@ -60,6 +71,7 @@ export const cartService = {
     'Failed to remove cart item'
   ),
 
+  /** DELETE /api/cart - Clear all items for the authenticated user */
   clearCart: async () => withAuthRetry(
     (config) => axios.delete(API_URL, config),
     'Failed to clear cart'

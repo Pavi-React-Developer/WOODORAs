@@ -353,7 +353,34 @@ const removeCartItem = async (req, res) => {
 };
 
 /**
- * @desc    Clear entire cart
+ * @desc    Remove a specific cart item by its MongoDB subdocument _id
+ * @route   DELETE /api/cart/item/:itemId
+ * @access  Private
+ */
+const removeCartItemById = async (req, res) => {
+  try {
+    const cart = await getOrCreateCart(req.user._id);
+    const { itemId } = req.params;
+
+    const originalLength = cart.items.length;
+    // Filter by the subdocument's own _id for precise removal
+    cart.items = cart.items.filter(
+      (item) => item._id?.toString() !== itemId
+    );
+
+    if (cart.items.length === originalLength) {
+      return res.status(404).json({ success: false, message: 'Cart item not found' });
+    }
+
+    await cart.save();
+    res.json({ success: true, cart });
+  } catch (error) {
+    res.status(500).json({ message: error.message || 'Failed to remove cart item' });
+  }
+};
+
+/**
+ * @desc    Clear entire cart for the logged-in user
  * @route   DELETE /api/cart
  * @access  Private
  */
@@ -362,7 +389,7 @@ const clearCart = async (req, res) => {
     const cart = await getOrCreateCart(req.user._id);
     cart.items = [];
     await cart.save();
-    res.json(cart);
+    res.json({ success: true, cart });
   } catch (error) {
     res.status(500).json({ message: error.message || 'Failed to clear cart' });
   }
@@ -374,5 +401,6 @@ module.exports = {
   addCartItem,
   updateCartItem,
   removeCartItem,
+  removeCartItemById,
   clearCart,
 };

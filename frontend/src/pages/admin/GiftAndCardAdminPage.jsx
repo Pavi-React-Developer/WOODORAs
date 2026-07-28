@@ -6,6 +6,7 @@ import { Eye, X, Edit2, ToggleLeft, ToggleRight, Trash2, SquarePen, Trash } from
 import { getImageSrc } from '../../utils/imageUtils';
 import { formatDeliveryDate, getDeliveryDate } from '../../utils/deliveryDate';
 import EditGiftBoxRulePage from './fees/EditGiftBoxRulePage';
+import OrderPricingSummary from '../../components/OrderPricingSummary';
 
 const formatDate = formatDeliveryDate;
 
@@ -442,40 +443,7 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
               {/* Payment Summary */}
               <div>
                 <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase">Payment Summary</h3>
-                <div className="bg-gray-50 p-4 rounded-lg text-sm text-gray-600">
-                  <div className="flex justify-between mb-2">
-                    <span>Subtotal</span>
-                    <span>₹{selectedOrder.itemsPrice || 0}</span>
-                  </div>
-                  {selectedOrder.giftWrapFee > 0 && (
-                    <div className="flex justify-between mb-2">
-                      <span>Gift Wrap Fee</span>
-                      <span>₹{selectedOrder.giftWrapFee}</span>
-                    </div>
-                  )}
-                  {selectedOrder.fees?.map((fee, idx) => (
-                    <div key={idx} className="flex justify-between mb-2">
-                      <span>{fee.name}</span>
-                      <span>₹{fee.amount}</span>
-                    </div>
-                  ))}
-                  {selectedOrder.codAdvance > 0 && (
-                    <div className="flex justify-between mb-2 text-red-600">
-                      <span>Advance Payment</span>
-                      <span>-₹{selectedOrder.codAdvance}</span>
-                    </div>
-                  )}
-                  {selectedOrder.discountAmount > 0 && (
-                    <div className="flex justify-between mb-2 text-green-600">
-                      <span>Discount</span>
-                      <span>-₹{selectedOrder.discountAmount}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between font-bold text-gray-800 pt-2 border-t mt-2">
-                    <span>Total Paid</span>
-                    <span>₹{selectedOrder.totalPrice || 0}</span>
-                  </div>
-                </div>
+                <div className="bg-gray-50 p-4 rounded-lg"><OrderPricingSummary order={selectedOrder} /></div>
               </div>
 
               {/* Gift Details */}

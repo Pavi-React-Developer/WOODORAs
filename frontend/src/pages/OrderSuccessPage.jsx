@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { CheckCircle, ShoppingBag, ArrowRight } from 'lucide-react';
 import { orderService } from '../api/orderService';
+import OrderPricingSummary from '../components/OrderPricingSummary';
 
 export default function OrderSuccessPage({ orderId, onNavigate }) {
   const [order, setOrder] = useState(null);
@@ -48,6 +49,11 @@ export default function OrderSuccessPage({ orderId, onNavigate }) {
               <p className="text-base font-mono font-bold text-gray-900">{orderId}</p>
             </div>
           )}
+
+          {order && <div className="text-left bg-[#F8F4EC] rounded-2xl p-5 mb-6">
+            <h2 className="font-bold text-gray-900 mb-3">Payment Summary</h2>
+            <OrderPricingSummary order={order} />
+          </div>}
 
           {/* Countdown */}
           <p className="text-sm text-gray-400 mb-6">

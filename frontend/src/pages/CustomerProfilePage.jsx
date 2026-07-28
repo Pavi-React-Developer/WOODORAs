@@ -47,7 +47,9 @@ import { bulkOrderService } from '../api/bulkOrderService';
 import { API_ORIGIN } from '../api/apiClient';
 import { formatDeliveryDate, getDeliveryDate } from '../utils/deliveryDate';
 import useCartStore from '../store/useCartStore';
+import useAddressStore from '../store/useAddressStore';
 import WriteReviewModal from '../components/WriteReviewModal';
+import CustomerAddressManager from '../components/CustomerAddressManager';
 
 const getProductName = (details) => {
   if (!details) return 'Custom Order';
@@ -67,6 +69,7 @@ const getWoodType = (details) => {
 
 const modules = [
   { id: 'profile', label: 'My Profile', icon: User },
+  { id: 'addresses', label: 'Addresses', icon: MapPin },
   { id: 'orders', label: 'Order History', icon: Package },
   { id: 'bulk-orders', label: 'Bulk Orders', icon: Package },
   { id: 'customize-orders', label: 'Customize Orders', icon: Settings },
@@ -160,6 +163,16 @@ export default function CustomerProfilePage({
   const [activeCustomizeOrder, setActiveCustomizeOrder] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const { addresses: storeAddresses, loading: addressLoading, fetchAddresses, addAddress: addStoreAddress, updateAddress: updateStoreAddress, deleteAddress: deleteStoreAddress } = useAddressStore();
+  const [addressModalOpen, setAddressModalOpen] = useState(false);
+  const [editingAddressId, setEditingAddressId] = useState(null);
+  const [addressForm, setAddressForm] = useState({
+    label: '', fullName: '', phone: '', pinCode: '', address: '', city: '', state: '', landmark: '', isDefault: false
+  });
+  
+  useEffect(() => {
+    fetchAddresses();
+  }, [fetchAddresses]);
   
   // Drag-to-scroll ref and state
   const navRef = useRef(null);
@@ -236,7 +249,6 @@ export default function CustomerProfilePage({
     profileImage: profile.profileImage || '',
     preferredAgeGroup: profile.preferences?.preferredAgeGroup || 'All Ages',
     emailNotifications: profile.preferences?.emailNotifications !== false,
-    addresses: profile.addresses?.length ? profile.addresses : [{ ...emptyAddress, fullName: profile.name || '', phone: profile.phone || '' }],
   });
 
   useEffect(() => {
@@ -1660,29 +1672,7 @@ export default function CustomerProfilePage({
   );
 
   const renderAddresses = () => (
-    <section className="px-5 py-7 lg:px-7">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h2 className="text-lg font-bold text-[#141225]">Addresses</h2>
-          <p className="mt-1 text-sm text-[#6D625C]">Saved to your customer backend profile.</p>
-        </div>
-        <button type="button" onClick={() => setIsEditing(true)} className="rounded-[8px] bg-[#9A6031] px-4 py-2 text-sm font-bold text-white">Manage</button>
-      </div>
-      {profile.addresses?.length ? (
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
-          {profile.addresses.map((address, index) => (
-            <div key={address._id || index} className="rounded-[14px] border border-[#E9DED3] bg-white p-5">
-              <p className="font-bold text-[#141225]">{address.label || 'Address'} {address.isDefault ? '(Default)' : ''}</p>
-              <p className="mt-3 text-sm text-[#6D625C]">{address.fullName} | {address.phone}</p>
-              <p className="mt-1 text-sm text-[#6D625C]">{address.address}</p>
-              <p className="mt-1 text-sm text-[#6D625C]">{address.city}, {address.state} - {address.pinCode}</p>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <EmptyState icon={MapPin} title="No saved address" text="Add a shipping address from Edit Profile." action="Add Address" onAction={() => setIsEditing(true)} />
-      )}
-    </section>
+    <CustomerAddressManager />
   );
 
   const renderWishlist = () => {
@@ -2238,35 +2228,6 @@ export default function CustomerProfilePage({
                 <input type="checkbox" checked={form.emailNotifications} onChange={(event) => setForm((current) => ({ ...current, emailNotifications: event.target.checked }))} className="h-4 w-4 accent-[#9A6031]" />
                 <span className="text-sm font-bold text-[#4A403B]">Receive email notifications</span>
               </label>
-            </div>
-
-            <div className="mt-8 border-t border-[#EFE6DD] pt-6">
-              <div className="flex items-center justify-between gap-4">
-                <h3 className="text-lg font-bold text-[#141225]">Shipping Addresses</h3>
-                <button type="button" onClick={addAddress} className="rounded-[8px] border border-[#D9B382] px-4 py-2 text-sm font-bold text-[#8B5E3C]">Add Address</button>
-              </div>
-              <div className="mt-4 space-y-4">
-                {form.addresses.map((address, index) => (
-                  <div key={index} className="rounded-[14px] border border-[#E9DED3] p-4">
-                    <div className="mb-4 flex items-center justify-between gap-3">
-                      <p className="font-bold text-[#141225]">Address {index + 1}</p>
-                      {form.addresses.length > 1 && (
-                        <button type="button" onClick={() => removeAddress(index)} className="text-sm font-bold text-red-600">Remove</button>
-                      )}
-                    </div>
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <Field label="Label" value={address.label || ''} onChange={(value) => updateAddress(index, 'label', value)} />
-                      <Field label="Full Name" value={address.fullName || ''} onChange={(value) => updateAddress(index, 'fullName', value)} />
-                      <Field label="Phone" value={address.phone || ''} onChange={(value) => updateAddress(index, 'phone', value)} />
-                      <Field label="Pincode" value={address.pinCode || ''} onChange={(value) => updateAddress(index, 'pinCode', value)} />
-                      <Field className="md:col-span-2" label="Address" value={address.address || ''} onChange={(value) => updateAddress(index, 'address', value)} />
-                      <Field label="City" value={address.city || ''} onChange={(value) => updateAddress(index, 'city', value)} />
-                      <Field label="State" value={address.state || ''} onChange={(value) => updateAddress(index, 'state', value)} />
-                      <Field className="md:col-span-2" label="Landmark" value={address.landmark || ''} onChange={(value) => updateAddress(index, 'landmark', value)} />
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
 
             <div className="mt-6 flex justify-end gap-3 border-t border-[#EFE6DD] pt-5">

@@ -67,7 +67,7 @@ export default function AppRouter() {
   const [profileLoading, setProfileLoading] = useState(false);
 
   // Cart state from store
-  const { cartItems, addToCart, updateQuantity, removeFromCart, hydrateCartFromBackend } = useCartStore();
+  const { cartItems, addToCart, updateQuantity, removeFromCart, hydrateCartFromBackend, clearCartState, getUniqueProductCount } = useCartStore();
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   // Wishlist state
@@ -99,7 +99,8 @@ export default function AppRouter() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleAuthSuccess = (data) => {
+  // On successful login: set user state and immediately fetch their cart from backend
+  const handleAuthSuccess = async (data) => {
     setUser({
       id: data._id,
       name: data.name,
@@ -107,13 +108,17 @@ export default function AppRouter() {
       role: data.role,
       isStaff: data.isStaff
     });
+    await hydrateCartFromBackend(); // Strictly fetch only this user's cart
     navigate('/');
   };
 
+  // On logout: wipe cart + wishlist from memory — no previous user data lingers
   const handleLogout = () => {
     authService.logout();
+    clearCartState();      // Clear cart state in memory (backend data is preserved)
     setUser(null);
     setProfileData(null);
+    setWishlistItems([]);  // Clear wishlist too
     navigate('/');
   };
 
@@ -227,11 +232,11 @@ export default function AppRouter() {
     navigate('/review-order');
   };
 
+  // Always run on mount — when no token exists, hydrateCartFromBackend clears
+  // any stale localStorage cart data so the badge never shows 0-login items.
   useEffect(() => {
-    if (user) {
-      hydrateCartFromBackend();
-    }
-  }, [user, hydrateCartFromBackend]);
+    hydrateCartFromBackend();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch full profile from backend whenever user is logged in (persists across refresh)
   useEffect(() => {
@@ -313,7 +318,7 @@ export default function AppRouter() {
                 user={user}
                 onLogout={handleLogout}
                 onNavigate={handleNavigate}
-                cartCount={cartItems.reduce((acc, item) => acc + item.qty, 0)}
+                cartCount={getUniqueProductCount()}
                 onOpenCart={() => setIsCartOpen(true)}
                 wishlistCount={wishlistItems.length}
                 onOpenWishlist={() => setIsWishlistOpen(true)}
@@ -336,7 +341,7 @@ export default function AppRouter() {
                 user={user}
                 onLogout={handleLogout}
                 onNavigate={handleNavigate}
-                cartCount={cartItems.reduce((acc, item) => acc + item.qty, 0)}
+                cartCount={getUniqueProductCount()}
                 onOpenCart={() => setIsCartOpen(true)}
                 wishlistCount={wishlistItems.length}
                 onOpenWishlist={() => setIsWishlistOpen(true)}
@@ -380,7 +385,7 @@ export default function AppRouter() {
                 user={user}
                 onLogout={handleLogout}
                 onNavigate={handleNavigate}
-                cartCount={cartItems.reduce((acc, item) => acc + item.qty, 0)}
+                cartCount={getUniqueProductCount()}
                 onOpenCart={() => setIsCartOpen(true)}
                 wishlistCount={wishlistItems.length}
                 onOpenWishlist={() => setIsWishlistOpen(true)}
@@ -398,7 +403,7 @@ export default function AppRouter() {
                 user={user}
                 onLogout={handleLogout}
                 onNavigate={handleNavigate}
-                cartCount={cartItems.reduce((acc, item) => acc + item.qty, 0)}
+                cartCount={getUniqueProductCount()}
                 onOpenCart={() => setIsCartOpen(true)}
                 wishlistCount={wishlistItems.length}
                 onOpenWishlist={() => setIsWishlistOpen(true)}
@@ -416,7 +421,7 @@ export default function AppRouter() {
                 user={user}
                 onLogout={handleLogout}
                 onNavigate={handleNavigate}
-                cartCount={cartItems.reduce((acc, item) => acc + item.qty, 0)}
+                cartCount={getUniqueProductCount()}
                 onOpenCart={() => setIsCartOpen(true)}
                 wishlistCount={wishlistItems.length}
                 onOpenWishlist={() => setIsWishlistOpen(true)}
@@ -435,7 +440,7 @@ export default function AppRouter() {
                   user={user}
                   onLogout={handleLogout}
                   onNavigate={handleNavigate}
-                  cartCount={cartItems.reduce((acc, item) => acc + item.qty, 0)}
+                  cartCount={getUniqueProductCount()}
                   onOpenCart={() => setIsCartOpen(true)}
                   wishlistCount={wishlistItems.length}
                   onOpenWishlist={() => setIsWishlistOpen(true)}
@@ -455,7 +460,7 @@ export default function AppRouter() {
                   user={user}
                   onLogout={handleLogout}
                   onNavigate={handleNavigate}
-                  cartCount={cartItems.reduce((acc, item) => acc + item.qty, 0)}
+                  cartCount={getUniqueProductCount()}
                   onOpenCart={() => setIsCartOpen(true)}
                   wishlistCount={wishlistItems.length}
                   onOpenWishlist={() => setIsWishlistOpen(true)}
@@ -475,7 +480,7 @@ export default function AppRouter() {
                   user={user}
                   onLogout={handleLogout}
                   onNavigate={handleNavigate}
-                  cartCount={cartItems.reduce((acc, item) => acc + item.qty, 0)}
+                  cartCount={getUniqueProductCount()}
                   onOpenCart={() => setIsCartOpen(true)}
                   wishlistCount={wishlistItems.length}
                   onOpenWishlist={() => setIsWishlistOpen(true)}
@@ -505,7 +510,7 @@ export default function AppRouter() {
                 user={user}
                 onLogout={handleLogout}
                 onNavigate={handleNavigate}
-                cartCount={cartItems.reduce((acc, item) => acc + item.qty, 0)}
+                cartCount={getUniqueProductCount()}
                 onOpenCart={() => setIsCartOpen(true)}
                 wishlistCount={wishlistItems.length}
                 onOpenWishlist={() => setIsWishlistOpen(true)}
@@ -529,7 +534,7 @@ export default function AppRouter() {
                   user={user}
                   onLogout={handleLogout}
                   onNavigate={handleNavigate}
-                  cartCount={cartItems.reduce((acc, item) => acc + item.qty, 0)}
+                  cartCount={getUniqueProductCount()}
                   onOpenCart={() => setIsCartOpen(true)}
                   wishlistCount={wishlistItems.length}
                   onOpenWishlist={() => setIsWishlistOpen(true)}
@@ -561,7 +566,7 @@ export default function AppRouter() {
                 user={user}
                 onLogout={handleLogout}
                 onNavigate={handleNavigate}
-                cartCount={cartItems.reduce((acc, item) => acc + item.qty, 0)}
+                cartCount={getUniqueProductCount()}
                 onOpenCart={() => setIsCartOpen(true)}
                 wishlistCount={wishlistItems.length}
                 onOpenWishlist={() => setIsWishlistOpen(true)}

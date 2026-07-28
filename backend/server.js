@@ -11,6 +11,7 @@ const staffRoutes = require('./routes/staffRoutes');
 const roleRoutes = require('./routes/roleRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const cartRoutes = require('./routes/cartRoutes');
+const userRoutes = require('./routes/userRoutes');
 const feeRoutes = require('./routes/feeRoutes');
 const cancellationRoutes = require('./routes/cancellationRoutes');
 const refundRoutes = require('./routes/refundRoutes');
@@ -120,6 +121,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/user', userRoutes);
 app.use('/api/catalog', catalogRoutes);
 app.use('/api/v2/catalog', catalogV2Routes);
 app.use('/api/staff', staffRoutes);

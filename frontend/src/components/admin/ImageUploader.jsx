@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Upload, X, Star, ArrowUp, ArrowDown, Loader } from 'lucide-react';
 import { Button } from './CommonComponents';
+import { getImageSrc } from '../../utils/imageUtils';
 
 export const ImageUploader = ({
     images = [],
@@ -164,7 +165,7 @@ export const ImageUploader = ({
                             }`}
                         >
                             <img
-                                src={img.url}
+                                src={getImageSrc(img.url)}
                                 alt={img.altText || 'product image'}
                                 className="w-full h-full object-cover"
                             />

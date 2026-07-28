@@ -3,6 +3,7 @@ import { orderService, ORDER_STATUS_OPTIONS } from '../../api/orderService';
 import { Package, Search, Calendar, MapPin, Eye, Trash2, X, Edit, Save, Download, RefreshCw, Gift , SquarePen , Trash } from 'lucide-react';
 import { downloadExcelFile } from '../../utils/exportUtils';
 import toast from 'react-hot-toast';
+import OrderPricingSummary from '../../components/OrderPricingSummary';
 
 export default function OrdersPage({ canView = true, canEdit = true, canDelete = true }) {
   const [orders, setOrders] = useState([]);
@@ -473,6 +474,8 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
 
                 <div className="mt-6 rounded-3xl bg-[#F8F4EC] p-6">
                   <h4 className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-wider">Payment Summary</h4>
+                  <OrderPricingSummary order={selectedOrder} />
+                  {false && <>
                   <div className="space-y-3 text-sm mb-6 border-b border-[#E6DFD4] pb-6">
                     <div className="flex justify-between text-gray-600">
                       <span>Subtotal</span>
@@ -488,7 +491,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
 
                     {selectedOrder.fees && selectedOrder.fees.length > 0 && (
                       selectedOrder.fees
-                        .filter(fee => fee.name.toLowerCase() !== 'advance')
+                        .filter(fee => !fee.name.toLowerCase().includes('advance'))
                         .map((fee, idx) => (
                           <div key={idx} className="flex justify-between text-gray-600">
                             <span>{fee.name} {fee.isWeightFee ? `(${(selectedOrder.orderItems?.reduce((acc, item) => acc + (parseFloat(item.weight) || 0) * (parseInt(item.qty) || 1), 0)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 3 })} kg)` : ''}</span>
@@ -524,6 +527,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                       <span className="text-2xl font-black text-[#8B5E3C]">₹{(selectedOrder.totalPrice || 0).toLocaleString()}</span>
                     </div>
                   )}
+                  </>}
                 </div>
               </div>
 
@@ -716,7 +720,10 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
               </div>
 
               {/* Order Totals Summary */}
-              <div className="mt-4 rounded-3xl bg-[#F8F4EC] p-4 flex flex-wrap gap-6 overflow-x-auto">
+              <div className="mt-4 rounded-3xl bg-[#F8F4EC] p-4">
+                <OrderPricingSummary order={selectedOrder} />
+              </div>
+              <div className="hidden mt-4 rounded-3xl bg-[#F8F4EC] p-4 flex flex-wrap gap-6 overflow-x-auto">
                 <div className="min-w-30">
                   <p className="text-xs uppercase tracking-widest text-gray-500">Subtotal</p>
                   <p className="mt-2 font-semibold text-gray-900">₹{selectedOrder.itemsPrice?.toLocaleString() ?? (selectedOrder.totalPrice - (selectedOrder.shippingPrice||0)).toLocaleString()}</p>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import useCartStore from '../store/useCartStore';
+import useAddressStore from '../store/useAddressStore';
 import { orderService } from '../api/orderService';
 import { authService } from '../api/authService';
 import { ArrowLeft, Plus, Minus, MapPin, Trash2, Edit2, CreditCard, Banknote, Loader2, CheckCircle2, Gift } from 'lucide-react';
@@ -22,9 +23,9 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
     }
   };
 
-  const [savedAddresses, setSavedAddresses] = useState([]);
+  const { addresses: savedAddresses, fetchAddresses, addAddress, updateAddress, deleteAddress } = useAddressStore();
   const [selectedAddressIndex, setSelectedAddressIndex] = useState(0);
-  const [editingAddressIndex, setEditingAddressIndex] = useState(null);
+  const [editingAddressId, setEditingAddressId] = useState(null);
   const [isAddingAddress, setIsAddingAddress] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('COD');
   const [orderNotes, setOrderNotes] = useState('');
@@ -47,7 +48,7 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
     state: '',
     customState: '',
     pinCode: '',
-    phone: '',
+    phone: currentUser?.phone || '',
     landmark: ''
   });
 
@@ -59,31 +60,15 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
     }
 
     // Load saved addresses
-    const loadAddresses = async () => {
-      let loadedAddresses = [];
-      if (authService.isAuthenticated()) {
-        try {
-          const profile = await authService.getProfile();
-          if (profile?.user?.addresses?.length > 0) {
-            loadedAddresses = profile.user.addresses;
-            localStorage.setItem('wooden_toys_addresses', JSON.stringify(loadedAddresses));
-          }
-        } catch (error) {
-          console.error('Failed to load profile addresses', error);
+    fetchAddresses().then(() => {
+        const { addresses } = useAddressStore.getState();
+        if (addresses.length === 0) {
+            setIsAddingAddress(true);
+        } else {
+            const defaultIdx = addresses.findIndex(a => a.isDefault);
+            if (defaultIdx !== -1) setSelectedAddressIndex(defaultIdx);
         }
-      }
-
-      if (loadedAddresses.length === 0) {
-        loadedAddresses = JSON.parse(localStorage.getItem('wooden_toys_addresses') || '[]');
-      }
-
-      setSavedAddresses(loadedAddresses);
-      if (loadedAddresses.length === 0) {
-        setIsAddingAddress(true);
-      }
-    };
-
-    loadAddresses();
+    });
 
     // Fetch fees
     const fetchFees = async () => {
@@ -124,25 +109,43 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
   let dynamicGiftBoxFee = 0;
   let dynamicProductFee = 0;
 
+  const calculateDynamicFee = (rules, vol) => {
+    if (!rules || rules.length === 0) return 0;
+    const activeRules = rules.filter(r => r.isActive).sort((a, b) => a.minVolume - b.minVolume);
+    if (activeRules.length === 0) return 0;
+    const matched = activeRules.find(r => vol >= r.minVolume && vol <= r.maxVolume);
+    if (matched) return matched.fee;
+    const highest = activeRules[activeRules.length - 1];
+    const lowest = activeRules[0];
+    if (vol > highest.maxVolume) {
+      const factor = Math.ceil(vol / (highest.maxVolume || 1));
+      return highest.fee * factor;
+    } else if (vol < lowest.minVolume) {
+      return lowest.fee;
+    }
+    return 0;
+  };
+
   cartItems.forEach(item => {
     // Calculate volume: length * width * height
     let volume = 0;
-    if (item.dimensions && item.dimensions.length && item.dimensions.width && item.dimensions.height) {
-      volume = item.dimensions.length * item.dimensions.width * item.dimensions.height;
+    if (item.dimensions) {
+      const l = Number(item.dimensions.length) || 0;
+      const w = Number(item.dimensions.width) || 0;
+      const h = Number(item.dimensions.height) || 0;
+      volume = l * w * h;
     }
 
     // Product Fee applies to all items (normal products and gift items)
-    const pRule = productFeeRules.find(r => r.isActive && volume >= r.minVolume && volume <= r.maxVolume);
-    if (pRule) {
-      dynamicProductFee += (pRule.fee * item.qty);
-    }
+    const pFee = calculateDynamicFee(productFeeRules, volume);
+    dynamicProductFee += (pFee * item.qty);
 
     // Gift Fee only applies if it's a gift AND the wrapper is active
     if (item.isGift && item.isGiftWrapper !== false) {
       // Gift Fee
-      const gRule = giftBoxRules.find(r => r.isActive && volume >= r.minVolume && volume <= r.maxVolume);
-      if (gRule) {
-         dynamicGiftBoxFee += (gRule.fee * item.qty);
+      const gFee = calculateDynamicFee(giftBoxRules, volume);
+      if (gFee > 0) {
+         dynamicGiftBoxFee += (gFee * item.qty);
       } else if (item.giftBox && item.giftBox.giftFee) {
          // Fallback to legacy
          dynamicGiftBoxFee += (Number(item.giftBox.giftFee) * item.qty);
@@ -197,7 +200,7 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
     }
   };
 
-  const handleSaveAddress = (e) => {
+  const handleSaveAddress = async (e) => {
     e.preventDefault();
     const finalCity = (formData.state === 'Tamil Nadu' && formData.city === 'Other') ? formData.customCity : formData.city;
 
@@ -231,31 +234,32 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
     }
 
     const addressToSave = { ...formData, city: finalCity, state: finalState };
-    let updatedAddresses;
-    if (editingAddressIndex !== null) {
-      updatedAddresses = [...savedAddresses];
-      updatedAddresses[editingAddressIndex] = addressToSave;
+    
+    let res;
+    if (editingAddressId !== null) {
+      res = await updateAddress(editingAddressId, addressToSave);
     } else {
-      updatedAddresses = [...savedAddresses, addressToSave];
+      res = await addAddress(addressToSave);
     }
 
-    setSavedAddresses(updatedAddresses);
-    localStorage.setItem('wooden_toys_addresses', JSON.stringify(updatedAddresses));
-
-    // Sync with profile backend
-    if (authService.isAuthenticated()) {
-      authService.updateProfile({ addresses: updatedAddresses })
-        .then(() => {
-          // Notify AppRouter to re-fetch the full profile so profile page stays in sync
-          if (onAddressUpdated) onAddressUpdated();
-        })
-        .catch(err => console.error('Failed to sync address to profile:', err));
+    if (res.success) {
+      const currentAddresses = useAddressStore.getState().addresses;
+      const newIndex = editingAddressId !== null 
+        ? currentAddresses.findIndex(a => a._id === editingAddressId)
+        : currentAddresses.length - 1;
+      
+      setSelectedAddressIndex(newIndex >= 0 ? newIndex : 0);
+      setIsAddingAddress(false);
+      setEditingAddressId(null);
+      toast.success(editingAddressId !== null ? 'Address updated!' : 'Address saved!');
+      
+      // Notify AppRouter to re-fetch profile if needed
+      if (onAddressUpdated && authService.isAuthenticated()) {
+          onAddressUpdated();
+      }
+    } else {
+      toast.error(res.error || 'Failed to save address');
     }
-
-    setSelectedAddressIndex(editingAddressIndex !== null ? editingAddressIndex : updatedAddresses.length - 1);
-    setIsAddingAddress(false);
-    setEditingAddressIndex(null);
-    toast.success(editingAddressIndex !== null ? 'Address updated!' : 'Address saved!');
   };
 
   const handleEditAddress = (index) => {
@@ -270,7 +274,7 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
       phone: addr.phone || '',
       landmark: addr.landmark || ''
     });
-    setEditingAddressIndex(index);
+    setEditingAddressId(addr._id);
     setIsAddingAddress(true);
   };
 
@@ -282,25 +286,25 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
       state: '',
       customState: '',
       pinCode: '',
-      phone: '',
+      phone: currentUser?.phone || '',
       landmark: ''
     });
-    setEditingAddressIndex(null);
+    setEditingAddressId(null);
     setIsAddingAddress(true);
   };
 
-  const handleDeleteAddress = (index) => {
-    const updated = savedAddresses.filter((_, i) => i !== index);
-    setSavedAddresses(updated);
-    localStorage.setItem('wooden_toys_addresses', JSON.stringify(updated));
-
-    // Sync with profile
-    if (authService.isAuthenticated()) {
-      authService.updateProfile({ addresses: updated }).catch(err => console.error('Failed to sync address deletion to profile:', err));
+  const handleDeleteAddress = async (index) => {
+    const addr = savedAddresses[index];
+    if (window.confirm('Are you sure you want to delete this address?')) {
+        const res = await deleteAddress(addr._id);
+        if (res.success) {
+            toast.success('Address deleted');
+            if (selectedAddressIndex === index) setSelectedAddressIndex(0);
+            if (useAddressStore.getState().addresses.length === 0) setIsAddingAddress(true);
+        } else {
+            toast.error(res.error || 'Failed to delete address');
+        }
     }
-
-    if (selectedAddressIndex === index) setSelectedAddressIndex(0);
-    if (updated.length === 0) setIsAddingAddress(true);
   };
 
   const handlePlaceOrder = async () => {
@@ -576,12 +580,12 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
                   </div>
                   <div className="pt-2 flex gap-3">
                     {savedAddresses.length > 0 && (
-                      <button type="button" onClick={() => { setIsAddingAddress(false); setEditingAddressIndex(null); }} className="w-full sm:w-auto px-6 py-3 rounded-2xl border border-gray-300 font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+                      <button type="button" onClick={() => { setIsAddingAddress(false); setEditingAddressId(null); }} className="w-full sm:w-auto px-6 py-3 rounded-2xl border border-gray-300 font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
                         Cancel
                       </button>
                     )}
                     <button type="submit" className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-[#8B5E3C] font-semibold text-white hover:bg-[#7A5234] transition-colors">
-                      {editingAddressIndex !== null ? 'Update Address' : 'Save Address'}
+                      {editingAddressId !== null ? 'Update Address' : 'Save Address'}
                     </button>
                   </div>
                 </form>
