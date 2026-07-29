@@ -407,7 +407,7 @@ export default function CustomerProfilePage({
 
   const displayName = profile.name || 'Customer';
   const displayEmail = profile.email || user?.email || '';
-  const displayPhone = profile.phone || 'Not added';
+  const displayPhone = profile.phone || storeAddresses.find(a => a.isDefault)?.phone || storeAddresses[0]?.phone || 'Not added';
   const resolveImage = (img) => {
     if (!img) return null;
     if (typeof img === 'string' && img !== '[object Object]') return img;
@@ -2101,10 +2101,12 @@ export default function CustomerProfilePage({
                 <h1 className="text-2xl font-bold tracking-tight text-[#141225]">{modules.find((item) => item.id === activeModule)?.label || 'My Profile'}</h1>
               </div>
             </div>
-            <button type="button" onClick={() => setIsEditing(true)} className="inline-flex items-center justify-center gap-2 rounded-[8px] bg-[#9A6031] px-5 py-3 text-sm font-bold text-white shadow-[0_12px_25px_rgba(139,94,60,0.2)] transition hover:bg-[#7E4B25]">
-              <Edit3 className="h-4 w-4" strokeWidth={1.8} />
-              Edit Profile
-            </button>
+            {activeModule === 'profile' && (
+              <button type="button" onClick={() => setIsEditing(true)} className="inline-flex items-center justify-center gap-2 rounded-[8px] bg-[#9A6031] px-5 py-3 text-sm font-bold text-white shadow-[0_12px_25px_rgba(139,94,60,0.2)] transition hover:bg-[#7E4B25]">
+                <Edit3 className="h-4 w-4" strokeWidth={1.8} />
+                Edit Profile
+              </button>
+            )}
           </header>
 
           {activeModule === 'profile' && renderProfile()}
@@ -2141,7 +2143,6 @@ export default function CustomerProfilePage({
 
             <div className="mt-6 grid gap-4 md:grid-cols-2">
               <Field label="Full Name" value={form.name} onChange={(value) => setForm((current) => ({ ...current, name: value }))} required />
-              <Field label="Phone Number" value={form.phone} onChange={(value) => setForm((current) => ({ ...current, phone: value }))} />
               <Field label="Date of Birth" type="date" value={form.dateOfBirth} onChange={(value) => setForm((current) => ({ ...current, dateOfBirth: value }))} />
               <label className="block">
                 <span className="text-sm font-bold text-[#4A403B]">Gender</span>

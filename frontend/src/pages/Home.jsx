@@ -146,7 +146,7 @@ export default function Home({ user, cartItems, wishlistItems, onOpenCart, onOpe
     });
   }, []);
 
-  const cartCount = cartItems?.reduce((acc, item) => acc + item.qty, 0) || 0;
+  const cartCount = cartItems ? new Set(cartItems.map(item => item.product)).size : 0;
   const wishlistCount = wishlistItems?.length || 0;
 
   const context = {

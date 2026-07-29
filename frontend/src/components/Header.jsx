@@ -3,7 +3,23 @@ import { ChevronDown, Heart, Search, ShoppingCart, User, X, Loader2, Menu, LogOu
 import { catalogService } from '../api/catalogService';
 import { cmsService } from '../api/cmsService';
 import { productV2API, categoryV2API } from '../api/catalogV2Service';
+import { API_ORIGIN } from '../api/apiClient';
 import { Link } from 'react-router-dom';
+
+// Resolve any profile image format to a full URL
+const resolveProfileImage = (img) => {
+  if (!img) return null;
+  // It's an object like { url: '/uploads/...' }
+  if (typeof img === 'object' && img.url) {
+    img = img.url;
+  }
+  if (typeof img !== 'string' || img === '[object Object]') return null;
+  if (img.startsWith('http') || img.startsWith('data:') || img.startsWith('blob:')) return img;
+  if (img.startsWith('/uploads') || img.startsWith('uploads/')) {
+    return `${API_ORIGIN}${img.startsWith('/') ? '' : '/'}${img}`;
+  }
+  return img;
+};
 
 export default function Header({
   user,
@@ -201,11 +217,14 @@ export default function Header({
               className="flex flex-col items-center gap-1 hover:text-[#B0611C] transition-colors"
               aria-label="Account"
             >
-              {(user?.profileImage?.url || user?.avatar) ? (
-                <img src={user.profileImage?.url || user.avatar} alt={user.name} className="h-[22px] w-[22px] rounded-full object-cover" />
-              ) : (
-                <User className="h-[22px] w-[22px]" strokeWidth={1.5} />
-              )}
+              {(() => {
+                const imgSrc = resolveProfileImage(user?.profileImage) || resolveProfileImage(user?.avatar);
+                return imgSrc ? (
+                  <img src={imgSrc} alt={user.name} className="h-[22px] w-[22px] rounded-full object-cover" />
+                ) : (
+                  <User className="h-[22px] w-[22px]" strokeWidth={1.5} />
+                );
+              })()}
               <span className="text-[11px] font-medium leading-none">Account</span>
             </button>
             {dropdownOpen && user && (
@@ -583,11 +602,14 @@ export default function Header({
               className="transition hover:opacity-80 flex items-center justify-center rounded-full"
               aria-label="Account"
             >
-              {(user?.profileImage?.url || user?.avatar) ? (
-                <img src={user.profileImage?.url || user.avatar} alt={user.name} className="h-[22px] w-[22px] sm:h-[26px] sm:w-[26px] rounded-full object-cover" />
-              ) : (
-                <User className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px]" strokeWidth={1.5} />
-              )}
+              {(() => {
+                const imgSrc = resolveProfileImage(user?.profileImage) || resolveProfileImage(user?.avatar);
+                return imgSrc ? (
+                  <img src={imgSrc} alt={user.name} className="h-[22px] w-[22px] sm:h-[26px] sm:w-[26px] rounded-full object-cover" />
+                ) : (
+                  <User className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px]" strokeWidth={1.5} />
+                );
+              })()}
             </button>
 
             {dropdownOpen && user && (

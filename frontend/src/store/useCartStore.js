@@ -317,6 +317,11 @@ const useCartStore = create(
         }
       },
 
+      // ─── Clear cart from memory only (on logout) ──────────────────────────
+      clearCartState: () => {
+        set({ cartItems: [] });
+      },
+
       // ─── Directly set cart items (used after order placement) ─────────────
       setCartItems: (items = []) => {
         const normalized = items.map(normalizeCartItem);

@@ -25,6 +25,7 @@ import { authService } from './api/authService';
 import CartOffcanvas from './components/CartOffcanvas';
 import WishlistOffcanvas from './components/WishlistOffcanvas';
 import useCartStore from './store/useCartStore';
+import useAddressStore from './store/useAddressStore';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -90,7 +91,7 @@ function LayoutWithHeader({ children, user, cartItems, wishlistItems, onOpenCart
         user={user}
         onLogout={onLogout}
         onNavigate={onNavigate}
-        cartCount={cartItems.reduce((acc, item) => acc + item.qty, 0)}
+        cartCount={new Set(cartItems.map(item => item.product)).size}
         onOpenCart={onOpenCart}
         wishlistCount={wishlistItems.length}
         onOpenWishlist={onOpenWishlist}
@@ -158,7 +159,9 @@ export default function App() {
       name: data.name,
       email: data.email,
       role: data.role,
-      isStaff: data.isStaff
+      isStaff: data.isStaff,
+      profileImage: data.profileImage,
+      avatar: data.avatar
     });
     if (!skipNavigate) {
       navigate('/');
@@ -169,6 +172,13 @@ export default function App() {
     authService.logout();
     setUser(null);
     setProfileData(null);
+    
+    // Clear stores from memory so previous user's data does not linger
+    try {
+      useAddressStore.getState().clearAddresses();
+      useCartStore.getState().clearCartState();
+    } catch(e) {}
+    
     navigate('/');
   };
 
@@ -236,6 +246,36 @@ export default function App() {
   useEffect(() => {
     if (user) {
       hydrateCartFromBackend();
+      
+      const fetchFullProfile = async () => {
+        try {
+          setProfileLoading(true);
+          const data = await authService.getProfile();
+          setProfileData(data);
+          // Sync profile image to user state so Header updates immediately
+          if (data) {
+            const profileUser = data.user || data;
+            setUser((current) => {
+              if (!current) return current;
+              const updated = {
+                ...current,
+                profileImage: profileUser.profileImage ?? current.profileImage,
+                avatar: profileUser.avatar ?? current.avatar,
+                name: profileUser.name ?? current.name,
+              };
+              authService.updateStoredUser(updated);
+              return updated;
+            });
+          }
+        } catch (err) {
+          setProfileError(err.message || 'Failed to load profile');
+        } finally {
+          setProfileLoading(false);
+        }
+      };
+      fetchFullProfile();
+    } else {
+      setProfileData(null);
     }
   }, [user, hydrateCartFromBackend]);
 

@@ -30,6 +30,8 @@ export const authService = {
           name: data.name,
           email: data.email,
           role: data.role,
+          avatar: data.avatar,
+          profileImage: data.profileImage,
         });
       }
 
@@ -64,6 +66,8 @@ export const authService = {
           email: data.email,
           role: data.role,
           isStaff: data.isStaff,
+          avatar: data.avatar,
+          profileImage: data.profileImage,
         });
       }
 

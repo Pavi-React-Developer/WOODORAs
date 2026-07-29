@@ -20,6 +20,7 @@ import { authService } from './api/authService';
 import CartOffcanvas from './components/CartOffcanvas';
 import WishlistOffcanvas from './components/WishlistOffcanvas';
 import useCartStore from './store/useCartStore';
+import useAddressStore from './store/useAddressStore';
 import GiftAndCardPage from './pages/GiftAndCardPage';
 
 import OAuthCallback from './pages/OAuthCallback';
@@ -119,6 +120,9 @@ export default function AppRouter() {
     setUser(null);
     setProfileData(null);
     setWishlistItems([]);  // Clear wishlist too
+    try {
+      useAddressStore.getState().clearAddresses();
+    } catch(e) {}
     navigate('/');
   };
 
