@@ -63,6 +63,10 @@ const userSchema = new mongoose.Schema({
         preferredAgeGroup: { type: String, default: 'All Ages' },
         emailNotifications: { type: Boolean, default: true },
     },
+    wishlist: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Product'
+    }],
     loyalty: {
         points: { type: Number, default: 0 },
         tier: { type: String, default: 'Premium Member' },

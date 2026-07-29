@@ -5,11 +5,14 @@ import { toast } from 'react-hot-toast';
 import CustomCalendar from '../components/CustomCalendar';
 import { productV2API, categoryV2API, subCategoryV2API } from '../api/catalogV2Service';
 import { getImageSrc } from '../utils/imageUtils';
+import useWishlistStore from '../store/useWishlistStore';
+import useCartStore from '../store/useCartStore';
 
 const API_URL = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api`;
 
 export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
   const navigate = useNavigate();
+  const { wishlistItems, toggleWishlist } = useWishlistStore();
   const [config, setConfig] = useState(null);
   const [message, setMessage] = useState('');
   const [style, setStyle] = useState('Classic');
@@ -127,8 +130,9 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
     // Add product to cart and navigate
     if (onAddToCart && onNavigate) {
       await onAddToCart(productWithGiftPrefs);
+      useCartStore.getState().setCheckoutOrigin('/gift-and-card');
       toast.success('Gift preferences saved! Added to cart.');
-      onNavigate('/cart');
+      onNavigate('/review-order');
     } else {
        toast.error('Navigation error. Please try again.');
     }
@@ -246,8 +250,20 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
                         </svg>
                       </div>
                     )}
-                    <button className="absolute top-2 right-2 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-sm text-gray-400 hover:text-[#A66C1C] hover:scale-110 transition-all z-10" onClick={(e) => e.stopPropagation()}>
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+                    <button 
+                      className="absolute top-2 right-2 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-sm text-gray-400 hover:text-[#A66C1C] hover:scale-110 transition-all z-10" 
+                      onClick={async (e) => { 
+                        e.stopPropagation(); 
+                        await toggleWishlist(product);
+                      }}
+                    >
+                      <svg 
+                        className={`w-3.5 h-3.5 transition-colors ${wishlistItems.some(w => (w._id || w) === product._id) ? 'text-red-500 fill-red-500' : 'fill-none'}`} 
+                        viewBox="0 0 24 24" 
+                        stroke="currentColor"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                      </svg>
                     </button>
                   </div>
                   

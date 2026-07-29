@@ -25,6 +25,7 @@ import { authService } from './api/authService';
 import CartOffcanvas from './components/CartOffcanvas';
 import WishlistOffcanvas from './components/WishlistOffcanvas';
 import useCartStore from './store/useCartStore';
+import useWishlistStore from './store/useWishlistStore';
 import useAddressStore from './store/useAddressStore';
 
 function ScrollToTop() {
@@ -128,27 +129,28 @@ function AdminLayout({ children }) {
 
 export default function App() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [user, setUser] = useState(() => authService.getCurrentUser());
   const [profileData, setProfileData] = useState(null);
   const [profileError, setProfileError] = useState('');
   const [profileLoading, setProfileLoading] = useState(false);
 
   // Cart state from store
-  const { cartItems, addToCart, updateQuantity, removeFromCart, hydrateCartFromBackend } = useCartStore();
+  const { cartItems, addToCart, updateQuantity, removeFromCart, hydrateCartFromBackend, fetchGlobalFee } = useCartStore();
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   // Wishlist state
-  const [wishlistItems, setWishlistItems] = useState([]);
+  const { wishlistItems, fetchWishlist, mergeGuestWishlist } = useWishlistStore();
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
 
   // Navigation handler (backwards compatible)
-  const handleNavigate = (path, payload = null) => {
+  const handleNavigate = (path, payload = null, options = {}) => {
     if (payload && typeof payload === 'object') {
-      navigate(path, { state: { data: payload } });
+      navigate(path, { state: { data: payload }, ...options });
     } else if (payload) {
-      navigate(`${path}/${payload}`);
+      navigate(`${path}/${payload}`, options);
     } else {
-      navigate(path);
+      navigate(path, options);
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -177,6 +179,7 @@ export default function App() {
     try {
       useAddressStore.getState().clearAddresses();
       useCartStore.getState().clearCartState();
+      useWishlistStore.setState({ wishlistItems: [], loading: false, error: null });
     } catch(e) {}
     
     navigate('/');
@@ -191,46 +194,19 @@ export default function App() {
   const handleBuyNow = (product) => {
     const addedQuantity = product.quantity || 1;
     addToCart(product, addedQuantity);
+    useCartStore.getState().setCheckoutOrigin(location.pathname);
     navigate('/review-order');
   };
 
-  const handleUpdateQuantity = (index, delta) => {
-    const item = cartItems[index];
-    if (!item) return;
-    const newQuantity = item.qty + delta;
-    if (newQuantity > 0) {
-      updateQuantity(item.product, newQuantity, item.variant);
-    } else {
-      removeFromCart(item.product, item.variant);
-    }
-  };
+  // CartOffcanvas now uses useCartStore directly — no index-based handlers needed
 
-  const handleRemoveFromCart = (index) => {
-    const item = cartItems[index];
-    if (item) {
-      removeFromCart(item.product, item.variant);
-    }
-  };
-
-  const handleAddToWishlist = (product) => {
-    const exists = wishlistItems.some(item => {
-      const isSameProduct = (item._id && product._id && item._id === product._id) ||
-        (item.id && product.id && item.id === product.id);
-      if (!isSameProduct) return false;
-      const itemVariantId = item.selectedVariant?._id || item.selectedVariant?.id;
-      const productVariantId = product.selectedVariant?._id || product.selectedVariant?.id;
-      return itemVariantId === productVariantId;
-    });
-    if (!exists) {
-      setWishlistItems([...wishlistItems, product]);
-    }
+  const handleAddToWishlist = async (product) => {
+    await useWishlistStore.getState().toggleWishlist(product);
     setIsWishlistOpen(true);
   };
 
   const handleRemoveFromWishlist = (index) => {
-    const newWishlist = [...wishlistItems];
-    newWishlist.splice(index, 1);
-    setWishlistItems(newWishlist);
+    useWishlistStore.getState().removeFromWishlistByIndex(index);
   };
 
   const handleMoveToCart = (item, index) => {
@@ -240,12 +216,18 @@ export default function App() {
 
   const handleCheckoutClick = () => {
     setIsCartOpen(false);
+    useCartStore.getState().setCheckoutOrigin(location.pathname);
     navigate('/review-order');
   };
 
   useEffect(() => {
+    fetchGlobalFee();
+  }, [fetchGlobalFee]);
+
+  useEffect(() => {
     if (user) {
       hydrateCartFromBackend();
+      mergeGuestWishlist().then(() => fetchWishlist());
       
       const fetchFullProfile = async () => {
         try {
@@ -277,7 +259,7 @@ export default function App() {
     } else {
       setProfileData(null);
     }
-  }, [user, hydrateCartFromBackend]);
+  }, [user?.id, hydrateCartFromBackend]); // Only run when user ID changes to prevent infinite loop
 
   const handleProfileUpdated = (updatedUser) => {
     setUser((current) => ({
@@ -300,14 +282,10 @@ export default function App() {
     <>
       <Toaster position="top-center" toastOptions={{ duration: 4000 }} />
 
-      {/* Cart Offcanvas */}
+      {/* Cart Offcanvas — reads from useCartStore directly */}
       <CartOffcanvas
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
-        cartItems={cartItems}
-        onUpdateQuantity={handleUpdateQuantity}
-        onRemove={handleRemoveFromCart}
-        onCheckout={handleCheckoutClick}
       />
 
       {/* Wishlist Offcanvas */}

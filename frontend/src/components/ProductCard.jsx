@@ -1,13 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { API_ORIGIN } from '../api/apiClient';
+import useWishlistStore from '../store/useWishlistStore';
 
 export default function ProductCard({ product, viewMode = 'grid', onNavigate, onAddToCart, onAddToWishlist, user }) {
   const [isAdding, setIsAdding] = useState(false);
-  const isInWishlist = user?.wishlist?.some?.((w) => (w._id || w) === product._id) || product.isWishlisted;
+  
+  // Use global wishlist state to stay in sync with sidebar removals
+  const wishlistItems = useWishlistStore(state => state.wishlistItems);
+  const isInWishlist = wishlistItems.some(w => (w._id || w) === product._id) || 
+                       user?.wishlist?.some?.((w) => (w._id || w) === product._id) || 
+                       product.isWishlisted;
+  // Fallback to local state just for immediate UI feedback before store updates
   const [localWishlist, setLocalWishlist] = useState(isInWishlist);
 
-  useEffect(() => {
+  // Sync local UI state with actual store state
+  React.useEffect(() => {
     setLocalWishlist(isInWishlist);
   }, [isInWishlist]);
 

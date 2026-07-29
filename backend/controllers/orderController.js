@@ -1,5 +1,6 @@
 const Order = require('../models/Order');
 const Fee = require('../models/Fee');
+const GlobalFee = require('../models/GlobalFee');
 const Refund = require('../models/Refund');
 const CancellationRule = require('../models/CancellationRule');
 const User = require('../models/User');
@@ -89,6 +90,17 @@ const updateVariantStock = async (variantId, qty, type) => {
   }
 };
 
+// Fix #6: Extracted to module-level to avoid duplication in updateOrderStatus & updateOrderDetails
+const STATUS_WEIGHTS = {
+  'Pending': 0,
+  'Placed': 1,
+  'Packed': 2,
+  'Shipping': 3,
+  'Out for delivery': 4,
+  'Delivered': 5,
+  'Cancelled': 99
+};
+
 const mapOrderStatusToRuleStatus = (status) => {
   const mapping = {
     'Placed': 'Order Placed',
@@ -140,26 +152,33 @@ const addOrderItems = async (req, res) => {
         .populate('paymentMethod', 'name')
         .lean();
 
+      let globalFee = await GlobalFee.findOne().lean();
+      if (!globalFee) {
+        globalFee = { productFee: 0, giftFee: 0, isActive: false };
+      }
+
       const subtotal = Number(itemsPrice) || orderItems.reduce((sum, item) => (
         sum + ((Number(item.price) || 0) * (Number(item.qty) || 0))
       ), 0);
 
       const feeSummary = calculateOrderFees({
         fees: configuredFees,
+        globalFee,
         subtotal,
         items: orderItems,
         state: shippingAddress?.state,
         paymentMethod,
       });
 
-      const resolvedFees = Array.isArray(fees) && fees.length > 0 ? fees : feeSummary.appliedFees;
+      // Always use backend calculated fees to prevent manipulation
+      const resolvedFees = feeSummary.appliedFees;
       const pricing = buildPricingSnapshot({
         pricing: req.body.pricing,
         subtotal,
         discountAmount: req.body.discountAmount,
         fees: resolvedFees,
-        shippingPrice: feeSummary.shippingCharge,
-        codAdvance: feeSummary.codAdvance,
+        shippingPrice: req.body.shippingPrice ?? feeSummary.shippingCharge,
+        codAdvance: req.body.codAdvance ?? feeSummary.codAdvance,
         paymentMethod,
       });
       console.debug('[order pricing]', {
@@ -356,16 +375,7 @@ const updateOrderStatus = async (req, res) => {
       return res.status(404).json({ message: 'Order not found' });
     }
 
-    const STATUS_WEIGHTS = {
-      'Pending': 0,
-      'Placed': 1,
-      'Packed': 2,
-      'Shipping': 3,
-      'Out for delivery': 4,
-      'Delivered': 5,
-      'Cancelled': 99
-    };
-
+    // Fix #6: Use module-level STATUS_WEIGHTS
     const currentWeight = STATUS_WEIGHTS[order.status] || 0;
     const newWeight = STATUS_WEIGHTS[status] || 0;
 
@@ -373,6 +383,7 @@ const updateOrderStatus = async (req, res) => {
       return res.status(400).json({ message: 'Cannot cancel a delivered order' });
     }
 
+    // Fix #7: Correct error message for already-cancelled orders
     if (status === 'Cancelled' && currentWeight === 99) {
       return res.status(400).json({ message: 'Order is already cancelled' });
     }
@@ -440,12 +451,32 @@ const updateOrderStatus = async (req, res) => {
 // @desc    Update order to delivered
 // @route   PUT /api/orders/:id/deliver
 // @access  Private/Admin
+// Fix #1: updateOrderToDelivered now deducts stock consistently (same as updateOrderStatus)
 const updateOrderToDelivered = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
 
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // Only deduct stock if not already delivered to prevent double deduction
+    if (order.status !== 'Delivered') {
+      for (const item of order.orderItems) {
+        if (item.variant) {
+          await updateVariantStock(item.variant, item.qty, 'deliver');
+        } else if (item.product) {
+          try {
+            const productToUpdate = await Product.findById(item.product);
+            if (productToUpdate && productToUpdate.inventory) {
+              productToUpdate.inventory.stockQuantity = Math.max(0, (productToUpdate.inventory.stockQuantity || 0) - item.qty);
+              await productToUpdate.save();
+            }
+          } catch (err) {
+            console.error('Failed to update product stock on deliver', err);
+          }
+        }
+      }
     }
 
     order.isDelivered = true;
@@ -515,22 +546,17 @@ const updateOrderDetails = async (req, res) => {
     }
 
     if (status && status !== order.status) {
-      const STATUS_WEIGHTS = {
-        'Pending': 0,
-        'Placed': 1,
-        'Packed': 2,
-        'Shipping': 3,
-        'Out for delivery': 4,
-        'Delivered': 5,
-        'Cancelled': 99
-      };
-
+      // Fix #6: Use module-level STATUS_WEIGHTS
       const currentWeight = STATUS_WEIGHTS[order.status] || 0;
       const newWeight = STATUS_WEIGHTS[status] || 0;
 
       if (status === 'Cancelled') {
-        if (order.status === 'Delivered' || order.status === 'Cancelled') {
+        if (order.status === 'Delivered') {
           return res.status(400).json({ message: 'Cannot cancel a delivered order' });
+        }
+        // Fix #7: Distinct message for already-cancelled orders
+        if (order.status === 'Cancelled') {
+          return res.status(400).json({ message: 'Order is already cancelled' });
         }
       } else if (newWeight < currentWeight) {
         return res.status(400).json({ message: 'Cannot move order status backwards' });
@@ -542,6 +568,22 @@ const updateOrderDetails = async (req, res) => {
       if (status === 'Delivered' && !order.isDelivered) {
         order.isDelivered = true;
         order.deliveredAt = Date.now();
+        // Deduct stock when marking Delivered via edit modal
+        for (const item of order.orderItems) {
+          if (item.variant) {
+            await updateVariantStock(item.variant, item.qty, 'deliver');
+          } else if (item.product) {
+            try {
+              const productToUpdate = await Product.findById(item.product);
+              if (productToUpdate && productToUpdate.inventory) {
+                productToUpdate.inventory.stockQuantity = Math.max(0, (productToUpdate.inventory.stockQuantity || 0) - item.qty);
+                await productToUpdate.save();
+              }
+            } catch (err) {
+              console.error('Failed to update product stock via updateOrderDetails', err);
+            }
+          }
+        }
       }
     }
 
@@ -599,14 +641,17 @@ const getCancellationPreview = async (req, res) => {
       }
     }
 
-    const amountPaid = order.paymentMethod === 'COD' ? 200 : order.totalPrice;
+    // Fix #2: Use dynamic advance payment from order data — never hardcode ₹200
+    const amountPaid = order.paymentMethod === 'COD'
+      ? (Number(order.advance_payment) || Number(order.codAdvance) || 0)
+      : (Number(order.total_amount) || Number(order.totalPrice) || 0);
     const estimatedRefund = Math.max(0, amountPaid - cancellationFee);
 
     res.json({
       orderId: order._id,
       items: order.orderItems,
       shippingAndFees: (order.shippingPrice || 0) + (order.taxPrice || 0),
-      totalOrderAmount: order.totalPrice,
+      totalOrderAmount: Number(order.total_amount) || Number(order.totalPrice) || 0,
       paymentMethod: order.paymentMethod,
       amountPaid,
       cancellationFee,
@@ -647,7 +692,10 @@ const cancelOrder = async (req, res) => {
       cancellationFee = rule.cancellationFee || 0;
     }
 
-    const amountPaid = order.paymentMethod === 'COD' ? 200 : order.totalPrice;
+    // Fix #2: Use dynamic advance payment from order data — never hardcode ₹200
+    const amountPaid = order.paymentMethod === 'COD'
+      ? (Number(order.advance_payment) || Number(order.codAdvance) || 0)
+      : (Number(order.total_amount) || Number(order.totalPrice) || 0);
     const refundAmount = Math.max(0, amountPaid - cancellationFee);
 
     // Create a Refund entry

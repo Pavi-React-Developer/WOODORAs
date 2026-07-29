@@ -16,7 +16,7 @@ import OrdersPage from './admin/OrdersPage';
 import { staffAPI } from '../api/staffService';
 import FeeListPage from './admin/fees/FeeListPage';
 import AddFeePage from './admin/fees/AddFeePage';
-import ProductFeeRulesList from './admin/fees/ProductFeeRulesList';
+import GlobalFeeSettings from './admin/fees/GlobalFeeSettings';
 import CancellationManagementPage from './admin/cancellations/CancellationManagementPage';
 import RefundManagementPage from './admin/refunds/RefundManagementPage';
 import InventoryManagement from './admin/inventory/InventoryManagement';
@@ -48,8 +48,7 @@ const adminRouteState = {
   '/admin/reviews': { tab: 'reviews' },
   '/admin/fees': { tab: 'fees', feeSubTab: 'list', feeMenuOpen: true },
   '/admin/fees/add': { tab: 'fees', feeSubTab: 'add', feeMenuOpen: true },
-  '/admin/fees/product-fees': { tab: 'fees', feeSubTab: 'product-fees', feeMenuOpen: true },
-  '/admin/cancellations': { tab: 'cancellation' },
+  '/admin/fees/global': { tab: 'fees', feeSubTab: 'global', feeMenuOpen: true },
   '/admin/cancellations': { tab: 'cancellation' },
   '/admin/refunds': { tab: 'refund', refundSubTab: 'list', refundMenuOpen: true },
   '/admin/bulk-orders': { tab: 'bulk-orders', bulkOrderSubTab: 'list', bulkOrderMenuOpen: true },
@@ -72,7 +71,6 @@ const adminTabPaths = {
   cms: '/admin/cms',
   coupons: '/admin/coupons',
   reviews: '/admin/reviews',
-  fees: '/admin/fees',
   fees: '/admin/fees',
   cancellation: '/admin/cancellations',
   refund: '/admin/refunds',
@@ -1104,15 +1102,6 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                       Add New Fee
                     </button>
                     )}
-                    <button
-                      onClick={() => openAdminTab('fees', { feeSubTab: 'product-fees', feeMenuOpen: true, path: '/admin/fees/product-fees' })}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
-                        currentTab === 'fees' && feeSubTab === 'product-fees' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
-                      }`}
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
-                      Product Fees
-                    </button>
                   </div>
                 )}
               </div>
@@ -2288,13 +2277,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
               editingFee={editingFee} 
             />
           )}
-          {(isAdmin || canView('fees')) && currentTab === 'fees' && feeSubTab === 'product-fees' && (
-            <ProductFeeRulesList 
-              onBack={() => setFeeSubTab('list')} 
-              canCreate={isAdmin || hasPermission('fees', 'create')}
-              canEdit={isAdmin || hasPermission('fees', 'edit')}
-              canDelete={isAdmin || hasPermission('fees', 'delete')}
-            />
+          {(isAdmin || canView('fees')) && currentTab === 'fees' && feeSubTab === 'global' && (
+            <GlobalFeeSettings />
           )}
 
           {/* ── CANCELLATION MANAGEMENT ── */}

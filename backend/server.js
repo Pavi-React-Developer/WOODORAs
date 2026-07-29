@@ -22,8 +22,8 @@ const couponRoutes = require('./routes/couponRoutes');
 const cmsRoutes = require('./routes/cmsRoutes');
 const bulkOrderRoutes = require('./routes/bulkOrderRoutes');
 const giftCardRoutes = require('./routes/giftCardRoutes');
-const giftBoxRuleRoutes = require('./routes/giftBoxRuleRoutes');
 const customizeRoutes = require('./routes/customizeRoutes');
+const globalFeeRoutes = require('./routes/globalFeeRoutes');
 const seedAttributes = require('./seedAttributes');
 const Order = require('./models/Order');
 const Review = require('./models/Review');
@@ -98,11 +98,15 @@ const passport = require('./config/passport');
 app.use(passport.initialize());
 app.use(cors({
     origin: function (origin, callback) {
-        const allowedOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',').map(s => s.trim()) : ['http://localhost:5173'];
+        const allowedOrigins = process.env.CORS_ORIGIN
+            ? process.env.CORS_ORIGIN.split(',').map(s => s.trim())
+            : ['http://localhost:5173'];
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
-            callback(null, false);
+            // Fix #15: Return a proper CORS error instead of silently rejecting.
+            // Silent rejection causes confusing 'network error' on the frontend.
+            callback(new Error(`CORS: Origin '${origin}' is not allowed`));
         }
     },
     credentials: true,
@@ -138,10 +142,8 @@ app.use('/api/coupons', couponRoutes);
 app.use('/api/cms', cmsRoutes);
 app.use('/api/bulk-orders', bulkOrderRoutes);
 app.use('/api/gift-cards', giftCardRoutes);
-app.use('/api/gift-box-rules', giftBoxRuleRoutes);
 app.use('/api/customize', customizeRoutes);
-const productFeeRuleRoutes = require('./routes/productFeeRuleRoutes');
-app.use('/api/product-fee-rules', productFeeRuleRoutes);
+app.use('/api/global-fees', globalFeeRoutes);
 
 app.get('/', (req, res) => {
     res.send('API is running...');

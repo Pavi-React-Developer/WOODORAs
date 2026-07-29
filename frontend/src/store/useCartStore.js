@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { API_ORIGIN } from '../api/apiClient';
 import { cartService } from '../api/cartService';
 import { toast } from 'react-hot-toast';
+import axios from 'axios';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -32,29 +33,39 @@ const calcVariantStock = (variant) => {
   return Math.max(0, Number(total) - Number(reserved));
 };
 
-/**
- * Debounced backend sync — prevents rapid repeated PUT requests.
- * Only fires if the user is logged in (token exists).
- */
+// ─── Sync Strategy ────────────────────────────────────────────────────────────
+// 
+// PROBLEM: replaceCart does full DB validation — if any item fails validation
+// (e.g. product has variants but item's variant is not found), the whole cart
+// is rejected. This caused:
+//   - "Cart sync failed. Refreshing cart..." toast on every quantity change
+//   - Items silently disappearing after syncing
+//   - The cart blinking (local → backend-cleared → local)
+//
+// FIX: Use ITEM-LEVEL API calls (addItem / updateItem / removeItemById) instead
+// of replaceCart for individual operations. replaceCart is only used for the
+// initial hydration merge (login), never for incremental updates.
+
 let syncTimer = null;
-const syncCartDebounced = (items, getStore) => {
+
+/**
+ * Debounce a single item quantity update to the backend.
+ * Uses PUT /api/cart/items/:productId — item-level, not whole-cart replace.
+ */
+const syncItemUpdateDebounced = (productId, qty, variantId, getStore) => {
   if (!localStorage.getItem('token')) return;
   clearTimeout(syncTimer);
   syncTimer = setTimeout(async () => {
     try {
-      const updatedCart = await cartService.replaceCart(items);
-      // Backend may have filtered out invalid/corrupt items — keep in sync
-      if (getStore && updatedCart && Array.isArray(updatedCart.items)) {
-        useCartStore.setState({ cartItems: updatedCart.items.map(normalizeCartItem) });
-      }
+      await cartService.updateItem(productId, qty, variantId || null);
     } catch (error) {
-      console.error('[Cart Sync] Failed:', error.message);
+      console.error('[Cart Sync] Update failed:', error.message);
+      // Don't toast here — it's a background sync; re-hydrate silently
       if (getStore) {
-        toast.error('Cart sync failed. Refreshing cart...');
         getStore().hydrateCartFromBackend();
       }
     }
-  }, 500);
+  }, 400);
 };
 
 // ─── Store ────────────────────────────────────────────────────────────────────
@@ -64,6 +75,20 @@ const useCartStore = create(
     (set, get) => ({
       cartItems: [],
       isCartHydrated: false,
+      isSyncing: false,
+      globalFee: null,
+      checkoutOrigin: null,
+
+      setCheckoutOrigin: (path) => set({ checkoutOrigin: path }),
+
+      fetchGlobalFee: async () => {
+        try {
+          const res = await axios.get(`${API_ORIGIN}/api/global-fees`);
+          set({ globalFee: res.data });
+        } catch (error) {
+          console.error('[Cart] Failed to fetch global fee:', error.message);
+        }
+      },
 
       /**
        * Fetch only the logged-in user's cart from the backend.
@@ -79,8 +104,60 @@ const useCartStore = create(
         try {
           const backendCart = await cartService.getCart();
           const backendItems = (backendCart.items || []).map(normalizeCartItem);
-          // Backend is the SINGLE SOURCE OF TRUTH for logged-in users.
-          // Do NOT merge with local state to prevent cross-user contamination.
+          
+          const localItems = get().cartItems;
+          
+          // If the user has a local cart (e.g. they added items as a guest before logging in),
+          // we need to merge it with their backend cart.
+          if (localItems.length > 0) {
+            const mergedMap = new Map();
+            let hasChanges = false;
+            
+            // 1. Add backend items to the map
+            backendItems.forEach(item => {
+              const key = `${toStr(item.product)}-${toStr(item.variant)}`;
+              mergedMap.set(key, item);
+            });
+            
+            // 2. Merge local items into the map
+            localItems.forEach(localItem => {
+              const key = `${toStr(localItem.product)}-${toStr(localItem.variant)}`;
+              if (mergedMap.has(key)) {
+                // Item exists in both: add quantities
+                const existing = mergedMap.get(key);
+                const newQty = existing.qty + localItem.qty;
+                const maxStock = existing.maxStock > 0 ? existing.maxStock : 999;
+                
+                if (newQty !== existing.qty) {
+                  existing.qty = Math.min(newQty, maxStock);
+                  hasChanges = true;
+                }
+              } else {
+                // Item only exists locally: add it to the map
+                mergedMap.set(key, localItem);
+                hasChanges = true;
+              }
+            });
+            
+            // 3. If there were local items to merge, push the unified cart to the backend
+            if (hasChanges) {
+              const mergedItemsArray = Array.from(mergedMap.values());
+              // Optimistically set local state
+              set({ cartItems: mergedItemsArray, isCartHydrated: true });
+              
+              // Bulk sync to the backend
+              const updatedBackendCart = await cartService.replaceCart(mergedItemsArray);
+              
+              // Update local state again with the definitive backend response
+              // (which may have stripped out invalid items or clamped quantities)
+              if (updatedBackendCart && Array.isArray(updatedBackendCart.items)) {
+                set({ cartItems: updatedBackendCart.items.map(normalizeCartItem) });
+              }
+              return;
+            }
+          }
+
+          // No merging needed: just use the backend items directly
           set({ cartItems: backendItems, isCartHydrated: true });
         } catch (error) {
           console.error('[Cart] Failed to hydrate from backend:', error.message);
@@ -99,173 +176,217 @@ const useCartStore = create(
       },
 
       // ─── Core Add to Cart ─────────────────────────────────────────────────
-      addToCart: (product, qty = 1) => {
+      addToCart: async (product, qty = 1) => {
         const productId = toStr(product._id || product.id || product.productId || '');
         if (!productId) return;
 
-        set((state) => {
-          let selectedVariant = product.selectedVariant || null;
-          const variants = product.variants || [];
+        let selectedVariant = product.selectedVariant || null;
+        const variants = product.variants || [];
 
-          // ── FIFO Variant Resolution (only if no variant is pre-selected) ──
-          if (!selectedVariant && variants.length > 0) {
-            for (const variant of variants) {
-              if (variant.isActive === false) continue;
+        // ── FIFO Variant Resolution (only if no variant is pre-selected) ──
+        if (!selectedVariant && variants.length > 0) {
+          const currentState = get();
+          for (const variant of variants) {
+            if (variant.isActive === false) continue;
 
-              const variantStock = Math.max(
-                0,
-                (variant.inventory ?? variant.currentStock ?? variant.stock ?? 0) - (variant.reserveStock || 0)
-              );
-              if (variantStock <= 0) continue;
+            const variantStock = Math.max(
+              0,
+              (variant.inventory ?? variant.currentStock ?? variant.stock ?? 0) - (variant.reserveStock || 0)
+            );
+            if (variantStock <= 0) continue;
 
-              const variantIdStr = toStr(variant._id || variant.id);
-              const qtyInCart = state.cartItems
-                .filter(item => toStr(item.product) === productId && toStr(item.variant) === variantIdStr)
-                .reduce((sum, item) => sum + item.qty, 0);
+            const variantIdStr = toStr(variant._id || variant.id);
+            const qtyInCart = currentState.cartItems
+              .filter(item => toStr(item.product) === productId && toStr(item.variant) === variantIdStr)
+              .reduce((sum, item) => sum + item.qty, 0);
 
-              if (variantStock - qtyInCart > 0) {
-                selectedVariant = variant;
-                break;
-              }
-            }
-
-            if (!selectedVariant) {
-              toast.error('All available stock has already been added to your cart.');
-              return state;
+            if (variantStock - qtyInCart > 0) {
+              selectedVariant = variant;
+              break;
             }
           }
 
-          // ── Calculate Final Details ────────────────────────────────────────
-          const variantId = toStr(selectedVariant?._id || selectedVariant?.id || '');
-          const variantPrice = selectedVariant?.discountPrice ?? selectedVariant?.basePrice ?? selectedVariant?.price;
-          const finalPrice = variantPrice != null ? Number(variantPrice) : Number(product.discountPrice ?? product.price ?? 0);
-
-          let finalImage =
-            product.images?.find((img) => img.isThumbnail)?.url ||
-            product.images?.[0]?.url ||
-            (typeof product.images?.[0] === 'string' ? product.images[0] : null) ||
-            (typeof product.image === 'object' ? product.image?.url : product.image) ||
-            '';
-          if (selectedVariant?.images?.length > 0) {
-            finalImage = selectedVariant.images[0]?.url || selectedVariant.images[0] || finalImage;
+          if (!selectedVariant) {
+            toast.error('All available stock has already been added to your cart.');
+            return;
           }
-          if (finalImage && finalImage.startsWith('/uploads')) {
-            finalImage = `${API_ORIGIN}${finalImage}`;
-          }
+        }
 
-          // ── Variant Label ──────────────────────────────────────────────────
-          const cap = (s) => (typeof s === 'string' ? s.charAt(0).toUpperCase() + s.slice(1) : s);
-          const optParts = [];
-          if (selectedVariant) {
-            if (Array.isArray(selectedVariant.options) && selectedVariant.options.length > 0) {
-              selectedVariant.options.forEach((opt) =>
-                optParts.push(`${cap(opt.attribute?.name || opt.attributeName || 'Option')}: ${cap(opt.value)}`)
-              );
-            } else if (selectedVariant.variantCombination) {
-              optParts.push(selectedVariant.variantCombination.split('-').map(cap).join(', '));
-            } else {
-              if (selectedVariant.color) optParts.push(`Colour: ${cap(selectedVariant.color)}`);
-              if (selectedVariant.weight) optParts.push(`Weight: ${cap(String(selectedVariant.weight))}`);
-              if (selectedVariant.size) optParts.push(`Size: ${cap(selectedVariant.size)}`);
+        // ── Calculate Final Details ────────────────────────────────────────
+        const variantId = toStr(selectedVariant?._id || selectedVariant?.id || '');
+        const variantPrice = selectedVariant?.discountPrice ?? selectedVariant?.basePrice ?? selectedVariant?.price;
+        const finalPrice = variantPrice != null ? Number(variantPrice) : Number(product.discountPrice ?? product.price ?? 0);
+
+        let finalImage =
+          product.images?.find((img) => img.isThumbnail)?.url ||
+          product.images?.[0]?.url ||
+          (typeof product.images?.[0] === 'string' ? product.images[0] : null) ||
+          (typeof product.image === 'object' ? product.image?.url : product.image) ||
+          '';
+        if (selectedVariant?.images?.length > 0) {
+          finalImage = selectedVariant.images[0]?.url || selectedVariant.images[0] || finalImage;
+        }
+        if (finalImage && finalImage.startsWith('/uploads')) {
+          finalImage = `${API_ORIGIN}${finalImage}`;
+        }
+
+        // ── Variant Label ──────────────────────────────────────────────────
+        const cap = (s) => (typeof s === 'string' ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+        const optParts = [];
+        if (selectedVariant) {
+          if (Array.isArray(selectedVariant.options) && selectedVariant.options.length > 0) {
+            selectedVariant.options.forEach((opt) =>
+              optParts.push(`${cap(opt.attribute?.name || opt.attributeName || 'Option')}: ${cap(opt.value)}`)
+            );
+          } else if (selectedVariant.variantCombination) {
+            optParts.push(selectedVariant.variantCombination.split('-').map(cap).join(', '));
+          } else {
+            if (selectedVariant.color) optParts.push(`Colour: ${cap(selectedVariant.color)}`);
+            if (selectedVariant.weight) optParts.push(`Weight: ${cap(String(selectedVariant.weight))}`);
+            if (selectedVariant.size) optParts.push(`Size: ${cap(selectedVariant.size)}`);
+          }
+        }
+        const variantOptions = optParts.join(', ') || null;
+
+        // ── Max Stock ──────────────────────────────────────────────────────
+        const maxStock = selectedVariant
+          ? calcVariantStock(selectedVariant)
+          : (product.variants && product.variants.length > 0)
+            ? 0
+            : Number(product.inventory?.stockQuantity ?? product.stock ?? 999);
+
+        if (maxStock <= 0 && !selectedVariant) {
+          toast.error('Product is out of stock.');
+          return;
+        }
+
+        const newItem = {
+          product: productId,
+          name: product.name || 'Product',
+          image: finalImage,
+          price: finalPrice,
+          qty,
+          variant: variantId || null,
+          variantOptions,
+          maxStock: Math.max(1, maxStock),
+          weight: selectedVariant?.weight ?? product.shippingWeight ?? product.weight ?? 0,
+          isGift: product.isGift || false,
+          isGiftWrapper: product.isGiftWrapper !== undefined ? product.isGiftWrapper : true,
+          giftBox: product.giftBox || null,
+          dimensions: (selectedVariant?.length && selectedVariant?.width && selectedVariant?.height)
+            ? { length: selectedVariant.length, width: selectedVariant.width, height: selectedVariant.height }
+            : product.dimensions || null,
+          giftMessage: product.giftMessage || null,
+          giftCardStyle: product.giftMessageStyle || null,
+          deliveryDate: product.deliveryDate || product.scheduledDeliveryDate || null,
+          scheduledDeliveryDate: product.scheduledDeliveryDate || null,
+        };
+
+        const currentState = get();
+        const existIndex = currentState.cartItems.findIndex(
+          (x) => toStr(x.product) === toStr(newItem.product) && toStr(x.variant) === toStr(newItem.variant)
+        );
+
+        let updatedItems;
+        if (existIndex !== -1) {
+          const existingItem = currentState.cartItems[existIndex];
+          const newQty = existingItem.qty + qty;
+          if (existingItem.maxStock > 0 && newQty > existingItem.maxStock) {
+            if (existingItem.qty >= existingItem.maxStock) {
+              toast.error(`Only ${existingItem.maxStock} item(s) available in stock.`);
+              return;
             }
-          }
-          const variantOptions = optParts.join(', ') || null;
-
-          // ── Max Stock ──────────────────────────────────────────────────────
-          const maxStock = selectedVariant
-            ? calcVariantStock(selectedVariant)
-            : (product.variants && product.variants.length > 0)
-              ? 0
-              : Number(product.inventory?.stockQuantity ?? product.stock ?? 999);
-
-          if (maxStock <= 0 && !selectedVariant) {
-            toast.error('Product is out of stock.');
-            return state;
-          }
-
-          const newItem = {
-            product: productId,
-            name: product.name || 'Product',
-            image: finalImage,
-            price: finalPrice,
-            qty,
-            variant: variantId || null,
-            variantOptions,
-            maxStock: Math.max(1, maxStock),
-            weight: selectedVariant?.weight ?? product.shippingWeight ?? product.weight ?? 0,
-            isGift: product.isGift || false,
-            isGiftWrapper: product.isGiftWrapper !== undefined ? product.isGiftWrapper : true,
-            giftBox: product.giftBox || null,
-            dimensions: (selectedVariant?.length && selectedVariant?.width && selectedVariant?.height)
-              ? { length: selectedVariant.length, width: selectedVariant.width, height: selectedVariant.height }
-              : product.dimensions || null,
-            giftMessage: product.giftMessage || null,
-            giftCardStyle: product.giftMessageStyle || null,
-            deliveryDate: product.deliveryDate || product.scheduledDeliveryDate || null,
-            scheduledDeliveryDate: product.scheduledDeliveryDate || null,
-          };
-
-          const existIndex = state.cartItems.findIndex(
-            (x) => toStr(x.product) === toStr(newItem.product) && toStr(x.variant) === toStr(newItem.variant)
-          );
-
-          let updatedItems;
-          if (existIndex !== -1) {
-            updatedItems = state.cartItems.map((x, i) => {
-              if (i !== existIndex) return x;
-              const newQty = x.qty + qty;
-              if (x.maxStock > 0 && newQty > x.maxStock) {
-                if (x.qty >= x.maxStock) {
-                  toast.error(`Only ${x.maxStock} item(s) available in stock.`);
-                  return x;
-                }
-                toast.error(`Only ${x.maxStock} item(s) available. Added remaining.`);
-                return { ...x, qty: x.maxStock, variantOptions: variantOptions || x.variantOptions };
-              }
-              const vLabel = variantOptions ? ` (${variantOptions})` : '';
-              toast.success(`Increased quantity of ${newItem.name}${vLabel}`);
-              return {
+            toast.error(`Only ${existingItem.maxStock} item(s) available. Added remaining.`);
+            updatedItems = currentState.cartItems.map((x, i) =>
+              i !== existIndex ? x : { ...x, qty: x.maxStock, variantOptions: variantOptions || x.variantOptions }
+            );
+          } else {
+            const vLabel = variantOptions ? ` (${variantOptions})` : '';
+            toast.success(`Increased quantity of ${newItem.name}${vLabel}`);
+            updatedItems = currentState.cartItems.map((x, i) =>
+              i !== existIndex ? x : {
                 ...x,
                 qty: newQty,
                 variantOptions: variantOptions || x.variantOptions,
                 isGift: newItem.isGift ?? x.isGift,
+                isGiftWrapper: newItem.isGiftWrapper !== undefined ? newItem.isGiftWrapper : x.isGiftWrapper,
                 giftMessage: newItem.giftMessage ?? x.giftMessage,
                 giftCardStyle: newItem.giftCardStyle ?? x.giftCardStyle,
                 deliveryDate: newItem.deliveryDate ?? x.deliveryDate,
                 scheduledDeliveryDate: newItem.scheduledDeliveryDate ?? x.scheduledDeliveryDate,
-              };
-            });
-          } else {
-            const clampedQty = maxStock > 0 ? Math.min(qty, maxStock) : qty;
-            updatedItems = [...state.cartItems, { ...newItem, qty: clampedQty }];
-            const vLabel = variantOptions ? ` (${variantOptions})` : '';
-            toast.success(`Added ${newItem.name}${vLabel} to cart`);
+                giftBox: newItem.giftBox ?? x.giftBox,
+              }
+            );
           }
+        } else {
+          const clampedQty = maxStock > 0 ? Math.min(qty, maxStock) : qty;
+          updatedItems = [...currentState.cartItems, { ...newItem, qty: clampedQty }];
+          const vLabel = variantOptions ? ` (${variantOptions})` : '';
+          toast.success(`Added ${newItem.name}${vLabel} to cart`);
+        }
 
-          syncCartDebounced(updatedItems, get);
-          return { cartItems: updatedItems };
-        });
+        // Optimistic local update immediately
+        set({ cartItems: updatedItems });
+
+        // Sync to backend using item-level API (avoids full-cart validation rejection)
+        if (localStorage.getItem('token')) {
+          try {
+            const backendCart = await cartService.addItem({
+              product: newItem.product,
+              variant: newItem.variant,
+              name: newItem.name,
+              image: newItem.image,
+              price: newItem.price,
+              qty,
+              weight: newItem.weight,
+              maxStock: newItem.maxStock,
+              variantOptions: newItem.variantOptions,
+              isGift: newItem.isGift,
+              isGiftWrapper: newItem.isGiftWrapper,
+              giftMessage: newItem.giftMessage,
+              giftCardStyle: newItem.giftCardStyle,
+              deliveryDate: newItem.deliveryDate,
+              scheduledDeliveryDate: newItem.scheduledDeliveryDate,
+              giftBox: newItem.giftBox,
+              dimensions: newItem.dimensions,
+            });
+            // Update local state with backend-confirmed items (fresh maxStock etc.)
+            if (backendCart && Array.isArray(backendCart.items)) {
+              set({ cartItems: backendCart.items.map(normalizeCartItem) });
+            }
+          } catch (error) {
+            console.error('[Cart] addItem backend failed:', error.message);
+            // Keep optimistic state — don't discard what the user added
+            // Silently re-hydrate in background to reconcile
+            get().hydrateCartFromBackend();
+          }
+        }
       },
 
       // ─── Update quantity for an existing cart item ─────────────────────────
       updateQuantity: (productId, qty, variantId = undefined) => {
-        set((state) => {
-          const updatedItems = state.cartItems.map((item) => {
-            if (!itemMatches(item, productId, variantId)) return item;
+        const state = get();
+        const item = state.cartItems.find(i => itemMatches(i, productId, variantId));
+        if (!item) return;
 
-            const newQty = Number(qty);
+        const newQty = Number(qty);
+        if (newQty < 1) return; // let removeFromCart handle deletion
 
-            if (item.maxStock != null && item.maxStock > 0 && newQty > item.maxStock) {
-              toast.error(`Only ${item.maxStock} item(s) available in stock.`);
-              return { ...item, qty: item.maxStock };
-            }
+        // Check stock
+        if (item.maxStock != null && item.maxStock > 0 && newQty > item.maxStock) {
+          toast.error(`Only ${item.maxStock} item(s) available in stock.`);
+          return;
+        }
 
-            return { ...item, qty: Math.max(1, newQty) };
-          });
-
-          syncCartDebounced(updatedItems, get);
-          return { cartItems: updatedItems };
+        // Optimistic local update
+        const updatedItems = state.cartItems.map((i) => {
+          if (!itemMatches(i, productId, variantId)) return i;
+          return { ...i, qty: newQty };
         });
+        set({ cartItems: updatedItems });
+
+        // Sync with item-level API (not replaceCart — avoids full-cart rejection)
+        syncItemUpdateDebounced(productId, newQty, variantId, get);
       },
 
       /**
@@ -273,14 +394,30 @@ const useCartStore = create(
        * Uses the MongoDB subdocument _id when available (preferred), falls
        * back to product+variant matching for items without an _id (e.g. guest).
        */
-      removeFromCart: (productId, variantId = undefined) => {
-        set((state) => {
-          const updatedItems = state.cartItems.filter(
-            (item) => !itemMatches(item, productId, variantId)
-          );
-          syncCartDebounced(updatedItems, get);
-          return { cartItems: updatedItems };
-        });
+      removeFromCart: async (productId, variantId = undefined) => {
+        const state = get();
+        const item = state.cartItems.find(i => itemMatches(i, productId, variantId));
+
+        // Optimistic local update immediately
+        const updatedItems = state.cartItems.filter(
+          (i) => !itemMatches(i, productId, variantId)
+        );
+        set({ cartItems: updatedItems });
+
+        // Sync removal to backend
+        if (localStorage.getItem('token') && item) {
+          try {
+            if (item._id) {
+              await cartService.removeItemById(item._id);
+            } else {
+              await cartService.removeItem(productId, variantId || null);
+            }
+          } catch (error) {
+            console.error('[Cart] removeFromCart backend failed:', error.message);
+            // Silently re-hydrate to reconcile
+            get().hydrateCartFromBackend();
+          }
+        }
       },
 
       /**
@@ -301,7 +438,6 @@ const useCartStore = create(
             await cartService.removeItemById(itemId);
           } catch (error) {
             console.error('[Cart] Failed to remove item from backend:', error.message);
-            toast.error('Failed to remove item. Refreshing cart...');
             get().hydrateCartFromBackend();
           }
         }
@@ -319,14 +455,14 @@ const useCartStore = create(
 
       // ─── Clear cart from memory only (on logout) ──────────────────────────
       clearCartState: () => {
-        set({ cartItems: [] });
+        clearTimeout(syncTimer);
+        set({ cartItems: [], isCartHydrated: false });
       },
 
       // ─── Directly set cart items (used after order placement) ─────────────
       setCartItems: (items = []) => {
         const normalized = items.map(normalizeCartItem);
         set({ cartItems: normalized });
-        syncCartDebounced(normalized, get);
       },
 
       // ─── Computed selectors ────────────────────────────────────────────────
@@ -344,7 +480,7 @@ const useCartStore = create(
         new Set(get().cartItems.map((item) => toStr(item.product))).size,
     }),
     {
-      name: 'woodora-cart-v4', // Bumped version to purge old persisted state
+      name: 'woodora-cart-v5', // Bumped version to purge old persisted state
       version: 1,
     }
   )

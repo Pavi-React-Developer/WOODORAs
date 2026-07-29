@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { CheckCircle, ShoppingBag, ArrowRight } from 'lucide-react';
 import { orderService } from '../api/orderService';
 import OrderPricingSummary from '../components/OrderPricingSummary';
+import useCartStore from '../store/useCartStore';
 
 export default function OrderSuccessPage({ orderId, onNavigate }) {
   const [order, setOrder] = useState(null);
@@ -62,13 +63,16 @@ export default function OrderSuccessPage({ orderId, onNavigate }) {
 
           <div className="flex flex-col sm:flex-row gap-3">
             <button
-              onClick={() => onNavigate('/order-history')}
+              onClick={() => onNavigate('/order-history', null, { replace: true })}
               className="flex-1 px-6 py-3.5 bg-[#8B5E3C] text-white rounded-xl font-bold hover:bg-[#7a5234] transition-colors flex items-center justify-center gap-2 shadow-md shadow-[#8B5E3C]/20"
             >
               <ShoppingBag className="w-5 h-5" /> View Orders
             </button>
             <button
-              onClick={() => onNavigate('/')}
+              onClick={() => {
+                const origin = useCartStore.getState().checkoutOrigin || '/';
+                onNavigate(origin, null, { replace: true });
+              }}
               className="flex-1 px-6 py-3.5 bg-white border border-[#E6DFD4] text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
             >
               Continue Shopping <ArrowRight className="w-5 h-5" />

@@ -58,8 +58,8 @@ export const feeAPI = {
 
     // Payment Methods
     getPaymentMethods: () => request(`${FEES_URL}/payment-methods`),
+    
+    // COD Availability
+    checkCodAvailability: (cartTotal) => request(`${FEES_URL}/cod-availability?cartTotal=${cartTotal}`),
     createPaymentMethod: (data) => request(`${FEES_URL}/payment-methods`, { method: 'POST', body: JSON.stringify(data) }),
-
-    // Product Fee Rules
-    getProductFeeRules: () => request(`${API_BASE_URL}/product-fee-rules`),
 };

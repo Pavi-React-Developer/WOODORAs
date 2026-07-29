@@ -41,6 +41,8 @@ export default function AddFeePage({ onNavigate, editingFee }) {
   const [applicationState, setApplicationState] = useState([]);
   const [weightSlabs, setWeightSlabs] = useState([{ minWeight: '', maxWeight: '', charge: '', status: true }]);
   const [active, setActive] = useState(true);
+  const [minimumOrderAmount, setMinimumOrderAmount] = useState('');
+  const [maximumOrderAmount, setMaximumOrderAmount] = useState('');
 
   // Error States
   const [errors, setErrors] = useState({});
@@ -74,6 +76,8 @@ export default function AddFeePage({ onNavigate, editingFee }) {
       setApplicationState(Array.isArray(editingFee.applicationState) ? editingFee.applicationState : (editingFee.applicationState ? [editingFee.applicationState] : []));
       setWeightSlabs(editingFee.weightSlabs?.length > 0 ? editingFee.weightSlabs.map(normalizeSlab) : [{ minWeight: '', maxWeight: '', charge: '', status: true }]);
       setActive(editingFee.active !== false);
+      setMinimumOrderAmount(editingFee.minimumOrderAmount ?? '');
+      setMaximumOrderAmount(editingFee.maximumOrderAmount ?? '');
     }
   }, [editingFee]);
 
@@ -124,6 +128,16 @@ export default function AddFeePage({ onNavigate, editingFee }) {
       }
     }
 
+    if (paymentMethod === 'cod' || paymentMethod === 'both') {
+      if (minimumOrderAmount !== '' && maximumOrderAmount !== '') {
+        const min = Number(minimumOrderAmount);
+        const max = Number(maximumOrderAmount);
+        if (!isNaN(min) && !isNaN(max) && min > max) {
+          newErrors.maximumOrderAmount = "Maximum amount must be greater than minimum amount";
+        }
+      }
+    }
+
     if (isWeightBased) {
       const slabErrors = [];
       weightSlabs.forEach((slab, index) => {
@@ -161,9 +175,6 @@ export default function AddFeePage({ onNavigate, editingFee }) {
     }
 
     setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) {
-      alert("Please fix the validation errors: " + Object.keys(newErrors).join(", "));
-    }
     return Object.keys(newErrors).length === 0;
   };
 
@@ -192,7 +203,9 @@ export default function AddFeePage({ onNavigate, editingFee }) {
         status: slab.status !== false,
         displayOrder: index,
       })) : [],
-      active
+      active,
+      minimumOrderAmount: (paymentMethod === 'cod' || paymentMethod === 'both') && minimumOrderAmount !== '' ? Number(minimumOrderAmount) : null,
+      maximumOrderAmount: (paymentMethod === 'cod' || paymentMethod === 'both') && maximumOrderAmount !== '' ? Number(maximumOrderAmount) : null,
     };
 
     try {
@@ -419,6 +432,34 @@ export default function AddFeePage({ onNavigate, editingFee }) {
             </select>
             {errors.feeType && <p className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">{errors.feeType}</p>}
           </div>
+
+          {(paymentMethod === 'cod' || paymentMethod === 'both') && (
+            <>
+              <div>
+                <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-2">Minimum Order Amount (₹)</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={minimumOrderAmount}
+                  onChange={(e) => setMinimumOrderAmount(e.target.value)}
+                  className="w-full border border-[#E6DFD4] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-brand-medium"
+                  placeholder="e.g. 500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-2">Maximum Order Amount (₹)</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={maximumOrderAmount}
+                  onChange={(e) => setMaximumOrderAmount(e.target.value)}
+                  className="w-full border border-[#E6DFD4] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-brand-medium"
+                  placeholder="e.g. 5000"
+                />
+                {errors.maximumOrderAmount && <p className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">{errors.maximumOrderAmount}</p>}
+              </div>
+            </>
+          )}
 
           <div className="flex items-center pt-8">
             <label className="flex items-center cursor-pointer">

@@ -453,15 +453,9 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
   const variantAttributeOptions = useMemo(() => {
     const map = buildAttributeOptionsFromVariants(product);
     // Convert Sets to sorted arrays
-    const result = Object.fromEntries(
+    return Object.fromEntries(
       Object.entries(map).map(([k, s]) => [k, Array.from(s)])
     );
-    console.log('🔍 Variant Attribute Options:', {
-      hasVariants: !!product?.variants,
-      variantCount: product?.variants?.length,
-      result
-    });
-    return result;
   }, [product]);
 
   // Determine attribute names to show. Prefer variant-derived options; fall back to
@@ -519,22 +513,13 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
     const totalAttributes = Object.keys(variantAttributeOptions).length;
     const selectedCount = Object.keys(selectedAttributeValues).length;
 
-    console.log('🔍 Variant Matching:', {
-      totalAttributes,
-      selectedCount,
-      selectedAttributeValues,
-      allSelected: totalAttributes > 0 && selectedCount >= totalAttributes
-    });
-
     // Only attempt match when all attribute dimensions are selected
     if (totalAttributes > 0 && selectedCount < totalAttributes) {
-      console.log('⏸️ Not all attributes selected yet');
       setSelectedVariant(null);
       return;
     }
 
     const matchedVariant = findMatchingVariant(product, selectedAttributeValues);
-    console.log('✨ Matched Variant:', matchedVariant);
     setSelectedVariant(matchedVariant || null);
 
     if (matchedVariant) {
@@ -557,12 +542,6 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
     } else {
       text = 'Handcrafted wooden toy designed for mindful play, beautiful display, and everyday use.';
     }
-
-    console.log('📝 Description text set:', {
-      selectedVariant: !!selectedVariant,
-      hasDescription: !!product?.description,
-      text: text.substring(0, 100),
-    });
 
     return text;
   }, [product, selectedVariant]);

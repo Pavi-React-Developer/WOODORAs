@@ -1,20 +1,42 @@
 import React from 'react';
-import { Gift } from 'lucide-react';
+import { Gift, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
+import useCartStore from '../store/useCartStore';
+import useCartCalculation from '../hooks/useCartCalculation';
+import { useNavigate } from 'react-router-dom';
 
 /**
- * CartOffcanvas
- * Props:
- *  - isOpen: boolean
- *  - onClose: () => void
- *  - cartItems: Array<{product, variant, name, image, price, qty, maxStock, variantOptions}>
- *  - onUpdateQuantity: (index: number, delta: +1 | -1) => void
- *  - onRemove: (index: number) => void
- *  - onCheckout: () => void
+ * CartOffcanvas — Side drawer cart panel.
+ *
+ * Uses useCartStore directly (single source of truth).
+ * All quantity / remove actions go through the store which handles
+ * optimistic UI + backend sync via item-level APIs.
  */
-export default function CartOffcanvas({ isOpen, onClose, cartItems, onUpdateQuantity, onRemove, onCheckout }) {
+export default function CartOffcanvas({ isOpen, onClose }) {
+  const navigate = useNavigate();
+  const { cartItems, updateQuantity, removeFromCart } = useCartStore();
+  const { subtotal: total } = useCartCalculation();
+
   if (!isOpen) return null;
 
-  const total = cartItems.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 0), 0);
+  const handleDecrease = (item) => {
+    if (item.qty <= 1) {
+      // Remove item when qty reaches 0
+      removeFromCart(item.product, item.variant);
+    } else {
+      updateQuantity(item.product, item.qty - 1, item.variant);
+    }
+  };
+
+  const handleIncrease = (item) => {
+    const maxStock = item.maxStock ?? 999;
+    if (item.qty >= maxStock) return;
+    updateQuantity(item.product, item.qty + 1, item.variant);
+  };
+
+  const handleCheckout = () => {
+    onClose();
+    navigate('/review-order');
+  };
 
   return (
     <>
@@ -29,24 +51,41 @@ export default function CartOffcanvas({ isOpen, onClose, cartItems, onUpdateQuan
 
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-brand-medium/20">
-          <h2 className="font-serif text-2xl font-bold text-brand-dark">Your Cart</h2>
+          <div className="flex items-center gap-2">
+            <ShoppingBag className="w-5 h-5 text-brand-dark" />
+            <h2 className="font-serif text-xl font-bold text-brand-dark">Your Cart</h2>
+            {cartItems.length > 0 && (
+              <span className="bg-brand-dark text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                {cartItems.length}
+              </span>
+            )}
+          </div>
           <button
             onClick={onClose}
             className="p-2 -mr-2 text-brand-dark/60 hover:text-brand-dark hover:bg-brand-light/40 rounded-full transition-colors"
+            aria-label="Close cart"
           >
             ✕
           </button>
         </div>
 
         {/* Cart Items */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {cartItems.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-brand-dark/50 space-y-3">
-              <span className="text-4xl">🛒</span>
-              <p>Your cart is empty.</p>
+            <div className="flex flex-col items-center justify-center h-full text-brand-dark/50 space-y-4 py-16">
+              <div className="w-20 h-20 bg-brand-beige/60 rounded-full flex items-center justify-center">
+                <ShoppingBag className="w-10 h-10 text-brand-dark/30" />
+              </div>
+              <p className="font-medium text-brand-dark/60">Your cart is empty.</p>
+              <button
+                onClick={onClose}
+                className="text-sm text-brand-dark underline underline-offset-2 hover:opacity-70 transition-opacity"
+              >
+                Continue Shopping
+              </button>
             </div>
           ) : (
-            cartItems.map((item, index) => {
+            cartItems.map((item) => {
               // Image resolution
               let imgSrc = '/wood-placeholder.png';
               if (typeof item.image === 'string' && item.image.trim() !== '') {
@@ -57,12 +96,11 @@ export default function CartOffcanvas({ isOpen, onClose, cartItems, onUpdateQuan
 
               const maxStock = item.maxStock ?? 999;
               const isAtMax = item.qty >= maxStock;
-              const isAtMin = item.qty <= 1;
 
               return (
                 <div
-                  key={`${item.product}-${item.variant || 'base'}-${index}`}
-                  className="flex gap-4 p-3 bg-brand-beige/30 rounded-2xl border border-brand-medium/10"
+                  key={`${item.product}-${item.variant || 'base'}-${item._id || ''}`}
+                  className="flex gap-3 p-3 bg-brand-beige/30 rounded-2xl border border-brand-medium/10 transition-all"
                 >
                   {/* Image */}
                   <div className="w-20 h-20 bg-white rounded-xl overflow-hidden shrink-0 border border-brand-medium/10 flex items-center justify-center">
@@ -75,69 +113,68 @@ export default function CartOffcanvas({ isOpen, onClose, cartItems, onUpdateQuan
                   </div>
 
                   {/* Details */}
-                  <div className="flex-1 flex flex-col justify-between">
+                  <div className="flex-1 flex flex-col justify-between min-w-0">
                     <div>
-                      <h4 className="font-bold text-sm text-brand-dark line-clamp-2">{item.name}</h4>
+                      <h4 className="font-bold text-sm text-brand-dark line-clamp-2 leading-snug">{item.name}</h4>
                       {item.variantOptions && (
-                        <p className="text-xs text-brand-dark/60 mt-1 line-clamp-2">{item.variantOptions}</p>
+                        <p className="text-xs text-brand-dark/60 mt-0.5 line-clamp-1">{item.variantOptions}</p>
                       )}
                       {item.isGift && (
                         <div className="mt-1">
-                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#FFF0E6] text-[#D95F24] text-[10px] font-bold tracking-wider">
-                            <Gift className="w-3 h-3" />
-                            GIFT & CARD
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#FFF0E6] text-[#D95F24] text-[9px] font-bold tracking-wider">
+                            <Gift className="w-2.5 h-2.5" />
+                            GIFT
                           </span>
                         </div>
                       )}
 
                       {/* Quantity Controls */}
                       <div className="flex items-center gap-2 mt-2">
-                        {/* Minus button */}
                         <button
                           type="button"
-                          onClick={() => onUpdateQuantity(index, -1)}
-                          className="w-7 h-7 flex items-center justify-center bg-white border border-brand-medium/30 rounded text-brand-dark font-bold hover:bg-brand-light/50 transition-colors text-sm leading-none"
+                          onClick={() => handleDecrease(item)}
+                          className="w-7 h-7 flex items-center justify-center bg-white border border-brand-medium/30 rounded-lg text-brand-dark font-bold hover:bg-red-50 hover:border-red-200 hover:text-red-500 transition-colors"
                           aria-label="Decrease quantity"
+                          title={item.qty <= 1 ? 'Remove item' : 'Decrease quantity'}
                         >
-                          -
+                          <Minus className="w-3 h-3" />
                         </button>
 
-                        {/* Quantity display */}
-                        <span className="text-sm font-bold text-brand-dark w-6 text-center tabular-nums">
+                        <span className="text-sm font-bold text-brand-dark w-6 text-center tabular-nums select-none">
                           {item.qty}
                         </span>
 
-                        {/* Plus button */}
                         <button
                           type="button"
-                          onClick={() => onUpdateQuantity(index, 1)}
+                          onClick={() => handleIncrease(item)}
                           disabled={isAtMax}
-                          className={`w-7 h-7 flex items-center justify-center bg-white border border-brand-medium/30 rounded text-brand-dark font-bold transition-colors text-sm leading-none
+                          className={`w-7 h-7 flex items-center justify-center bg-white border border-brand-medium/30 rounded-lg text-brand-dark font-bold transition-colors
                             ${isAtMax ? 'opacity-40 cursor-not-allowed' : 'hover:bg-brand-light/50'}`}
                           aria-label="Increase quantity"
                           title={isAtMax ? `Maximum stock (${maxStock}) reached` : 'Increase quantity'}
                         >
-                          +
+                          <Plus className="w-3 h-3" />
                         </button>
-                      </div>
 
-                      {/* Max stock label */}
-                      {isAtMax && (
-                        <p className="text-[10px] text-amber-600 mt-1 font-medium">Max stock reached</p>
-                      )}
+                        {isAtMax && (
+                          <span className="text-[9px] text-amber-600 font-medium">Max</span>
+                        )}
+                      </div>
                     </div>
 
                     {/* Price + Remove */}
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="font-serif font-bold text-brand-dark">
-                        ₹{(Number(item.price || 0) * Number(item.qty || 1)).toFixed(2)}
+                    <div className="flex items-center justify-between mt-1.5">
+                      <span className="font-bold text-sm text-brand-dark">
+                        ₹{(Number(item.price || 0) * Number(item.qty || 1)).toLocaleString('en-IN')}
                       </span>
                       <button
                         type="button"
-                        onClick={() => onRemove(index)}
-                        className="text-[10px] text-red-500 hover:text-red-700 font-bold uppercase tracking-wide transition-colors"
+                        onClick={() => removeFromCart(item.product, item.variant)}
+                        className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Remove item"
+                        aria-label="Remove item"
                       >
-                        Remove
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
@@ -148,18 +185,26 @@ export default function CartOffcanvas({ isOpen, onClose, cartItems, onUpdateQuan
         </div>
 
         {/* Footer */}
-        <div className="border-t border-brand-medium/20 p-6 bg-brand-beige/10">
-          <div className="flex justify-between items-center mb-4">
-            <span className="text-sm font-bold text-brand-dark/70">Subtotal</span>
-            <span className="font-serif text-2xl font-bold text-brand-dark">₹{total.toFixed(2)}</span>
+        <div className="border-t border-brand-medium/20 p-5 bg-brand-beige/10 space-y-3">
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-semibold text-brand-dark/70 uppercase tracking-wider">Subtotal</span>
+            <span className="font-serif text-2xl font-bold text-brand-dark">₹{total.toLocaleString('en-IN')}</span>
           </div>
+          <p className="text-xs text-brand-dark/50 text-center">Shipping &amp; fees calculated at checkout</p>
           <button
             type="button"
             disabled={cartItems.length === 0}
-            onClick={onCheckout}
-            className="w-full py-3.5 bg-brand-dark hover:bg-brand-medium text-white font-bold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+            onClick={handleCheckout}
+            className="w-full py-3.5 bg-brand-dark hover:bg-brand-medium text-white font-bold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md text-sm tracking-wide"
           >
-            Checkout Securely
+            Checkout Securely →
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full py-2.5 bg-transparent border border-brand-medium/30 text-brand-dark/70 font-medium rounded-xl transition-colors hover:bg-brand-beige/50 text-sm"
+          >
+            Continue Shopping
           </button>
         </div>
       </div>

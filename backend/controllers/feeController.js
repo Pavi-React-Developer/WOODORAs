@@ -58,6 +58,31 @@ const prepareFeePayload = async (body) => {
     payload.weightSlabs = [];
   }
 
+  if ('minimumOrderAmount' in body) {
+    if (payload.minimumOrderAmount !== null && payload.minimumOrderAmount !== '') {
+      payload.minimumOrderAmount = Number(payload.minimumOrderAmount);
+    } else {
+      payload.minimumOrderAmount = null;
+    }
+  }
+
+  if ('maximumOrderAmount' in body) {
+    if (payload.maximumOrderAmount !== null && payload.maximumOrderAmount !== '') {
+      payload.maximumOrderAmount = Number(payload.maximumOrderAmount);
+    } else {
+      payload.maximumOrderAmount = null;
+    }
+  }
+
+  if ('minimumOrderAmount' in body || 'maximumOrderAmount' in body) {
+    if (payload.minimumOrderAmount !== null && payload.minimumOrderAmount !== undefined &&
+        payload.maximumOrderAmount !== null && payload.maximumOrderAmount !== undefined) {
+      if (payload.minimumOrderAmount > payload.maximumOrderAmount) {
+        throw new Error('Minimum order amount cannot be greater than maximum order amount');
+      }
+    }
+  }
+
   return payload;
 };
 
@@ -277,5 +302,59 @@ exports.createPaymentMethod = async (req, res) => {
     res.status(201).json(saved);
   } catch (error) {
     res.status(500).json({ message: 'Server error creating payment method', error: error.message });
+  }
+};
+
+// ==========================================
+// CHECKOUT API
+// ==========================================
+
+exports.checkCodAvailability = async (req, res) => {
+  try {
+    const cartTotal = Number(req.query.cartTotal || 0);
+
+    // Find first active COD fee that has min or max order amount configured
+    const activeCodFees = await Fee.find({
+      active: true,
+      paymentMethod: { $in: ['COD', 'Both (COD & CashFree)'] },
+      $or: [
+        { minimumOrderAmount: { $exists: true, $ne: null } },
+        { maximumOrderAmount: { $exists: true, $ne: null } }
+      ]
+    });
+
+    if (!activeCodFees || activeCodFees.length === 0) {
+      return res.status(200).json({ codEnabled: true, message: '' });
+    }
+
+    // Evaluate against the first configured fee
+    const feeConfig = activeCodFees[0];
+    const min = feeConfig.minimumOrderAmount;
+    const max = feeConfig.maximumOrderAmount;
+
+    let codEnabled = true;
+    let message = '';
+
+    if (min != null && max != null) {
+      if (cartTotal < min || cartTotal > max) {
+        codEnabled = false;
+        message = `Cash on Delivery is available only for orders between ₹${min} and ₹${max}.`;
+      }
+    } else if (min != null) {
+      if (cartTotal < min) {
+        codEnabled = false;
+        message = `Cash on Delivery is available only for orders above ₹${min}.`;
+      }
+    } else if (max != null) {
+      if (cartTotal > max) {
+        codEnabled = false;
+        message = `Cash on Delivery is available only up to ₹${max}.`;
+      }
+    }
+
+    res.status(200).json({ codEnabled, message });
+  } catch (error) {
+    console.error('Error checking COD availability:', error);
+    res.status(500).json({ message: 'Server error checking COD availability', error: error.message });
   }
 };

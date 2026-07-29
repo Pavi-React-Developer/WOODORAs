@@ -125,9 +125,121 @@ const deleteAddress = async (req, res) => {
     }
 };
 
+// Wishlist Controllers
+const getWishlist = async (req, res) => {
+    try {
+        let user = await User.findById(req.user._id).populate({
+            path: 'wishlist',
+            select: 'name price salePrice discountPrice images isWishlisted slug hasVariants variants',
+            populate: {
+                path: 'variants',
+                select: 'price salePrice discountPrice basePrice options images'
+            }
+        });
+        
+        if (!user) {
+            const Staff = require('../models/Staff');
+            user = await Staff.findById(req.user._id).populate({
+                path: 'wishlist',
+                select: 'name price salePrice discountPrice images isWishlisted slug hasVariants variants',
+                populate: {
+                    path: 'variants',
+                    select: 'price salePrice discountPrice basePrice options images'
+                }
+            });
+        }
+        
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        res.json({ success: true, wishlist: user.wishlist || [] });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const toggleWishlist = async (req, res) => {
+    try {
+        const { productId } = req.body;
+        if (!productId) return res.status(400).json({ message: 'Product ID is required' });
+        
+        let user = await User.findById(req.user._id);
+        if (!user) {
+            const Staff = require('../models/Staff');
+            user = await Staff.findById(req.user._id);
+        }
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        const index = user.wishlist.indexOf(productId);
+        let action = '';
+        if (index > -1) {
+            user.wishlist.splice(index, 1);
+            action = 'removed';
+        } else {
+            user.wishlist.push(productId);
+            action = 'added';
+        }
+        await user.save();
+        
+        // Return populated wishlist for UI
+        await user.populate({
+            path: 'wishlist',
+            select: 'name price salePrice discountPrice images isWishlisted slug hasVariants variants',
+            populate: {
+                path: 'variants',
+                select: 'price salePrice discountPrice basePrice options images'
+            }
+        });
+        
+        res.json({ success: true, action, wishlist: user.wishlist });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const mergeWishlist = async (req, res) => {
+    try {
+        const { productIds } = req.body;
+        if (!productIds || !Array.isArray(productIds)) {
+            return res.status(400).json({ message: 'Product IDs array is required' });
+        }
+
+        let user = await User.findById(req.user._id);
+        if (!user) {
+            const Staff = require('../models/Staff');
+            user = await Staff.findById(req.user._id);
+        }
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        const currentWishlistStr = user.wishlist.map(id => id.toString());
+        
+        for (const pid of productIds) {
+            if (!currentWishlistStr.includes(pid.toString())) {
+                user.wishlist.push(pid);
+                currentWishlistStr.push(pid.toString());
+            }
+        }
+        await user.save();
+
+        await user.populate({
+            path: 'wishlist',
+            select: 'name price salePrice discountPrice images isWishlisted slug hasVariants variants',
+            populate: {
+                path: 'variants',
+                select: 'price salePrice discountPrice basePrice options images'
+            }
+        });
+
+        res.json({ success: true, wishlist: user.wishlist });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     getAddresses,
     addAddress,
     updateAddress,
-    deleteAddress
+    deleteAddress,
+    getWishlist,
+    toggleWishlist,
+    mergeWishlist
 };

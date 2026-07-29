@@ -1,8 +1,6 @@
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 const ProductVariant = require('../models/ProductVariant');
-const GiftBoxRule = require('../models/GiftBoxRule');
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
@@ -118,38 +116,40 @@ const replaceCart = async (req, res) => {
     const rawItems = Array.isArray(req.body?.items) ? req.body.items : [];
     const validItems = [];
 
-    // Strictly validate every item against live database stock
     for (const item of rawItems) {
       const normalized = normalizeItem(item);
       if (!normalized.product || !normalized.name) continue;
 
-      let liveMaxStock = 0;
+      let liveMaxStock = normalized.maxStock || 999;
       let isValid = false;
 
       if (normalized.variant) {
+        // Item specifies a variant — validate it exists and is active
         const variantDoc = await ProductVariant.findById(normalized.variant).lean();
-        if (variantDoc && variantDoc.isActive) {
+        if (variantDoc && variantDoc.isActive !== false) {
           liveMaxStock = getLiveStock(variantDoc);
           isValid = true;
         }
+        // If variant not found or inactive, discard item (truly invalid)
       } else {
+        // Item has no variant — accept it if the product exists.
+        // We no longer reject no-variant items just because the product HAS variants,
+        // because the cart stores a snapshot of what the user selected, not a live
+        // product state. The frontend already enforces variant selection at add-time.
         const productDoc = await Product.findById(normalized.product).lean();
         if (productDoc) {
-          // If the product ACTUALLY expects variants, but the item has no variant, REJECT IT.
-          const variantCount = await ProductVariant.countDocuments({ product: productDoc._id });
-          if (variantCount > 0) {
-            isValid = false; // Corrupt item: product has variants but item didn't specify one
-          } else {
-            liveMaxStock = normalized.maxStock;
-            isValid = true;
-          }
+          liveMaxStock = normalized.maxStock || 999;
+          isValid = true;
         }
       }
 
       if (isValid) {
         // Clamp quantity to max stock to correct old illegal amounts
         normalized.maxStock = liveMaxStock;
-        normalized.qty = Math.min(normalized.qty, liveMaxStock > 0 ? liveMaxStock : normalized.qty);
+        if (liveMaxStock > 0) {
+          normalized.qty = Math.min(normalized.qty, liveMaxStock);
+        }
+        if (normalized.qty < 1) normalized.qty = 1;
         validItems.push(normalized);
       }
     }
@@ -165,6 +165,7 @@ const replaceCart = async (req, res) => {
   }
 };
 
+
 /**
  * @desc    Add single item to cart with live stock validation
  * @route   POST /api/cart/items
@@ -179,16 +180,17 @@ const addCartItem = async (req, res) => {
 
     // ── Live stock validation ─────────────────────────────────────────────
     let liveMaxStock = 999;
+    let cachedVariantDoc = null; // Fix #8: cache to avoid double DB fetch
 
     if (incoming.variant) {
-      const variantDoc = await ProductVariant.findById(incoming.variant).lean();
-      if (!variantDoc) {
+      cachedVariantDoc = await ProductVariant.findById(incoming.variant).lean();
+      if (!cachedVariantDoc) {
         return res.status(404).json({ success: false, message: 'Variant not found' });
       }
-      if (!variantDoc.isActive) {
+      if (!cachedVariantDoc.isActive) {
         return res.status(400).json({ success: false, message: 'Variant is no longer available' });
       }
-      liveMaxStock = getLiveStock(variantDoc);
+      liveMaxStock = getLiveStock(cachedVariantDoc);
     } else {
       const productDoc = await Product.findById(incoming.product).lean();
       if (!productDoc) {
@@ -197,45 +199,6 @@ const addCartItem = async (req, res) => {
       liveMaxStock = incoming.maxStock; // Use frontend maxStock for non-variant products
     }
 
-    // ── Calculate Gift Box if isGift is true ──────────────────────────────
-    if (incoming.isGift) {
-      let productVol = 0;
-      
-      if (incoming.variant) {
-         const variantDoc = await ProductVariant.findById(incoming.variant).lean();
-         if (variantDoc && variantDoc.length && variantDoc.width && variantDoc.height) {
-            productVol = variantDoc.length * variantDoc.width * variantDoc.height;
-         }
-      } 
-      
-      if (!productVol) {
-         const productDoc = await Product.findById(incoming.product).lean();
-         if (productDoc && productDoc.dimensions && productDoc.dimensions.length && productDoc.dimensions.width && productDoc.dimensions.height) {
-            productVol = productDoc.dimensions.length * productDoc.dimensions.width * productDoc.dimensions.height;
-         }
-      }
-
-      if (productVol > 0) {
-        const rule = await GiftBoxRule.findOne({
-          isActive: true,
-          minVolume: { $lte: productVol },
-          maxVolume: { $gte: productVol }
-        }).lean();
-
-        if (rule) {
-          incoming.giftBox = {
-            volume: productVol,
-            boxSize: rule.boxSize,
-            giftFee: rule.fee
-          };
-        } else {
-          // No rule found, could handle this based on requirement
-          incoming.giftBox = { volume: productVol, boxSize: 'N/A', giftFee: 0 };
-        }
-      } else {
-        incoming.giftBox = { volume: 0, boxSize: 'N/A', giftFee: 0 };
-      }
-    }
 
     // ── Get current cart and find existing item ───────────────────────────
     const cart = await getOrCreateCart(req.user._id);

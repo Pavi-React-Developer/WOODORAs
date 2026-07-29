@@ -1,21 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import useCartStore from '../store/useCartStore';
+import useCartCalculation from '../hooks/useCartCalculation';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { getImageSrc } from '../utils/imageUtils';
 
 export default function ReviewOrderPage({ onNavigate }) {
-  const { cartItems, getSubtotal } = useCartStore();
+  const { cartItems } = useCartStore();
+  const { subtotal, productFee, giftFee } = useCartCalculation();
 
+  const total = subtotal + productFee + giftFee;
 
-  const subtotal = getSubtotal();
-  let giftWrapFee = 0;
-  cartItems.forEach(item => {
-    if (item.isGift && item.giftBox && item.giftBox.giftFee) {
-       giftWrapFee += (Number(item.giftBox.giftFee) * item.qty);
-    }
-  });
-  
-  const total = subtotal + giftWrapFee;
+  const handleBack = () => {
+    const origin = useCartStore.getState().checkoutOrigin || '/';
+    onNavigate(origin);
+  };
 
   if (cartItems.length === 0) {
     return (
@@ -23,7 +21,7 @@ export default function ReviewOrderPage({ onNavigate }) {
         <div className="text-center bg-white p-8 rounded-3xl shadow-sm border border-[#E6DFD4] max-w-md w-full">
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Cart is empty</h2>
           <p className="text-gray-500 mb-6">You have no items to review.</p>
-          <button onClick={() => onNavigate('/')} className="bg-[#8B5E3C] text-white px-6 py-3 rounded-xl font-semibold">Go back</button>
+          <button onClick={handleBack} className="bg-[#8B5E3C] text-white px-6 py-3 rounded-xl font-semibold">Go back</button>
         </div>
       </div>
     );
@@ -52,7 +50,7 @@ export default function ReviewOrderPage({ onNavigate }) {
         </div>
 
         <div className="flex items-center gap-3 mb-8">
-          <button onClick={() => onNavigate('/cart')} className="p-2 bg-white rounded-full text-gray-500 hover:text-[#8B5E3C] shadow-sm transition-colors">
+          <button onClick={handleBack} className="p-2 bg-white rounded-full text-gray-500 hover:text-[#8B5E3C] shadow-sm transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </button>
           <h1 className="text-3xl font-bold text-gray-900">Review Your Order</h1>
@@ -104,10 +102,16 @@ export default function ReviewOrderPage({ onNavigate }) {
                   <span>Subtotal ({cartItems.length} items)</span>
                   <span className="text-gray-900 font-bold">₹{subtotal.toLocaleString()}</span>
                 </div>
-                {giftWrapFee > 0 && (
+                {productFee > 0 && (
+                  <div className="flex justify-between text-gray-600 font-medium">
+                    <span>Product Fee</span>
+                    <span className="text-gray-900 font-bold">₹{productFee.toLocaleString()}</span>
+                  </div>
+                )}
+                {giftFee > 0 && (
                   <div className="flex justify-between text-gray-600 font-medium">
                     <span>Gift Wrap Fee</span>
-                    <span className="text-gray-900 font-bold">₹{giftWrapFee.toLocaleString()}</span>
+                    <span className="text-gray-900 font-bold">₹{giftFee.toLocaleString()}</span>
                   </div>
                 )}
               </div>
@@ -118,7 +122,7 @@ export default function ReviewOrderPage({ onNavigate }) {
               </div>
 
               <button
-                onClick={() => onNavigate('/complete-order')}
+                onClick={() => onNavigate('/complete-order', null, { replace: true })}
                 className="w-full flex items-center justify-center gap-2 bg-[#8B5E3C] text-white py-4 rounded-xl font-bold text-lg hover:bg-[#7a5234] transition-colors shadow-md shadow-[#8B5E3C]/20"
               >
                 Confirm Buy

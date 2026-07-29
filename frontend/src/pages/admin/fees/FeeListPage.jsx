@@ -2,13 +2,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Edit3, Trash2, Download, Plus, RefreshCw, Package , SquarePen , Trash } from 'lucide-react';
 import { feeAPI } from '../../../api/feeService';
 import { downloadExcelFile } from '../../../utils/exportUtils';
-import ProductFeeRulesList from './ProductFeeRulesList';
+import GlobalFeeSettings from './GlobalFeeSettings';
 
 export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, canEdit = true, canDelete = true }) {
   const [fees, setFees] = useState([]);
   const [categories, setCategories] = useState([]);
   const [paymentMethods, setPaymentMethods] = useState([]);
-  const [showProductFees, setShowProductFees] = useState(false);
+  const [showGlobalFees, setShowGlobalFees] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -52,9 +52,25 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
       fee.paymentMethod || '',
       fee.state || 'All States',
       fee.feeType === 'Fixed Amount' ? `₹${fee.amount}` : `₹${fee.amount} per kg`,
-      fee.isActive ? 'Active' : 'Inactive',
+      fee.active ? 'Active' : 'Inactive',
     ]);
     downloadExcelFile('fees', header, rows);
+  };
+
+  const handleToggleStatus = async (fee) => {
+    try {
+      const payload = { active: !fee.active };
+      if (fee.feeCategory && typeof fee.feeCategory === 'object') {
+        payload.feeCategory = fee.feeCategory._id;
+      } else if (fee.feeCategory) {
+        payload.feeCategory = fee.feeCategory;
+      }
+      
+      await feeAPI.updateFee(fee._id, payload);
+      setFees(fees.map(f => f._id === fee._id ? { ...f, active: !f.active } : f));
+    } catch (err) {
+      alert('Failed to toggle fee status');
+    }
   };
 
   const handleDelete = async (id) => {
@@ -92,13 +108,8 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
     return <div className="p-8 text-center text-gray-500">Loading fees...</div>;
   }
 
-  if (showProductFees) {
-    return <ProductFeeRulesList 
-      onBack={() => setShowProductFees(false)} 
-      canCreate={canCreate}
-      canEdit={canEdit}
-      canDelete={canDelete}
-    />;
+  if (showGlobalFees) {
+    return <GlobalFeeSettings onBack={() => setShowGlobalFees(false)} canCreate={canCreate} canEdit={canEdit} canDelete={canDelete} />;
   }
 
   return (
@@ -112,9 +123,14 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
           <button onClick={loadData} className="admin-secondary-btn">
             <RefreshCw size={16} /> Refresh
           </button>
-          <button onClick={() => setShowProductFees(true)} className="admin-btn">
-            <Package size={16} /> Product Fee
-          </button>
+          {canEdit && (
+            <button
+              onClick={() => setShowGlobalFees(true)}
+              className="flex items-center gap-2 bg-[#8B5E3C] text-white px-4 py-2 rounded-xl font-bold hover:bg-[#7a5234]"
+            >
+              <Package size={16} /> Global Fees
+            </button>
+          )}
           {canCreate && (
             <button
               onClick={() => onNavigate('add')}
@@ -214,9 +230,13 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
                       )}
                     </td>
                     <td className="py-4 px-4">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${fee.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                      <button 
+                        onClick={() => handleToggleStatus(fee)}
+                        title="Click to toggle status"
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${fee.active ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                      >
                         {fee.active ? 'Active' : 'Inactive'}
-                      </span>
+                      </button>
                     </td>
                     <td className="py-4 px-4 text-right whitespace-nowrap">
                       <div className="inline-flex items-center gap-2">

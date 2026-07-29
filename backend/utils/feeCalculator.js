@@ -14,12 +14,23 @@ const normalizePaymentMethod = (value) => {
   return normalized;
 };
 
+// Fix #9: Normalize state name to title case for consistent matching.
+// Previously only Tamil Nadu was recognized — all other states collapsed to
+// 'Other State', silently dropping any fee configured for them.
 const normalizeFeeState = (state) => {
   if (!state) return '';
-  return String(state).trim().toLowerCase() === 'tamil nadu' ? 'Tamil Nadu' : 'Other State';
+  const trimmed = String(state).trim();
+  if (!trimmed) return '';
+  // Title-case each word so 'KARNATAKA', 'karnataka', 'Karnataka' all match
+  return trimmed
+    .split(' ')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
 };
 
-const calculateWeightInKg = (items = []) => items.reduce((total, item) => {
+// Fix #18: Guard against null/undefined items in the array
+const calculateWeightInKg = (items = []) => (Array.isArray(items) ? items : []).reduce((total, item) => {
+  if (!item) return total;
   const rawWeight = item.weight;
   let weight = parseFloat(rawWeight) || 0;
 
@@ -38,7 +49,11 @@ const isStateMatch = (fee, feeState) => {
   const states = Array.isArray(fee.applicationState) ? fee.applicationState : [fee.applicationState];
   return states.some((state) => {
     const normalized = String(state || '').trim();
-    return normalized === feeState || normalized.toLowerCase() === 'all';
+    // 'all' or 'All' means the fee applies to all states
+    if (!normalized || normalized.toLowerCase() === 'all') return true;
+    // Compare title-cased state names for consistency
+    const normFeeState = normalized.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+    return normFeeState === feeState;
   });
 };
 
@@ -94,7 +109,7 @@ const calculateWeightCharge = (fee, subtotal, totalWeight) => {
   return 0;
 };
 
-const calculateOrderFees = ({ fees = [], subtotal = 0, items = [], state = '', paymentMethod = '' }) => {
+const calculateOrderFees = ({ fees = [], globalFee = null, subtotal = 0, items = [], state = '', paymentMethod = '' }) => {
   const feeState = normalizeFeeState(state);
   const totalWeight = calculateWeightInKg(items);
   const result = {
@@ -104,6 +119,8 @@ const calculateOrderFees = ({ fees = [], subtotal = 0, items = [], state = '', p
     codAdvance: 0,
     extraFeesList: [],
     appliedFees: [],
+    productFee: 0,
+    giftFee: 0,
   };
 
   if (!toNumber(subtotal) || !feeState) return result;
@@ -148,6 +165,26 @@ const calculateOrderFees = ({ fees = [], subtotal = 0, items = [], state = '', p
         result.appliedFees.push(appliedFee);
       }
     });
+
+  // Calculate Global Fees (Product Fee and Gift Fee)
+  if (globalFee && globalFee.isActive) {
+    // Product Fee is added ONE TIME if the cart has items
+    if (items.length > 0 && globalFee.productFee > 0) {
+      result.productFee = globalFee.productFee;
+      const productFeeItem = { name: 'Product Fee', amount: globalFee.productFee };
+      result.extraFeesList.push(productFeeItem);
+      result.appliedFees.push(productFeeItem);
+    }
+    
+    // Gift Fee is added ONE TIME if toggle is ON and cart has gift item
+    const hasGift = items.some(item => item.isGift && item.isGiftWrapper);
+    if (hasGift && globalFee.giftFee > 0) {
+      result.giftFee = globalFee.giftFee;
+      const giftFeeItem = { name: 'Gift Fee', amount: globalFee.giftFee };
+      result.extraFeesList.push(giftFeeItem);
+      result.appliedFees.push(giftFeeItem);
+    }
+  }
 
   return result;
 };

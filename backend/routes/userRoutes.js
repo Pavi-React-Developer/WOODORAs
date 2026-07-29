@@ -5,7 +5,10 @@ const {
     getAddresses,
     addAddress,
     updateAddress,
-    deleteAddress
+    deleteAddress,
+    getWishlist,
+    toggleWishlist,
+    mergeWishlist
 } = require('../controllers/userController');
 
 // All user routes should be protected
@@ -18,5 +21,13 @@ router.route('/addresses')
 router.route('/addresses/:addressId')
     .put(updateAddress)
     .delete(deleteAddress);
+
+// Wishlist routes
+router.route('/wishlist')
+    .get(getWishlist)
+    .post(toggleWishlist);
+
+router.route('/wishlist/merge')
+    .post(mergeWishlist);
 
 module.exports = router;

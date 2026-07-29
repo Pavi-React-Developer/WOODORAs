@@ -162,20 +162,23 @@ const forgotPassword = async (req, res) => {
     try {
         const user = await User.findOne({ email });
         if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+            // Fix #10 (security): Do not reveal whether an email exists to prevent user enumeration attacks.
+            return res.status(200).json({ message: 'If an account with that email exists, a password reset link has been sent.' });
         }
 
-        // Generate a simple reset token
+        // Generate a cryptographically secure reset token
         const resetToken = crypto.randomBytes(20).toString('hex');
         user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
         user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
         await user.save();
 
-        // In a real application, send this token via email
-        // Mocking the email sending for now
-        res.status(200).json({ 
-            message: 'Email sent (Mocked)', 
-            resetToken: resetToken // Returning token for demonstration purposes
+        // TODO: Send resetToken via email (e.g. using nodemailer / SendGrid / Resend).
+        // The token must NEVER be returned in the API response — doing so exposes
+        // it to network observers, server logs, and any intercepting proxy.
+        // Example: await sendResetEmail(user.email, resetToken);
+
+        res.status(200).json({
+            message: 'If an account with that email exists, a password reset link has been sent.',
         });
     } catch (error) {
         res.status(500).json({ message: error.message });

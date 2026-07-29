@@ -37,6 +37,16 @@ const feeSchema = new mongoose.Schema(
         message: 'At least one application state must be selected'
       }
     },
+    minimumOrderAmount: {
+      type: Number,
+      required: false,
+      min: 0
+    },
+    maximumOrderAmount: {
+      type: Number,
+      required: false,
+      min: 0
+    },
     weightSlabs: [
       {
         minWeight: {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import useCartStore from '../store/useCartStore';
+import useCartCalculation from '../hooks/useCartCalculation';
 import useAddressStore from '../store/useAddressStore';
 import { orderService } from '../api/orderService';
 import { authService } from '../api/authService';
@@ -31,8 +32,6 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
   const [orderNotes, setOrderNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [fees, setFees] = useState([]);
-  const [productFeeRules, setProductFeeRules] = useState([]);
-  const [giftBoxRules, setGiftBoxRules] = useState([]);
   const [cityError, setCityError] = useState('');
   const [discountAmount, setDiscountAmount] = useState(0);
   const [appliedCoupon, setAppliedCoupon] = useState(null);
@@ -56,9 +55,12 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
 
   useEffect(() => {
     if (cartItems.length === 0) {
-      onNavigate('/');
+      const origin = useCartStore.getState().checkoutOrigin || '/';
+      onNavigate(origin, null, { replace: true });
     }
+  }, [cartItems, onNavigate]);
 
+  useEffect(() => {
     // Load saved addresses
     fetchAddresses().then(() => {
         const { addresses } = useAddressStore.getState();
@@ -71,24 +73,43 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
     });
 
     // Fetch fees
+    let mounted = true;
     const fetchFees = async () => {
       try {
-        const [feesData, productRules, giftRules] = await Promise.all([
-          feeAPI.getAllFees(),
-          feeAPI.getProductFeeRules().catch(() => []),
-          adminService.getGiftBoxRules().catch(() => [])
-        ]);
-        setFees(feesData || []);
-        setProductFeeRules(productRules || []);
-        setGiftBoxRules(giftRules || []);
+        const feesData = await feeAPI.getAllFees();
+        if (mounted) {
+          setFees(feesData || []);
+        }
       } catch (err) {
         console.error('Error fetching fees', err);
       }
     };
     fetchFees();
-  }, [cartItems, onNavigate]);
+    return () => { mounted = false; };
+  }, []); // Run exactly once on mount
+
+  const [codStatus, setCodStatus] = useState({ enabled: true, message: '' });
 
   const subtotal = getSubtotal();
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchCodAvailability = async () => {
+      try {
+        const response = await feeAPI.checkCodAvailability(subtotal);
+        if (mounted) {
+          setCodStatus(response);
+          if (!response.codEnabled && paymentMethod === 'COD') {
+            setPaymentMethod('cashfree');
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching COD availability:', err);
+      }
+    };
+    fetchCodAvailability();
+    return () => { mounted = false; };
+  }, [subtotal, paymentMethod]);
 
   const currentState = savedAddresses.length > 0 && !isAddingAddress
     ? savedAddresses[selectedAddressIndex]?.state
@@ -105,60 +126,14 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
   const extraChargeSum = extraFeesList.reduce((sum, fee) => sum + fee.amount, 0);
   const discountedSubtotal = Math.max(subtotal - discountAmount, 0);
 
-  // Calculate dynamic gift box fee and product fee
-  let dynamicGiftBoxFee = 0;
-  let dynamicProductFee = 0;
-
-  const calculateDynamicFee = (rules, vol) => {
-    if (!rules || rules.length === 0) return 0;
-    const activeRules = rules.filter(r => r.isActive).sort((a, b) => a.minVolume - b.minVolume);
-    if (activeRules.length === 0) return 0;
-    const matched = activeRules.find(r => vol >= r.minVolume && vol <= r.maxVolume);
-    if (matched) return matched.fee;
-    const highest = activeRules[activeRules.length - 1];
-    const lowest = activeRules[0];
-    if (vol > highest.maxVolume) {
-      const factor = Math.ceil(vol / (highest.maxVolume || 1));
-      return highest.fee * factor;
-    } else if (vol < lowest.minVolume) {
-      return lowest.fee;
-    }
-    return 0;
-  };
-
-  cartItems.forEach(item => {
-    // Calculate volume: length * width * height
-    let volume = 0;
-    if (item.dimensions) {
-      const l = Number(item.dimensions.length) || 0;
-      const w = Number(item.dimensions.width) || 0;
-      const h = Number(item.dimensions.height) || 0;
-      volume = l * w * h;
-    }
-
-    // Product Fee applies to all items (normal products and gift items)
-    const pFee = calculateDynamicFee(productFeeRules, volume);
-    dynamicProductFee += (pFee * item.qty);
-
-    // Gift Fee only applies if it's a gift AND the wrapper is active
-    if (item.isGift && item.isGiftWrapper !== false) {
-      // Gift Fee
-      const gFee = calculateDynamicFee(giftBoxRules, volume);
-      if (gFee > 0) {
-         dynamicGiftBoxFee += (gFee * item.qty);
-      } else if (item.giftBox && item.giftBox.giftFee) {
-         // Fallback to legacy
-         dynamicGiftBoxFee += (Number(item.giftBox.giftFee) * item.qty);
-      }
-    }
-  });
+  const { productFee: dynamicProductFee, giftFee: dynamicGiftBoxFee } = useCartCalculation();
 
   if (dynamicProductFee > 0 && !appliedFees.some(f => f.name === 'Product Fee')) {
     appliedFees.push({ name: 'Product Fee', amount: dynamicProductFee });
   }
 
-  if (dynamicGiftBoxFee > 0 && !appliedFees.some(f => f.name === 'Gift Box Fee')) {
-    appliedFees.push({ name: 'Gift Box Fee', amount: dynamicGiftBoxFee });
+  if (dynamicGiftBoxFee > 0 && !appliedFees.some(f => f.name === 'Gift Fee')) {
+    appliedFees.push({ name: 'Gift Fee', amount: dynamicGiftBoxFee });
   }
 
   const orderTotal = discountedSubtotal + shippingCharge + extraChargeSum + dynamicGiftBoxFee + dynamicProductFee;
@@ -345,7 +320,7 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
         giftMessage: giftItem?.giftMessage ?? savedGiftPreferences?.message ?? '',
         // Cart stores style as giftCardStyle — map to order field giftMessageStyle
         giftMessageStyle: giftItem?.giftCardStyle ?? savedGiftPreferences?.style ?? 'Classic',
-        giftWrapFee: appliedFees.find(f => f.name === 'Gift Box Fee')?.amount || 0,
+        giftWrapFee: appliedFees.find(f => f.name === 'Gift Fee')?.amount || 0,
         deliveryDate: isGiftOrder ? selectedDeliveryDate : null,
         scheduledDeliveryDate: isGiftOrder ? selectedDeliveryDate : null,
       };
@@ -360,6 +335,7 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
           variant: item.variant,
           weight: item.weight,
           isGift: item.isGift,
+          isGiftWrapper: item.isGiftWrapper,
           giftMessage: item.giftMessage,
           giftMessageStyle: item.giftCardStyle,
           deliveryDate: item.deliveryDate || item.scheduledDeliveryDate || null,
@@ -448,7 +424,7 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
         </div>
 
         <div className="flex items-center gap-3 mb-8">
-          <button onClick={() => onNavigate('/review-order')} className="p-2 bg-white rounded-full text-gray-500 hover:text-[#8B5E3C] shadow-sm transition-colors">
+          <button onClick={() => onNavigate('/review-order', null, { replace: true })} className="p-2 bg-white rounded-full text-gray-500 hover:text-[#8B5E3C] shadow-sm transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </button>
           <h1 className="text-3xl font-bold text-gray-900">Complete Your Order</h1>
@@ -602,15 +578,28 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label className={`relative p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-center gap-4 ${paymentMethod === 'COD' ? 'border-[#8B5E3C] bg-[#F8F4EC]/50' : 'border-[#E6DFD4] hover:border-[#8B5E3C]/50'}`}>
-                  <input type="radio" name="paymentMethod" value="COD" checked={paymentMethod === 'COD'} onChange={(e) => setPaymentMethod(e.target.value)} className="w-4 h-4 text-[#8B5E3C] focus:ring-[#8B5E3C]" />
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                      <Banknote className="w-4 h-4" />
+                <div className="flex flex-col gap-1">
+                  <label className={`relative p-4 rounded-2xl border-2 transition-all flex items-center gap-4 ${!codStatus.codEnabled ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed' : paymentMethod === 'COD' ? 'border-[#8B5E3C] bg-[#F8F4EC]/50 cursor-pointer' : 'border-[#E6DFD4] hover:border-[#8B5E3C]/50 cursor-pointer'}`}>
+                    <input 
+                      type="radio" 
+                      name="paymentMethod" 
+                      value="COD" 
+                      checked={paymentMethod === 'COD'} 
+                      onChange={(e) => setPaymentMethod(e.target.value)} 
+                      disabled={!codStatus.codEnabled}
+                      className="w-4 h-4 text-[#8B5E3C] focus:ring-[#8B5E3C] disabled:cursor-not-allowed" 
+                    />
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${!codStatus.codEnabled ? 'bg-gray-200 text-gray-500' : 'bg-blue-100 text-blue-600'}`}>
+                        <Banknote className="w-4 h-4" />
+                      </div>
+                      <span className="font-bold text-gray-800">Cash on Delivery</span>
                     </div>
-                    <span className="font-bold text-gray-800">Cash on Delivery</span>
-                  </div>
-                </label>
+                  </label>
+                  {!codStatus.codEnabled && codStatus.message && (
+                    <p className="text-xs font-semibold text-red-500 pl-2 mt-1">{codStatus.message}</p>
+                  )}
+                </div>
 
                 <label className={`relative p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-center gap-4 ${paymentMethod === 'Cashfree' ? 'border-[#8B5E3C] bg-[#F8F4EC]/50' : 'border-[#E6DFD4] hover:border-[#8B5E3C]/50'}`}>
                   <input type="radio" name="paymentMethod" value="Cashfree" checked={paymentMethod === 'Cashfree'} onChange={(e) => setPaymentMethod(e.target.value)} className="w-4 h-4 text-[#8B5E3C] focus:ring-[#8B5E3C]" />

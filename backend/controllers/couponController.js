@@ -251,9 +251,13 @@ exports.toggleCouponVisibility = async (req, res) => {
 
 exports.deleteCoupon = async (req, res) => {
   try {
-    console.log('deleteCoupon called for ID:', req.params.id);
-    const coupon = await Coupon.findByIdAndDelete(req.params.id);
-    console.log('Deleted coupon:', coupon);
+    // Fix #4: Soft delete — preserve coupon reference on historical orders
+    // Hard deleting breaks order history that references this coupon code
+    const coupon = await Coupon.findByIdAndUpdate(
+      req.params.id,
+      { deleted: true, status: 'inactive' },
+      { new: true }
+    );
     if (!coupon) return res.status(404).json({ message: 'Coupon not found' });
     res.json({ message: 'Coupon deleted successfully' });
   } catch (error) {

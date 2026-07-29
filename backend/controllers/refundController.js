@@ -7,21 +7,29 @@ const { addWalletCredit } = require('./walletController');
 const Product = require('../models/Product');
 
 // Helper: restore inventory for refunded order items
-const restoreProductStock = async (item) => {
+const restoreProductStock = async (item, wasDelivered = false) => {
   if (!item) return;
   try {
     if (item.variant) {
       const variant = await ProductVariant.findById(item.variant);
       if (variant) {
-        // For variants, we reduce reserveStock to make it available in currentStock again.
-        // We DO NOT increase inventory, as inventory was never deducted at checkout.
+        // Always release the reserve stock (stock was reserved at order placement)
         const newReserve = Math.max(0, (variant.reserveStock || 0) - item.qty);
-        const newCurrent = Math.max(0, (variant.inventory || 0) - newReserve);
+        let newInventory = variant.inventory || 0;
+
+        // Fix #3: If the order was delivered, inventory was also deducted at delivery.
+        // Restore it so the product goes back on sale.
+        if (wasDelivered) {
+          newInventory = newInventory + item.qty;
+        }
+
+        const newCurrent = Math.max(0, newInventory - newReserve);
         await ProductVariant.findByIdAndUpdate(item.variant, {
           reserveStock: newReserve,
+          inventory: newInventory,
           currentStock: newCurrent
         });
-        console.log(`Stock restored: freed ${item.qty} from reserve for variant ${item.variant}.`);
+        console.log(`Stock restored: freed ${item.qty} from reserve${wasDelivered ? ' and restored to inventory' : ''} for variant ${item.variant}.`);
       }
     } else if (item.product) {
       const product = await Product.findById(item.product);
@@ -36,6 +44,7 @@ const restoreProductStock = async (item) => {
     console.error('Failed to restore stock on refund processing', err);
   }
 };
+
 
 // @desc    Get all refunds (Admin)
 // @route   GET /api/refunds
@@ -123,11 +132,14 @@ const processRefund = async (req, res) => {
     if (!refund.stockRestored && refund.orderRef) {
       const order = await Order.findById(refund.orderRef);
       if (order && Array.isArray(order.orderItems)) {
+        // Fix #3: Pass whether the order was delivered so inventory is also restored
+        const wasDelivered = order.status === 'Delivered' ||
+          (refund.originalStatus === 'Delivered');
         for (const item of order.orderItems) {
-          await restoreProductStock(item);
+          await restoreProductStock(item, wasDelivered);
         }
         refund.stockRestored = true;
-        console.log(`Inventory restored automatically for refund ${refund._id} (order ${refund.orderId})`);
+        console.log(`Inventory restored automatically for refund ${refund._id} (order ${refund.orderId}), wasDelivered=${wasDelivered}`);
       }
     }
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import { getImageSrc } from '../utils/imageUtils';
 
 export default function WishlistOffcanvas({ isOpen, onClose, wishlistItems, onRemove, onMoveToCart }) {
   if (!isOpen) return null;
@@ -92,7 +93,7 @@ export default function WishlistOffcanvas({ isOpen, onClose, wishlistItems, onRe
                 <div key={index} className="flex gap-4 p-3 bg-brand-beige/30 rounded-2xl border border-brand-medium/10">
                   <div className="w-20 h-20 bg-white rounded-xl overflow-hidden shrink-0 border border-brand-medium/10 flex items-center justify-center">
                     <img 
-                      src={firstImage} 
+                      src={firstImage === '/wood-placeholder.png' ? firstImage : getImageSrc(firstImage)} 
                       alt={item.name} 
                       className="w-full h-full object-cover"
                       onError={(e) => { e.target.src = '/wood-placeholder.png'; }}

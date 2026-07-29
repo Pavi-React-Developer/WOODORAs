@@ -18,6 +18,9 @@ router.route('/payment-methods')
   .get(feeController.getPaymentMethods)
   .post(feeController.createPaymentMethod);
 
+// COD Availability
+router.get('/cod-availability', feeController.checkCodAvailability);
+
 // Fees
 router.route('/')
   .get(feeController.getFees)
