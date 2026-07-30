@@ -246,7 +246,7 @@ export default function NavbarAdmin() {
                 <div className="absolute top-full left-0 right-0 bg-white border border-[#E6DFD4] rounded-lg mt-1 z-50 max-h-60 overflow-y-auto p-2 shadow-lg">
                   <div className="text-xs font-bold text-brand-medium uppercase mb-2 px-1">Categories</div>
                   {catalogItems.categories.map(cat => {
-                    const isChecked = currentItem.subItems?.some(sub => sub.url === `/shop?category=${cat._id}`);
+                    const isChecked = currentItem.subItems?.some(sub => sub.url === `/products?category=${cat._id}`);
                     return (
                       <label key={cat._id} className="flex items-center gap-2 p-1.5 hover:bg-gray-50 cursor-pointer text-sm rounded">
                         <input 
@@ -255,9 +255,9 @@ export default function NavbarAdmin() {
                           onChange={(e) => {
                             let newSubItems = [...(currentItem.subItems || [])];
                             if (e.target.checked) {
-                               newSubItems.push({ title: cat.name, url: `/shop?category=${cat._id}` });
+                               newSubItems.push({ title: cat.name, url: `/products?category=${cat._id}` });
                             } else {
-                               newSubItems = newSubItems.filter(sub => sub.url !== `/shop?category=${cat._id}`);
+                               newSubItems = newSubItems.filter(sub => sub.url !== `/products?category=${cat._id}`);
                             }
                             setCurrentItem({ ...currentItem, subItems: newSubItems, isDropdown: newSubItems.length > 0 || currentItem.isDropdown });
                           }} 
@@ -324,7 +324,7 @@ export default function NavbarAdmin() {
                           let url = '';
                           if (type === 'cat') {
                             const cat = catalogItems.categories.find(c => c._id === id);
-                            if (cat) { title = cat.name; url = `/shop?category=${id}`; }
+                            if (cat) { title = cat.name; url = `/products?category=${id}`; }
                           } else if (type === 'prod') {
                             const prod = catalogItems.products.find(p => p._id === id);
                             if (prod) { title = prod.name; url = `/product/${id}`; }

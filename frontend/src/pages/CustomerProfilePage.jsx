@@ -106,6 +106,7 @@ const profileModulePaths = {
 const profilePathModules = Object.fromEntries(
   Object.entries(profileModulePaths).map(([moduleId, path]) => [path, moduleId])
 );
+profilePathModules['/profile/edit'] = 'profile';
 profilePathModules['/profile/order-history/details'] = 'order-details';
 profilePathModules['/profile/bulk-orders/details'] = 'bulk-order-details';
 profilePathModules['/profile/customize-orders/details'] = 'customize-order-details';
@@ -230,6 +231,7 @@ export default function CustomerProfilePage({
     const normalizedPath = location.pathname.replace(/\/+$/, '') || '/profile';
     const nextModule = profilePathModules[normalizedPath] || 'profile';
     setActiveModule(nextModule);
+    setIsEditing(normalizedPath === '/profile/edit');
     if (nextModule !== 'order-details') {
       setActiveOrder(null);
     }
@@ -595,7 +597,7 @@ export default function CustomerProfilePage({
       };
       const response = await authService.updateProfile(payload);
       onProfileUpdated?.(response.user);
-      setIsEditing(false);
+      navigate('/profile');
       toast.success('Profile updated successfully!');
     } catch (error) {
       toast.error(error.message || 'Failed to update profile');
@@ -660,7 +662,7 @@ export default function CustomerProfilePage({
             </div>
           </div>
 
-          <button type="button" onClick={() => setIsEditing(true)} className="mt-8 flex w-full flex-col items-center justify-center rounded-[12px] border border-dashed border-[#C9AA91] px-6 py-5 text-[#9A6031] transition hover:bg-[#FFF8F2]">
+          <button type="button" onClick={() => navigate('/profile/edit')} className="mt-8 flex w-full flex-col items-center justify-center rounded-[12px] border border-dashed border-[#C9AA91] px-6 py-5 text-[#9A6031] transition hover:bg-[#FFF8F2]">
             <span className="flex items-center gap-3 text-sm font-bold">
               <Upload className="h-5 w-5" strokeWidth={1.8} />
               Update Photo URL
@@ -2082,8 +2084,8 @@ export default function CustomerProfilePage({
                 <h1 className="text-2xl font-bold tracking-tight text-[#141225]">{modules.find((item) => item.id === activeModule)?.label || 'My Profile'}</h1>
               </div>
             </div>
-            {activeModule === 'profile' && (
-              <button type="button" onClick={() => setIsEditing(true)} className="inline-flex items-center justify-center gap-2 rounded-[8px] bg-[#9A6031] px-5 py-3 text-sm font-bold text-white shadow-[0_12px_25px_rgba(139,94,60,0.2)] transition hover:bg-[#7E4B25]">
+            {activeModule === 'profile' && !isEditing && (
+              <button type="button" onClick={() => navigate('/profile/edit')} className="inline-flex items-center justify-center gap-2 rounded-[8px] bg-[#9A6031] px-5 py-3 text-sm font-bold text-white shadow-[0_12px_25px_rgba(139,94,60,0.2)] transition hover:bg-[#7E4B25]">
                 <Edit3 className="h-4 w-4" strokeWidth={1.8} />
                 Edit Profile
               </button>
@@ -2119,7 +2121,7 @@ export default function CustomerProfilePage({
                 <h2 className="text-xl font-bold text-[#141225]">Edit Customer Details</h2>
                 <p className="mt-1 text-sm text-[#6D625C]">Saved directly to `/api/auth/profile`.</p>
               </div>
-              <button type="button" onClick={() => setIsEditing(false)} className="rounded-[8px] border border-[#E9DED3] px-4 py-2 text-sm font-bold text-[#6D625C]">Cancel</button>
+              <button type="button" onClick={() => navigate('/profile')} className="rounded-[8px] border border-[#E9DED3] px-4 py-2 text-sm font-bold text-[#6D625C]">Cancel</button>
             </div>
 
             <div className="mt-6 grid gap-4 md:grid-cols-2">

@@ -325,7 +325,7 @@ export default function App() {
 
         {/* Shop */}
         <Route
-          path="/shop"
+          path="/products"
           element={
             <LayoutWithHeader
               user={user}

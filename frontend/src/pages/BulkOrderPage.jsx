@@ -432,17 +432,32 @@ export default function BulkOrderPage() {
                 <h4 className="font-bold text-[#A66C1C] text-lg">{selectedProductDetails.name}</h4>
                 <p className="text-sm text-[#7C7370] mt-2 line-clamp-2">{selectedProductDetails.shortDescription || selectedProductDetails.description || 'Premium handcrafted wooden product.'}</p>
                 <div className="mt-4 flex flex-col gap-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xl font-bold text-[#333333]">₹{Number(selectedProductDetails.price || 0).toLocaleString()}</span>
-                    {selectedProductDetails.compareAtPrice > selectedProductDetails.price && (
-                      <>
-                        <span className="text-sm text-[#999999] line-through">₹{Number(selectedProductDetails.compareAtPrice).toLocaleString()}</span>
-                        <span className="inline-flex items-center self-center rounded-full bg-[#B1621F]/15 px-2 py-0.5 text-[11px] font-semibold text-[#B1621F]">
-                          -{Math.round(((selectedProductDetails.compareAtPrice - selectedProductDetails.price) / selectedProductDetails.compareAtPrice) * 100)}%
-                        </span>
-                      </>
-                    )}
-                  </div>
+                  {(() => {
+                    let listPrice = 0, salePrice = 0;
+                    if (selectedProductDetails.hasVariants && selectedProductDetails.variants && selectedProductDetails.variants.length > 0) {
+                      listPrice = Math.min(...selectedProductDetails.variants.map((v) => v.basePrice || v.price || 0));
+                      salePrice = Math.min(...selectedProductDetails.variants.map((v) => v.discountPrice || v.salePrice || v.basePrice || v.price || 0));
+                    } else {
+                      listPrice = selectedProductDetails.basePrice || selectedProductDetails.compareAtPrice || selectedProductDetails.price || 0;
+                      salePrice = selectedProductDetails.discountPrice || selectedProductDetails.salePrice || selectedProductDetails.price || listPrice;
+                    }
+                    const hasDiscount = salePrice < listPrice;
+                    const discountPercent = hasDiscount ? Math.round(((listPrice - salePrice) / listPrice) * 100) : 0;
+
+                    return (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xl font-bold text-[#333333]">₹{Number(salePrice).toLocaleString()}</span>
+                        {hasDiscount && (
+                          <>
+                            <span className="text-sm text-[#999999] line-through">₹{Number(listPrice).toLocaleString()}</span>
+                            <span className="inline-flex items-center self-center rounded-full bg-[#B1621F]/15 px-2 py-0.5 text-[11px] font-semibold text-[#B1621F]">
+                              -{discountPercent}%
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
                 <div className="mt-4 flex gap-4">
                   <div className="px-3 py-1 bg-[#F9F6F0] rounded text-xs font-bold text-[#A66C1C]">SKU: {selectedProductDetails.sku || 'N/A'}</div>

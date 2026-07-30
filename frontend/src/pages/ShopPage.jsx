@@ -339,7 +339,7 @@ export default function ShopPage({ onNavigate, onAddToCart, onAddToWishlist, use
   );
 
   const currentCategoryObj = categories.find(c => c._id === selectedCategory);
-  const pageTitle = currentCategoryObj ? currentCategoryObj.name : 'Woodora Toys';
+  const pageTitle = currentCategoryObj ? currentCategoryObj.name : 'All Products';
 
   return (
     <div className="bg-[#FDF9F1] min-h-screen pt-4 pb-16 font-sans text-[#141225]">

@@ -26,14 +26,14 @@ export default function CategoriesPage({ onNavigate }) {
   }, []);
 
   return (
-    <div className="bg-[#FDF9F1] min-h-screen pt-32 pb-16 font-sans text-[#141225]">
+    <div className="bg-[#FDF9F1] min-h-screen pt-4 pb-16 font-sans text-[#141225]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Breadcrumbs with generous margin top */}
         <div className="text-xs text-gray-500 mt-4 mb-8 flex items-center gap-2">
           <span className="cursor-pointer hover:text-gray-900 transition-colors" onClick={() => onNavigate('/')}>Home</span>
           <span>&gt;</span>
-          <span className="cursor-pointer hover:text-gray-900 transition-colors" onClick={() => onNavigate('/shop')}>Woodora</span>
+          <span className="cursor-pointer hover:text-gray-900 transition-colors" onClick={() => onNavigate('/products')}>Woodora</span>
           <span>&gt;</span>
           <span className="font-semibold text-gray-900">Categories</span>
         </div>
@@ -69,7 +69,7 @@ export default function CategoriesPage({ onNavigate }) {
                     key={c._id || i}
                     variants={fadeUp}
                     className="flex flex-col items-center gap-3 cursor-pointer group py-2"
-                    onClick={() => onNavigate(`/shop?category=${c._id}`)}
+                    onClick={() => onNavigate(`/products?category=${c._id}`)}
                   >
                     {/* Circle image */}
                     <div className="relative w-28 h-28 md:w-36 md:h-36 rounded-full overflow-hidden ring-2 ring-[#E6DFD4] group-hover:ring-[#B0611C] transition-all duration-300 shadow-md group-hover:shadow-lg shrink-0">

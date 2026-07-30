@@ -538,7 +538,11 @@ function ProductGridBlock({ grid, onNavigate, onAddToCart, onAddToWishlist, user
             </div>
             {grid.ctaText && (
               <div className="mt-4 md:mt-0 md:absolute md:right-0">
-                <button onClick={() => onNavigate(grid.ctaUrl || '/')} className="text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full border border-[#B0611B] text-[#B0611B] hover:bg-[#B0611B] hover:text-white transition-colors">
+                <button onClick={() => {
+                  let target = grid.ctaUrl || '/products';
+                  if (target.startsWith('/shop')) target = target.replace('/shop', '/products');
+                  onNavigate(target);
+                }} className="text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full border border-[#B0611B] text-[#B0611B] hover:bg-[#B0611B] hover:text-white transition-colors">
                   {grid.ctaText} &gt;
                 </button>
               </div>
@@ -652,7 +656,7 @@ export function HomeCategoryGrid({ context = {}, specificData }) {
             </div>
             <div className="mt-3 md:mt-0 md:absolute md:right-0">
               <button
-                onClick={() => onNavigate('/shop')}
+                onClick={() => onNavigate('/products')}
                 className="text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full border border-[#B0611B] text-[#B0611B] hover:bg-[#B0611B] hover:text-white transition-colors"
               >
                 View All &gt;
@@ -763,7 +767,7 @@ function CategoriesGridBlock({ grid, onNavigate }) {
             </div>
             {grid.ctaText && (
               <div className="mt-4 md:mt-0 md:absolute md:right-0">
-                <button onClick={() => onNavigate(grid.ctaUrl || '/')} className="text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full border border-[#B0611B] text-[#B0611B] hover:bg-[#B0611B] hover:text-white transition-colors">
+                <button onClick={() => onNavigate('/categories')} className="text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full border border-[#B0611B] text-[#B0611B] hover:bg-[#B0611B] hover:text-white transition-colors">
                   {grid.ctaText} &gt;
                 </button>
               </div>
@@ -835,7 +839,7 @@ function CategoriesGridBlock({ grid, onNavigate }) {
                       <motion.div
                         variants={fadeUp}
                         className="flex flex-col items-center gap-3 cursor-pointer group py-2"
-                        onClick={() => onNavigate(`/shop?category=${c._id}`)}
+                        onClick={() => onNavigate(`/products?category=${c._id}`)}
                       >
                         {/* Circle image */}
                         <div className="relative w-28 h-28 md:w-36 md:h-36 rounded-full overflow-hidden ring-2 ring-[#E6DFD4] group-hover:ring-[#B0611C] transition-all duration-300 shadow-md group-hover:shadow-lg shrink-0">
