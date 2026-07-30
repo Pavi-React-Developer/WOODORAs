@@ -117,6 +117,35 @@ export const adminService = {
     );
   },
 
+  // Product Fee Rules
+  getProductFeeRules: async () => {
+    return withAuthRetry(
+      (config) => axios.get(`${API_URL}/product-fees`, config),
+      'Failed to fetch product fee rules'
+    );
+  },
+
+  createProductFeeRule: async (data) => {
+    return withAuthRetry(
+      (config) => axios.post(`${API_URL}/product-fees`, data, config),
+      'Failed to create product fee rule'
+    );
+  },
+
+  updateProductFeeRule: async (id, data) => {
+    return withAuthRetry(
+      (config) => axios.put(`${API_URL}/product-fees/${id}`, data, config),
+      'Failed to update product fee rule'
+    );
+  },
+
+  deleteProductFeeRule: async (id) => {
+    return withAuthRetry(
+      (config) => axios.delete(`${API_URL}/product-fees/${id}`, config),
+      'Failed to delete product fee rule'
+    );
+  },
+
   getCoupons: async (params = {}) => {
     return withAuthRetry(
       (config) => axios.get(`${API_URL}/coupons`, { ...config, params }),
@@ -200,4 +229,33 @@ export const adminService = {
       'Failed to fetch personalized messages'
     );
   },
+
+  // Dynamic Gift Box Rules
+  getGiftBoxRules: async () => {
+    return withAuthRetry(
+      (config) => axios.get(`${API_URL}/gift-cards/admin/box-rules`, config),
+      'Failed to fetch gift box rules'
+    );
+  },
+
+  createGiftBoxRule: async (data) => {
+    return withAuthRetry(
+      (config) => axios.post(`${API_URL}/gift-cards/admin/box-rules`, data, config),
+      'Failed to create gift box rule'
+    );
+  },
+
+  updateGiftBoxRule: async (id, data) => {
+    return withAuthRetry(
+      (config) => axios.put(`${API_URL}/gift-cards/admin/box-rules/${id}`, data, config),
+      'Failed to update gift box rule'
+    );
+  },
+
+  deleteGiftBoxRule: async (id) => {
+    return withAuthRetry(
+      (config) => axios.delete(`${API_URL}/gift-cards/admin/box-rules/${id}`, config),
+      'Failed to delete gift box rule'
+    );
+  }
 };

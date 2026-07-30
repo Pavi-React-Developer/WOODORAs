@@ -1,4 +1,6 @@
 const User = require('../models/User');
+const Staff = require('../models/Staff');
+const ProductImage = require('../models/catalog/ProductImage');
 
 // @desc    Get all addresses for logged-in user
 // @route   GET /api/user/addresses
@@ -125,6 +127,30 @@ const deleteAddress = async (req, res) => {
     }
 };
 
+// Helper: inject ProductImage URLs into each wishlist product
+// Products use a separate ProductImage collection for actual images.
+// The embedded Product.images field may be empty, so we must always
+// check ProductImage first, then fall back to the embedded field.
+const injectWishlistImages = async (wishlistItems) => {
+    if (!wishlistItems || wishlistItems.length === 0) return wishlistItems;
+    const productIds = wishlistItems.filter(Boolean).map(p => p._id);
+    if (!productIds.length) return wishlistItems;
+
+    const productImages = await ProductImage.find({ product: { $in: productIds } })
+        .sort({ isThumbnail: -1, displayOrder: 1 });
+
+    return wishlistItems.map(product => {
+        if (!product) return product;
+        const productObj = product.toObject ? product.toObject() : { ...product };
+        const imgs = productImages.filter(img => img.product.toString() === productObj._id.toString());
+        if (imgs.length > 0) {
+            // Return objects with url field so frontend image logic works correctly
+            productObj.images = imgs.map(img => ({ url: img.url, public_id: img.public_id || '', isThumbnail: img.isThumbnail }));
+        }
+        return productObj;
+    });
+};
+
 // Wishlist Controllers
 const getWishlist = async (req, res) => {
     try {
@@ -138,7 +164,7 @@ const getWishlist = async (req, res) => {
         });
         
         if (!user) {
-            const Staff = require('../models/Staff');
+
             user = await Staff.findById(req.user._id).populate({
                 path: 'wishlist',
                 select: 'name price salePrice discountPrice images isWishlisted slug hasVariants variants',
@@ -150,7 +176,9 @@ const getWishlist = async (req, res) => {
         }
         
         if (!user) return res.status(404).json({ message: 'User not found' });
-        res.json({ success: true, wishlist: user.wishlist || [] });
+        
+        const finalWishlist = await injectWishlistImages(user.wishlist || []);
+        res.json({ success: true, wishlist: finalWishlist });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -163,7 +191,7 @@ const toggleWishlist = async (req, res) => {
         
         let user = await User.findById(req.user._id);
         if (!user) {
-            const Staff = require('../models/Staff');
+
             user = await Staff.findById(req.user._id);
         }
         if (!user) return res.status(404).json({ message: 'User not found' });
@@ -179,7 +207,6 @@ const toggleWishlist = async (req, res) => {
         }
         await user.save();
         
-        // Return populated wishlist for UI
         await user.populate({
             path: 'wishlist',
             select: 'name price salePrice discountPrice images isWishlisted slug hasVariants variants',
@@ -189,7 +216,8 @@ const toggleWishlist = async (req, res) => {
             }
         });
         
-        res.json({ success: true, action, wishlist: user.wishlist });
+        const finalWishlist = await injectWishlistImages(user.wishlist || []);
+        res.json({ success: true, action, wishlist: finalWishlist });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -204,7 +232,7 @@ const mergeWishlist = async (req, res) => {
 
         let user = await User.findById(req.user._id);
         if (!user) {
-            const Staff = require('../models/Staff');
+
             user = await Staff.findById(req.user._id);
         }
         if (!user) return res.status(404).json({ message: 'User not found' });
@@ -228,7 +256,8 @@ const mergeWishlist = async (req, res) => {
             }
         });
 
-        res.json({ success: true, wishlist: user.wishlist });
+        const finalWishlist = await injectWishlistImages(user.wishlist || []);
+        res.json({ success: true, wishlist: finalWishlist });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

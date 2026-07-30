@@ -20,9 +20,18 @@ const createProduct = async (req, res) => {
     try {
         const { name, slug, description, category, subCategory, sku, price, compareAtPrice, images, attributes, ageGroup, ageColors, woodType } = req.body;
 
-        // Validate required fields
-        if (!name || !category) {
-            return res.status(400).json({ message: 'Name and category are required' });
+        // Inline Validation
+        if (!name || name.trim().length < 3) {
+            return res.status(400).json({ message: 'Product name must be at least 3 characters long' });
+        }
+        if (!category) {
+            return res.status(400).json({ message: 'Category is required' });
+        }
+        if (price !== undefined && Number(price) < 0) {
+            return res.status(400).json({ message: 'Price cannot be negative' });
+        }
+        if (description && description.length < 10) {
+            return res.status(400).json({ message: 'Description must be at least 10 characters long' });
         }
 
         // Check if product slug already exists
@@ -214,6 +223,17 @@ const getProductById = async (req, res) => {
 const updateProduct = async (req, res) => {
     try {
         const { name, description, price, compareAtPrice, images, sku, isActive, attributes } = req.body;
+
+        // Inline Validation
+        if (name !== undefined && name.trim().length < 3) {
+            return res.status(400).json({ message: 'Product name must be at least 3 characters long' });
+        }
+        if (price !== undefined && Number(price) < 0) {
+            return res.status(400).json({ message: 'Price cannot be negative' });
+        }
+        if (description !== undefined && description.length < 10) {
+            return res.status(400).json({ message: 'Description must be at least 10 characters long' });
+        }
 
         let product = await Product.findById(req.params.id);
         if (!product) {

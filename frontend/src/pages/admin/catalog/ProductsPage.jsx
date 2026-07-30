@@ -88,6 +88,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
     const [mappedAttributes, setMappedAttributes] = useState([]);  // Mapped attributes for the subcategory selected in the form
     const [formLoading, setFormLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
+    const [formErrors, setFormErrors] = useState({});
 
     // Selection/Bulk state
     const [selectedIds, setSelectedIds] = useState([]);
@@ -123,13 +124,8 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
         if (formData.category) {
             const filtered = subCategories.filter(s => (s.category?._id || s.category) === formData.category);
             setFormSubCategories(filtered);
-            if (!filtered.some(s => s._id === formData.subCategory)) {
-                setFormData(prev => ({ ...prev, subCategory: '', attributeValues: {} }));
-                setMappedAttributes([]);
-            }
         } else {
             setFormSubCategories([]);
-            setMappedAttributes([]);
         }
     }, [formData.category, subCategories]);
 
@@ -335,8 +331,21 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
 
     const handleSave = async (e) => {
         e.preventDefault();
-        setFormLoading(true);
         setErrorMsg('');
+        
+        let errors = {};
+        if (!formData.name || formData.name.trim().length < 3) errors.name = 'Product name must be at least 3 characters.';
+        if (!formData.category) errors.category = 'Category is required.';
+        if (!formData.subCategory) errors.subCategory = 'Sub-Category is required.';
+        if (formData.price < 0) errors.price = 'Price cannot be negative.';
+        if (formData.description && formData.description.length < 10) errors.description = 'Description must be at least 10 characters long.';
+
+        if (Object.keys(errors).length > 0) {
+            setFormErrors(errors);
+            return;
+        }
+
+        setFormLoading(true);
 
         // Transform attribute values format back into Mongoose array format
         const avArray = Object.entries(formData.attributeValues).map(([attrId, payload]) => ({
@@ -759,10 +768,11 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                             type="text"
                                             required
                                             value={formData.name}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                                            onChange={(e) => { setFormData(prev => ({ ...prev, name: e.target.value })); if(formErrors.name) setFormErrors({...formErrors, name: ''}); }}
                                             placeholder="e.g. Classic Wooden Train"
-                                            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
+                                            className={`px-4 py-2 border ${formErrors.name ? 'border-red-500 bg-red-50 focus:ring-red-500' : 'border-gray-300 focus:ring-amber-500'} rounded-lg focus:outline-none focus:ring-2 text-sm`}
                                         />
+                                        {formErrors.name && <p className="text-red-500 text-[10px]">{formErrors.name}</p>}
                                     </div>
                                     <div className="flex flex-col gap-1.5">
                                         <label className="text-sm font-semibold text-gray-700">Base SKU *</label>
@@ -785,16 +795,24 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                             value={formData.category}
                                             onChange={(e) => {
                                                 const newCatId = e.target.value;
-                                                setFormData(prev => ({ ...prev, category: newCatId }));
-                                                generateSKU(newCatId, formData.subCategory);
+                                                setFormData(prev => ({ 
+                                                    ...prev, 
+                                                    category: newCatId,
+                                                    subCategory: '',
+                                                    attributeValues: {} 
+                                                }));
+                                                setMappedAttributes([]);
+                                                generateSKU(newCatId, '');
+                                                if(formErrors.category) setFormErrors({...formErrors, category: ''});
                                             }}
-                                            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm bg-white"
+                                            className={`px-4 py-2 border ${formErrors.category ? 'border-red-500 bg-red-50 focus:ring-red-500' : 'border-gray-300 focus:ring-amber-500'} rounded-lg focus:outline-none focus:ring-2 text-sm bg-white`}
                                         >
                                             <option value="">Select Category</option>
                                             {categories.map(c => (
                                                 <option key={c._id} value={c._id}>{c.name}</option>
                                             ))}
                                         </select>
+                                        {formErrors.category && <p className="text-red-500 text-[10px]">{formErrors.category}</p>}
                                     </div>
                                     <div className="flex flex-col gap-1.5">
                                         <label className="text-sm font-semibold text-gray-700">Sub-Category *</label>
@@ -803,7 +821,11 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                             value={formData.subCategory}
                                             onChange={(e) => {
                                                 const newSubId = e.target.value;
-                                                setFormData(prev => ({ ...prev, subCategory: newSubId }));
+                                                setFormData(prev => ({ 
+                                                    ...prev, 
+                                                    subCategory: newSubId,
+                                                    attributeValues: {} 
+                                                }));
                                                 generateSKU(formData.category, newSubId);
                                             }}
                                             disabled={!formData.category}

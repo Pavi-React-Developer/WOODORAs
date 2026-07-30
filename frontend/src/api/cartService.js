@@ -38,6 +38,12 @@ export const cartService = {
     'Failed to fetch cart'
   ),
 
+  /** POST /api/cart/summary - Fetch the dynamic checkout summary */
+  getCartSummary: async (payload) => withAuthRetry(
+    (config) => axios.post(`${API_URL}/summary`, payload, config),
+    'Failed to fetch cart summary'
+  ),
+
   /** PUT /api/cart - Replace entire cart (sync) */
   replaceCart: async (items) => withAuthRetry(
     (config) => axios.put(API_URL, { items }, config),

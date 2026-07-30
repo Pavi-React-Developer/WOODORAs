@@ -109,7 +109,7 @@ const calculateWeightCharge = (fee, subtotal, totalWeight) => {
   return 0;
 };
 
-const calculateOrderFees = ({ fees = [], globalFee = null, subtotal = 0, items = [], state = '', paymentMethod = '' }) => {
+const calculateOrderFees = ({ fees = [], subtotal = 0, items = [], state = '', paymentMethod = '' }) => {
   const feeState = normalizeFeeState(state);
   const totalWeight = calculateWeightInKg(items);
   const result = {
@@ -119,7 +119,7 @@ const calculateOrderFees = ({ fees = [], globalFee = null, subtotal = 0, items =
     codAdvance: 0,
     extraFeesList: [],
     appliedFees: [],
-    productFee: 0,
+    productFee: 0, // Keep this initialized so consumers don't break
     giftFee: 0,
   };
 
@@ -146,8 +146,26 @@ const calculateOrderFees = ({ fees = [], globalFee = null, subtotal = 0, items =
     }
   }
 
+  const shippingFee = matchingFees.find((fee) => (
+    normalizeToken(fee.feeCategory?.name).includes('shipping')
+  ));
+
+  let isFreeShipping = false;
+  if (shippingFee) {
+    const minOrder = toNumber(shippingFee.minimumOrderAmount);
+    if (minOrder > 0 && subtotal >= minOrder) {
+      isFreeShipping = true;
+      result.isFreeShipping = true;
+    }
+  }
+
   matchingFees
-    .filter((fee) => !normalizeToken(fee.feeCategory?.name).includes('weight'))
+    .filter((fee) => {
+      const categoryToken = normalizeToken(fee.feeCategory?.name);
+      const isWeight = categoryToken.includes('weight');
+      const isShipping = categoryToken.includes('shipping');
+      return !isWeight && !(isFreeShipping && isShipping);
+    })
     .forEach((fee) => {
       const charge = calculateFeeAmount(fee, subtotal, fee.flatFeeValue);
       if (charge <= 0) return;
@@ -156,35 +174,19 @@ const calculateOrderFees = ({ fees = [], globalFee = null, subtotal = 0, items =
       const categoryName = String(fee.feeCategory?.name || '');
       const isAdvance = `${feeName} ${categoryName}`.toLowerCase().includes('advance');
 
-      if (isAdvance && normalizePaymentMethod(paymentMethod) === 'cod') {
-        result.codAdvance += charge;
-        result.appliedFees.push({ name: feeName, amount: charge });
+      if (isAdvance) {
+        if (normalizePaymentMethod(paymentMethod) === 'cod') {
+          result.codAdvance += charge;
+          // Advance payment is collected upfront, but it is not an additional charge.
+          // Do not push to appliedFees to prevent it from increasing the grandTotal.
+        }
+        // If it's an advance fee but payment method is NOT COD, we simply ignore it!
       } else {
         const appliedFee = { name: feeName, amount: charge };
         result.extraFeesList.push(appliedFee);
         result.appliedFees.push(appliedFee);
       }
     });
-
-  // Calculate Global Fees (Product Fee and Gift Fee)
-  if (globalFee && globalFee.isActive) {
-    // Product Fee is added ONE TIME if the cart has items
-    if (items.length > 0 && globalFee.productFee > 0) {
-      result.productFee = globalFee.productFee;
-      const productFeeItem = { name: 'Product Fee', amount: globalFee.productFee };
-      result.extraFeesList.push(productFeeItem);
-      result.appliedFees.push(productFeeItem);
-    }
-    
-    // Gift Fee is added ONE TIME if toggle is ON and cart has gift item
-    const hasGift = items.some(item => item.isGift && item.isGiftWrapper);
-    if (hasGift && globalFee.giftFee > 0) {
-      result.giftFee = globalFee.giftFee;
-      const giftFeeItem = { name: 'Gift Fee', amount: globalFee.giftFee };
-      result.extraFeesList.push(giftFeeItem);
-      result.appliedFees.push(giftFeeItem);
-    }
-  }
 
   return result;
 };

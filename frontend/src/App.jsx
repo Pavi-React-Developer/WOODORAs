@@ -27,6 +27,7 @@ import WishlistOffcanvas from './components/WishlistOffcanvas';
 import useCartStore from './store/useCartStore';
 import useWishlistStore from './store/useWishlistStore';
 import useAddressStore from './store/useAddressStore';
+import { useConfigStore } from './store/useConfigStore';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -136,7 +137,7 @@ export default function App() {
   const [profileLoading, setProfileLoading] = useState(false);
 
   // Cart state from store
-  const { cartItems, addToCart, updateQuantity, removeFromCart, hydrateCartFromBackend, fetchGlobalFee } = useCartStore();
+  const { cartItems, addToCart, updateQuantity, removeFromCart, hydrateCartFromBackend } = useCartStore();
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   // Wishlist state
@@ -165,6 +166,9 @@ export default function App() {
       profileImage: data.profileImage,
       avatar: data.avatar
     });
+    // Explicitly merge the guest cart into the backend cart on login
+    hydrateCartFromBackend(true);
+
     if (!skipNavigate) {
       navigate('/');
     }
@@ -221,8 +225,8 @@ export default function App() {
   };
 
   useEffect(() => {
-    fetchGlobalFee();
-  }, [fetchGlobalFee]);
+    useConfigStore.getState().fetchWalletConfig();
+  }, []);
 
   useEffect(() => {
     if (user) {

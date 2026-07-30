@@ -141,6 +141,8 @@ const emptyAddress = {
   isDefault: true,
 };
 
+import { useConfigStore } from '../store/useConfigStore';
+
 export default function CustomerProfilePage({
   user,
   profileData,
@@ -158,11 +160,14 @@ export default function CustomerProfilePage({
   const navigate = useNavigate();
   const profile = profileData?.user || user || {};
   const { cartItems, updateQuantity, removeFromCart, getSubtotal } = useCartStore();
+  const { walletEnabled } = useConfigStore();
   const [activeModule, setActiveModule] = useState('profile');
   const [activeOrder, setActiveOrder] = useState(null);
   const [activeBulkOrder, setActiveBulkOrder] = useState(null);
   const [activeCustomizeOrder, setActiveCustomizeOrder] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+
+  const visibleModules = modules.filter(m => walletEnabled ? true : m.id !== 'wallet');
   const [saving, setSaving] = useState(false);
   const { addresses: storeAddresses, loading: addressLoading, fetchAddresses, addAddress: addStoreAddress, updateAddress: updateStoreAddress, deleteAddress: deleteStoreAddress } = useAddressStore();
   const [addressModalOpen, setAddressModalOpen] = useState(false);
@@ -1211,10 +1216,12 @@ export default function CustomerProfilePage({
             <div key={order._id} className="rounded-[14px] border border-[#E9DED3] bg-white p-5 shadow-sm">
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
                 <div>
-                  <h3 className="font-bold text-[#141225]">{order.companyName}</h3>
-                  <p className="text-sm text-[#6D625C]">Contact: {order.contactPerson} ({order.phone})</p>
-                  <p className="text-sm text-[#6D625C]">Estimated Quantity: {order.estimatedQuantity}</p>
-                  {order.customBranding && <p className="text-sm font-semibold text-[#8B5E3C] mt-1">✓ Custom Branding Requested</p>}
+                  <h3 className="font-bold text-[#141225]">{order.product?.name || 'Bulk Order Request'}</h3>
+                  {order.customFields && order.customFields.slice(0, 3).map((field, idx) => (
+                    <p key={idx} className="text-sm text-[#6D625C]">
+                      <span className="font-medium">{field.label}:</span> {typeof field.value === 'boolean' ? (field.value ? 'Yes' : 'No') : field.value}
+                    </p>
+                  ))}
                   <p className="text-xs text-[#8A817C] mt-2">Requested on: {formatDate(order.createdAt)}</p>
                 </div>
                 <div className="flex flex-col items-end gap-2">
@@ -1249,7 +1256,7 @@ export default function CustomerProfilePage({
 
   const renderBulkOrderDetails = () => {
     if (!activeBulkOrder) return null;
-    const { product, category, subCategory, companyName, contactPerson, email, phone, estimatedQuantity, customBranding, customizationRequests, status, rejectionReason, createdAt } = activeBulkOrder;
+    const { product, category, subCategory, customFields, status, rejectionReason, createdAt } = activeBulkOrder;
     
     let productImageUrl = '/wood-placeholder.png';
     
@@ -1318,47 +1325,21 @@ export default function CustomerProfilePage({
             </div>
           </div>
 
-          <div className="rounded-[14px] border border-[#E9DED3] bg-white p-5">
-            <h3 className="font-bold text-[#141225] mb-4">Request Information</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 text-sm">
-               <div>
-                  <p className="text-[#6D625C]">Company Name</p>
-                  <p className="font-semibold text-[#141225] mt-1">{companyName}</p>
-               </div>
-               <div>
-                  <p className="text-[#6D625C]">Contact Person</p>
-                  <p className="font-semibold text-[#141225] mt-1">{contactPerson}</p>
-               </div>
-               <div>
-                  <p className="text-[#6D625C]">Email Address</p>
-                  <p className="font-semibold text-[#141225] mt-1">{email}</p>
-               </div>
-               <div>
-                  <p className="text-[#6D625C]">Phone Number</p>
-                  <p className="font-semibold text-[#141225] mt-1">{phone}</p>
-               </div>
-               <div>
-                  <p className="text-[#6D625C]">Estimated Quantity</p>
-                  <p className="font-semibold text-[#141225] mt-1">{estimatedQuantity}</p>
-               </div>
-               <div>
-                  <p className="text-[#6D625C]">Custom Branding</p>
-                  <p className="font-semibold text-[#141225] mt-1">{customBranding ? 'Requested' : 'Not Requested'}</p>
-               </div>
-               {customizationRequests && (
-                  <div className="sm:col-span-2 mt-2">
-                     <p className="text-[#6D625C]">Customization Requests</p>
-                     <p className="font-semibold text-[#141225] mt-1 p-3 bg-[#FAF8F5] rounded-[8px] border border-[#E9DED3]">{customizationRequests}</p>
+          {customFields && customFields.length > 0 && (
+            <div className="rounded-[14px] border border-[#E9DED3] bg-white p-5">
+              <h3 className="font-bold text-[#141225] mb-4">Request Information</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 text-sm">
+                {customFields.map((field, idx) => (
+                  <div key={idx}>
+                    <p className="text-[#6D625C] text-xs font-bold uppercase tracking-wider">{field.label}</p>
+                    <p className="font-semibold text-[#141225] mt-1">
+                      {typeof field.value === 'boolean' ? (field.value ? 'Yes' : 'No') : field.value || 'N/A'}
+                    </p>
                   </div>
-               )}
-               {status === 'Rejected' && rejectionReason && (
-                  <div className="sm:col-span-2 bg-red-50 p-4 rounded-lg border border-red-100 mt-2">
-                     <p className="font-bold text-red-600">Rejection Reason</p>
-                     <p className="text-red-700 text-sm mt-1">{rejectionReason}</p>
-                  </div>
-               )}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </section>
     );
@@ -2074,7 +2055,7 @@ export default function CustomerProfilePage({
           onMouseMove={handleMouseMove}
           className="flex overflow-x-auto gap-4 hide-scrollbar bg-white rounded-[18px] p-3 shadow-[0_18px_60px_rgba(62,39,35,0.08)] cursor-grab active:cursor-grabbing select-none"
         >
-          {modules.map(({ id, label, icon: Icon }) => (
+          {visibleModules.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               type="button"

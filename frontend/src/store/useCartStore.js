@@ -58,6 +58,10 @@ const syncItemUpdateDebounced = (productId, qty, variantId, getStore) => {
   syncTimer = setTimeout(async () => {
     try {
       await cartService.updateItem(productId, qty, variantId || null);
+      if (getStore) {
+        // Force an immediate summary fetch now that the backend is updated
+        getStore().fetchCartSummary();
+      }
     } catch (error) {
       console.error('[Cart Sync] Update failed:', error.message);
       // Don't toast here — it's a background sync; re-hydrate silently
@@ -76,26 +80,38 @@ const useCartStore = create(
       cartItems: [],
       isCartHydrated: false,
       isSyncing: false,
-      globalFee: null,
+      cartSummary: {
+        subtotal: 0,
+        cartVolume: 0,
+        matchedBoxSize: '',
+        productFee: 0,
+        giftFee: 0,
+        deliveryCharge: 0,
+        codAdvance: 0,
+        discount: 0,
+        appliedFees: [],
+        grandTotal: 0
+      },
       checkoutOrigin: null,
 
       setCheckoutOrigin: (path) => set({ checkoutOrigin: path }),
 
-      fetchGlobalFee: async () => {
+      fetchCartSummary: async (payload = {}) => {
         try {
-          const res = await axios.get(`${API_ORIGIN}/api/global-fees`);
-          set({ globalFee: res.data });
+          const summary = await cartService.getCartSummary(payload);
+          set({ cartSummary: summary });
         } catch (error) {
-          console.error('[Cart] Failed to fetch global fee:', error.message);
+          console.error('[Cart] Failed to fetch cart summary:', error.message);
         }
       },
 
       /**
        * Fetch only the logged-in user's cart from the backend.
        * Called after login and on page load when a token exists.
-       * STRICTLY replaces local state — no merging, no cross-user data bleed.
+       * By default, it STRICTLY replaces local state — no merging.
+       * Set mergeLocal=true ONLY when logging in, to merge guest cart.
        */
-      hydrateCartFromBackend: async () => {
+      hydrateCartFromBackend: async (mergeLocal = false) => {
         if (!localStorage.getItem('token')) {
           // No token → clear any leftover cart data and mark hydrated
           set({ cartItems: [], isCartHydrated: true });
@@ -104,21 +120,21 @@ const useCartStore = create(
         try {
           const backendCart = await cartService.getCart();
           const backendItems = (backendCart.items || []).map(normalizeCartItem);
-          
+
           const localItems = get().cartItems;
-          
-          // If the user has a local cart (e.g. they added items as a guest before logging in),
-          // we need to merge it with their backend cart.
-          if (localItems.length > 0) {
+
+          // Only merge if explicitly requested (e.g., just logged in)
+          // Otherwise, this causes cart doubling on every page reload!
+          if (mergeLocal && localItems.length > 0) {
             const mergedMap = new Map();
             let hasChanges = false;
-            
+
             // 1. Add backend items to the map
             backendItems.forEach(item => {
               const key = `${toStr(item.product)}-${toStr(item.variant)}`;
               mergedMap.set(key, item);
             });
-            
+
             // 2. Merge local items into the map
             localItems.forEach(localItem => {
               const key = `${toStr(localItem.product)}-${toStr(localItem.variant)}`;
@@ -127,7 +143,7 @@ const useCartStore = create(
                 const existing = mergedMap.get(key);
                 const newQty = existing.qty + localItem.qty;
                 const maxStock = existing.maxStock > 0 ? existing.maxStock : 999;
-                
+
                 if (newQty !== existing.qty) {
                   existing.qty = Math.min(newQty, maxStock);
                   hasChanges = true;
@@ -138,18 +154,17 @@ const useCartStore = create(
                 hasChanges = true;
               }
             });
-            
+
             // 3. If there were local items to merge, push the unified cart to the backend
             if (hasChanges) {
               const mergedItemsArray = Array.from(mergedMap.values());
               // Optimistically set local state
               set({ cartItems: mergedItemsArray, isCartHydrated: true });
-              
+
               // Bulk sync to the backend
               const updatedBackendCart = await cartService.replaceCart(mergedItemsArray);
-              
+
               // Update local state again with the definitive backend response
-              // (which may have stripped out invalid items or clamped quantities)
               if (updatedBackendCart && Array.isArray(updatedBackendCart.items)) {
                 set({ cartItems: updatedBackendCart.items.map(normalizeCartItem) });
               }
@@ -499,6 +514,7 @@ function normalizeCartItem(item = {}) {
     variantOptions: item.variantOptions || null,
     maxStock: Number(item.maxStock) || 999,
     weight: Number(item.weight) || 0,
+    volume: Number(item.volume) || 0,
     dimensions: item.dimensions || null,
     isGift: item.isGift || false,
     isGiftWrapper: item.isGiftWrapper !== undefined ? item.isGiftWrapper : true,

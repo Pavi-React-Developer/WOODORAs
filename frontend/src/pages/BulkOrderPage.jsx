@@ -28,6 +28,7 @@ export default function BulkOrderPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -54,6 +55,27 @@ export default function BulkOrderPage() {
     fetchData();
   }, []);
 
+  const validateField = (fieldDef, value) => {
+    let errorMsg = '';
+    
+    if (fieldDef.isRequired && (value === undefined || value === '' || value === false || value === null)) {
+      return `${fieldDef.label} is required`;
+    }
+
+    if (value && typeof value === 'string') {
+      const labelLower = fieldDef.label.toLowerCase();
+      
+      if (labelLower.includes('email') && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        errorMsg = 'Invalid email address';
+      } else if (labelLower.includes('phone') && !/^\d{10}$/.test(value.replace(/\D/g, ''))) {
+        errorMsg = 'Phone number must be exactly 10 digits';
+      } else if ((labelLower.includes('name') || labelLower.includes('nmae')) && !/^[a-zA-Z\s]+$/.test(value)) {
+        errorMsg = 'Name should only contain letters';
+      }
+    }
+    return errorMsg;
+  };
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     
@@ -64,10 +86,8 @@ export default function BulkOrderPage() {
       };
 
       if (name === 'category') {
-        // Reset subCategory and product
         newData.subCategory = '';
         newData.product = '';
-        // Filter subCategories based on selected category
         const filtered = subCategories.filter(sc => 
           sc.category?._id === value || sc.category === value
         );
@@ -77,9 +97,7 @@ export default function BulkOrderPage() {
       }
 
       if (name === 'subCategory') {
-        // Reset product
         newData.product = '';
-        // Filter products based on selected subCategory
         const filtered = products.filter(p => 
           p.subCategory === value || p.subCategory?._id === value
         );
@@ -106,42 +124,65 @@ export default function BulkOrderPage() {
             updatedCustomFields.push({ fieldId, label: fieldDef.label, value: newValue });
           }
           newData.customFields = updatedCustomFields;
+          
+          setErrors(errs => ({ ...errs, [name]: validateField(fieldDef, newValue) }));
         }
         return newData;
+      } else {
+        setErrors(errs => ({ ...errs, [name]: value ? '' : 'This field is required' }));
       }
 
       return newData;
     });
   };
 
+  const handleBlur = (e) => {
+    const { name, value, type, checked } = e.target;
+    
+    if (name.startsWith('customField_')) {
+      const fieldId = name.replace('customField_', '');
+      const fieldDef = dynamicFields.find(f => f._id === fieldId);
+      if (fieldDef) {
+        const val = type === 'checkbox' ? checked : value;
+        setErrors(prev => ({ ...prev, [name]: validateField(fieldDef, val) }));
+      }
+    } else if (['category', 'subCategory', 'product'].includes(name)) {
+      setErrors(prev => ({ ...prev, [name]: value ? '' : 'This field is required' }));
+    }
+  };
+
+  const validateForm = () => {
+    let isValid = true;
+    const newErrors = {};
+
+    if (!formData.category) { newErrors.category = 'Category is required'; isValid = false; }
+    if (!formData.subCategory) { newErrors.subCategory = 'Subcategory is required'; isValid = false; }
+    if (!formData.product) { newErrors.product = 'Product is required'; isValid = false; }
+
+    for (const field of dynamicFields) {
+      const submittedField = formData.customFields?.find(cf => cf.fieldId === field._id);
+      const val = submittedField !== undefined ? submittedField.value : (field.type === 'checkbox' ? false : '');
+      const err = validateField(field, val);
+      if (err) {
+        newErrors[`customField_${field._id}`] = err;
+        isValid = false;
+      }
+    }
+    
+    setErrors(newErrors);
+    return isValid;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const token = localStorage.getItem('token');
-    if (!token) {
-      toast.error('Please login to submit a bulk order request');
+    if (!validateForm()) {
+      toast.error('Please fix the validation errors before submitting');
       return;
-    }
-
-    if (!formData.category || !formData.subCategory || !formData.product) {
-      toast.error('Please select Category, Subcategory, and Product');
-      return;
-    }
-
-    // Validate required dynamic fields before hitting the network
-    for (const field of dynamicFields) {
-      if (field.isRequired) {
-        const submittedField = formData.customFields?.find(cf => cf.fieldId === field._id);
-        if (!submittedField || submittedField.value === '' || submittedField.value === false) {
-          toast.error(`${field.label} is required`);
-          return;
-        }
-      }
     }
 
     setIsSubmitting(true);
     try {
-      // Uses bulkOrderService → apiClient → VITE_API_BASE_URL (no hardcoded localhost)
       const data = await bulkOrderService.createBulkOrder(formData);
       if (data.success) {
         toast.success('Bulk order request submitted successfully!');
@@ -149,6 +190,7 @@ export default function BulkOrderPage() {
         setFilteredSubCategories([]);
         setFilteredProducts([]);
         setSelectedProductDetails(null);
+        setErrors({});
       } else {
         toast.error(data.message || 'Failed to submit request');
       }
@@ -168,7 +210,6 @@ export default function BulkOrderPage() {
               || (typeof prod.image === 'string' ? prod.image : null) 
               || null;
     if (imgSrc && typeof imgSrc === 'string' && imgSrc.startsWith('/uploads')) {
-      // Use API_ORIGIN from apiClient (reads VITE_API_BASE_URL) — no hardcoded localhost
       imgSrc = `${API_ORIGIN}${imgSrc}`;
     }
     return typeof imgSrc === 'string' ? imgSrc.trim() : null;
@@ -197,61 +238,67 @@ export default function BulkOrderPage() {
           {/* Form Section */}
           <div className="bg-white p-8 rounded-2xl shadow-xl border border-[#E9DED3]">
             <h2 className="text-2xl font-serif font-bold text-[#A66C1C] mb-6 border-b border-[#E9DED3] pb-4">Quick Bulk Order Form</h2>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} noValidate className="space-y-6">
               
               {/* Product Selection */}
               <div className="space-y-4 bg-[#FAF4EF] p-4 rounded-xl border border-[#E9DED3]">
                 <h3 className="text-sm font-bold text-[#A66C1C] uppercase tracking-wider">Select Product</h3>
                 
                 <div>
-                  <label className="block text-[11px] font-bold text-[#8A817C] uppercase tracking-wider mb-2">Category</label>
+                  <label className="block text-[11px] font-bold text-[#8A817C] uppercase tracking-wider mb-2">Category <span className="text-red-500">*</span></label>
                   <select
                     name="category"
                     value={formData.category}
                     onChange={handleChange}
+                    onBlur={handleBlur}
                     required
                     disabled={isLoadingData}
-                    className="w-full px-4 py-3 rounded-lg border border-[#E9DED3] bg-white focus:border-[#9C755A] focus:ring-1 focus:ring-[#9C755A] outline-none transition-all appearance-none"
+                    className={`w-full px-4 py-3 rounded-lg border ${errors.category ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-[#E9DED3] focus:ring-[#9C755A] focus:border-[#9C755A]'} bg-white outline-none transition-all appearance-none`}
                   >
                     <option value="">Select Category...</option>
                     {categories.map(cat => (
                       <option key={cat._id} value={cat._id}>{cat.name}</option>
                     ))}
                   </select>
+                  {errors.category && <p className="text-red-500 text-[10px] mt-1 font-medium">{errors.category}</p>}
                 </div>
                 
                 <div>
-                  <label className="block text-[11px] font-bold text-[#8A817C] uppercase tracking-wider mb-2">Sub Category</label>
+                  <label className="block text-[11px] font-bold text-[#8A817C] uppercase tracking-wider mb-2">Sub Category <span className="text-red-500">*</span></label>
                   <select
                     name="subCategory"
                     value={formData.subCategory}
                     onChange={handleChange}
+                    onBlur={handleBlur}
                     required
                     disabled={!formData.category}
-                    className="w-full px-4 py-3 rounded-lg border border-[#E9DED3] bg-white focus:border-[#9C755A] focus:ring-1 focus:ring-[#9C755A] outline-none transition-all appearance-none"
+                    className={`w-full px-4 py-3 rounded-lg border ${errors.subCategory ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-[#E9DED3] focus:ring-[#9C755A] focus:border-[#9C755A]'} bg-white outline-none transition-all appearance-none`}
                   >
                     <option value="">Select Subcategory...</option>
                     {filteredSubCategories.map(sub => (
                       <option key={sub._id} value={sub._id}>{sub.name}</option>
                     ))}
                   </select>
+                  {errors.subCategory && <p className="text-red-500 text-[10px] mt-1 font-medium">{errors.subCategory}</p>}
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-[#8A817C] uppercase tracking-wider mb-2">Product</label>
+                  <label className="block text-[11px] font-bold text-[#8A817C] uppercase tracking-wider mb-2">Product <span className="text-red-500">*</span></label>
                   <select
                     name="product"
                     value={formData.product}
                     onChange={handleChange}
+                    onBlur={handleBlur}
                     required
                     disabled={!formData.subCategory}
-                    className="w-full px-4 py-3 rounded-lg border border-[#E9DED3] bg-white focus:border-[#9C755A] focus:ring-1 focus:ring-[#9C755A] outline-none transition-all appearance-none"
+                    className={`w-full px-4 py-3 rounded-lg border ${errors.product ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-[#E9DED3] focus:ring-[#9C755A] focus:border-[#9C755A]'} bg-white outline-none transition-all appearance-none`}
                   >
                     <option value="">Select Product...</option>
                     {filteredProducts.map(prod => (
                       <option key={prod._id} value={prod._id}>{prod.name}</option>
                     ))}
                   </select>
+                  {errors.product && <p className="text-red-500 text-[10px] mt-1 font-medium">{errors.product}</p>}
                 </div>
               </div>
 
@@ -261,21 +308,26 @@ export default function BulkOrderPage() {
                   <h3 className="text-sm font-bold text-[#A66C1C] uppercase tracking-wider mb-2">Additional Information</h3>
                   {dynamicFields.map(field => {
                     const fieldValue = formData.customFields?.find(cf => cf.fieldId === field._id)?.value || (field.type === 'checkbox' ? false : '');
+                    const fieldError = errors[`customField_${field._id}`];
                     
                     if (field.type === 'checkbox') {
                       return (
-                        <div key={field._id} className="flex items-center gap-3">
-                          <input
-                            type="checkbox"
-                            id={`customField_${field._id}`}
-                            name={`customField_${field._id}`}
-                            checked={fieldValue}
-                            onChange={handleChange}
-                            className="w-5 h-5 text-[#A66C1C] border-gray-300 rounded focus:ring-[#A66C1C]"
-                          />
-                          <label htmlFor={`customField_${field._id}`} className="text-sm text-[#7C7370]">
-                            {field.label} {field.isRequired && <span className="text-red-500">*</span>}
-                          </label>
+                        <div key={field._id}>
+                          <div className={`flex items-center gap-3 p-3 rounded-lg ${fieldError ? 'border border-red-500 bg-red-50' : ''}`}>
+                            <input
+                              type="checkbox"
+                              id={`customField_${field._id}`}
+                              name={`customField_${field._id}`}
+                              checked={fieldValue}
+                              onChange={handleChange}
+                              onBlur={handleBlur}
+                              className="w-5 h-5 text-[#A66C1C] border-gray-300 rounded focus:ring-[#A66C1C]"
+                            />
+                            <label htmlFor={`customField_${field._id}`} className="text-sm text-[#7C7370]">
+                              {field.label} {field.isRequired && <span className="text-red-500">*</span>}
+                            </label>
+                          </div>
+                          {fieldError && <p className="text-red-500 text-[10px] mt-1 font-medium">{fieldError}</p>}
                         </div>
                       );
                     }
@@ -290,14 +342,16 @@ export default function BulkOrderPage() {
                             name={`customField_${field._id}`}
                             value={fieldValue}
                             onChange={handleChange}
+                            onBlur={handleBlur}
                             required={field.isRequired}
-                            className="w-full px-4 py-3 rounded-lg border border-[#E9DED3] bg-[#FAF4EF] focus:bg-white focus:border-[#9C755A] focus:ring-1 focus:ring-[#9C755A] outline-none transition-all appearance-none"
+                            className={`w-full px-4 py-3 rounded-lg border ${fieldError ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-[#E9DED3] focus:ring-[#9C755A] focus:border-[#9C755A]'} bg-[#FAF4EF] focus:bg-white outline-none transition-all appearance-none`}
                           >
                             <option value="">Select option...</option>
                             {field.options?.map((opt, i) => (
                               <option key={i} value={opt}>{opt}</option>
                             ))}
                           </select>
+                          {fieldError && <p className="text-red-500 text-[10px] mt-1 font-medium">{fieldError}</p>}
                         </div>
                       );
                     }
@@ -312,10 +366,12 @@ export default function BulkOrderPage() {
                           name={`customField_${field._id}`}
                           value={fieldValue}
                           onChange={handleChange}
+                          onBlur={handleBlur}
                           required={field.isRequired}
                           placeholder={field.placeholder || ''}
-                          className="w-full px-4 py-3 rounded-lg border border-[#E9DED3] bg-[#FAF4EF] focus:bg-white focus:border-[#9C755A] focus:ring-1 focus:ring-[#9C755A] outline-none transition-all"
+                          className={`w-full px-4 py-3 rounded-lg border ${fieldError ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-[#E9DED3] focus:ring-[#9C755A] focus:border-[#9C755A]'} bg-[#FAF4EF] focus:bg-white outline-none transition-all`}
                         />
+                        {fieldError && <p className="text-red-500 text-[10px] mt-1 font-medium">{fieldError}</p>}
                       </div>
                     );
                   })}

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Edit3, Trash2, Download, Plus, RefreshCw, Package , SquarePen , Trash } from 'lucide-react';
 import { feeAPI } from '../../../api/feeService';
 import { downloadExcelFile } from '../../../utils/exportUtils';
-import GlobalFeeSettings from './GlobalFeeSettings';
+import ProductFeeRulesPage from './ProductFeeRulesPage';
 
 export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, canEdit = true, canDelete = true }) {
   const [fees, setFees] = useState([]);
@@ -109,7 +109,7 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
   }
 
   if (showGlobalFees) {
-    return <GlobalFeeSettings onBack={() => setShowGlobalFees(false)} canCreate={canCreate} canEdit={canEdit} canDelete={canDelete} />;
+    return <ProductFeeRulesPage onBack={() => setShowGlobalFees(false)} canCreate={canCreate} canEdit={canEdit} canDelete={canDelete} />;
   }
 
   return (

@@ -79,11 +79,20 @@ const createStaff = async (req, res) => {
     const { fullName, email, mobile, password, role, status } = req.body;
 
     // Validate required
-    if (!fullName || !email || !password || !role) {
-      return res.status(400).json({ success: false, message: 'fullName, email, password, and role are required.' });
+    if (!fullName || fullName.trim().length === 0) {
+      return res.status(400).json({ success: false, message: 'Full name is required.' });
     }
-    if (password.length < 8) {
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+      return res.status(400).json({ success: false, message: 'A valid email is required.' });
+    }
+    if (!password || password.length < 8) {
       return res.status(400).json({ success: false, message: 'Password must be at least 8 characters.' });
+    }
+    if (!role) {
+      return res.status(400).json({ success: false, message: 'Role is required.' });
+    }
+    if (mobile && !/^\d{10}$/.test(mobile)) {
+      return res.status(400).json({ success: false, message: 'Mobile must be a 10-digit number.' });
     }
 
     const existing = await Staff.findOne({ email: email.toLowerCase() });
@@ -114,6 +123,18 @@ const createStaff = async (req, res) => {
 const updateStaff = async (req, res) => {
   try {
     const { fullName, email, mobile, role, status, password } = req.body;
+    
+    // Inline Validation
+    if (fullName !== undefined && fullName.trim().length === 0) {
+      return res.status(400).json({ success: false, message: 'Full name cannot be empty.' });
+    }
+    if (email !== undefined && !/^\S+@\S+\.\S+$/.test(email)) {
+      return res.status(400).json({ success: false, message: 'A valid email is required.' });
+    }
+    if (mobile !== undefined && mobile !== '' && !/^\d{10}$/.test(mobile)) {
+      return res.status(400).json({ success: false, message: 'Mobile must be a 10-digit number.' });
+    }
+
     const staff = await Staff.findById(req.params.id);
     if (!staff) return res.status(404).json({ success: false, message: 'Staff not found' });
 

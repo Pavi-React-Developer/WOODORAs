@@ -41,7 +41,9 @@ export default function OrderPricingSummary({ order, className = '' }) {
       {pricing.fees.map((fee, idx) => (
         <div key={idx} className="flex justify-between">
           <span className="text-gray-600">{fee.name}</span>
-          <span className="font-semibold text-gray-900">+{money(fee.amount)}</span>
+          <span className={fee.amount === 0 || fee.isFree ? "font-semibold text-emerald-700" : "font-semibold text-gray-900"}>
+            {fee.amount === 0 || fee.isFree ? 'FREE' : `+${money(fee.amount)}`}
+          </span>
         </div>
       ))}
 

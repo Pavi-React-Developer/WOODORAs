@@ -278,6 +278,7 @@ export default function AddStaffPage({ onBack, onSuccess, editingStaff, currentU
     if (!form.fullName.trim()) e.fullName = 'Full Name is required.';
     if (!form.email.trim()) e.email = 'Email is required.';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = 'Enter a valid email address.';
+    if (form.mobile && !/^\d{10}$/.test(form.mobile)) e.mobile = 'Mobile must be a 10-digit number.';
     if (!isEdit && !form.password) e.password = 'Password is required.';
     else if (form.password && form.password.length < 8) e.password = 'Password must contain at least 8 characters.';
     if (!form.role) e.role = 'Role is required.';

@@ -44,21 +44,35 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
 
   const fetchData = async () => {
     setLoading(true);
+    
     try {
       const conf = await adminService.getGiftCardConfig();
       if (conf) setConfig(conf);
+    } catch (err) {
+      console.error('Failed to load GiftCardConfig:', err);
+    }
 
+    try {
       const ords = await adminService.getAdminGiftOrders();
       setOrders(ords || []);
+    } catch (err) {
+      console.error('Failed to load Gift Orders:', err);
+    }
 
+    try {
       const msgs = await adminService.getAdminMessages();
       setMessages(msgs || []);
+    } catch (err) {
+      console.error('Failed to load Admin Messages:', err);
+    }
 
+    try {
       const rules = await adminService.getGiftBoxRules();
       setGiftBoxRules(rules || []);
     } catch (err) {
-      toast.error('Failed to load Gift & Card data');
+      console.error('Failed to load Gift Box Rules:', err);
     }
+    
     setLoading(false);
   };
 

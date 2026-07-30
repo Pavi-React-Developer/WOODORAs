@@ -23,7 +23,7 @@ exports.createBulkOrder = async (req, res) => {
     }
 
     const newBulkOrder = await BulkOrder.create({
-      user: req.user._id,
+      user: req.user ? req.user._id : undefined,
       category,
       subCategory,
       product,

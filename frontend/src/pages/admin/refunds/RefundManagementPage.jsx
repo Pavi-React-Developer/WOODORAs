@@ -4,12 +4,30 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveCo
 import toast from 'react-hot-toast';
 import { adminService } from '../../../api/adminService';
 import { downloadExcelFile } from '../../../utils/exportUtils';
+import { useConfigStore } from '../../../store/useConfigStore';
 
 export default function RefundManagementPage({ canEdit = true, canDelete = true }) {
   const [refunds, setRefunds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [activeViewRefund, setActiveViewRefund] = useState(null);
+
+  // Global Wallet Toggle State
+  const { walletEnabled, updateWalletConfig } = useConfigStore();
+  const [isTogglingWallet, setIsTogglingWallet] = useState(false);
+
+  const handleToggleWallet = async (e) => {
+    const newValue = e.target.checked;
+    setIsTogglingWallet(true);
+    try {
+      await updateWalletConfig(newValue);
+      toast.success(`Wallet feature ${newValue ? 'enabled' : 'disabled'} globally.`);
+    } catch (error) {
+      toast.error('Failed to update wallet configuration.');
+    } finally {
+      setIsTogglingWallet(false);
+    }
+  };
 
   // Step 2: Approve modal
   const [approveRefund, setApproveRefund] = useState(null);
@@ -24,6 +42,7 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
   const [statusFilter, setStatusFilter] = useState('All Statuses');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [dateFilter, setDateFilter] = useState('30'); // '30', '7', 'all'
 
   const fetchRefunds = async () => {
     setLoading(true);
@@ -84,7 +103,7 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
       await adminService.processRefund(processRefund._id, refundMethod);
       toast.success(`Refund processed via ${refundMethod}! Stock has been restored.`);
       setProcessRefund(null);
-      setRefundMethod('Wallet');
+      setRefundMethod(walletEnabled ? 'Wallet' : 'UPI');
       fetchRefunds();
     } catch (e) {
       toast.error(e.message || 'Failed to process refund');
@@ -93,7 +112,6 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
     }
   };
 
-  // Filtering logic
   const filteredRefunds = refunds.filter((r) => {
     const matchPayment = paymentTypeFilter === 'All Payment Types' || r.paymentType === paymentTypeFilter;
     let matchStatus = true;
@@ -107,7 +125,16 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
     const searchLower = searchQuery.toLowerCase();
     const matchSearch = r.orderId?.toLowerCase().includes(searchLower) || r.customerName?.toLowerCase().includes(searchLower);
 
-    return matchPayment && matchStatus && matchSearch;
+    let matchDate = true;
+    if (dateFilter !== 'all') {
+      const days = parseInt(dateFilter, 10);
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - days);
+      const refundDate = new Date(r.createdAt || Date.now());
+      matchDate = refundDate >= cutoffDate;
+    }
+
+    return matchPayment && matchStatus && matchSearch && matchDate;
   });
 
   const itemsPerPage = 5;
@@ -189,18 +216,42 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
           </div>
           <div className="flex items-center gap-3">
             <button onClick={fetchRefunds} className="admin-secondary-btn">
-              <RefreshCw size={16} />
+              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
               Refresh
             </button>
-            <button className="admin-secondary-btn flex items-center gap-2">
-              Last 30 Days
-              <ChevronDown size={14} />
-            </button>
+            <select
+              value={dateFilter}
+              onChange={(e) => { setDateFilter(e.target.value); setCurrentPage(1); }}
+              className="bg-white border border-[#E9DED3] text-[#4A403B] text-sm rounded-lg px-4 py-2 focus:outline-none shadow-sm cursor-pointer"
+            >
+              <option value="30">Last 30 Days</option>
+              <option value="7">Last 7 Days</option>
+              <option value="all">All Time</option>
+            </select>
             <button onClick={exportRefundsExcel} className="admin-export-btn">
               <Download size={16} />
               Export Excel
             </button>
           </div>
+        </div>
+
+        {/* Global Wallet Toggle */}
+        <div className="bg-white rounded-[14px] border border-[#E9DED3] p-5 shadow-sm mb-6 flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-[#141225]">Wallet</h2>
+            <p className="text-sm text-[#6D625C]">Enable or Disable Wallet functionality across the entire application.</p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input 
+              type="checkbox" 
+              className="sr-only peer" 
+              checked={walletEnabled}
+              onChange={handleToggleWallet}
+              disabled={isTogglingWallet}
+            />
+            <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#8B5E3C]/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-[#8B5E3C]"></div>
+            <span className="ml-3 text-sm font-medium text-gray-900">{walletEnabled ? 'Enabled' : 'Disabled'}</span>
+          </label>
         </div>
 
         {/* Stats Row */}
@@ -407,7 +458,7 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
                       {/* Step 3: Refund button (only for Refund Approved) */}
                       {refund.status === 'Refund Approved' && canEdit && (
                         <button
-                          onClick={() => { setProcessRefund(refund); setRefundMethod('Wallet'); }}
+                          onClick={() => { setProcessRefund(refund); setRefundMethod(walletEnabled ? 'Wallet' : 'UPI'); }}
                           className="inline-block px-4 py-1.5 rounded-lg text-[10px] font-bold shadow-sm bg-[#647C5E] text-white cursor-pointer hover:opacity-80 transition-opacity"
                         >
                           Refund
@@ -558,7 +609,9 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
               <div className="mb-5">
                 <p className="text-[11px] font-bold text-[#8A817C] uppercase tracking-wider mb-2">Select Refund Method</p>
                 <div className="grid grid-cols-3 gap-2">
-                  {['Wallet', 'UPI', 'Bank Transfer'].map((method) => (
+                  {['Wallet', 'UPI', 'Bank Transfer']
+                    .filter(method => walletEnabled || method !== 'Wallet')
+                    .map((method) => (
                     <button key={method}
                       onClick={() => setRefundMethod(method)}
                       className={`py-2.5 rounded-xl text-xs font-bold border-2 transition-colors ${

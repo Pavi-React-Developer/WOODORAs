@@ -10,7 +10,6 @@ import { stateDistricts } from '../utils/indiaStates';
 import { feeAPI } from '../api/feeService';
 import { adminService } from '../api/adminService';
 import { createCashfreeSession } from '../api/cashfreeService';
-import { calculateOrderFees } from '../utils/feeCalculator';
 import { getImageSrc } from '../utils/imageUtils';
 import CouponSection from '../components/CouponSection';
 import LoginModal from '../components/LoginModal';
@@ -33,9 +32,9 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
   const [loading, setLoading] = useState(false);
   const [fees, setFees] = useState([]);
   const [cityError, setCityError] = useState('');
-  const [discountAmount, setDiscountAmount] = useState(0);
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
 
   const currentUser = user || authService.getCurrentUser();
 
@@ -90,7 +89,15 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
 
   const [codStatus, setCodStatus] = useState({ enabled: true, message: '' });
 
-  const subtotal = getSubtotal();
+  const currentState = savedAddresses.length > 0 && !isAddingAddress
+    ? savedAddresses[selectedAddressIndex]?.state
+    : formData.state;
+
+  const { subtotal, deliveryCharge = 0, appliedFees = [], codAdvance, discount: discountAmount, grandTotal: total } = useCartCalculation({
+    state: currentState,
+    couponCode: appliedCoupon?.couponCode || '',
+    paymentMethod,
+  });
 
   useEffect(() => {
     let mounted = true;
@@ -100,7 +107,7 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
         if (mounted) {
           setCodStatus(response);
           if (!response.codEnabled && paymentMethod === 'COD') {
-            setPaymentMethod('cashfree');
+            setPaymentMethod('Cashfree');
           }
         }
       } catch (err) {
@@ -111,46 +118,16 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
     return () => { mounted = false; };
   }, [subtotal, paymentMethod]);
 
-  const currentState = savedAddresses.length > 0 && !isAddingAddress
-    ? savedAddresses[selectedAddressIndex]?.state
-    : formData.state;
-
-  const feeSummary = calculateOrderFees({
-    fees,
-    subtotal,
-    items: cartItems,
-    state: currentState,
-    paymentMethod,
-  });
-  const { totalWeight, shippingCharge, codAdvance, extraFeesList, appliedFees } = feeSummary;
-  const extraChargeSum = extraFeesList.reduce((sum, fee) => sum + fee.amount, 0);
-  const discountedSubtotal = Math.max(subtotal - discountAmount, 0);
-
-  const { productFee: dynamicProductFee, giftFee: dynamicGiftBoxFee } = useCartCalculation();
-
-  if (dynamicProductFee > 0 && !appliedFees.some(f => f.name === 'Product Fee')) {
-    appliedFees.push({ name: 'Product Fee', amount: dynamicProductFee });
-  }
-
-  if (dynamicGiftBoxFee > 0 && !appliedFees.some(f => f.name === 'Gift Fee')) {
-    appliedFees.push({ name: 'Gift Fee', amount: dynamicGiftBoxFee });
-  }
-
-  const orderTotal = discountedSubtotal + shippingCharge + extraChargeSum + dynamicGiftBoxFee + dynamicProductFee;
   const isCodAdvance = paymentMethod === 'COD' && codAdvance > 0;
-  const balanceAmount = isCodAdvance ? (orderTotal - codAdvance) : 0; // Deduct advance from order total
-
-  const total = orderTotal;
+  const balanceAmount = isCodAdvance ? (total - codAdvance) : 0;
 
   const handleApplyCoupon = (result) => {
     if (!result?.coupon) {
       setAppliedCoupon(null);
-      setDiscountAmount(0);
       return;
     }
 
     setAppliedCoupon(result?.coupon || null);
-    setDiscountAmount(Number(result?.discountAmount || 0));
   };
 
   const handleInputChange = (e) => {
@@ -173,6 +150,9 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
       setCityError('');
       setFormData(prev => ({ ...prev, city: '', customCity: '', customState: '' }));
     }
+    if (formErrors[name]) {
+      setFormErrors(prev => ({ ...prev, [name]: '' }));
+    }
   };
 
   const handleSaveAddress = async (e) => {
@@ -180,11 +160,20 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
     const finalCity = (formData.state === 'Tamil Nadu' && formData.city === 'Other') ? formData.customCity : formData.city;
 
     let finalState = formData.state;
+    let errors = {};
+
+    if (!formData.fullName || formData.fullName.trim().length === 0) errors.fullName = 'Full Name is required.';
+    if (!formData.phone || !/^\d{10}$/.test(formData.phone)) errors.phone = 'Valid 10-digit phone number is required.';
+    if (!formData.address || formData.address.trim().length === 0) errors.address = 'Address is required.';
+    if (!formData.state) errors.state = 'State is required.';
+    if (!formData.pinCode || !/^\d{6}$/.test(formData.pinCode)) errors.pinCode = 'Valid 6-digit pin code is required.';
+
     if (formData.state === 'Other State') {
       if (!formData.customState || !formData.customState.trim()) {
-        return toast.error('Please enter your state');
+        errors.customState = 'Please enter your state';
+      } else {
+        finalState = formData.customState.trim();
       }
-      finalState = formData.customState.trim();
 
       if (finalCity) {
         const userCity = finalCity.trim().toLowerCase().replace(/ district| dt| dist/g, '').trim();
@@ -196,16 +185,22 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
         });
 
         if (isTnDistrict) {
-          return toast.error('Please select Tamil Nadu as your state for Tamil Nadu districts.');
+          errors.city = 'Please select Tamil Nadu as your state for Tamil Nadu districts.';
         }
       }
     }
 
-    if (!formData.fullName || !formData.address || !finalCity || !formData.state || !formData.pinCode || !formData.phone) {
-      return toast.error('Please fill all required fields');
+    if (!finalCity || finalCity.trim().length === 0) {
+      if (formData.state === 'Tamil Nadu' && formData.city === 'Other') {
+        errors.customCity = 'District is required.';
+      } else {
+        errors.city = 'District is required.';
+      }
     }
-    if (formData.phone.length < 10) {
-      return toast.error('Please enter a valid phone number');
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
     }
 
     const addressToSave = { ...formData, city: finalCity, state: finalState };
@@ -302,6 +297,10 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
       
       const giftItem = cartItems.find(item => item.isGift) || null;
       const isGiftOrder = cartItems.some(item => item.isGift);
+      // Gift WRAPPING is only enabled when the user specifically selected it
+      // (isGiftWrapper=true). This must match useCartCalculation's isGiftEnabled
+      // so the fee shown on checkout equals the fee saved on the order.
+      const isGiftWrapped = cartItems.some(item => item.isGift && item.isGiftWrapper);
       let savedGiftPreferences = null;
       try {
         const storedPreferences = localStorage.getItem('giftCardPreferences');
@@ -314,13 +313,15 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
         || giftItem?.scheduledDeliveryDate
         || savedGiftPreferences?.deliveryDate
         || null;
+        
+      const giftWrapFee = appliedFees?.find(f => f.name === 'Gift Wrap Fee')?.amount || 0;
+
       const giftProps = {
         isGiftOrder,
-        // Read giftMessage directly (may be empty string if user typed nothing — that's valid)
+        giftWrapping: { enabled: isGiftWrapped },
         giftMessage: giftItem?.giftMessage ?? savedGiftPreferences?.message ?? '',
-        // Cart stores style as giftCardStyle — map to order field giftMessageStyle
         giftMessageStyle: giftItem?.giftCardStyle ?? savedGiftPreferences?.style ?? 'Classic',
-        giftWrapFee: appliedFees.find(f => f.name === 'Gift Fee')?.amount || 0,
+        giftWrapFee,
         deliveryDate: isGiftOrder ? selectedDeliveryDate : null,
         scheduledDeliveryDate: isGiftOrder ? selectedDeliveryDate : null,
       };
@@ -344,12 +345,12 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
         paymentMethod,
         itemsPrice: subtotal,
         taxPrice: 0,
-        shippingPrice: shippingCharge,
+        shippingPrice: deliveryCharge,
         totalPrice: total,
         codAdvance,
         balanceAmount,
         orderNotes,
-        fees: appliedFees,
+        fees: [],
         couponCode: appliedCoupon?.couponCode || null,
         discountAmount,
         ...giftProps
@@ -488,42 +489,53 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1">Full Name *</label>
-                      <input type="text" name="fullName" value={formData.fullName} onChange={handleInputChange} className="w-full px-4 py-2.5 rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30" required />
+                      <input type="text" name="fullName" value={formData.fullName} onChange={handleInputChange} className={`w-full px-4 py-2.5 rounded-xl border ${formErrors.fullName ? 'border-red-500 bg-red-50 focus:ring-red-500' : 'border-[#E6DFD4] focus:ring-[#8B5E3C]/30'} focus:outline-none focus:ring-2`} required />
+                      {formErrors.fullName && <p className="text-red-500 text-[10px] mt-1">{formErrors.fullName}</p>}
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1">Phone Number *</label>
-                      <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} className="w-full px-4 py-2.5 rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30" required />
+                      <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} className={`w-full px-4 py-2.5 rounded-xl border ${formErrors.phone ? 'border-red-500 bg-red-50 focus:ring-red-500' : 'border-[#E6DFD4] focus:ring-[#8B5E3C]/30'} focus:outline-none focus:ring-2`} required />
+                      {formErrors.phone && <p className="text-red-500 text-[10px] mt-1">{formErrors.phone}</p>}
                     </div>
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">House / Street Address *</label>
-                    <input type="text" name="address" value={formData.address} onChange={handleInputChange} className="w-full px-4 py-2.5 rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30" required />
+                    <input type="text" name="address" value={formData.address} onChange={handleInputChange} className={`w-full px-4 py-2.5 rounded-xl border ${formErrors.address ? 'border-red-500 bg-red-50 focus:ring-red-500' : 'border-[#E6DFD4] focus:ring-[#8B5E3C]/30'} focus:outline-none focus:ring-2`} required />
+                    {formErrors.address && <p className="text-red-500 text-[10px] mt-1">{formErrors.address}</p>}
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1">State *</label>
-                      <select name="state" value={formData.state} onChange={handleInputChange} className="w-full px-4 py-2.5 rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 bg-white" required>
+                      <select name="state" value={formData.state} onChange={handleInputChange} className={`w-full px-4 py-2.5 rounded-xl border ${formErrors.state ? 'border-red-500 bg-red-50 focus:ring-red-500' : 'border-[#E6DFD4] focus:ring-[#8B5E3C]/30'} focus:outline-none focus:ring-2 bg-white`} required>
                         <option value="">Select State</option>
                         <option value="Tamil Nadu">Tamil Nadu</option>
                         <option value="Other State">Other State</option>
                       </select>
+                      {formErrors.state && <p className="text-red-500 text-[10px] mt-1">{formErrors.state}</p>}
                       {formData.state === 'Other State' && (
-                        <input type="text" name="customState" value={formData.customState || ''} onChange={handleInputChange} placeholder="Type your state" className="mt-3 w-full px-4 py-2.5 rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30" required />
+                        <>
+                          <input type="text" name="customState" value={formData.customState || ''} onChange={handleInputChange} placeholder="Type your state" className={`mt-3 w-full px-4 py-2.5 rounded-xl border ${formErrors.customState ? 'border-red-500 bg-red-50 focus:ring-red-500' : 'border-[#E6DFD4] focus:ring-[#8B5E3C]/30'} focus:outline-none focus:ring-2`} required />
+                          {formErrors.customState && <p className="text-red-500 text-[10px] mt-1">{formErrors.customState}</p>}
+                        </>
                       )}
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1">City / District *</label>
                       {formData.state === 'Tamil Nadu' ? (
                         <>
-                          <select name="city" value={formData.city} onChange={handleInputChange} className="w-full px-4 py-2.5 rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 bg-white" required>
+                          <select name="city" value={formData.city} onChange={handleInputChange} className={`w-full px-4 py-2.5 rounded-xl border ${formErrors.city ? 'border-red-500 bg-red-50 focus:ring-red-500' : 'border-[#E6DFD4] focus:ring-[#8B5E3C]/30'} focus:outline-none focus:ring-2 bg-white`} required>
                             <option value="">Select District</option>
                             {availableDistricts.map(district => (
                               <option key={district} value={district}>{district}</option>
                             ))}
                             <option value="Other">Other (Type manually)</option>
                           </select>
+                          {formErrors.city && <p className="text-red-500 text-[10px] mt-1">{formErrors.city}</p>}
                           {formData.city === 'Other' && (
-                            <input type="text" name="customCity" value={formData.customCity || ''} onChange={handleInputChange} placeholder="Type your district" className="mt-3 w-full px-4 py-2.5 rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30" required />
+                            <>
+                              <input type="text" name="customCity" value={formData.customCity || ''} onChange={handleInputChange} placeholder="Type your district" className={`mt-3 w-full px-4 py-2.5 rounded-xl border ${formErrors.customCity ? 'border-red-500 bg-red-50 focus:ring-red-500' : 'border-[#E6DFD4] focus:ring-[#8B5E3C]/30'} focus:outline-none focus:ring-2`} required />
+                              {formErrors.customCity && <p className="text-red-500 text-[10px] mt-1">{formErrors.customCity}</p>}
+                            </>
                           )}
                         </>
                       ) : (
@@ -534,11 +546,11 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
                             value={formData.city}
                             onChange={handleInputChange}
                             placeholder="Enter your district"
-                            className={`w-full px-4 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 ${cityError ? 'border-red-400 focus:ring-red-300' : 'border-[#E6DFD4]'}`}
+                            className={`w-full px-4 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 ${formErrors.city || cityError ? 'border-red-400 focus:ring-red-300' : 'border-[#E6DFD4]'}`}
                             required
                           />
-                          {cityError && (
-                            <p className="mt-1.5 text-xs text-red-500 font-medium">{cityError}</p>
+                          {(formErrors.city || cityError) && (
+                            <p className="mt-1.5 text-xs text-red-500 font-medium">{formErrors.city || cityError}</p>
                           )}
                         </>
                       )}
@@ -547,7 +559,8 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1">Pincode *</label>
-                      <input type="text" name="pinCode" value={formData.pinCode} onChange={handleInputChange} className="w-full px-4 py-2.5 rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30" required />
+                      <input type="text" name="pinCode" value={formData.pinCode} onChange={handleInputChange} className={`w-full px-4 py-2.5 rounded-xl border ${formErrors.pinCode ? 'border-red-500 bg-red-50 focus:ring-red-500' : 'border-[#E6DFD4] focus:ring-[#8B5E3C]/30'} focus:outline-none focus:ring-2`} required />
+                      {formErrors.pinCode && <p className="text-red-500 text-[10px] mt-1">{formErrors.pinCode}</p>}
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1">Landmark (Optional)</label>
@@ -700,10 +713,12 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
                     <span>-₹{discountAmount.toLocaleString()}</span>
                   </div>
                 )}
-                {appliedFees.filter(fee => fee.name.toLowerCase() !== 'advance').map((fee, idx) => (
+                {appliedFees && appliedFees.map((fee, idx) => (
                   <div key={idx} className="flex justify-between text-gray-600">
-                    <span>{fee.name} {fee.isWeightFee ? `(${totalWeight.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 3 })} kg)` : ''}</span>
-                    <span className="text-gray-900 font-medium">₹{fee.amount.toLocaleString()}</span>
+                    <span>{fee.name}</span>
+                    <span className={fee.amount === 0 || fee.isFree ? "text-green-600 font-bold" : "text-gray-900 font-medium"}>
+                      {fee.amount === 0 || fee.isFree ? 'FREE' : `₹${fee.amount.toLocaleString()}`}
+                    </span>
                   </div>
                 ))}
                 <div className="flex justify-between font-bold text-gray-800 pt-2 border-t border-[#E6DFD4]/50">

@@ -48,6 +48,7 @@ const buildCartContext = async (items = []) => {
     };
   });
 };
+exports.buildCartContext = buildCartContext;
 
 const couponMatchesCartItem = (coupon, item = {}) => {
   const couponCategory = normalizeReference(coupon?.category);
@@ -84,6 +85,7 @@ const isCouponApplicableToCart = (coupon, items = []) => {
 
   return true;
 };
+exports.isCouponApplicableToCart = isCouponApplicableToCart;
 
 const validateCouponPayload = (body) => {
   const errors = [];
@@ -299,14 +301,14 @@ exports.getEligibleCoupons = async (req, res) => {
     let userOrderUsageMap = {};
     let globalOrderUsageMap = {};
     if (coupons.length > 0) {
-      // Count actual paid orders per coupon code to get live global usage
-      const couponCodes = coupons.map(c => c.couponCode);
-      const paidOrders = await Order.find({ couponCode: { $in: couponCodes }, isPaid: true }).select('couponCode user').lean();
+      // Count actual paid orders per coupon ID to get live global usage (avoids historical overlap if coupon code is reused)
+      const couponIds = coupons.map(c => c._id);
+      const paidOrders = await Order.find({ coupon: { $in: couponIds }, isPaid: true }).select('coupon user').lean();
       paidOrders.forEach(order => {
-        if (order.couponCode) {
-          const code = String(order.couponCode).trim().toUpperCase();
+        if (order.coupon) {
+          const cid = String(order.coupon);
           // Global count across all users
-          globalOrderUsageMap[code] = (globalOrderUsageMap[code] || 0) + 1;
+          globalOrderUsageMap[cid] = (globalOrderUsageMap[cid] || 0) + 1;
         }
       });
     }
@@ -314,7 +316,7 @@ exports.getEligibleCoupons = async (req, res) => {
     const eligible = coupons.filter((coupon) => {
       if (coupon.usageLimit > 0) {
         // Check global usage against the limit dynamically from actual paid orders
-        const globalUsage = globalOrderUsageMap[coupon.couponCode] || 0;
+        const globalUsage = globalOrderUsageMap[String(coupon._id)] || 0;
         if (globalUsage >= coupon.usageLimit) return false;
       }
       if (Number(subtotal) < Number(coupon.minOrderValue || 0)) return false;
@@ -348,7 +350,7 @@ exports.applyCoupon = async (req, res) => {
     if (coupon.usageLimit > 0) {
       // Count globally across ALL users from actual paid orders dynamically
       const globalOrderUsage = await Order.countDocuments({
-        couponCode: coupon.couponCode,
+        coupon: coupon._id,
         isPaid: true,
       });
       if (globalOrderUsage >= coupon.usageLimit) {

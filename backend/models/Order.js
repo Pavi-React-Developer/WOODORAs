@@ -85,6 +85,38 @@ const orderSchema = new mongoose.Schema(
       boxSize: { type: String },
       giftFee: { type: Number }
     },
+    total_cart_volume: {
+      type: Number,
+      default: 0
+    },
+    matched_box_size: {
+      type: String,
+      default: ''
+    },
+    product_fee: {
+      type: Number,
+      default: 0
+    },
+    gift_fee: {
+      type: Number,
+      default: 0
+    },
+    delivery_charge: {
+      type: Number,
+      default: 0
+    },
+    discount: {
+      type: Number,
+      default: 0
+    },
+    grand_total: {
+      type: Number,
+      default: 0
+    },
+    gift_toggle: {
+      type: Boolean,
+      default: false
+    },
     itemsPrice: {
       type: Number,
       required: true,

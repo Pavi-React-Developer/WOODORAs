@@ -1,12 +1,13 @@
 const Order = require('../models/Order');
 const Fee = require('../models/Fee');
-const GlobalFee = require('../models/GlobalFee');
 const Refund = require('../models/Refund');
 const CancellationRule = require('../models/CancellationRule');
 const User = require('../models/User');
 const Product = require('../models/Product');
 const { calculateOrderFees } = require('../utils/feeCalculator');
 const ProductVariant = require('../models/ProductVariant');
+const Inventory = require('../models/Inventory');
+const ProductFeeRule = require('../models/ProductFeeRule');
 
 const normalizeDeliveryDate = (value) => {
   if (value == null || value === '') return null;
@@ -34,7 +35,7 @@ const buildPricingSnapshot = ({ pricing = {}, subtotal, discountAmount, fees, sh
   const weightFee = amount(pricing.weight_fee ?? pricing.weightFee ?? shippingPrice);
   // A weight fee is this storefront's shipping charge. Never store/add the
   // same charge in both fields, even if an older client sends both values.
-  const shippingFee = weightFee > 0 ? 0 : amount(pricing.shipping_fee ?? pricing.shippingFee);
+  const shippingFee = weightFee > 0 ? 0 : amount(pricing.shipping_fee ?? pricing.shippingFee ?? feeAmount(fees, 'shipping'));
   const snapshot = {
     subtotal: amount(pricing.subtotal ?? subtotal),
     coupon_discount: amount(pricing.coupon_discount ?? pricing.couponDiscount ?? discountAmount),
@@ -79,7 +80,7 @@ const updateVariantStock = async (variantId, qty, type) => {
     }
 
     const newCurrent = Math.max(0, (variant.inventory || 0) - (variant.reserveStock || 0));
-    
+
     await ProductVariant.findByIdAndUpdate(variantId, {
       reserveStock: variant.reserveStock,
       inventory: variant.inventory,
@@ -87,6 +88,24 @@ const updateVariantStock = async (variantId, qty, type) => {
     });
   } catch (err) {
     console.error('Failed to update variant stock', err);
+  }
+};
+
+const updateProductStock = async (productId, qty, type = 'reserve') => {
+  try {
+    const inventory = await Inventory.findOne({ product: productId });
+    if (!inventory) return;
+
+    if (type === 'reserve') {
+      // For simple products, we just decrement stockQuantity when reserved/purchased
+      inventory.stockQuantity = Math.max(0, inventory.stockQuantity - qty);
+    } else if (type === 'refund' || type === 'cancel') {
+      inventory.stockQuantity = inventory.stockQuantity + qty;
+    }
+
+    await inventory.save();
+  } catch (err) {
+    console.error('Failed to update product inventory stock', err);
   }
 };
 
@@ -133,9 +152,19 @@ const addOrderItems = async (req, res) => {
       giftWrapFee
     } = req.body;
 
-    if (orderItems && orderItems.length === 0) {
+    if (!orderItems || orderItems.length === 0) {
       return res.status(400).json({ message: 'No order items' });
-    } else {
+    }
+
+    // Inline Validation for Shipping Address
+    if (!shippingAddress || !shippingAddress.address || !shippingAddress.city || !shippingAddress.state || !shippingAddress.pinCode) {
+      return res.status(400).json({ message: 'Complete shipping address is required (address, city, state, pinCode)' });
+    }
+    if (!shippingAddress.phone || !/^\d{10}$/.test(shippingAddress.phone)) {
+      return res.status(400).json({ message: 'A valid 10-digit phone number is required for shipping' });
+    }
+
+    if (true) { // keeping the else block structure
       const giftOrderItem = orderItems?.find((item) => item.isGift);
       const normalizedDeliveryDate = normalizeDeliveryDate(
         deliveryDate
@@ -152,9 +181,100 @@ const addOrderItems = async (req, res) => {
         .populate('paymentMethod', 'name')
         .lean();
 
-      let globalFee = await GlobalFee.findOne().lean();
-      if (!globalFee) {
-        globalFee = { productFee: 0, giftFee: 0, isActive: false };
+      // Calculate total cart volume by fetching dimensions from DB (same as cartController).
+      // req.body.orderItems never carry dimensions, so we must look them up.
+      let totalCartVolume = 0;
+      await Promise.all(orderItems.map(async (item) => {
+        const qty = Number(item.qty) || 1;
+        let length = 0, width = 0, height = 0;
+
+        // Try variant dimensions first
+        if (item.variant) {
+          try {
+            const variant = await ProductVariant.findById(item.variant).lean();
+            if (variant) {
+              length = Number(variant.length) || 0;
+              width  = Number(variant.width)  || 0;
+              height = Number(variant.height) || 0;
+            }
+          } catch (_) {}
+        }
+
+        // Fallback to product dimensions
+        if (!(length > 0 && width > 0 && height > 0) && item.product) {
+          try {
+            const product = await Product.findById(item.product).lean();
+            if (product) {
+              length = Number(product.dimensions?.length) || 0;
+              width  = Number(product.dimensions?.width)  || 0;
+              height = Number(product.dimensions?.height) || 0;
+              // Some products store a pre-computed volume field
+              if (!(length > 0 && width > 0 && height > 0) && Number(product.volume) > 0) {
+                totalCartVolume += Number(product.volume) * qty;
+                return;
+              }
+            }
+          } catch (_) {}
+        }
+
+        if (length > 0 && width > 0 && height > 0) {
+          totalCartVolume += length * width * height * qty;
+        }
+      }));
+
+      let productFeeRule = await ProductFeeRule.findOne({
+        isActive: true,
+        minVolume: { $lte: totalCartVolume },
+        maxVolume: { $gte: totalCartVolume }
+      }).lean();
+
+      let dynamicProductFee = 0;
+      let dynamicBoxSize = '';
+
+      if (productFeeRule) {
+        dynamicProductFee = productFeeRule.productFee || 0;
+        dynamicBoxSize = productFeeRule.boxSize || '';
+      } else {
+        const highestRule = await ProductFeeRule.findOne({ isActive: true })
+          .sort({ maxVolume: -1 })
+          .lean();
+        if (highestRule && totalCartVolume > highestRule.maxVolume) {
+          const factor = Math.ceil(totalCartVolume / (highestRule.maxVolume || 1));
+          dynamicProductFee = (Number(highestRule.productFee) || 0) * factor;
+          dynamicBoxSize = highestRule.boxSize || '';
+        }
+      }
+
+      let giftToggle = req.body.giftWrapping?.enabled;
+      let giftFee = 0;
+      if (giftToggle === true && orderItems.length > 0) {
+        let giftBoxRule = await require('../models/GiftBoxRule').findOne({
+          isActive: true,
+          minVolume: { $lte: totalCartVolume },
+          maxVolume: { $gte: totalCartVolume }
+        }).lean();
+
+        if (giftBoxRule) {
+          giftFee = Number(giftBoxRule.fee) || 0;
+        } else {
+          // Fallback for gift fee if volume exceeds max
+          const highestGiftRule = await require('../models/GiftBoxRule').findOne({ isActive: true })
+            .sort({ maxVolume: -1 })
+            .lean();
+          
+          if (highestGiftRule && totalCartVolume > highestGiftRule.maxVolume) {
+            const factor = Math.ceil(totalCartVolume / (highestGiftRule.maxVolume || 1));
+            giftFee = (Number(highestGiftRule.fee) || 0) * factor;
+          } else if (highestGiftRule) {
+             giftFee = Number(highestGiftRule.fee) || 0;
+          } else {
+             // absolute fallback to static config if no rules exist
+             const giftConfig = await require('../models/GiftCardConfig').findOne().lean();
+             if (giftConfig && giftConfig.giftWrapFee) {
+               giftFee = Number(giftConfig.giftWrapFee);
+             }
+          }
+        }
       }
 
       const subtotal = Number(itemsPrice) || orderItems.reduce((sum, item) => (
@@ -163,21 +283,43 @@ const addOrderItems = async (req, res) => {
 
       const feeSummary = calculateOrderFees({
         fees: configuredFees,
-        globalFee,
         subtotal,
         items: orderItems,
         state: shippingAddress?.state,
         paymentMethod,
       });
 
-      // Always use backend calculated fees to prevent manipulation
-      const resolvedFees = feeSummary.appliedFees;
+      // Start with applied fees from global fee rules
+      let resolvedFees = [...(feeSummary.appliedFees || [])];
+
+      if (feeSummary.isFreeShipping) {
+        resolvedFees.push({ name: 'Shipping Fee', amount: 0, isFree: true });
+      }
+
+      // Inject the matched Product Fee into the fees array
+      if (dynamicProductFee > 0) {
+        resolvedFees.unshift({ name: 'Product Volume Fee', amount: dynamicProductFee });
+        feeSummary.productFee = dynamicProductFee;
+      }
+
+      // Inject the matched Gift Fee into the fees array
+      if (giftFee > 0) {
+        resolvedFees.push({
+          name: 'Gift Wrap Fee',
+          amount: giftFee
+        });
+        feeSummary.giftFee = giftFee;
+      }
+
+      // Always use backend-calculated fees from resolvedFees — never trust the
+      // client-supplied pricing snapshot, which could cause double-counting of
+      // the weight/shipping fee (Cashfree amount mismatch).
       const pricing = buildPricingSnapshot({
-        pricing: req.body.pricing,
+        pricing: {},
         subtotal,
         discountAmount: req.body.discountAmount,
         fees: resolvedFees,
-        shippingPrice: req.body.shippingPrice ?? feeSummary.shippingCharge,
+        shippingPrice: 0,
         codAdvance: req.body.codAdvance ?? feeSummary.codAdvance,
         paymentMethod,
       });
@@ -213,8 +355,21 @@ const addOrderItems = async (req, res) => {
         giftMessageStyle: giftMessageStyle ?? giftOrderItem?.giftMessageStyle ?? 'Classic',
         deliveryDate: normalizedDeliveryDate,
         scheduledDeliveryDate: normalizedDeliveryDate,
-        giftWrapFee: pricing.gift_fee || giftWrapFee || 0,
-        giftWrapping: req.body.giftWrapping || { enabled: false },
+        giftWrapFee: pricing.gift_fee || giftFee || 0,
+        giftWrapping: {
+          enabled: giftToggle === true,
+          volume: totalCartVolume || 0,
+          boxSize: dynamicBoxSize || '',
+          giftFee: pricing.gift_fee || giftFee || 0,
+        },
+        total_cart_volume: totalCartVolume,
+        matched_box_size: dynamicBoxSize,
+        product_fee: pricing.product_fee || dynamicProductFee || 0,
+        gift_fee: pricing.gift_fee || giftFee || 0,
+        delivery_charge: pricing.shipping_fee + pricing.weight_fee,
+        discount: pricing.coupon_discount,
+        grand_total: pricing.total_amount,
+        gift_toggle: giftToggle,
         ...pricing,
       });
 
@@ -255,16 +410,17 @@ const addOrderItems = async (req, res) => {
         if (item.variant) {
           await updateVariantStock(item.variant, item.qty, 'reserve');
         } else if (item.product) {
-          // Implement simple product stock decrement
-          try {
-            const productToUpdate = await Product.findById(item.product);
-            if (productToUpdate && productToUpdate.inventory) {
-              productToUpdate.inventory.stockQuantity = Math.max(0, (productToUpdate.inventory.stockQuantity || 0) - item.qty);
-              await productToUpdate.save();
-            }
-          } catch (err) {
-            console.error('Failed to update product stock', err);
-          }
+          await updateProductStock(item.product, item.qty, 'reserve');
+        }
+      }
+
+      // Clear the cart if this is a COD order (for Cashfree, cart is cleared in verifyPayment after success)
+      if (req.body.paymentMethod === 'COD') {
+        try {
+          const Cart = require('../models/Cart');
+          await Cart.findOneAndUpdate({ user: req.user._id }, { items: [] });
+        } catch (cartErr) {
+          console.error('Failed to clear cart after COD order:', cartErr);
         }
       }
 
@@ -414,15 +570,7 @@ const updateOrderStatus = async (req, res) => {
         if (item.variant) {
           await updateVariantStock(item.variant, item.qty, 'deliver');
         } else if (item.product) {
-          try {
-            const productToUpdate = await Product.findById(item.product);
-            if (productToUpdate && productToUpdate.inventory) {
-              productToUpdate.inventory.stockQuantity = Math.max(0, (productToUpdate.inventory.stockQuantity || 0) - item.qty);
-              await productToUpdate.save();
-            }
-          } catch (err) {
-            console.error('Failed to update product stock on deliver', err);
-          }
+          await updateProductStock(item.product, item.qty, 'deliver');
         }
       }
     }
@@ -466,15 +614,7 @@ const updateOrderToDelivered = async (req, res) => {
         if (item.variant) {
           await updateVariantStock(item.variant, item.qty, 'deliver');
         } else if (item.product) {
-          try {
-            const productToUpdate = await Product.findById(item.product);
-            if (productToUpdate && productToUpdate.inventory) {
-              productToUpdate.inventory.stockQuantity = Math.max(0, (productToUpdate.inventory.stockQuantity || 0) - item.qty);
-              await productToUpdate.save();
-            }
-          } catch (err) {
-            console.error('Failed to update product stock on deliver', err);
-          }
+          await updateProductStock(item.product, item.qty, 'deliver');
         }
       }
     }
@@ -573,15 +713,7 @@ const updateOrderDetails = async (req, res) => {
           if (item.variant) {
             await updateVariantStock(item.variant, item.qty, 'deliver');
           } else if (item.product) {
-            try {
-              const productToUpdate = await Product.findById(item.product);
-              if (productToUpdate && productToUpdate.inventory) {
-                productToUpdate.inventory.stockQuantity = Math.max(0, (productToUpdate.inventory.stockQuantity || 0) - item.qty);
-                await productToUpdate.save();
-              }
-            } catch (err) {
-              console.error('Failed to update product stock via updateOrderDetails', err);
-            }
+            await updateProductStock(item.product, item.qty, 'deliver');
           }
         }
       }
@@ -737,26 +869,40 @@ const cancelOrder = async (req, res) => {
 // @access  Private/Admin
 const getDashboardStats = async (req, res) => {
   try {
-    const totalOrders = await Order.countDocuments();
-    const totalCustomers = await User.countDocuments({ role: 'user' });
-    const totalProducts = await Product.countDocuments();
+    const days = req.query.days === 'all' ? null : (parseInt(req.query.days) || 30);
+
+    let dateFilter = {};
+    if (days !== null) {
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - (days - 1));
+      startDate.setHours(0, 0, 0, 0);
+      dateFilter = { createdAt: { $gte: startDate } };
+    }
+
+    const totalOrders = await Order.countDocuments(dateFilter);
+    // Since Customers aren't easily filtered by order date, we either show all or just filter users by registration date
+    const totalCustomers = await User.countDocuments({ role: 'user', ...dateFilter });
+    const totalProducts = await Product.countDocuments(dateFilter);
 
     // Revenue logic: sum of all paid orders
-    const orders = await Order.find({ isPaid: true });
+    const orders = await Order.find({ isPaid: true, ...dateFilter });
     const totalRevenue = orders.reduce((sum, order) => sum + (order.totalPrice || 0), 0);
 
-    // Revenue analytics: daily revenue over the last 30 days
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
-    thirtyDaysAgo.setHours(0, 0, 0, 0);
+    // Revenue analytics: daily revenue
+    // For 'all' time, maybe just show last 30 days of graph, or we could group by month.
+    // For simplicity, we limit the chart to the requested 'days', or 30 if 'all' is selected.
+    const chartDays = days || 30;
+    const chartStartDate = new Date();
+    chartStartDate.setDate(chartStartDate.getDate() - (chartDays - 1));
+    chartStartDate.setHours(0, 0, 0, 0);
 
     const recentOrders = await Order.find({
       isPaid: true,
-      createdAt: { $gte: thirtyDaysAgo }
+      createdAt: { $gte: chartStartDate }
     });
 
     const revenueByDate = {};
-    for (let i = 29; i >= 0; i--) {
+    for (let i = chartDays - 1; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const dateStr = d.toISOString().split('T')[0];
@@ -778,7 +924,7 @@ const getDashboardStats = async (req, res) => {
     // Order Volume: orders by day of week (1=Sun)
     // Actually day of week: 0=Sun, 1=Mon, ..., 6=Sat
     const orderVolumeArray = Array(7).fill(0);
-    const allOrders = await Order.find();
+    const allOrders = await Order.find(dateFilter);
     allOrders.forEach(order => {
       const day = new Date(order.createdAt).getDay();
       orderVolumeArray[day] += 1;
@@ -817,15 +963,7 @@ const deleteOrder = async (req, res) => {
           if (item.variant) {
             await updateVariantStock(item.variant, item.qty, 'cancel');
           } else if (item.product) {
-            try {
-              const productToUpdate = await Product.findById(item.product);
-              if (productToUpdate && productToUpdate.inventory) {
-                productToUpdate.inventory.stockQuantity = (productToUpdate.inventory.stockQuantity || 0) + item.qty;
-                await productToUpdate.save();
-              }
-            } catch (err) {
-              console.error('Failed to restore product stock on order delete', err);
-            }
+            await updateProductStock(item.product, item.qty, 'cancel');
           }
         }
       }

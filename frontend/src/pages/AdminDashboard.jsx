@@ -16,7 +16,7 @@ import OrdersPage from './admin/OrdersPage';
 import { staffAPI } from '../api/staffService';
 import FeeListPage from './admin/fees/FeeListPage';
 import AddFeePage from './admin/fees/AddFeePage';
-import GlobalFeeSettings from './admin/fees/GlobalFeeSettings';
+import ProductFeeRulesPage from './admin/fees/ProductFeeRulesPage';
 import CancellationManagementPage from './admin/cancellations/CancellationManagementPage';
 import RefundManagementPage from './admin/refunds/RefundManagementPage';
 import InventoryManagement from './admin/inventory/InventoryManagement';
@@ -92,6 +92,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
   const [productMenuOpen, setProductMenuOpen] = useState(false);
   const [categorySubTab, setCategorySubTab] = useState('list'); // 'list' | 'add' | 'edit'
   const [subCategorySubTab, setSubCategorySubTab] = useState('list'); // 'list' | 'add'
+  const [daysFilter, setDaysFilter] = useState('30'); // '30', '7', 'all'
 
   // Staff Management state
   const [staffSubTab, setStaffSubTab] = useState('list'); // 'list' | 'add' | 'role-assign'
@@ -262,7 +263,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
           })
           .catch(err => console.error("Failed to load subcategories in admin", err)),
         
-        adminService.getDashboardStats()
+        adminService.getDashboardStats(daysFilter)
           .then(data => {
             if (data) {
               setTotalRevenue(data.totalRevenue || 0);
@@ -1209,13 +1210,17 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                   <p className="text-sm text-brand-medium mt-1">Welcome back. Here's what is happening today.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <button onClick={() => window.location.reload()} disabled={isRefreshing} className="admin-secondary-btn flex items-center gap-2 disabled:opacity-60">
+                  <button onClick={() => loadData()} disabled={isRefreshing} className="admin-secondary-btn flex items-center gap-2 disabled:opacity-60">
                     <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} /> {isRefreshing ? 'Refreshing...' : 'Refresh'}
                   </button>
-                  <select className="bg-white border border-[#E6DFD4] text-brand-dark text-sm rounded-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-brand-medium cursor-pointer shadow-sm">
-                    <option>Last 30 Days</option>
-                    <option>Last 7 Days</option>
-                    <option>All Time</option>
+                  <select 
+                    value={daysFilter}
+                    onChange={(e) => setDaysFilter(e.target.value)}
+                    className="bg-white border border-[#E6DFD4] text-brand-dark text-sm rounded-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-brand-medium cursor-pointer shadow-sm"
+                  >
+                    <option value="30">Last 30 Days</option>
+                    <option value="7">Last 7 Days</option>
+                    <option value="all">All Time</option>
                   </select>
                   <button onClick={handleExportCSV} className="admin-export-btn flex items-center gap-2">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
@@ -2278,7 +2283,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
             />
           )}
           {(isAdmin || canView('fees')) && currentTab === 'fees' && feeSubTab === 'global' && (
-            <GlobalFeeSettings />
+            <ProductFeeRulesPage />
           )}
 
           {/* ── CANCELLATION MANAGEMENT ── */}

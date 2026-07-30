@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Heart, ShoppingBag, ArrowLeft } from 'lucide-react';
-import { getImageSrc } from '../utils/imageUtils';
+import { getImageSrc, normalizeImageValue } from '../utils/imageUtils';
 
 export default function WishlistPage({ wishlistItems, onRemove, onMoveToCart, onNavigate }) {
   
@@ -11,23 +11,14 @@ export default function WishlistPage({ wishlistItems, onRemove, onMoveToCart, on
     return item.price ?? 0;
   };
 
-  const getEffectiveImages = (item) => {
-    if (item.selectedVariant?.images && Array.isArray(item.selectedVariant.images) && item.selectedVariant.images.length > 0) {
-      return item.selectedVariant.images.filter(img => {
-        if (typeof img === 'string') return img.trim() !== '';
-        return img?.url && img.url.trim() !== '';
-      });
+  const getEffectiveImage = (item) => {
+    let imgSrc = item.selectedVariant?.images?.find(img => img.isThumbnail)?.url || item.selectedVariant?.images?.[0]?.url || (typeof item.selectedVariant?.images?.[0] === 'string' ? item.selectedVariant.images[0] : null);
+    
+    if (!imgSrc) {
+       imgSrc = item.images?.find(img => img.isThumbnail)?.url || item.images?.[0]?.url || (typeof item.images?.[0] === 'string' ? item.images[0] : null) || (typeof item.image === 'object' ? item.image?.url : item.image) || null;
     }
-    if (Array.isArray(item.images) && item.images.length > 0) {
-      return item.images.filter(img => {
-        if (typeof img === 'string') return img.trim() !== '';
-        return img?.url && img.url.trim() !== '';
-      });
-    }
-    if (item.image && (typeof item.image !== 'string' || item.image.trim() !== '')) {
-      return [item.image];
-    }
-    return ['/wood-placeholder.png'];
+    
+    return imgSrc || '/wood-placeholder.png';
   };
 
   const getVariantText = (item) => {
@@ -76,20 +67,8 @@ export default function WishlistPage({ wishlistItems, onRemove, onMoveToCart, on
           <div className="divide-y divide-[#E6DFD4]">
             {wishlistItems.map((item, index) => {
               const effectivePrice = getEffectivePrice(item);
-              const effectiveImages = getEffectiveImages(item);
+              const firstImage = getEffectiveImage(item);
               const variantText = getVariantText(item);
-              let firstImage = '/wood-placeholder.png';
-              
-              if (effectiveImages && effectiveImages.length > 0) {
-                const img = effectiveImages[0];
-                if (typeof img === 'string') {
-                  if (img.trim() !== '') {
-                    firstImage = img;
-                  }
-                } else if (img?.url && img.url.trim() !== '') {
-                  firstImage = img.url;
-                }
-              }
               
               return (
                 <div key={index} className="p-6 flex flex-col md:grid md:grid-cols-12 gap-6 items-center hover:bg-gray-50 transition-colors">
@@ -97,13 +76,13 @@ export default function WishlistPage({ wishlistItems, onRemove, onMoveToCart, on
                   <div className="col-span-8 flex items-center gap-6 w-full">
                     <div className="w-28 h-28 bg-[#F8F4EC] rounded-2xl overflow-hidden shrink-0 border border-gray-100">
                       <img 
-                        src={firstImage} 
+                        src={firstImage || '/wood-placeholder.png'} 
                         alt={item.name} 
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover mix-blend-multiply"
                         onError={(e) => { e.target.src = '/wood-placeholder.png'; }}
                       />
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <h3 className="font-bold text-gray-800 text-xl line-clamp-2 leading-snug mb-1 cursor-pointer hover:text-[#8B5E3C]" onClick={() => onNavigate(`/product/${item._id}`)}>
                         {item.name}
                       </h3>

@@ -1,6 +1,13 @@
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 const ProductVariant = require('../models/ProductVariant');
+const ProductFeeRule = require('../models/ProductFeeRule');
+const GiftCardConfig = require('../models/GiftCardConfig');
+const Fee = require('../models/Fee');
+const Coupon = require('../models/Coupon');
+const { calculateOrderFees } = require('../utils/feeCalculator');
+const { buildCartContext, isCouponApplicableToCart } = require('../controllers/couponController');
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
@@ -358,6 +365,222 @@ const clearCart = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Get dynamic cart summary including product fee, gift fee, delivery charge, and discount
+ * @route   POST /api/cart/summary
+ * @access  Private
+ */
+const getCartSummary = async (req, res) => {
+  try {
+    const { isGiftEnabled, state, paymentMethod, couponCode } = req.body;
+    
+    // 1. Get enriched cart items
+    const cart = await getOrCreateCart(req.user._id);
+    const enrichedItems = await Promise.all(
+      cart.items.map(async (item) => {
+        try {
+          const obj = item.toObject ? item.toObject() : { ...item };
+          if (item.variant) {
+            const variant = await ProductVariant.findById(item.variant).lean();
+            if (variant) {
+              obj.price = variant.discountPrice ?? variant.basePrice ?? item.price;
+              if (variant.length && variant.width && variant.height) {
+                obj.dimensions = { length: variant.length, width: variant.width, height: variant.height };
+              }
+            }
+          } else if (item.product) {
+            const product = await Product.findById(item.product).lean();
+            if (product) {
+              obj.price = product.discountPrice ?? product.price ?? item.price;
+              obj.name = product.name ?? item.name;
+              if (!obj.dimensions && product.dimensions) {
+                obj.dimensions = product.dimensions;
+              }
+            }
+          }
+          return obj;
+        } catch {
+          return item.toObject ? item.toObject() : { ...item };
+        }
+      })
+    );
+
+    // 2. Subtotal & Volume
+    let subtotal = 0;
+    let cartVolume = 0;
+    enrichedItems.forEach(item => {
+      const qty = Number(item.qty) || 1;
+      const price = Number(item.price) || 0;
+      subtotal += price * qty;
+
+      const length = Number(item.dimensions?.length) || 0;
+      const width = Number(item.dimensions?.width) || 0;
+      const height = Number(item.dimensions?.height) || 0;
+      if (length > 0 && width > 0 && height > 0) {
+        cartVolume += (length * width * height * qty);
+      } else if (item.volume && Number(item.volume) > 0) {
+        cartVolume += (Number(item.volume) * qty);
+      }
+    });
+
+    // 3. Product Fee
+    let productFee = 0;
+    let matchedBoxSize = '';
+    if (enrichedItems.length > 0) {
+      let productFeeRule = await ProductFeeRule.findOne({
+        isActive: true,
+        minVolume: { $lte: cartVolume },
+        maxVolume: { $gte: cartVolume }
+      }).lean();
+
+      if (productFeeRule) {
+        productFee = Number(productFeeRule.productFee) || 0;
+        matchedBoxSize = productFeeRule.boxSize || '';
+      } else {
+        // If volume exceeds the max defined slab, scale it dynamically
+        const highestRule = await ProductFeeRule.findOne({ isActive: true })
+          .sort({ maxVolume: -1 })
+          .lean();
+        
+        if (highestRule && cartVolume > highestRule.maxVolume) {
+          const factor = Math.ceil(cartVolume / (highestRule.maxVolume || 1));
+          productFee = (Number(highestRule.productFee) || 0) * factor;
+          matchedBoxSize = highestRule.boxSize || '';
+        }
+      }
+    }
+
+    // 4. Gift Fee (Dynamically calculated based on GiftBoxRule and cartVolume)
+    let giftFee = 0;
+    if (isGiftEnabled === true && enrichedItems.length > 0) {
+      let giftBoxRule = await require('../models/GiftBoxRule').findOne({
+        isActive: true,
+        minVolume: { $lte: cartVolume },
+        maxVolume: { $gte: cartVolume }
+      }).lean();
+
+      if (giftBoxRule) {
+        giftFee = Number(giftBoxRule.fee) || 0;
+      } else {
+        // Fallback for gift fee if volume exceeds max
+        const highestGiftRule = await require('../models/GiftBoxRule').findOne({ isActive: true })
+          .sort({ maxVolume: -1 })
+          .lean();
+        
+        if (highestGiftRule && cartVolume > highestGiftRule.maxVolume) {
+          const factor = Math.ceil(cartVolume / (highestGiftRule.maxVolume || 1));
+          giftFee = (Number(highestGiftRule.fee) || 0) * factor;
+        } else if (highestGiftRule) {
+           giftFee = Number(highestGiftRule.fee) || 0;
+        } else {
+           // absolute fallback to static config if no rules exist
+           const giftConfig = await GiftCardConfig.findOne().lean();
+           if (giftConfig && giftConfig.giftWrapFee) {
+             giftFee = Number(giftConfig.giftWrapFee);
+           }
+        }
+      }
+    }
+
+    // 5. Delivery Charge & COD Advance & Extra Global Fees
+    let deliveryCharge = 0;
+    let codAdvance = 0;
+    let extraFeesList = [];
+    let isFreeShipping = false;
+    if (state && enrichedItems.length > 0) {
+      const configuredFees = await Fee.find({ active: true })
+        .populate('feeCategory', 'name')
+        .populate('paymentMethod', 'name')
+        .lean();
+        
+      const feeSummary = calculateOrderFees({
+        fees: configuredFees,
+        subtotal,
+        items: enrichedItems,
+        state,
+        paymentMethod: paymentMethod || ''
+      });
+      deliveryCharge = Number(feeSummary.shippingCharge) || 0;
+      codAdvance = Number(feeSummary.codAdvance) || 0;
+      extraFeesList = feeSummary.extraFeesList || [];
+      isFreeShipping = feeSummary.isFreeShipping || false;
+    }
+
+    // 6. Discount
+    let discount = 0;
+    if (couponCode && enrichedItems.length > 0) {
+      const normalizedCode = String(couponCode).trim().toUpperCase();
+      const coupon = await Coupon.findOne({ couponCode: normalizedCode, deleted: false, status: 'active' });
+      if (coupon) {
+        const cartContext = await buildCartContext(enrichedItems);
+        if (isCouponApplicableToCart(coupon, cartContext) && subtotal >= Number(coupon.minOrderValue || 0)) {
+          if (coupon.discountType === 'Percentage') {
+            discount = Math.min((subtotal * Number(coupon.discountValue)) / 100, Number(coupon.maxDiscount || 0));
+          } else {
+            discount = Math.min(Number(coupon.discountValue), Number(coupon.maxDiscount || Number(coupon.discountValue)));
+          }
+        }
+      }
+    }
+
+    // 7. Consolidate Applied Fees array
+    const appliedFees = [];
+    
+    // Add Product Volume Fee
+    if (productFee > 0) {
+      appliedFees.push({ name: 'Product Volume Fee', amount: productFee });
+    }
+    
+    // Add Gift Wrap Fee
+    if (giftFee > 0) {
+      appliedFees.push({ name: 'Gift Wrap Fee', amount: giftFee });
+    }
+
+    // Add Global Fees (Tax, Platform, Shipping/Weight) from feeSummary
+    let feeSummaryAppliedFees = [];
+    if (state && enrichedItems.length > 0) {
+      const configuredFees = await Fee.find({ active: true })
+        .populate('feeCategory', 'name')
+        .populate('paymentMethod', 'name')
+        .lean();
+      const feeSummary = calculateOrderFees({
+        fees: configuredFees,
+        subtotal,
+        items: enrichedItems,
+        state,
+        paymentMethod: paymentMethod || ''
+      });
+      feeSummaryAppliedFees = feeSummary.appliedFees || [];
+      if (feeSummary.isFreeShipping) {
+        feeSummaryAppliedFees.push({ name: 'Shipping Fee', amount: 0, isFree: true });
+      }
+    }
+    
+    feeSummaryAppliedFees.forEach(fee => {
+      appliedFees.push(fee);
+    });
+
+    // Calculate Grand Total (exclude advance since it is a payment)
+    const sumOfAppliedFees = appliedFees.reduce((acc, curr) => acc + curr.amount, 0);
+    const grandTotal = Math.max(0, subtotal + sumOfAppliedFees - discount);
+
+    res.json({
+      subtotal,
+      cartVolume,
+      matchedBoxSize,
+      productFee,
+      giftFee,
+      deliveryCharge,
+      codAdvance,
+      discount,
+      appliedFees,
+      grandTotal
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message || 'Failed to fetch cart summary' });
+  }
+};
+
 module.exports = {
   getCart,
   replaceCart,
@@ -366,4 +589,5 @@ module.exports = {
   removeCartItem,
   removeCartItemById,
   clearCart,
+  getCartSummary,
 };

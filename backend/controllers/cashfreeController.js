@@ -93,6 +93,7 @@ const createPaymentSession = async (req, res) => {
   }
 };
 
+
 /**
  * @desc   Verify Cashfree payment after customer returns from payment page
  * @route  POST /api/payment/cashfree/verify
@@ -140,6 +141,14 @@ const verifyPayment = async (req, res) => {
 
       const updatedOrder = await order.save();
 
+      // Clear the user's cart upon successful payment
+      try {
+        const Cart = require('../models/Cart');
+        await Cart.findOneAndUpdate({ user: order.user }, { items: [] });
+      } catch (cartErr) {
+        console.error('Failed to clear cart after Cashfree success:', cartErr);
+      }
+
       return res.json({
         success: true,
         isPaid: updatedOrder.isPaid,
@@ -165,6 +174,3 @@ const verifyPayment = async (req, res) => {
 };
 
 module.exports = { diagnostics, createPaymentSession, verifyPayment };
-
-
-

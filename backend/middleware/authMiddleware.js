@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Staff = require('../models/Staff');
 
 const getAuthFailureResponse = (message, reason) => {
     const response = { message };
@@ -29,7 +30,7 @@ const protect = async (req, res, next) => {
 
         // If not found in User collection, check Staff collection
         if (!user) {
-            const Staff = require('../models/Staff');
+
             const staff = await Staff.findById(decoded.id).select('-password');
             if (staff) {
                 // Map staff fields to match expected user shape

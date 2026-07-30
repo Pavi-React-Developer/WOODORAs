@@ -322,62 +322,83 @@ export function HomeHeroBanner({ context = {}, specificData }) {
       heroSlides = context.heroSlides;
   }
 
-  const [prevEl, setPrevEl] = useState(null);
-  const [nextEl, setNextEl] = useState(null);
+  const [swiperInstance, setSwiperInstance] = useState(null);
   const [paginationEl, setPaginationEl] = useState(null);
 
+  useEffect(() => {
+    console.log("[HeroBanner Debug] Number of banners received/rendered slides:", heroSlides?.length || 0);
+  }, [heroSlides]);
+
   if (!heroSlides || !heroSlides.length) return null;
+
   return (
     <section className="relative w-full h-[50vh] md:h-[70vh] lg:h-[90vh] min-h-[350px] md:min-h-[450px] lg:min-h-[600px] overflow-hidden bg-brand-dark group">
-      {prevEl && nextEl && paginationEl ? (
-        <Swiper
-          modules={[Autoplay, Pagination, EffectFade, EffectCreative, Navigation]}
-          effect="fade"
-          autoplay={{ delay: 5000, disableOnInteraction: false }}
-          pagination={{ clickable: true, el: paginationEl }}
-          navigation={{ prevEl: prevEl, nextEl: nextEl }}
-          loop={heroSlides.length > 1}
-          className="w-full h-full"
-        >
-          {heroSlides.map((slide, i) => (
-            <SwiperSlide key={i}>
-              <div className="relative w-full h-full">
-                {(() => {
-                  const isDesktopVid = slide.desktopUrl && slide.desktopUrl.match(/\.(mp4|webm)$/i);
-                  const isMobileVid = slide.mobileUrl && slide.mobileUrl.match(/\.(mp4|webm)$/i);
-                  return (
-                    <>
-                      {slide.desktopUrl && (
-                        isDesktopVid ? (
-                          <video src={slide.desktopUrl} className={`w-full h-full object-cover object-center brightness-90 ${slide.mobileUrl ? 'hidden md:block' : ''}`} autoPlay muted loop playsInline />
-                        ) : (
-                          <img src={slide.desktopUrl} alt={slide.title} className={`w-full h-full object-cover object-center brightness-90 ${slide.mobileUrl ? 'hidden md:block' : ''}`} onError={e => { e.target.src = '/wood-placeholder.png'; }} />
-                        )
-                      )}
-                      {slide.mobileUrl && (
-                        isMobileVid ? (
-                          <video src={slide.mobileUrl} className={`w-full h-full object-cover object-center brightness-90 ${slide.desktopUrl ? 'block md:hidden' : ''}`} autoPlay muted loop playsInline />
-                        ) : (
-                          <img src={slide.mobileUrl} alt={slide.title} className={`w-full h-full object-cover object-center brightness-90 ${slide.desktopUrl ? 'block md:hidden' : ''}`} onError={e => { e.target.src = '/wood-placeholder.png'; }} />
-                        )
-                      )}
-                      {(!slide.desktopUrl && !slide.mobileUrl) && (
-                        <img src={slide.bannerImage || '/wood-placeholder.png'} alt={slide.title} className="w-full h-full object-cover object-center brightness-90" onError={e => { e.target.src = '/wood-placeholder.png'; }} />
-                      )}
-                    </>
-                  );
-                })()}
-              </div>
-            </SwiperSlide>
-          ))}
-        </Swiper>
-      ) : (
-        <div className="w-full h-full bg-brand-dark" />
-      )}
-      <button ref={setPrevEl} type="button" className="hero-prev absolute top-1/2 left-4 z-20 -translate-y-1/2 w-12 h-12 flex items-center justify-center bg-white/20 hover:bg-white/40 text-white rounded-full backdrop-blur transition-all md:opacity-0 md:group-hover:opacity-100">
+      <Swiper
+        onSwiper={setSwiperInstance}
+        modules={[Autoplay, Pagination, EffectFade, EffectCreative]}
+        effect="fade"
+        fadeEffect={{ crossFade: true }}
+        observer={true}
+        observeParents={true}
+        autoplay={{ delay: 5000, disableOnInteraction: false }}
+        pagination={{ clickable: true, el: paginationEl }}
+        loop={heroSlides.length > 1}
+        className="w-full h-full"
+      >
+        {heroSlides.map((slide, i) => (
+          <SwiperSlide key={slide._id || i}>
+            <div className="relative w-full h-full">
+              {(() => {
+                const isDesktopVid = slide.desktopUrl && slide.desktopUrl.match(/\.(mp4|webm)$/i);
+                const isMobileVid = slide.mobileUrl && slide.mobileUrl.match(/\.(mp4|webm)$/i);
+                return (
+                  <>
+                    {slide.desktopUrl && (
+                      isDesktopVid ? (
+                        <video src={slide.desktopUrl} className={`w-full h-full object-cover object-center brightness-90 ${slide.mobileUrl ? 'hidden md:block' : ''}`} autoPlay muted loop playsInline />
+                      ) : (
+                        <img src={slide.desktopUrl} alt={slide.title} className={`w-full h-full object-cover object-center brightness-90 ${slide.mobileUrl ? 'hidden md:block' : ''}`} onError={e => { e.target.src = '/wood-placeholder.png'; }} />
+                      )
+                    )}
+                    {slide.mobileUrl && (
+                      isMobileVid ? (
+                        <video src={slide.mobileUrl} className={`w-full h-full object-cover object-center brightness-90 ${slide.desktopUrl ? 'block md:hidden' : ''}`} autoPlay muted loop playsInline />
+                      ) : (
+                        <img src={slide.mobileUrl} alt={slide.title} className={`w-full h-full object-cover object-center brightness-90 ${slide.desktopUrl ? 'block md:hidden' : ''}`} onError={e => { e.target.src = '/wood-placeholder.png'; }} />
+                      )
+                    )}
+                    {(!slide.desktopUrl && !slide.mobileUrl) && (
+                      <img src={slide.bannerImage || '/wood-placeholder.png'} alt={slide.title} className="w-full h-full object-cover object-center brightness-90" onError={e => { e.target.src = '/wood-placeholder.png'; }} />
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+          </SwiperSlide>
+        ))}
+      </Swiper>
+      <button 
+        type="button" 
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          swiperInstance?.slidePrev();
+        }}
+        className="hero-prev absolute top-1/2 left-4 z-[50] -translate-y-1/2 w-12 h-12 flex items-center justify-center bg-white/20 hover:bg-white/40 text-white rounded-full backdrop-blur transition-all md:opacity-0 md:group-hover:opacity-100 cursor-pointer"
+        aria-label="Previous slide"
+      >
         <ChevronLeft className="w-6 h-6" />
       </button>
-      <button ref={setNextEl} type="button" className="hero-next absolute top-1/2 right-4 z-20 -translate-y-1/2 w-12 h-12 flex items-center justify-center bg-white/20 hover:bg-white/40 text-white rounded-full backdrop-blur transition-all md:opacity-0 md:group-hover:opacity-100">
+      <button 
+        type="button" 
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          swiperInstance?.slideNext();
+        }}
+        className="hero-next absolute top-1/2 right-4 z-[50] -translate-y-1/2 w-12 h-12 flex items-center justify-center bg-white/20 hover:bg-white/40 text-white rounded-full backdrop-blur transition-all md:opacity-0 md:group-hover:opacity-100 cursor-pointer"
+        aria-label="Next slide"
+      >
         <ChevronRight className="w-6 h-6" />
       </button>
       <div ref={setPaginationEl} className="hero-dots absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-3" />

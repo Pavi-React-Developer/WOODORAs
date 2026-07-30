@@ -13,6 +13,7 @@ export default function Login({ onAuthSuccess, onNavigate }) {
   // Status and feedbacks
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [formErrors, setFormErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
 
   const resetForm = () => {
@@ -22,6 +23,7 @@ export default function Login({ onAuthSuccess, onNavigate }) {
     setRole('user');
     setErrorMsg('');
     setSuccessMsg('');
+    setFormErrors({});
   };
 
   const handleModeChange = (newMode) => {
@@ -36,10 +38,18 @@ export default function Login({ onAuthSuccess, onNavigate }) {
     setIsLoading(true);
 
     try {
+      let errors = {};
+
       if (mode === 'login') {
-        if (!email || !password) {
-          throw new Error('Please fill in all credentials.');
+        if (!email || !/^\S+@\S+\.\S+$/.test(email)) errors.email = 'Valid email is required.';
+        if (!password) errors.password = 'Password is required.';
+        
+        if (Object.keys(errors).length > 0) {
+          setFormErrors(errors);
+          setIsLoading(false);
+          return;
         }
+
         const data = await authService.login(email, password);
         setSuccessMsg(`Welcome back, ${data.name}! Login successful.`);
         const mappedUser = {
@@ -56,9 +66,16 @@ export default function Login({ onAuthSuccess, onNavigate }) {
       } 
       
       else if (mode === 'register') {
-        if (!name || !email || !password) {
-          throw new Error('Please fill in all registration fields.');
+        if (!name || name.trim().length < 2) errors.name = 'Name must be at least 2 characters.';
+        if (!email || !/^\S+@\S+\.\S+$/.test(email)) errors.email = 'Valid email is required.';
+        if (!password || password.length < 8) errors.password = 'Password must be at least 8 characters.';
+        
+        if (Object.keys(errors).length > 0) {
+          setFormErrors(errors);
+          setIsLoading(false);
+          return;
         }
+
         const data = await authService.register(name, email, password, role);
         setSuccessMsg(`Account created successfully for ${data.name}!`);
         const mappedUser = {
@@ -74,9 +91,14 @@ export default function Login({ onAuthSuccess, onNavigate }) {
       } 
       
       else if (mode === 'forgot') {
-        if (!email) {
-          throw new Error('Please enter your email address.');
+        if (!email || !/^\S+@\S+\.\S+$/.test(email)) errors.email = 'Valid email is required.';
+        
+        if (Object.keys(errors).length > 0) {
+          setFormErrors(errors);
+          setIsLoading(false);
+          return;
         }
+
         const data = await authService.forgotPassword(email);
         setSuccessMsg(`Mock Reset Email Triggered! Reset token: ${data.resetToken || 'mock_token'}`);
       }
@@ -168,9 +190,10 @@ export default function Login({ onAuthSuccess, onNavigate }) {
                     type="text"
                     required
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full border border-gray-200 rounded px-4 py-2.5 text-sm focus:outline-none focus:border-brand-medium focus:ring-1 focus:ring-brand-medium transition-colors"
+                    onChange={(e) => { setName(e.target.value); if(formErrors.name) setFormErrors({...formErrors, name: ''}); }}
+                    className={`w-full border ${formErrors.name ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-gray-200 focus:border-brand-medium focus:ring-brand-medium'} rounded px-4 py-2.5 text-sm focus:outline-none focus:ring-1 transition-colors`}
                   />
+                  {formErrors.name && <p className="text-red-500 text-[10px] mt-1">{formErrors.name}</p>}
                 </div>
               )}
 
@@ -181,9 +204,10 @@ export default function Login({ onAuthSuccess, onNavigate }) {
                   required
                   placeholder="hello@example.com"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full border border-gray-200 rounded px-4 py-2.5 text-sm focus:outline-none focus:border-brand-medium focus:ring-1 focus:ring-brand-medium transition-colors"
+                  onChange={(e) => { setEmail(e.target.value); if(formErrors.email) setFormErrors({...formErrors, email: ''}); }}
+                  className={`w-full border ${formErrors.email ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-gray-200 focus:border-brand-medium focus:ring-brand-medium'} rounded px-4 py-2.5 text-sm focus:outline-none focus:ring-1 transition-colors`}
                 />
+                {formErrors.email && <p className="text-red-500 text-[10px] mt-1">{formErrors.email}</p>}
               </div>
 
               {mode !== 'forgot' && (
@@ -201,9 +225,10 @@ export default function Login({ onAuthSuccess, onNavigate }) {
                     required
                     placeholder="••••••••"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full border border-gray-200 rounded px-4 py-2.5 text-sm focus:outline-none focus:border-brand-medium focus:ring-1 focus:ring-brand-medium transition-colors"
+                    onChange={(e) => { setPassword(e.target.value); if(formErrors.password) setFormErrors({...formErrors, password: ''}); }}
+                    className={`w-full border ${formErrors.password ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-gray-200 focus:border-brand-medium focus:ring-brand-medium'} rounded px-4 py-2.5 text-sm focus:outline-none focus:ring-1 transition-colors`}
                   />
+                  {formErrors.password && <p className="text-red-500 text-[10px] mt-1">{formErrors.password}</p>}
                 </div>
               )}
 

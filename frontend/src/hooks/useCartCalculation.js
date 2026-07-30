@@ -1,35 +1,21 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import useCartStore from '../store/useCartStore';
 
-export default function useCartCalculation() {
-  const { cartItems, globalFee } = useCartStore();
+export default function useCartCalculation({ state = '', couponCode = '', paymentMethod = '' } = {}) {
+  const { cartItems, cartSummary, fetchCartSummary } = useCartStore();
 
-  const calculation = useMemo(() => {
-    let subtotal = 0;
-    cartItems.forEach(item => {
-      subtotal += (Number(item.price) || 0) * (Number(item.qty) || 0);
-    });
+  const isGiftEnabled = useMemo(() => {
+    return cartItems.some(item => item.isGift && item.isGiftWrapper);
+  }, [cartItems]);
 
-    let productFee = 0;
-    let giftFee = 0;
+  useEffect(() => {
+    // We must wait longer than syncItemUpdateDebounced (400ms) in useCartStore
+    // so that the backend has updated the cart before we fetch the summary
+    const timer = setTimeout(() => {
+      fetchCartSummary({ isGiftEnabled, state, couponCode, paymentMethod });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [cartItems, isGiftEnabled, state, couponCode, paymentMethod, fetchCartSummary]);
 
-    if (globalFee && globalFee.isActive) {
-      if (cartItems.length > 0) {
-        productFee = globalFee.productFee || 0;
-      }
-      
-      const hasGiftWrapper = cartItems.some(item => item.isGift && item.isGiftWrapper);
-      if (hasGiftWrapper) {
-        giftFee = globalFee.giftFee || 0;
-      }
-    }
-
-    return {
-      subtotal,
-      productFee,
-      giftFee,
-    };
-  }, [cartItems, globalFee]);
-
-  return calculation;
+  return cartSummary;
 }

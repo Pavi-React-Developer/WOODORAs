@@ -6,9 +6,7 @@ import { getImageSrc } from '../utils/imageUtils';
 
 export default function ReviewOrderPage({ onNavigate }) {
   const { cartItems } = useCartStore();
-  const { subtotal, productFee, giftFee } = useCartCalculation();
-
-  const total = subtotal + productFee + giftFee;
+  const { subtotal, appliedFees, grandTotal: total } = useCartCalculation();
 
   const handleBack = () => {
     const origin = useCartStore.getState().checkoutOrigin || '/';
@@ -102,18 +100,14 @@ export default function ReviewOrderPage({ onNavigate }) {
                   <span>Subtotal ({cartItems.length} items)</span>
                   <span className="text-gray-900 font-bold">₹{subtotal.toLocaleString()}</span>
                 </div>
-                {productFee > 0 && (
-                  <div className="flex justify-between text-gray-600 font-medium">
-                    <span>Product Fee</span>
-                    <span className="text-gray-900 font-bold">₹{productFee.toLocaleString()}</span>
+                {appliedFees && appliedFees.map((fee, idx) => (
+                  <div key={idx} className="flex justify-between text-gray-600 font-medium">
+                    <span>{fee.name}</span>
+                    <span className="text-gray-900 font-bold">
+                      {fee.amount === 0 ? 'FREE' : `₹${fee.amount.toLocaleString()}`}
+                    </span>
                   </div>
-                )}
-                {giftFee > 0 && (
-                  <div className="flex justify-between text-gray-600 font-medium">
-                    <span>Gift Wrap Fee</span>
-                    <span className="text-gray-900 font-bold">₹{giftFee.toLocaleString()}</span>
-                  </div>
-                )}
+                ))}
               </div>
 
               <div className="flex justify-between items-end my-8">

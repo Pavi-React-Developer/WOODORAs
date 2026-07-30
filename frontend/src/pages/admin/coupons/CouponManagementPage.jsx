@@ -46,6 +46,7 @@ export default function CouponManagementPage({ canCreate = true, canEdit = true,
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [formErrors, setFormErrors] = useState({});
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [offerFilter, setOfferFilter] = useState('all');
@@ -137,6 +138,7 @@ export default function CouponManagementPage({ canCreate = true, canEdit = true,
     setEditingCoupon(null);
     setError('');
     setSuccess('');
+    setFormErrors({});
   };
 
   const openAdd = () => {
@@ -176,39 +178,22 @@ export default function CouponManagementPage({ canCreate = true, canEdit = true,
     e.preventDefault();
     setError('');
     setSuccess('');
+    let errors = {};
 
-    if (!form.couponCode.trim()) {
-      setError('Coupon code is required');
+    if (!form.couponCode.trim()) errors.couponCode = 'Coupon code is required';
+    if (!form.offerType) errors.offerType = 'Offer type is required';
+    if (!form.discountType) errors.discountType = 'Discount type is required';
+    if (form.discountValue === '' || Number(form.discountValue) < 0) errors.discountValue = 'Valid discount value is required';
+    if (Number(form.minOrderValue) < 0) errors.minOrderValue = 'Minimum order cannot be negative';
+    if (Number(form.usageLimit) < 0) errors.usageLimit = 'Usage limit cannot be negative';
+    if (form.discountType === 'Percentage' && Number(form.discountValue) > 100) errors.discountValue = 'Percentage cannot exceed 100%';
+    if (form.discountType === 'Percentage' && (form.maxDiscount === '' || Number(form.maxDiscount) < 0)) errors.maxDiscount = 'Valid max discount is required';
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
       return;
     }
-    if (!form.offerType) {
-      setError('Offer type is required');
-      return;
-    }
-    if (!form.discountType) {
-      setError('Discount type is required');
-      return;
-    }
-    if (form.discountValue === '' || Number(form.discountValue) < 0) {
-      setError('Discount value is required');
-      return;
-    }
-    if (Number(form.minOrderValue) < 0) {
-      setError('Minimum order cannot be negative');
-      return;
-    }
-    if (Number(form.usageLimit) < 0) {
-      setError('Usage limit cannot be negative');
-      return;
-    }
-    if (form.discountType === 'Percentage' && Number(form.discountValue) > 100) {
-      setError('Discount percentage cannot exceed 100%');
-      return;
-    }
-    if (form.discountType === 'Percentage' && (form.maxDiscount === '' || Number(form.maxDiscount) < 0)) {
-      setError('Maximum discount is required for percentage offers');
-      return;
-    }
+
     if (form.startDate && form.endDate && new Date(form.startDate) > new Date(form.endDate)) {
       setError('Start date cannot be greater than end date');
       return;
@@ -439,7 +424,8 @@ export default function CouponManagementPage({ canCreate = true, canEdit = true,
             <div className="grid gap-4 md:grid-cols-2">
               <label className="text-sm">
                 <span className="mb-1 block font-semibold text-[#2F241D]">Coupon Code *</span>
-                <input value={form.couponCode} onChange={(e) => setForm({ ...form, couponCode: e.target.value })} className="w-full rounded-xl border border-[#E6DFD4] px-3 py-2.5 outline-none focus:border-[#8B5E3C]" placeholder="WELCOME10" required />
+                <input value={form.couponCode} onChange={(e) => { setForm({ ...form, couponCode: e.target.value }); if(formErrors.couponCode) setFormErrors({...formErrors, couponCode: ''}); }} className={`w-full rounded-xl border ${formErrors.couponCode ? 'border-red-500 bg-red-50' : 'border-[#E6DFD4]'} px-3 py-2.5 outline-none focus:border-[#8B5E3C]`} placeholder="WELCOME10" required />
+                {formErrors.couponCode && <p className="text-red-500 text-[10px] mt-1">{formErrors.couponCode}</p>}
               </label>
               <label className="text-sm">
                 <span className="mb-1 block font-semibold text-[#2F241D]">Offer Type *</span>
@@ -463,7 +449,8 @@ export default function CouponManagementPage({ canCreate = true, canEdit = true,
               </label>
               <label className="text-sm">
                 <span className="mb-1 block font-semibold text-[#2F241D]">Discount Value *</span>
-                <input type="number" min="0" value={form.discountValue} onChange={(e) => setForm({ ...form, discountValue: e.target.value })} className="w-full rounded-xl border border-[#E6DFD4] px-3 py-2.5 outline-none focus:border-[#8B5E3C]" placeholder={form.discountType === 'Percentage' ? '10' : '150'} required />
+                <input type="number" min="0" value={form.discountValue} onChange={(e) => { setForm({ ...form, discountValue: e.target.value }); if(formErrors.discountValue) setFormErrors({...formErrors, discountValue: ''}); }} className={`w-full rounded-xl border ${formErrors.discountValue ? 'border-red-500 bg-red-50' : 'border-[#E6DFD4]'} px-3 py-2.5 outline-none focus:border-[#8B5E3C]`} placeholder={form.discountType === 'Percentage' ? '10' : '150'} required />
+                {formErrors.discountValue && <p className="text-red-500 text-[10px] mt-1">{formErrors.discountValue}</p>}
               </label>
             </div>
 

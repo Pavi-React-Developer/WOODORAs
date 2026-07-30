@@ -1,5 +1,5 @@
 import React from 'react';
-import { getImageSrc } from '../utils/imageUtils';
+import { getImageSrc, normalizeImageValue } from '../utils/imageUtils';
 
 export default function WishlistOffcanvas({ isOpen, onClose, wishlistItems, onRemove, onMoveToCart }) {
   if (!isOpen) return null;
@@ -9,27 +9,18 @@ export default function WishlistOffcanvas({ isOpen, onClose, wishlistItems, onRe
     if (item.selectedVariant && (item.selectedVariant.basePrice != null || item.selectedVariant.price != null)) {
       return item.selectedVariant.basePrice ?? item.selectedVariant.price;
     }
-    return item.price ?? 0;
+    return item.salePrice || item.price || 0;
   };
 
   // Helper function to get the effective images (variant images or product images)
-  const getEffectiveImages = (item) => {
-    if (item.selectedVariant?.images && Array.isArray(item.selectedVariant.images) && item.selectedVariant.images.length > 0) {
-      return item.selectedVariant.images.filter(img => {
-        if (typeof img === 'string') return img.trim() !== '';
-        return img?.url && img.url.trim() !== '';
-      });
+  const getEffectiveImage = (item) => {
+    let imgSrc = item.selectedVariant?.images?.find(img => img.isThumbnail)?.url || item.selectedVariant?.images?.[0]?.url || (typeof item.selectedVariant?.images?.[0] === 'string' ? item.selectedVariant.images[0] : null);
+    
+    if (!imgSrc) {
+       imgSrc = item.images?.find(img => img.isThumbnail)?.url || item.images?.[0]?.url || (typeof item.images?.[0] === 'string' ? item.images[0] : null) || (typeof item.image === 'object' ? item.image?.url : item.image) || null;
     }
-    if (Array.isArray(item.images) && item.images.length > 0) {
-      return item.images.filter(img => {
-        if (typeof img === 'string') return img.trim() !== '';
-        return img?.url && img.url.trim() !== '';
-      });
-    }
-    if (item.image && (typeof item.image !== 'string' || item.image.trim() !== '')) {
-      return [item.image];
-    }
-    return ['/wood-placeholder.png'];
+    
+    return imgSrc || '/wood-placeholder.png';
   };
 
   // Helper function to get variant details text
@@ -74,26 +65,14 @@ export default function WishlistOffcanvas({ isOpen, onClose, wishlistItems, onRe
           ) : (
             wishlistItems.map((item, index) => {
               const effectivePrice = getEffectivePrice(item);
-              const effectiveImages = getEffectiveImages(item);
+              const firstImage = getEffectiveImage(item);
               const variantText = getVariantText(item);
-              let firstImage = '/wood-placeholder.png';
-              
-              if (effectiveImages && effectiveImages.length > 0) {
-                const img = effectiveImages[0];
-                if (typeof img === 'string') {
-                  if (img.trim() !== '') {
-                    firstImage = img;
-                  }
-                } else if (img?.url && img.url.trim() !== '') {
-                  firstImage = img.url;
-                }
-              }
               
               return (
                 <div key={index} className="flex gap-4 p-3 bg-brand-beige/30 rounded-2xl border border-brand-medium/10">
                   <div className="w-20 h-20 bg-white rounded-xl overflow-hidden shrink-0 border border-brand-medium/10 flex items-center justify-center">
                     <img 
-                      src={firstImage === '/wood-placeholder.png' ? firstImage : getImageSrc(firstImage)} 
+                      src={firstImage || '/wood-placeholder.png'} 
                       alt={item.name} 
                       className="w-full h-full object-cover"
                       onError={(e) => { e.target.src = '/wood-placeholder.png'; }}

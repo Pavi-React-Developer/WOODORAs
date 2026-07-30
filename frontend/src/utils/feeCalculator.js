@@ -149,8 +149,26 @@ export const calculateOrderFees = ({ fees = [], subtotal = 0, items = [], state 
     }
   }
 
+  const shippingFee = matchingFees.find((fee) => (
+    normalizeToken(fee.feeCategory?.name).includes('shipping')
+  ));
+
+  let isFreeShipping = false;
+  if (shippingFee) {
+    const minOrder = toNumber(shippingFee.minimumOrderAmount);
+    if (minOrder > 0 && subtotal >= minOrder) {
+      isFreeShipping = true;
+      result.isFreeShipping = true;
+    }
+  }
+
   matchingFees
-    .filter((fee) => !normalizeToken(fee.feeCategory?.name).includes('weight'))
+    .filter((fee) => {
+      const categoryToken = normalizeToken(fee.feeCategory?.name);
+      const isWeight = categoryToken.includes('weight');
+      const isShipping = categoryToken.includes('shipping');
+      return !isWeight && !(isFreeShipping && isShipping);
+    })
     .forEach((fee) => {
       const charge = calculateFeeAmount(fee, subtotal, fee.flatFeeValue);
       if (charge <= 0) return;

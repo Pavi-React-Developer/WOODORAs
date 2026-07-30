@@ -17,24 +17,30 @@ const InputLabel = ({ label, required }) => (
   </label>
 );
 
-const InputField = ({ type = "text", placeholder, value, onChange, required }) => (
-  <input 
-    type={type} required={required}
-    value={value || ''} onChange={onChange}
-    placeholder={placeholder}
-    className="w-full px-3 py-2.5 text-sm rounded-lg border border-[#E9DED3] focus:ring-1 focus:ring-[#9E6544] focus:border-[#9E6544] bg-white transition-all text-gray-700"
-  />
+const InputField = ({ type = "text", placeholder, value, onChange, onBlur, required, error }) => (
+  <div>
+    <input 
+      type={type} required={required}
+      value={value || ''} onChange={onChange} onBlur={onBlur}
+      placeholder={placeholder}
+      className={`w-full px-3 py-2.5 text-sm rounded-lg border ${error ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-[#E9DED3] focus:ring-[#9E6544] focus:border-[#9E6544]'} bg-white transition-all text-gray-700`}
+    />
+    {error && <p className="text-red-500 text-[10px] mt-1 font-medium">{error}</p>}
+  </div>
 );
 
-const SelectField = ({ options, placeholder, value, onChange, required }) => (
-  <select
-    required={required}
-    value={value || ''} onChange={onChange}
-    className="w-full px-3 py-2.5 text-sm rounded-lg border border-[#E9DED3] focus:ring-1 focus:ring-[#9E6544] focus:border-[#9E6544] bg-white transition-all text-gray-700"
-  >
-    <option value="" disabled>{placeholder}</option>
-    {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-  </select>
+const SelectField = ({ options, placeholder, value, onChange, onBlur, required, error }) => (
+  <div>
+    <select
+      required={required}
+      value={value || ''} onChange={onChange} onBlur={onBlur}
+      className={`w-full px-3 py-2.5 text-sm rounded-lg border ${error ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-[#E9DED3] focus:ring-[#9E6544] focus:border-[#9E6544]'} bg-white transition-all text-gray-700`}
+    >
+      <option value="" disabled>{placeholder}</option>
+      {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+    </select>
+    {error && <p className="text-red-500 text-[10px] mt-1 font-medium">{error}</p>}
+  </div>
 );
 
 export default function CustomizePage() {
@@ -48,6 +54,7 @@ export default function CustomizePage() {
     notes: '',
     agreed: false
   });
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     fetchFields();
@@ -67,20 +74,114 @@ export default function CustomizePage() {
     }
   };
 
+  const validateField = (section, field, value) => {
+    let errorMsg = '';
+    
+    if (section === 'customerInfo') {
+      if (field === 'fullName') {
+        if (!value.trim()) errorMsg = 'Full name is required';
+        else if (!/^[a-zA-Z\s]+$/.test(value)) errorMsg = 'Name should only contain letters';
+      }
+      if (field === 'email') {
+        if (!value.trim()) errorMsg = 'Email is required';
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) errorMsg = 'Invalid email address';
+      }
+      if (field === 'phone') {
+        if (!value.trim()) errorMsg = 'Phone number is required';
+        else if (!/^\d{10}$/.test(value.replace(/\D/g, ''))) errorMsg = 'Phone number must be at least 10 digits';
+      }
+    }
+    
+    if (section === 'shippingAddress') {
+      if (field === 'address' && !value.trim()) errorMsg = 'Street address is required';
+      if (field === 'city' && !value.trim()) errorMsg = 'City is required';
+      if (field === 'state' && !value.trim()) errorMsg = 'State is required';
+      if (field === 'country' && !value.trim()) errorMsg = 'Country is required';
+      if (field === 'pinCode') {
+        if (!value.trim()) errorMsg = 'ZIP / Pincode is required';
+        else if (!/^\d{5,6}$/.test(value)) errorMsg = 'Invalid ZIP / Pincode';
+      }
+    }
+
+    if (section === 'productDetails') {
+      const customField = customFields.find(f => f.label === field);
+      if (customField && customField.isRequired && (value === '' || value === false)) {
+        errorMsg = `${field} is required`;
+      }
+    }
+
+    return errorMsg;
+  };
+
   const handleChange = (section, field, value) => {
     if (section) {
       setFormData(prev => ({ ...prev, [section]: { ...prev[section], [field]: value } }));
     } else {
       setFormData(prev => ({ ...prev, [field]: value }));
     }
+
+    // Clear error dynamically as user types
+    if (section) {
+      setErrors(prev => ({
+        ...prev,
+        [`${section}.${field}`]: validateField(section, field, value)
+      }));
+    }
+  };
+
+  const handleBlur = (section, field, value) => {
+    const errorMsg = validateField(section, field, value);
+    setErrors(prev => ({ ...prev, [`${section}.${field}`]: errorMsg }));
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    let isValid = true;
+
+    // Validate Customer Info
+    Object.keys(formData.customerInfo).forEach(field => {
+      const err = validateField('customerInfo', field, formData.customerInfo[field]);
+      if (err) {
+        newErrors[`customerInfo.${field}`] = err;
+        isValid = false;
+      }
+    });
+
+    // Validate Shipping Address
+    Object.keys(formData.shippingAddress).forEach(field => {
+      const err = validateField('shippingAddress', field, formData.shippingAddress[field]);
+      if (err) {
+        newErrors[`shippingAddress.${field}`] = err;
+        isValid = false;
+      }
+    });
+
+    // Validate Product Details
+    customFields.forEach(field => {
+      const err = validateField('productDetails', field.label, formData.productDetails[field.label]);
+      if (err) {
+        newErrors[`productDetails.${field.label}`] = err;
+        isValid = false;
+      }
+    });
+
+    setErrors(newErrors);
+    return isValid;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      toast.error("Please fix the validation errors before submitting.");
+      return;
+    }
+
     if (!formData.agreed) {
       toast.error("Please agree to the terms & conditions.");
       return;
     }
+    
     setLoading(true);
 
     const formattedProductDetails = Object.entries(formData.productDetails).map(([label, value]) => ({
@@ -88,7 +189,6 @@ export default function CustomizePage() {
       value
     }));
     
-    // Add notes to product details so it's saved in the backend
     if (formData.notes) {
         formattedProductDetails.push({ label: 'Additional Notes', value: formData.notes });
     }
@@ -115,6 +215,7 @@ export default function CustomizePage() {
         notes: '',
         agreed: false
       });
+      setErrors({});
     } catch (error) {
       toast.error(error.message || 'Failed to submit request');
     } finally {
@@ -124,7 +225,6 @@ export default function CustomizePage() {
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] pb-24 relative">
-      {/* Top Banner */}
       <div className="h-64 bg-[#3B2920] relative overflow-hidden flex flex-col justify-center px-8 md:px-16 lg:px-32">
         <img src="/customize banner.jpeg" alt="Customize Banner" className="absolute inset-0 w-full h-full object-cover opacity-50" />
         <div className="relative z-10 max-w-7xl mx-auto w-full">
@@ -133,7 +233,6 @@ export default function CustomizePage() {
         </div>
       </div>
 
-      {/* Stepper */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 hidden md:flex items-center justify-center gap-4 text-xs font-semibold text-[#7A4B3A]">
         {['Customer Details', 'Shipping Address', 'Product Configuration', 'Upload & Notes', 'Submit Request'].map((step, idx) => (
           <React.Fragment key={step}>
@@ -146,44 +245,81 @@ export default function CustomizePage() {
         ))}
       </div>
 
-      <form onSubmit={handleSubmit} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        
-        {/* Main Grid: Left and Right Columns */}
+      <form onSubmit={handleSubmit} noValidate className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           
           {/* LEFT COLUMN */}
           <div className="space-y-8">
-            
-            {/* Customer Details */}
             <div className="bg-[#FAF8F5] rounded-2xl shadow-sm border border-[#E9DED3] p-6">
               <CardHeader icon={User} title="Customer Details" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div><InputLabel label="Full Name" required /><InputField value={formData.customerInfo.fullName} onChange={(e) => handleChange('customerInfo', 'fullName', e.target.value)} placeholder="Enter full name" required /></div>
-                <div><InputLabel label="Email" required /><InputField type="email" value={formData.customerInfo.email} onChange={(e) => handleChange('customerInfo', 'email', e.target.value)} placeholder="Enter email address" required /></div>
-                <div><InputLabel label="Phone Number" required /><InputField type="tel" value={formData.customerInfo.phone} onChange={(e) => handleChange('customerInfo', 'phone', e.target.value)} placeholder="Enter phone number" required /></div>
-                <div><InputLabel label="Company Name (Optional)" /><InputField value={formData.customerInfo.company} onChange={(e) => handleChange('customerInfo', 'company', e.target.value)} placeholder="Enter company name" /></div>
+                <div>
+                  <InputLabel label="Full Name" required />
+                  <InputField 
+                    value={formData.customerInfo.fullName} 
+                    onChange={(e) => handleChange('customerInfo', 'fullName', e.target.value)} 
+                    onBlur={(e) => handleBlur('customerInfo', 'fullName', e.target.value)}
+                    placeholder="Enter full name" 
+                    error={errors['customerInfo.fullName']}
+                    required 
+                  />
+                </div>
+                <div>
+                  <InputLabel label="Email" required />
+                  <InputField 
+                    type="email" 
+                    value={formData.customerInfo.email} 
+                    onChange={(e) => handleChange('customerInfo', 'email', e.target.value)} 
+                    onBlur={(e) => handleBlur('customerInfo', 'email', e.target.value)}
+                    placeholder="Enter email address" 
+                    error={errors['customerInfo.email']}
+                    required 
+                  />
+                </div>
+                <div>
+                  <InputLabel label="Phone Number" required />
+                  <InputField 
+                    type="tel" 
+                    value={formData.customerInfo.phone} 
+                    onChange={(e) => handleChange('customerInfo', 'phone', e.target.value)} 
+                    onBlur={(e) => handleBlur('customerInfo', 'phone', e.target.value)}
+                    placeholder="Enter phone number" 
+                    error={errors['customerInfo.phone']}
+                    required 
+                  />
+                </div>
+                <div>
+                  <InputLabel label="Company Name (Optional)" />
+                  <InputField 
+                    value={formData.customerInfo.company} 
+                    onChange={(e) => handleChange('customerInfo', 'company', e.target.value)} 
+                    placeholder="Enter company name" 
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Product Configuration */}
             <div className="bg-[#FAF8F5] rounded-2xl shadow-sm border border-[#E9DED3] p-6">
               <CardHeader icon={Package} title="Product Configuration" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {customFields.map((field, idx) => (
                   <div key={idx} className={field.type === 'text' || field.type === 'dropdown' ? 'md:col-span-2' : ''}>
                     {field.type === 'checkbox' ? (
-                      <label className="flex items-center gap-3 p-4 bg-white rounded-xl border border-[#E9DED3] cursor-pointer hover:border-[#9E6544] transition-colors">
-                        <input
-                          type="checkbox"
-                          required={field.isRequired}
-                          checked={formData.productDetails[field.label] || false}
-                          onChange={(e) => handleChange('productDetails', field.label, e.target.checked)}
-                          className="w-4 h-4 text-[#9E6544] rounded border-gray-300 focus:ring-[#9E6544]"
-                        />
-                        <span className="text-xs font-semibold text-gray-700">
-                          {field.label} {field.isRequired && '*'}
-                        </span>
-                      </label>
+                      <div>
+                        <label className={`flex items-center gap-3 p-4 bg-white rounded-xl border ${errors[`productDetails.${field.label}`] ? 'border-red-500' : 'border-[#E9DED3] hover:border-[#9E6544]'} cursor-pointer transition-colors`}>
+                          <input
+                            type="checkbox"
+                            required={field.isRequired}
+                            checked={formData.productDetails[field.label] || false}
+                            onChange={(e) => handleChange('productDetails', field.label, e.target.checked)}
+                            className="w-4 h-4 text-[#9E6544] rounded border-gray-300 focus:ring-[#9E6544]"
+                          />
+                          <span className="text-xs font-semibold text-gray-700">
+                            {field.label} {field.isRequired && '*'}
+                          </span>
+                        </label>
+                        {errors[`productDetails.${field.label}`] && <p className="text-red-500 text-[10px] mt-1 font-medium">{errors[`productDetails.${field.label}`]}</p>}
+                      </div>
                     ) : (
                       <>
                         <InputLabel label={field.label} required={field.isRequired} />
@@ -191,16 +327,20 @@ export default function CustomizePage() {
                           <SelectField 
                             value={formData.productDetails[field.label] || ''}
                             onChange={(e) => handleChange('productDetails', field.label, e.target.value)}
+                            onBlur={(e) => handleBlur('productDetails', field.label, e.target.value)}
                             options={field.options} 
                             placeholder={`Select ${field.label.toLowerCase()}`} 
                             required={field.isRequired} 
+                            error={errors[`productDetails.${field.label}`]}
                           />
                         ) : (
                           <InputField 
                             value={formData.productDetails[field.label] || ''}
                             onChange={(e) => handleChange('productDetails', field.label, e.target.value)}
+                            onBlur={(e) => handleBlur('productDetails', field.label, e.target.value)}
                             placeholder={`Enter ${field.label.toLowerCase()}`} 
                             required={field.isRequired} 
+                            error={errors[`productDetails.${field.label}`]}
                           />
                         )}
                       </>
@@ -213,18 +353,68 @@ export default function CustomizePage() {
 
           {/* RIGHT COLUMN */}
           <div className="space-y-8">
-            {/* Shipping Address */}
             <div className="bg-[#FAF8F5] rounded-2xl shadow-sm border border-[#E9DED3] p-6">
               <CardHeader icon={MapPin} title="Shipping Address" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="md:col-span-2"><InputLabel label="Street Address" required /><InputField value={formData.shippingAddress.address} onChange={(e) => handleChange('shippingAddress', 'address', e.target.value)} placeholder="Enter street address" required /></div>
-                <div><InputLabel label="City" required /><InputField value={formData.shippingAddress.city} onChange={(e) => handleChange('shippingAddress', 'city', e.target.value)} placeholder="Enter city" required /></div>
-                <div><InputLabel label="State" required /><InputField value={formData.shippingAddress.state} onChange={(e) => handleChange('shippingAddress', 'state', e.target.value)} placeholder="Enter state" required /></div>
-                <div><InputLabel label="Country" required /><SelectField value={formData.shippingAddress.country} onChange={(e) => handleChange('shippingAddress', 'country', e.target.value)} options={['India', 'United States', 'United Kingdom', 'Australia']} placeholder="Select country" required /></div>
-                <div><InputLabel label="ZIP / Pincode" required /><InputField value={formData.shippingAddress.pinCode} onChange={(e) => handleChange('shippingAddress', 'pinCode', e.target.value)} placeholder="Enter pincode" required /></div>
+                <div className="md:col-span-2">
+                  <InputLabel label="Street Address" required />
+                  <InputField 
+                    value={formData.shippingAddress.address} 
+                    onChange={(e) => handleChange('shippingAddress', 'address', e.target.value)} 
+                    onBlur={(e) => handleBlur('shippingAddress', 'address', e.target.value)}
+                    placeholder="Enter street address" 
+                    error={errors['shippingAddress.address']}
+                    required 
+                  />
+                </div>
+                <div>
+                  <InputLabel label="City" required />
+                  <InputField 
+                    value={formData.shippingAddress.city} 
+                    onChange={(e) => handleChange('shippingAddress', 'city', e.target.value)} 
+                    onBlur={(e) => handleBlur('shippingAddress', 'city', e.target.value)}
+                    placeholder="Enter city" 
+                    error={errors['shippingAddress.city']}
+                    required 
+                  />
+                </div>
+                <div>
+                  <InputLabel label="State" required />
+                  <InputField 
+                    value={formData.shippingAddress.state} 
+                    onChange={(e) => handleChange('shippingAddress', 'state', e.target.value)} 
+                    onBlur={(e) => handleBlur('shippingAddress', 'state', e.target.value)}
+                    placeholder="Enter state" 
+                    error={errors['shippingAddress.state']}
+                    required 
+                  />
+                </div>
+                <div>
+                  <InputLabel label="Country" required />
+                  <SelectField 
+                    value={formData.shippingAddress.country} 
+                    onChange={(e) => handleChange('shippingAddress', 'country', e.target.value)} 
+                    onBlur={(e) => handleBlur('shippingAddress', 'country', e.target.value)}
+                    options={['India', 'United States', 'United Kingdom', 'Australia']} 
+                    placeholder="Select country" 
+                    error={errors['shippingAddress.country']}
+                    required 
+                  />
+                </div>
+                <div>
+                  <InputLabel label="ZIP / Pincode" required />
+                  <InputField 
+                    value={formData.shippingAddress.pinCode} 
+                    onChange={(e) => handleChange('shippingAddress', 'pinCode', e.target.value)} 
+                    onBlur={(e) => handleBlur('shippingAddress', 'pinCode', e.target.value)}
+                    placeholder="Enter pincode" 
+                    error={errors['shippingAddress.pinCode']}
+                    required 
+                  />
+                </div>
               </div>
             </div>
-            {/* Reference Upload */}
+
             <div className="bg-[#FAF8F5] rounded-2xl shadow-sm border border-[#E9DED3] p-6">
               <h2 className="text-lg font-bold text-[#7A4B3A] flex items-center gap-3 mb-2">
                 <UploadCloud className="w-5 h-5 text-[#9E6544]" /> Reference Upload
@@ -243,8 +433,6 @@ export default function CustomizePage() {
         </div>
 
         {/* FULL WIDTH SECTIONS */}
-
-        {/* Additional Notes */}
         <div className="bg-[#FAF8F5] rounded-2xl shadow-sm border border-[#E9DED3] p-6">
           <h2 className="text-lg font-bold text-[#7A4B3A] flex items-center gap-3 mb-2">
             <Edit3 className="w-5 h-5 text-[#9E6544]" /> Additional Notes
@@ -258,7 +446,6 @@ export default function CustomizePage() {
           <div className="text-right text-[10px] text-gray-400 mt-1">{formData.notes.length}/1000</div>
         </div>
 
-        {/* Footer Actions */}
         <div className="flex flex-col items-center gap-6 pb-10">
           <label className="flex items-center gap-3 cursor-pointer">
             <input type="checkbox" required checked={formData.agreed} onChange={(e) => handleChange(null, 'agreed', e.target.checked)} className="w-4 h-4 text-[#9E6544] rounded border-gray-300 focus:ring-[#9E6544]" />
@@ -274,3 +461,4 @@ export default function CustomizePage() {
     </div>
   );
 }
+

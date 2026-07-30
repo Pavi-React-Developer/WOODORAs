@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { protect, authorize } = require('../middleware/authMiddleware');
+const { protect, authorize, optionalAuth } = require('../middleware/authMiddleware');
 const {
   createBulkOrder,
   getAllBulkOrders,
@@ -25,7 +25,7 @@ router.route('/fields/:id')
   .delete(protect, authorize('admin'), deleteField);
 
 router.route('/')
-  .post(protect, createBulkOrder)
+  .post(optionalAuth, createBulkOrder)
   .get(protect, authorize('admin'), getAllBulkOrders);
 
 router.get('/my-requests', protect, getMyBulkOrders);

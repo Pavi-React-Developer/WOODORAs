@@ -8,6 +8,7 @@ const {
   removeCartItem,
   removeCartItemById,
   clearCart,
+  getCartSummary,
 } = require('../controllers/cartController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -18,6 +19,8 @@ router.route('/')
   .get(protect, getCart)
   .put(protect, replaceCart)
   .delete(protect, clearCart);
+
+router.route('/summary').post(protect, getCartSummary);
 
 // POST /api/cart/items   → add item (increments qty if exists)
 router.route('/items')

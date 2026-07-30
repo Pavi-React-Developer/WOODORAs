@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const Staff = require('../models/Staff');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
@@ -49,6 +50,17 @@ const normalizeAddresses = (addresses = []) => {
 const registerUser = async (req, res) => {
     const { name, email, password, role } = req.body;
 
+    // Inline Validation
+    if (!name || name.trim().length === 0) {
+        return res.status(400).json({ message: 'Name is required' });
+    }
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+        return res.status(400).json({ message: 'A valid email is required' });
+    }
+    if (!password || password.length < 8) {
+        return res.status(400).json({ message: 'Password must be at least 8 characters long' });
+    }
+
     try {
         const userExists = await User.findOne({ email });
         if (userExists) {
@@ -85,8 +97,11 @@ const registerUser = async (req, res) => {
 const loginUser = async (req, res) => {
     const { email, password } = req.body || {};
 
-    if (!email || !password) {
-        return res.status(400).json({ message: 'Email and password are required' });
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+        return res.status(400).json({ message: 'A valid email is required' });
+    }
+    if (!password) {
+        return res.status(400).json({ message: 'Password is required' });
     }
 
     try {
@@ -105,7 +120,7 @@ const loginUser = async (req, res) => {
         }
 
         // If not found in User, check the Staff collection
-        const Staff = require('../models/Staff');
+
         const staff = await Staff.findOne({ email: email.toLowerCase() });
 
         if (staff && (await staff.matchPassword(password))) {
