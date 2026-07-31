@@ -59,8 +59,7 @@ const syncItemUpdateDebounced = (productId, qty, variantId, getStore) => {
     try {
       await cartService.updateItem(productId, qty, variantId || null);
       if (getStore) {
-        // Force an immediate summary fetch now that the backend is updated
-        getStore().fetchCartSummary();
+        getStore().fetchCartSummary(getStore().cartCalculationPayload || {});
       }
     } catch (error) {
       console.error('[Cart Sync] Update failed:', error.message);
@@ -69,7 +68,7 @@ const syncItemUpdateDebounced = (productId, qty, variantId, getStore) => {
         getStore().hydrateCartFromBackend();
       }
     }
-  }, 400);
+  }, 50);
 };
 
 // ─── Store ────────────────────────────────────────────────────────────────────
@@ -92,6 +91,8 @@ const useCartStore = create(
         appliedFees: [],
         grandTotal: 0
       },
+      cartCalculationPayload: {},
+      setCartCalculationPayload: (payload) => set({ cartCalculationPayload: payload }),
       checkoutOrigin: null,
 
       setCheckoutOrigin: (path) => set({ checkoutOrigin: path }),
@@ -168,12 +169,14 @@ const useCartStore = create(
               if (updatedBackendCart && Array.isArray(updatedBackendCart.items)) {
                 set({ cartItems: updatedBackendCart.items.map(normalizeCartItem) });
               }
+              get().fetchCartSummary(get().cartCalculationPayload || {});
               return;
             }
           }
 
           // No merging needed: just use the backend items directly
           set({ cartItems: backendItems, isCartHydrated: true });
+          get().fetchCartSummary(get().cartCalculationPayload || {});
         } catch (error) {
           console.error('[Cart] Failed to hydrate from backend:', error.message);
           set({ isCartHydrated: true });
@@ -369,6 +372,7 @@ const useCartStore = create(
             if (backendCart && Array.isArray(backendCart.items)) {
               set({ cartItems: backendCart.items.map(normalizeCartItem) });
             }
+            get().fetchCartSummary(get().cartCalculationPayload || {});
           } catch (error) {
             console.error('[Cart] addItem backend failed:', error.message);
             // Keep optimistic state — don't discard what the user added
@@ -427,6 +431,7 @@ const useCartStore = create(
             } else {
               await cartService.removeItem(productId, variantId || null);
             }
+            get().fetchCartSummary(get().cartCalculationPayload || {});
           } catch (error) {
             console.error('[Cart] removeFromCart backend failed:', error.message);
             // Silently re-hydrate to reconcile
@@ -451,6 +456,7 @@ const useCartStore = create(
         if (localStorage.getItem('token')) {
           try {
             await cartService.removeItemById(itemId);
+            get().fetchCartSummary(get().cartCalculationPayload || {});
           } catch (error) {
             console.error('[Cart] Failed to remove item from backend:', error.message);
             get().hydrateCartFromBackend();

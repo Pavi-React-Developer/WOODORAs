@@ -550,7 +550,7 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                                     <div className="flex flex-col gap-1.5">
                                         <label className="text-sm font-semibold text-gray-700">Display Order</label>
                                         <input
-                                            type="number"
+                                            type="text" inputMode="numeric"
                                             value={formData.displayOrder}
                                             onChange={(e) => setFormData(prev => ({ ...prev, displayOrder: e.target.value }))}
                                             className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
@@ -688,7 +688,7 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                                                             <div className="flex items-center gap-1.5">
                                                                 <span className="text-xs text-gray-500">Order:</span>
                                                                 <input
-                                                                    type="number"
+                                                                    type="text" inputMode="numeric"
                                                                     value={mapEntry.displayOrder || 1}
                                                                     onChange={(e) => handleMapValueChange(attr._id, 'displayOrder', e.target.value)}
                                                                     className="w-12 px-2 py-1 border border-gray-300 rounded text-xs text-center focus:outline-none focus:ring-1 focus:ring-amber-500"

@@ -17,7 +17,10 @@ const allStates = [
 ];
 
 const normalizeCategoryName = (value) => String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-const isWeightCategory = (category) => normalizeCategoryName(category?.name).includes('weight');
+const isWeightCategory = (category) => {
+  const name = normalizeCategoryName(category?.name);
+  return name.includes('weight') || name.includes('shipping');
+};
 const normalizeSlab = (slab, index) => ({
   ...slab,
   minWeight: slab.minWeight ?? '',
@@ -438,7 +441,7 @@ export default function AddFeePage({ onNavigate, editingFee }) {
               <div>
                 <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-2">Minimum Order Amount (₹)</label>
                 <input
-                  type="number"
+                  type="text" inputMode="numeric"
                   min="0"
                   value={minimumOrderAmount}
                   onChange={(e) => setMinimumOrderAmount(e.target.value)}
@@ -449,7 +452,7 @@ export default function AddFeePage({ onNavigate, editingFee }) {
               <div>
                 <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-2">Maximum Order Amount (₹)</label>
                 <input
-                  type="number"
+                  type="text" inputMode="numeric"
                   min="0"
                   value={maximumOrderAmount}
                   onChange={(e) => setMaximumOrderAmount(e.target.value)}
@@ -491,18 +494,18 @@ export default function AddFeePage({ onNavigate, editingFee }) {
                     <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center w-full">
                       <div className="flex-1">
                         <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Min Weight (kg)</label>
-                        <input type="number" step="0.0001" min="0" value={slab.minWeight} onChange={e => handleSlabChange(index, 'minWeight', e.target.value)} className="w-full border border-[#E6DFD4] rounded-lg px-3 py-2 text-sm" placeholder="0.0001" />
+                        <input type="text" inputMode="numeric" step="0.0001" min="0" value={slab.minWeight} onChange={e => handleSlabChange(index, 'minWeight', e.target.value)} className="w-full border border-[#E6DFD4] rounded-lg px-3 py-2 text-sm" placeholder="0.0001" />
                         {errors.weightSlabs?.[index]?.minWeight && <p className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">{errors.weightSlabs[index].minWeight}</p>}
                       </div>
                       <span className="hidden sm:block text-gray-400 font-bold px-2 pt-4">-</span>
                       <div className="flex-1">
                         <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Max Weight (kg)</label>
-                        <input type="number" step="0.0001" min="0" value={slab.maxWeight} onChange={e => handleSlabChange(index, 'maxWeight', e.target.value)} className="w-full border border-[#E6DFD4] rounded-lg px-3 py-2 text-sm" placeholder="1.0000" />
+                        <input type="text" inputMode="numeric" step="0.0001" min="0" value={slab.maxWeight} onChange={e => handleSlabChange(index, 'maxWeight', e.target.value)} className="w-full border border-[#E6DFD4] rounded-lg px-3 py-2 text-sm" placeholder="1.0000" />
                         {errors.weightSlabs?.[index]?.maxWeight && <p className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">{errors.weightSlabs[index].maxWeight}</p>}
                       </div>
                       <div className="flex-1">
                         <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Charge {feeType === 'Fixed Amount' ? '(₹)' : '(%)'}</label>
-                        <input type="number" step="0.01" min="0" value={slab.charge ?? slab.feeValue ?? ''} onChange={e => handleSlabChange(index, 'charge', e.target.value)} className="w-full border border-[#E6DFD4] rounded-lg px-3 py-2 text-sm" placeholder="200" />
+                        <input type="text" inputMode="numeric" step="0.01" min="0" value={slab.charge ?? slab.feeValue ?? ''} onChange={e => handleSlabChange(index, 'charge', e.target.value)} className="w-full border border-[#E6DFD4] rounded-lg px-3 py-2 text-sm" placeholder="200" />
                         {errors.weightSlabs?.[index]?.charge && <p className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">{errors.weightSlabs[index].charge}</p>}
                       </div>
                       <div className="flex flex-col gap-2 pt-5">
@@ -535,7 +538,7 @@ export default function AddFeePage({ onNavigate, editingFee }) {
             <div>
               <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-2">Fee Value ({feeType === 'Fixed Amount' ? '₹' : '%'}) <span className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">*</span></label>
               <input
-                type="number"
+                type="text" inputMode="numeric"
                 value={flatFeeValue}
                 onChange={(e) => setFlatFeeValue(e.target.value)}
                 placeholder="e.g. 50"

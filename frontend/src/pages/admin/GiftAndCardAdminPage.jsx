@@ -196,11 +196,11 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
               <div className="grid grid-cols-2 md:grid-cols-6 gap-4 items-end">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Min Volume (cm³)</label>
-                  <input type="number" name="minVolume" value={formData.minVolume} onChange={(e) => setFormData({...formData, minVolume: e.target.value ? Number(e.target.value) : ''})} required className="w-full p-2 border rounded text-sm focus:ring-[#B0611C]" placeholder="e.g. 0" />
+                  <input type="text" inputMode="numeric" name="minVolume" value={formData.minVolume} onChange={(e) => setFormData({...formData, minVolume: e.target.value ? Number(e.target.value) : ''})} required className="w-full p-2 border rounded text-sm focus:ring-[#B0611C]" placeholder="e.g. 0" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Max Volume (cm³)</label>
-                  <input type="number" name="maxVolume" value={formData.maxVolume} onChange={(e) => setFormData({...formData, maxVolume: e.target.value ? Number(e.target.value) : ''})} required className="w-full p-2 border rounded text-sm focus:ring-[#B0611C]" placeholder="e.g. 500" />
+                  <input type="text" inputMode="numeric" name="maxVolume" value={formData.maxVolume} onChange={(e) => setFormData({...formData, maxVolume: e.target.value ? Number(e.target.value) : ''})} required className="w-full p-2 border rounded text-sm focus:ring-[#B0611C]" placeholder="e.g. 500" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Box Size</label>
@@ -208,7 +208,7 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Fee (₹)</label>
-                  <input type="number" name="fee" value={formData.fee} onChange={(e) => setFormData({...formData, fee: e.target.value ? Number(e.target.value) : ''})} required className="w-full p-2 border rounded text-sm focus:ring-[#B0611C]" placeholder="e.g. 30" />
+                  <input type="text" inputMode="numeric" name="fee" value={formData.fee} onChange={(e) => setFormData({...formData, fee: e.target.value ? Number(e.target.value) : ''})} required className="w-full p-2 border rounded text-sm focus:ring-[#B0611C]" placeholder="e.g. 30" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>

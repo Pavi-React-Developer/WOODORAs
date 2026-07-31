@@ -575,7 +575,7 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                                     <div className="flex flex-col gap-1.5">
                                         <label className="text-sm font-semibold text-gray-700">Display Order</label>
                                         <input
-                                            type="number"
+                                            type="text" inputMode="numeric"
                                             min="1"
                                             value={formData.displayOrder}
                                             onChange={(e) => setFormData(prev => ({ ...prev, displayOrder: e.target.value }))}

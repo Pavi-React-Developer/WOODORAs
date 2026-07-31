@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const cloudinaryAssetSchema = new mongoose.Schema({
   url: { type: String, required: true },
-  public_id: { type: String, required: true },
+  public_id: { type: String, default: '' },
   width: { type: Number, default: 0 },
   height: { type: Number, default: 0 },
   format: { type: String, default: '' },

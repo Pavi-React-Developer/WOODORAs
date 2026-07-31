@@ -232,13 +232,15 @@ export default function CustomerProfilePage({
     const nextModule = profilePathModules[normalizedPath] || 'profile';
     setActiveModule(nextModule);
     setIsEditing(normalizedPath === '/profile/edit');
-    if (nextModule !== 'order-details') {
+    if (nextModule === 'order-details' && location.state?.data) {
+      setActiveOrder(location.state.data);
+    } else if (nextModule !== 'order-details') {
       setActiveOrder(null);
     }
     if (nextModule !== 'bulk-order-details') {
       setActiveBulkOrder(null);
     }
-  }, [location.pathname]);
+  }, [location.pathname, location.state]);
   
   useEffect(() => {
     try {

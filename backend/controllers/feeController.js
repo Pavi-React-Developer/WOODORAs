@@ -4,7 +4,10 @@ const PaymentMethod = require('../models/PaymentMethod');
 
 const normalizeText = (value) => String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
-const isWeightCategoryName = (name) => normalizeText(name).includes('weight');
+const isWeightCategoryName = (name) => {
+  const normalized = normalizeText(name);
+  return normalized.includes('weight') || normalized.includes('shipping');
+};
 
 const normalizeWeightSlabs = (weightSlabs = []) => weightSlabs
   .map((slab, index) => ({

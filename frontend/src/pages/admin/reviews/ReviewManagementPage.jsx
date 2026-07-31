@@ -410,7 +410,7 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
             <ResponsiveContainer width="100%" height={140}>
               <BarChart data={stats.topProducts} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0"/>
-                <XAxis type="number" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false}/>
+                <XAxis type="text" inputMode="numeric" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false}/>
                 <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 11, fill: "#374151" }} axisLine={false} tickLine={false}/>
                 <Tooltip contentStyle={{ borderRadius: 10, fontSize: 12 }}/>
                 <Bar dataKey="reviewCount" fill="#6366f1" radius={[0,6,6,0]} name="Reviews"/>

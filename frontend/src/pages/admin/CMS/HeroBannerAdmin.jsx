@@ -159,7 +159,7 @@ export default function HeroBannerAdmin() {
               </div>
               <div>
                 <label className="text-xs font-semibold text-brand-medium uppercase tracking-wider block mb-1">Sort Order</label>
-                <input type="number" value={form.sortOrder} onChange={e => setForm(f => ({ ...f, sortOrder: +e.target.value }))}
+                <input type="text" inputMode="numeric" value={form.sortOrder} onChange={e => setForm(f => ({ ...f, sortOrder: +e.target.value }))}
                   className="w-full border border-[#E6DFD4] rounded-lg px-3 py-2 text-sm" />
               </div>
               <div>

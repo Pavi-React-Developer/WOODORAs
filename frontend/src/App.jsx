@@ -137,7 +137,7 @@ export default function App() {
   const [profileLoading, setProfileLoading] = useState(false);
 
   // Cart state from store
-  const { cartItems, addToCart, updateQuantity, removeFromCart, hydrateCartFromBackend } = useCartStore();
+  const { cartItems, addToCart, updateQuantity, removeFromCart, hydrateCartFromBackend, clearCart } = useCartStore();
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   // Wishlist state
@@ -195,8 +195,9 @@ export default function App() {
     setIsCartOpen(true);
   };
 
-  const handleBuyNow = (product) => {
+  const handleBuyNow = async (product) => {
     const addedQuantity = product.quantity || 1;
+    clearCart();
     addToCart(product, addedQuantity);
     useCartStore.getState().setCheckoutOrigin(location.pathname);
     navigate('/review-order');

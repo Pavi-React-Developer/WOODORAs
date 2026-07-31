@@ -1526,7 +1526,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                       <div className="space-y-2">
                         <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium block">Display Order</label>
                         <input 
-                          type="number" 
+                          type="text" inputMode="numeric" 
                           value={catDisplayOrder} 
                           onChange={(e) => setCatDisplayOrder(e.target.value)} 
                           className="w-full border border-[#E6DFD4] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-medium"
@@ -1916,7 +1916,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                         <div className="space-y-2">
                           <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium block">Price ($) *</label>
                           <input 
-                            type="number" 
+                            type="text" inputMode="numeric" 
                             step="0.01" 
                             min="0" 
                             required 
@@ -1929,7 +1929,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                         <div className="space-y-2">
                           <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium block">Initial Stock *</label>
                           <input 
-                            type="number" 
+                            type="text" inputMode="numeric" 
                             min="0" 
                             required 
                             value={stock} 

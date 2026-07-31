@@ -94,7 +94,7 @@ export default function OrderHistoryPage({ onNavigate }) {
                     <div className="hidden md:block">
                       <p className="text-xs text-gray-500 font-semibold mb-1 uppercase tracking-wider">Ship To</p>
                       <p className="font-bold text-[#8B5E3C] flex items-center gap-1 cursor-help" title={order.shippingAddress.address}>
-                        <MapPin className="w-4 h-4" /> {order.shippingAddress.fullName.split(' ')[0]}
+                        <MapPin className="w-4 h-4" /> {user?.name?.split(' ')[0] || order.shippingAddress.fullName.split(' ')[0]}
                       </p>
                     </div>
                   </div>
@@ -104,7 +104,7 @@ export default function OrderHistoryPage({ onNavigate }) {
                         {order.status}
                       </span>
                       <button 
-                        onClick={() => onNavigate(`/order-success/${order._id}`)}
+                        onClick={() => onNavigate('/profile/order-history/details', order)}
                         className="text-sm font-bold text-[#8B5E3C] hover:text-[#7a5234] flex items-center gap-1"
                       >
                         View Details <ExternalLink className="w-4 h-4" />
@@ -191,4 +191,3 @@ export default function OrderHistoryPage({ onNavigate }) {
     </div>
   );
 }
-

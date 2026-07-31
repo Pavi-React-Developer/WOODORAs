@@ -343,8 +343,7 @@ exports.applyCoupon = async (req, res) => {
 
     if (coupon.deleted) return res.status(400).json({ message: 'Coupon is no longer available' });
     if (coupon.status !== 'active') return res.status(400).json({ message: 'Coupon is not active' });
-    // Allow applying coupons even if they are not marked `visible` in admin
-    // This enables manual application from checkout even when admin visibility is toggled.
+    if (!coupon.visible) return res.status(400).json({ message: 'Coupon is no longer available' });
     if (coupon.startDate && new Date(coupon.startDate) > new Date()) return res.status(400).json({ message: 'Coupon has not started yet' });
     if (coupon.endDate && new Date(coupon.endDate) < new Date()) return res.status(400).json({ message: 'Coupon has expired' });
     if (coupon.usageLimit > 0) {

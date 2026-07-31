@@ -93,11 +93,14 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
     ? savedAddresses[selectedAddressIndex]?.state
     : formData.state;
 
-  const { subtotal, deliveryCharge = 0, appliedFees = [], codAdvance, discount: discountAmount, grandTotal: total } = useCartCalculation({
+  const { deliveryCharge = 0, appliedFees = [], codAdvance, discount: discountAmount } = useCartCalculation({
     state: currentState,
     couponCode: appliedCoupon?.couponCode || '',
     paymentMethod,
   });
+
+  const subtotal = getSubtotal();
+  const total = Math.max(0, subtotal + appliedFees.reduce((sum, fee) => sum + fee.amount, 0) - discountAmount);
 
   useEffect(() => {
     let mounted = true;

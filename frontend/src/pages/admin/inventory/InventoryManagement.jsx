@@ -588,7 +588,7 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
                       {(editItem?.type === 'variant' || getProductVariants(editItem?.data).length > 0) ? 'Total Stock' : 'Current Stock'}
                     </label>
                     <input 
-                      type="number" 
+                      type="text" inputMode="numeric" 
                       min="0"
                       value={editStock} 
                       onChange={(e) => setEditStock(e.target.value)}
@@ -600,7 +600,7 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
                       <div className="space-y-2">
                         <label className="text-xs font-bold uppercase tracking-widest text-brand-medium">Current Stock</label>
                         <input 
-                          type="number" 
+                          type="text" inputMode="numeric" 
                           value={Math.max(0, parseInt(editStock || 0) - parseInt(editReserveStock || 0))} 
                           disabled
                           className="w-full border border-[#E6DFD4] rounded-xl px-4 py-3 text-sm bg-gray-50 text-gray-500 cursor-not-allowed"
@@ -609,7 +609,7 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
                       <div className="space-y-2">
                         <label className="text-xs font-bold uppercase tracking-widest text-brand-medium">Reserve Stock</label>
                         <input 
-                          type="number" 
+                          type="text" inputMode="numeric" 
                           min="0"
                           value={editReserveStock} 
                           onChange={(e) => setEditReserveStock(e.target.value)}

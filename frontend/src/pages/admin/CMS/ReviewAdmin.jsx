@@ -161,7 +161,7 @@ export default function ReviewAdmin() {
           <div>
             <label className="text-xs font-semibold text-brand-medium uppercase tracking-wider block mb-2">Marquee Scroll Duration (seconds)</label>
             <input
-              type="number"
+              type="text" inputMode="numeric"
               name="marqueeSpeed"
               value={form.marqueeSpeed}
               onChange={handleChange}
@@ -206,7 +206,7 @@ export default function ReviewAdmin() {
           <div>
             <label className="text-xs font-semibold text-brand-medium uppercase tracking-wider block mb-2">Autoplay Delay (ms)</label>
             <input
-              type="number"
+              type="text" inputMode="numeric"
               name="sliderSpeed"
               value={form.sliderSpeed}
               onChange={handleChange}
@@ -224,7 +224,7 @@ export default function ReviewAdmin() {
             <div>
               <label className="text-xs font-semibold text-brand-medium uppercase tracking-wider block mb-2">Mobile View (Columns)</label>
               <input
-                type="number"
+                type="text" inputMode="numeric"
                 name="mobileColumns"
                 value={form.mobileColumns}
                 onChange={handleChange}
@@ -236,7 +236,7 @@ export default function ReviewAdmin() {
             <div>
               <label className="text-xs font-semibold text-brand-medium uppercase tracking-wider block mb-2">Desktop View (Columns)</label>
               <input
-                type="number"
+                type="text" inputMode="numeric"
                 name="desktopColumns"
                 value={form.desktopColumns}
                 onChange={handleChange}

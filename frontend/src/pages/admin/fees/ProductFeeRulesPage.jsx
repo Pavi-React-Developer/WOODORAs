@@ -133,7 +133,7 @@ export default function ProductFeeRulesPage() {
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">Min Volume (cm³)</label>
                 <input 
-                  type="number" 
+                  type="text" inputMode="numeric" 
                   name="minVolume" 
                   value={formData.minVolume} 
                   onChange={(e) => setFormData({...formData, minVolume: e.target.value ? Number(e.target.value) : ''})} 
@@ -146,7 +146,7 @@ export default function ProductFeeRulesPage() {
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">Max Volume (cm³)</label>
                 <input 
-                  type="number" 
+                  type="text" inputMode="numeric" 
                   name="maxVolume" 
                   value={formData.maxVolume} 
                   onChange={(e) => setFormData({...formData, maxVolume: e.target.value ? Number(e.target.value) : ''})} 
@@ -171,7 +171,7 @@ export default function ProductFeeRulesPage() {
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">Product Fee (₹)</label>
                 <input 
-                  type="number" 
+                  type="text" inputMode="numeric" 
                   name="productFee" 
                   value={formData.productFee} 
                   onChange={(e) => setFormData({...formData, productFee: e.target.value ? Number(e.target.value) : ''})} 

@@ -97,7 +97,7 @@ export const DynamicFormBuilder = ({
 
                         {attrType === 'Number' && (
                             <input
-                                type="number"
+                                type="text" inputMode="numeric"
                                 value={currentNum}
                                 onChange={(e) => handleFieldChange(attrId, e.target.value, 'Number')}
                                 required={isRequired}

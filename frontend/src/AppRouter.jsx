@@ -68,7 +68,7 @@ export default function AppRouter() {
   const [profileLoading, setProfileLoading] = useState(false);
 
   // Cart state from store
-  const { cartItems, addToCart, updateQuantity, removeFromCart, hydrateCartFromBackend, clearCartState, getUniqueProductCount } = useCartStore();
+  const { cartItems, addToCart, updateQuantity, removeFromCart, hydrateCartFromBackend, clearCartState, clearCart, getUniqueProductCount } = useCartStore();
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   // Wishlist state
@@ -177,6 +177,7 @@ export default function AppRouter() {
   const handleBuyNow = async (product) => {
     const resolved = await resolveProductForCart(product);
     if (!resolved) return;
+    clearCart();
     addToCart(resolved, 1);
     navigate('/review-order');
   };

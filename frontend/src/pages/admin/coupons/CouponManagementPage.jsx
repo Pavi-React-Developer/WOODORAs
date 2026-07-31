@@ -449,7 +449,7 @@ export default function CouponManagementPage({ canCreate = true, canEdit = true,
               </label>
               <label className="text-sm">
                 <span className="mb-1 block font-semibold text-[#2F241D]">Discount Value *</span>
-                <input type="number" min="0" value={form.discountValue} onChange={(e) => { setForm({ ...form, discountValue: e.target.value }); if(formErrors.discountValue) setFormErrors({...formErrors, discountValue: ''}); }} className={`w-full rounded-xl border ${formErrors.discountValue ? 'border-red-500 bg-red-50' : 'border-[#E6DFD4]'} px-3 py-2.5 outline-none focus:border-[#8B5E3C]`} placeholder={form.discountType === 'Percentage' ? '10' : '150'} required />
+                <input type="text" inputMode="numeric" min="0" value={form.discountValue} onChange={(e) => { setForm({ ...form, discountValue: e.target.value }); if(formErrors.discountValue) setFormErrors({...formErrors, discountValue: ''}); }} className={`w-full rounded-xl border ${formErrors.discountValue ? 'border-red-500 bg-red-50' : 'border-[#E6DFD4]'} px-3 py-2.5 outline-none focus:border-[#8B5E3C]`} placeholder={form.discountType === 'Percentage' ? '10' : '150'} required />
                 {formErrors.discountValue && <p className="text-red-500 text-[10px] mt-1">{formErrors.discountValue}</p>}
               </label>
             </div>
@@ -459,21 +459,21 @@ export default function CouponManagementPage({ canCreate = true, canEdit = true,
                 {(form.offerType === 'General Offer' || form.offerType === 'Category Offer' || form.offerType === 'Cart Offer') && (
                   <label className="text-sm">
                     <span className="mb-1 block font-semibold text-[#2F241D]">Minimum Order Value{form.offerType === 'Cart Offer' ? ' *' : ''}</span>
-                    <input type="number" min="0" value={form.minOrderValue} onChange={(e) => setForm({ ...form, minOrderValue: e.target.value })} className="w-full rounded-xl border border-[#E6DFD4] px-3 py-2.5 outline-none focus:border-[#8B5E3C]" />
+                    <input type="text" inputMode="numeric" min="0" value={form.minOrderValue} onChange={(e) => setForm({ ...form, minOrderValue: e.target.value })} className="w-full rounded-xl border border-[#E6DFD4] px-3 py-2.5 outline-none focus:border-[#8B5E3C]" />
                   </label>
                 )}
 
                 {form.discountType === 'Percentage' && (
                   <label className="text-sm">
                     <span className="mb-1 block font-semibold text-[#2F241D]">Maximum Discount</span>
-                    <input type="number" min="0" value={form.maxDiscount} onChange={(e) => setForm({ ...form, maxDiscount: e.target.value })} className="w-full rounded-xl border border-[#E6DFD4] px-3 py-2.5 outline-none focus:border-[#8B5E3C]" />
+                    <input type="text" inputMode="numeric" min="0" value={form.maxDiscount} onChange={(e) => setForm({ ...form, maxDiscount: e.target.value })} className="w-full rounded-xl border border-[#E6DFD4] px-3 py-2.5 outline-none focus:border-[#8B5E3C]" />
                   </label>
                 )}
 
                 {(form.offerType === 'Category Offer' || form.offerType === 'Product Offer') && (
                   <label className="text-sm">
                     <span className="mb-1 block font-semibold text-[#2F241D]">Minimum Quantity</span>
-                    <input type="number" min="1" value={form.minimumQuantity} onChange={(e) => setForm({ ...form, minimumQuantity: e.target.value })} className="w-full rounded-xl border border-[#E6DFD4] px-3 py-2.5 outline-none focus:border-[#8B5E3C]" />
+                    <input type="text" inputMode="numeric" min="1" value={form.minimumQuantity} onChange={(e) => setForm({ ...form, minimumQuantity: e.target.value })} className="w-full rounded-xl border border-[#E6DFD4] px-3 py-2.5 outline-none focus:border-[#8B5E3C]" />
                   </label>
                 )}
               </div>
@@ -559,7 +559,7 @@ export default function CouponManagementPage({ canCreate = true, canEdit = true,
             <div className="grid gap-4 md:grid-cols-3">
               <label className="text-sm">
                 <span className="mb-1 block font-semibold text-[#2F241D]">Usage Limit</span>
-                <input type="number" min="0" value={form.usageLimit} onChange={(e) => setForm({ ...form, usageLimit: e.target.value })} className="w-full rounded-xl border border-[#E6DFD4] px-3 py-2.5 outline-none focus:border-[#8B5E3C]" />
+                <input type="text" inputMode="numeric" min="0" value={form.usageLimit} onChange={(e) => setForm({ ...form, usageLimit: e.target.value })} className="w-full rounded-xl border border-[#E6DFD4] px-3 py-2.5 outline-none focus:border-[#8B5E3C]" />
               </label>
               <label className="text-sm">
                 <span className="mb-1 block font-semibold text-[#2F241D]">Start Date</span>

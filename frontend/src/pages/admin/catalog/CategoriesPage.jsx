@@ -527,7 +527,7 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
 
                 <div className="grid grid-cols-2 gap-4">
                   <Field label="Display Order">
-                    <input type="number" min={1} value={formData.displayOrder} onChange={setField('displayOrder')} className={inputCls} />
+                    <input type="text" inputMode="numeric" min={1} value={formData.displayOrder} onChange={setField('displayOrder')} className={inputCls} />
                   </Field>
                   <div className="flex items-center gap-3 mt-6">
                     <label className="relative inline-flex items-center cursor-pointer">

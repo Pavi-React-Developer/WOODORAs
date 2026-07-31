@@ -142,7 +142,7 @@ export default function ThirdBannerAdmin() {
               </div>
               <div>
                 <FieldLabel>Sort Order</FieldLabel>
-                <input type="number" value={form.sortOrder} onChange={e => setForm(f => ({ ...f, sortOrder: +e.target.value }))}
+                <input type="text" inputMode="numeric" value={form.sortOrder} onChange={e => setForm(f => ({ ...f, sortOrder: +e.target.value }))}
                   className="w-full border border-[#E6DFD4] rounded-lg px-3 py-2 text-sm" />
               </div>
               <div>

@@ -410,7 +410,7 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
                 <div className="space-y-1.5">
                   <label className="text-sm font-bold text-[#4A403B]">Cancellation Fee (₹) <span className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">*</span></label>
                   <input 
-                    type="number" 
+                    type="text" inputMode="numeric" 
                     placeholder="Enter fee amount"
                     value={formData.cancellationFee}
                     onChange={(e) => {
@@ -431,7 +431,7 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
                 <div className="space-y-1.5">
                   <label className="text-sm font-bold text-[#4A403B]">Refund (%) <span className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">*</span></label>
                   <input 
-                    type="number" 
+                    type="text" inputMode="numeric" 
                     placeholder="e.g. 100"
                     value={formData.refundPercentage}
                     onChange={(e) => setFormData({ ...formData, refundPercentage: e.target.value })}
@@ -442,7 +442,7 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
                 <div className="space-y-1.5">
                   <label className="text-sm font-bold text-[#4A403B]">SLA (Days) <span className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">*</span></label>
                   <input 
-                    type="number" 
+                    type="text" inputMode="numeric" 
                     placeholder="Enter SLA in days"
                     value={formData.timeLimit}
                     onChange={(e) => setFormData({ ...formData, timeLimit: e.target.value })}

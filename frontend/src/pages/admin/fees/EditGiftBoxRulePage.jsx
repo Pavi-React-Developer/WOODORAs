@@ -70,11 +70,11 @@ export default function EditGiftBoxRulePage({ ruleId, onBack }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">Min Volume (cm³)</label>
-              <input type="number" value={formData.minVolume} onChange={(e) => setFormData({...formData, minVolume: e.target.value ? Number(e.target.value) : ''})} required className="w-full px-4 py-3 border border-[#E6DFD4] rounded-xl text-sm focus:outline-none focus:border-[#8B5E3C]" />
+              <input type="text" inputMode="numeric" value={formData.minVolume} onChange={(e) => setFormData({...formData, minVolume: e.target.value ? Number(e.target.value) : ''})} required className="w-full px-4 py-3 border border-[#E6DFD4] rounded-xl text-sm focus:outline-none focus:border-[#8B5E3C]" />
             </div>
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">Max Volume (cm³)</label>
-              <input type="number" value={formData.maxVolume} onChange={(e) => setFormData({...formData, maxVolume: e.target.value ? Number(e.target.value) : ''})} required className="w-full px-4 py-3 border border-[#E6DFD4] rounded-xl text-sm focus:outline-none focus:border-[#8B5E3C]" />
+              <input type="text" inputMode="numeric" value={formData.maxVolume} onChange={(e) => setFormData({...formData, maxVolume: e.target.value ? Number(e.target.value) : ''})} required className="w-full px-4 py-3 border border-[#E6DFD4] rounded-xl text-sm focus:outline-none focus:border-[#8B5E3C]" />
             </div>
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">Box Size</label>
@@ -89,7 +89,7 @@ export default function EditGiftBoxRulePage({ ruleId, onBack }) {
             </div>
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">Fee (₹)</label>
-              <input type="number" value={formData.fee} onChange={(e) => setFormData({...formData, fee: e.target.value ? Number(e.target.value) : ''})} required className="w-full px-4 py-3 border border-[#E6DFD4] rounded-xl text-sm focus:outline-none focus:border-[#8B5E3C]" />
+              <input type="text" inputMode="numeric" value={formData.fee} onChange={(e) => setFormData({...formData, fee: e.target.value ? Number(e.target.value) : ''})} required className="w-full px-4 py-3 border border-[#E6DFD4] rounded-xl text-sm focus:outline-none focus:border-[#8B5E3C]" />
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm font-bold text-gray-700 mb-1">Status</label>

@@ -134,16 +134,18 @@ export const calculateOrderFees = ({ fees = [], subtotal = 0, items = [], state 
     isPaymentMatch(fee, paymentMethod)
   ));
 
-  const weightFee = matchingFees.find((fee) => (
-    normalizeToken(fee.feeCategory?.name).includes('weight')
-  ));
+  const weightFee = matchingFees.find((fee) => {
+    const name = normalizeToken(fee.feeCategory?.name);
+    return name.includes('weight') && !name.includes('shipping');
+  });
 
   if (weightFee) {
-    result.shippingCharge = calculateWeightCharge(weightFee, subtotal, totalWeight);
-    if (result.shippingCharge > 0) {
+    const wCharge = calculateWeightCharge(weightFee, subtotal, totalWeight);
+    if (wCharge > 0) {
+      result.shippingCharge += wCharge;
       result.appliedFees.push({
         name: weightFee.feeName || 'Weight Charge',
-        amount: result.shippingCharge,
+        amount: wCharge,
         isWeightFee: true,
       });
     }
@@ -159,6 +161,27 @@ export const calculateOrderFees = ({ fees = [], subtotal = 0, items = [], state 
     if (minOrder > 0 && subtotal >= minOrder) {
       isFreeShipping = true;
       result.isFreeShipping = true;
+      result.appliedFees.push({
+        name: shippingFee.feeName || 'Shipping Charge',
+        amount: 0,
+        isFree: true,
+      });
+    } else {
+      let sCharge = 0;
+      if (shippingFee.weightSlabs && shippingFee.weightSlabs.length > 0) {
+        sCharge = calculateWeightCharge(shippingFee, subtotal, totalWeight);
+      } else {
+        sCharge = calculateFeeAmount(shippingFee, subtotal, shippingFee.flatFeeValue);
+      }
+
+      if (sCharge > 0) {
+        result.shippingCharge += sCharge;
+        result.appliedFees.push({
+          name: shippingFee.feeName || 'Shipping Charge',
+          amount: sCharge,
+          isShippingFee: true,
+        });
+      }
     }
   }
 
@@ -167,7 +190,7 @@ export const calculateOrderFees = ({ fees = [], subtotal = 0, items = [], state 
       const categoryToken = normalizeToken(fee.feeCategory?.name);
       const isWeight = categoryToken.includes('weight');
       const isShipping = categoryToken.includes('shipping');
-      return !isWeight && !(isFreeShipping && isShipping);
+      return !isWeight && !isShipping;
     })
     .forEach((fee) => {
       const charge = calculateFeeAmount(fee, subtotal, fee.flatFeeValue);

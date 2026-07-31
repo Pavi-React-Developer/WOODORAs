@@ -48,6 +48,36 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
 
     const handleCloseForm = () => {
         setIsFormOpen(false);
+        setEditId(null);
+        setFormData({
+            name: '',
+            description: '',
+            category: categories[0]?._id || '',
+            subCategory: '',
+            price: 0,
+            compareAtPrice: 0,
+            sku: '',
+            barcode: '',
+            shortDescription: '',
+            costPrice: 0,
+            taxPercent: 0,
+            hsnCode: '',
+            shippingWeight: 0,
+            shippingClass: '',
+            dimensions: { length: 0, width: 0, height: 0 },
+            lowStockAlert: 5,
+            isActive: true,
+            seoTitle: '',
+            seoDescription: '',
+            metaKeywords: '',
+            tags: '',
+            additionalInfo: [],
+            images: [],
+            variants: [],
+            attributeValues: {},
+        });
+        setFormErrors({});
+        setMappedAttributes([]);
         if (onCancelAdd) onCancelAdd();
     };
 
@@ -226,6 +256,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
     };
 
     const handleOpenForm = async (product = null) => {
+        setMappedAttributes([]);
         if (product) {
             setEditId(product._id);
             setFormLoading(true);
@@ -353,8 +384,26 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
             ...payload
         }));
 
+        // Extract images from variants since Product-level image section is removed
+        let derivedImages = [];
+        if (formData.variants && formData.variants.length > 0) {
+            const uniqueUrls = new Set();
+            formData.variants.forEach(v => {
+                if (Array.isArray(v.images)) {
+                    v.images.forEach(img => {
+                        const url = typeof img === 'string' ? img : img.url;
+                        if (url && !uniqueUrls.has(url)) {
+                            uniqueUrls.add(url);
+                            derivedImages.push(img);
+                        }
+                    });
+                }
+            });
+        }
+
         const payload = {
             ...formData,
+            images: derivedImages.length > 0 ? derivedImages : formData.images,
             metaKeywords: formData.metaKeywords.split(',').map(s => s.trim()).filter(Boolean),
             tags: formData.tags.split(',').map(s => s.trim()).filter(Boolean),
             price: Number(formData.price),
@@ -913,7 +962,6 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                 </div>
                             )}
 
-                            {/* Section 5: Dynamic Variants Table */}
                             {/* Section 5: Dynamic Variants Management */}
                             {mappedAttributes.some(m => m.attribute?.isVariant) && (
                                 <div className="space-y-4">
@@ -935,6 +983,8 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                         basePrice={formData.price}
                                         baseCostPrice={formData.costPrice}
                                         baseWeight={formData.shippingWeight}
+                                        baseDimensions={formData.dimensions}
+                                        baseImages={formData.images}
                                     />
                                 </div>
                             )}
