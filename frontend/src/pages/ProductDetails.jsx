@@ -306,16 +306,17 @@ const getCustomAdditionalInfo = (product) => {
   );
 };
 
-const getPricingInfo = (source = {}) => {
+const getPricingInfo = (product = {}, variant = null) => {
+  const source = variant || product;
   const listPrice = Number(
-    source.compareAtPrice ?? source.basePrice ?? source.effectivePrice ?? source.price ?? 0
+    source.compareAtPrice ?? source.basePrice ?? source.effectivePrice ?? source.price ?? product.compareAtPrice ?? product.price ?? 0
   );
   const salePriceCandidate = source.discountPrice !== null && source.discountPrice !== undefined && source.discountPrice !== ''
     ? Number(source.discountPrice)
     : NaN;
   const salePrice = Number.isFinite(salePriceCandidate) && salePriceCandidate > 0
     ? salePriceCandidate
-    : Number(source.basePrice ?? source.effectivePrice ?? source.price ?? 0);
+    : Number(source.basePrice ?? source.effectivePrice ?? source.price ?? product.price ?? 0);
   const effectiveListPrice = listPrice > 0 ? listPrice : salePrice;
   const hasDiscount = salePrice > 0 && effectiveListPrice > 0 && salePrice < effectiveListPrice;
   const discountPercent = hasDiscount ? Math.round((1 - salePrice / effectiveListPrice) * 100) : 0;

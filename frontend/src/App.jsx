@@ -22,6 +22,7 @@ import GiftAndCardPage from './pages/GiftAndCardPage';
 import CustomizePage from './pages/CustomizePage';
 import OAuthCallback from './pages/OAuthCallback';
 import { authService } from './api/authService';
+import { productV2API } from './api/catalogV2Service';
 import CartOffcanvas from './components/CartOffcanvas';
 import WishlistOffcanvas from './components/WishlistOffcanvas';
 import useCartStore from './store/useCartStore';
