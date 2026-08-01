@@ -1,9 +1,73 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Gift, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
 import useCartStore from '../store/useCartStore';
 import useCartCalculation from '../hooks/useCartCalculation';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../api/authService';
+import { productV2API } from '../api/catalogV2Service';
+
+function CartVariantSuggestion({ productId, currentVariantId, cartItems }) {
+  const [suggestion, setSuggestion] = useState(null);
+  const [productData, setProductData] = useState(null);
+  const { addToCart } = useCartStore();
+  const [isAdding, setIsAdding] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    const fetchSuggestion = async () => {
+      try {
+        const res = await productV2API.getById(productId);
+        if (!active) return;
+        const prod = res.product || res;
+        setProductData(prod);
+        if (prod && prod.variants && Array.isArray(prod.variants)) {
+          const cartVariantIds = new Set(cartItems.filter(i => String(i.product) === String(productId)).map(i => i.variant));
+          const available = prod.variants.find(v => 
+            v.isActive !== false && 
+            String(v._id) !== String(currentVariantId) && 
+            !cartVariantIds.has(v._id) &&
+            ((v.inventory ?? v.currentStock ?? v.stock ?? 0) - (v.reserveStock || 0)) > 0
+          );
+          if (available) {
+            setSuggestion(available);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch variants for suggestion:', err);
+      }
+    };
+    fetchSuggestion();
+    return () => { active = false; };
+  }, [productId, currentVariantId, cartItems]);
+
+  if (!suggestion || !productData) return null;
+
+  const handleAdd = () => {
+    setIsAdding(true);
+    setTimeout(() => {
+      addToCart(productData, 1, suggestion);
+      setIsAdding(false);
+    }, 300);
+  };
+
+  const optionText = suggestion.options?.map(o => o.value).join(' / ') || 'another';
+
+  return (
+    <div className="mt-3 bg-amber-50 rounded-lg p-2.5 flex flex-wrap items-center justify-between gap-2 border border-amber-200 shadow-sm animate-in fade-in slide-in-from-top-1">
+      <span className="text-[11px] text-amber-800 font-medium flex-1">
+        Try our <span className="font-bold">{optionText}</span> version instead!
+      </span>
+      <button 
+        type="button"
+        onClick={handleAdd}
+        disabled={isAdding}
+        className="text-[10px] font-bold text-amber-900 bg-amber-200 hover:bg-amber-300 px-3 py-1.5 rounded-md transition-colors disabled:opacity-50 uppercase tracking-wide shrink-0"
+      >
+        {isAdding ? 'Adding...' : 'Add'}
+      </button>
+    </div>
+  );
+}
 
 /**
  * CartOffcanvas — Side drawer cart panel.
@@ -193,6 +257,7 @@ export default function CartOffcanvas({ isOpen, onClose }) {
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
+                    {isAtMax && <CartVariantSuggestion productId={item.product} currentVariantId={item.variant} cartItems={cartItems} />}
                   </div>
                 </div>
               );
