@@ -31,8 +31,6 @@ const StaffModel = require('./models/Staff');
 
 // Load env vars
 dotenv.config();
-process.env.BACKEND_URL = 'https://linen-finch-820225.hostingersite.com';
-process.env.FRONTEND_URL = 'https://marakathai.com';
 
 // Connect to database
 connectDB();
@@ -101,15 +99,15 @@ app.use(cors({
         const allowedOrigins = [
             'https://marakathai.com',
             'https://linen-finch-820225.hostingersite.com',
+            'https://papayawhip-lemur-557495.hostingersite.com',
             'http://localhost:4173',
             'http://localhost:5173'
         ];
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
-            // Fix #15: Return a proper CORS error instead of silently rejecting.
-            // Silent rejection causes confusing 'network error' on the frontend.
-            callback(new Error(`CORS: Origin '${origin}' is not allowed`));
+            // Silently reject instead of throwing an Error so static files still load
+            callback(null, false);
         }
     },
     credentials: true,
@@ -152,9 +150,20 @@ app.use('/api/settings', require('./routes/systemSettingRoutes'));
 // Serve static frontend build
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Handle 404 for API routes so they don't fall through to the SPA fallback
+app.use('/api', (req, res) => {
+    res.status(404).json({ success: false, message: 'API Route Not Found' });
+});
+
 // SPA Fallback: Any route not handled by the API will serve the React app
-app.get(/(.*)/, (req, res) => {
-    res.sendFile(path.resolve(__dirname, 'public', 'index.html'));
+app.get(/.*/, (req, res) => {
+    const indexPath = path.resolve(__dirname, 'public', 'index.html');
+    res.sendFile(indexPath, (err) => {
+        if (err) {
+            console.error('SPA Fallback Error: index.html not found at', indexPath);
+            res.status(500).send('Frontend build not found. Please build the frontend and place it in the public folder.');
+        }
+    });
 });
 
 // Global error handler to prevent HTML responses on errors

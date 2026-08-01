@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Upload, X, Star, ArrowUp, ArrowDown, Loader } from 'lucide-react';
 import { Button } from './CommonComponents';
 import { getImageSrc } from '../../utils/imageUtils';
+import { uploadAPI } from '../../api/catalogAdminService';
 
 export const ImageUploader = ({
     images = [],
@@ -31,8 +32,6 @@ export const ImageUploader = ({
         setUploading(true);
 
         try {
-            const { uploadAPI } = await import('../../api/catalogAdminService');
-            
             const res = await uploadAPI.uploadImages(validImages, 'product', (progressEvent) => {
                 // If you want to use progress: const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
             });

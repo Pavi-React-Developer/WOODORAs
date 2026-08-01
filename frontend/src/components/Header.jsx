@@ -464,17 +464,76 @@ export default function Header({
 
       {/* Mobile Search Bar */}
       <div className="border-t border-[#F1E8E0] px-4 py-3 lg:hidden">
-        <label className="mx-auto flex max-w-xl items-center gap-3 rounded-[10px] border border-[#E6D9CE] bg-white px-4 py-3 text-[#8B5E3C]">
-          <Search className="h-5 w-5" strokeWidth={1.8} />
-          <input
-            type="search"
-            placeholder="Search for toys, gift sets & more..."
-            className="w-full bg-transparent text-sm text-[#2E2E2E] outline-none placeholder:text-[#7C7370]"
-            value={searchQuery}
-            onFocus={() => setIsSearchOpen(true)}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </label>
+        <div className="relative mx-auto max-w-xl">
+          <label className="flex items-center gap-3 rounded-[10px] border border-[#E6D9CE] bg-white px-4 py-3 text-[#8B5E3C] focus-within:border-[#B0611C] transition-colors">
+            <Search className="h-5 w-5" strokeWidth={1.8} />
+            <input
+              type="search"
+              placeholder="Search for toys, gift sets & more..."
+              className="w-full bg-transparent text-sm text-[#2E2E2E] outline-none placeholder:text-[#7C7370]"
+              value={searchQuery}
+              onFocus={() => setIsSearchOpen(true)}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && searchQuery.trim()) {
+                  onNavigate(`/search?q=${searchQuery}`);
+                  setSearchQuery('');
+                  setIsSearchOpen(false);
+                }
+              }}
+            />
+            {searchQuery.trim() && (
+              <button 
+                type="button" 
+                onClick={() => setSearchQuery('')}
+                className="p-1 text-[#8A817C] hover:text-[#B0611C]"
+              >
+                <X className="h-4 w-4" strokeWidth={2} />
+              </button>
+            )}
+          </label>
+
+          {/* Inline Search Results Dropdown for Mobile */}
+          {searchQuery.trim() && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[#E9DED3] rounded-xl shadow-xl overflow-hidden z-50">
+              {(searchResults.length > 0 || categoryResults.length > 0) ? (
+                <div className="py-2 max-h-[60vh] overflow-y-auto">
+                  {categoryResults.length > 0 && (
+                    <div className="mb-2 border-b border-[#E9DED3] pb-2">
+                      <p className="px-4 py-1 text-[10px] font-bold text-[#8A817C] uppercase tracking-wider">Categories</p>
+                      {categoryResults.map((cat) => (
+                        <button key={`m-cat-${cat._id}`} onClick={() => { onNavigate(`/products?category=${cat._id}`); setSearchQuery(''); }} className="flex items-center gap-3 w-full p-3 px-4 hover:bg-[#FAF4EF] transition">
+                          <div className="w-8 h-8 rounded-full bg-[#E9DED3] flex items-center justify-center shrink-0"><Search className="h-4 w-4 text-[#9C755A]" /></div>
+                          <p className="text-sm font-bold text-[#4A3326]">{cat.name}</p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {searchResults.length > 0 && (
+                    <div>
+                      <p className="px-4 py-1 text-[10px] font-bold text-[#8A817C] uppercase tracking-wider">Products</p>
+                      {searchResults.map((product) => (
+                        <button key={`m-${product._id}`} onClick={() => { onNavigate(`/product/${product.slug || product._id}`); setSearchQuery(''); }} className="flex items-center gap-4 w-full p-4 hover:bg-[#FAF4EF] transition">
+                          <div className="w-12 h-12 rounded-md overflow-hidden bg-gray-100 shrink-0">
+                            {product.images && product.images[0] ? (<img src={product.images[0].url || product.images[0]} alt={product.name} className="w-full h-full object-cover" />) : (<div className="w-full h-full bg-[#E9DED3]" />)}
+                          </div>
+                          <div className="text-left flex-1">
+                            <p className="text-sm font-bold text-[#4A3326] line-clamp-1">{product.name}</p>
+                            <p className="text-xs text-[#7C7370]">{product.category?.name || 'Category'}</p>
+                          </div>
+                          <p className="text-sm font-bold text-[#9C755A]">₹{product.price}</p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <button onClick={() => { onNavigate(`/search?q=${searchQuery}`); setSearchQuery(''); }} className="w-full p-4 text-sm font-bold text-[#9C755A] hover:bg-[#FAF4EF] transition border-t border-[#E9DED3] mt-2">View All Results</button>
+                </div>
+              ) : !isSearching ? (
+                <div className="p-8 text-center text-[#7C7370]">No results found for "{searchQuery}"</div>
+              ) : null}
+            </div>
+          )}
+        </div>
       </div>
     </header>
 
