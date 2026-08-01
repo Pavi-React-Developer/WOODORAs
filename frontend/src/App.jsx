@@ -141,7 +141,7 @@ export default function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   // Wishlist state
-  const { wishlistItems, fetchWishlist, mergeGuestWishlist } = useWishlistStore();
+  const { wishlistItems, fetchWishlist, mergeGuestWishlist, validateWishlist } = useWishlistStore();
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
 
   // Navigation handler (backwards compatible)
@@ -189,24 +189,72 @@ export default function App() {
     navigate('/');
   };
 
-  const handleAddToCart = (product) => {
-    const addedQuantity = product.quantity || 1;
-    addToCart(product, addedQuantity);
+  const resolveProductForCart = async (product) => {
+    // Preserve gift-specific fields set before calling addToCart
+    const giftPrefs = {
+      isGift: product.isGift,
+      isGiftWrapper: product.isGiftWrapper,
+      giftMessage: product.giftMessage,
+      giftMessageStyle: product.giftMessageStyle,
+      deliveryDate: product.deliveryDate,
+      scheduledDeliveryDate: product.scheduledDeliveryDate,
+    };
+
+    let productToAdd = { ...product };
+
+    // Always fetch full details to ensure we have complete variants, stock info, and options before adding to cart
+    try {
+      const res = await productV2API.getById(productToAdd._id || productToAdd.id);
+      const fullProduct = res.product || res;
+      // Merge API data but restore gift fields so they aren't overwritten
+      productToAdd = { ...productToAdd, ...fullProduct, ...giftPrefs };
+    } catch (err) {
+      console.error('[Cart] Failed to fetch full product details:', err);
+    }
+
+    // ── Product already has a pre-selected variant (from ProductDetails page) ──
+    if (productToAdd.selectedVariant) {
+      const sv = productToAdd.selectedVariant;
+      const availableStock = Math.max(
+        0,
+        (sv.inventory ?? sv.currentStock ?? sv.stock ?? 0) - (sv.reserveStock || 0)
+      );
+      if (availableStock <= 0) {
+        toast.error('This variant is out of stock!');
+        return null;
+      }
+    }
+
+    return productToAdd;
+  };
+
+  const handleAddToCart = async (product, qty = 1, explicitlySelectedVariant = null) => {
+    const resolved = await resolveProductForCart(product);
+    if (!resolved) return;
+    const addedQuantity = resolved.quantity || qty;
+    addToCart(resolved, addedQuantity, explicitlySelectedVariant);
     setIsCartOpen(true);
   };
 
-  const handleBuyNow = async (product) => {
-    const addedQuantity = product.quantity || 1;
+  const handleBuyNow = async (product, qty = 1, explicitlySelectedVariant = null) => {
+    const resolved = await resolveProductForCart(product);
+    if (!resolved) return;
+    const addedQuantity = resolved.quantity || qty;
     clearCart();
-    addToCart(product, addedQuantity);
+    addToCart(resolved, addedQuantity, explicitlySelectedVariant);
     useCartStore.getState().setCheckoutOrigin(location.pathname);
-    navigate('/review-order');
+    if (!user) {
+      localStorage.setItem('checkout_redirect', '/review-order');
+      navigate('/login');
+    } else {
+      navigate('/review-order');
+    }
   };
 
   // CartOffcanvas now uses useCartStore directly — no index-based handlers needed
 
-  const handleAddToWishlist = async (product) => {
-    await useWishlistStore.getState().toggleWishlist(product);
+  const handleAddToWishlist = async (product, variant = null, qty = 1) => {
+    await useWishlistStore.getState().toggleWishlist(product, variant, qty);
     setIsWishlistOpen(true);
   };
 
@@ -215,14 +263,24 @@ export default function App() {
   };
 
   const handleMoveToCart = (item, index) => {
-    handleAddToCart(item);
+    const product = item.product || item;
+    const qty = item.qty || 1;
+    const variant = item.variant;
+    
+    addToCart(product, qty, variant);
+    setIsCartOpen(true);
     handleRemoveFromWishlist(index);
   };
 
   const handleCheckoutClick = () => {
     setIsCartOpen(false);
     useCartStore.getState().setCheckoutOrigin(location.pathname);
-    navigate('/review-order');
+    if (!user) {
+      localStorage.setItem('checkout_redirect', '/review-order');
+      navigate('/login');
+    } else {
+      navigate('/review-order');
+    }
   };
 
   useEffect(() => {
@@ -232,7 +290,13 @@ export default function App() {
   useEffect(() => {
     if (user) {
       hydrateCartFromBackend();
-      mergeGuestWishlist().then(() => fetchWishlist());
+      
+      const initUserWishlist = async () => {
+        await validateWishlist();
+        await mergeGuestWishlist();
+        await fetchWishlist();
+      };
+      initUserWishlist();
       
       const fetchFullProfile = async () => {
         try {
@@ -263,6 +327,7 @@ export default function App() {
       fetchFullProfile();
     } else {
       setProfileData(null);
+      validateWishlist();
     }
   }, [user?.id, hydrateCartFromBackend]); // Only run when user ID changes to prevent infinite loop
 

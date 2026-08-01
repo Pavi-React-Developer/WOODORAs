@@ -372,12 +372,19 @@ const clearCart = async (req, res) => {
  */
 const getCartSummary = async (req, res) => {
   try {
-    const { isGiftEnabled, state, paymentMethod, couponCode } = req.body;
+    const { isGiftEnabled, state, paymentMethod, couponCode, items } = req.body;
     
     // 1. Get enriched cart items
-    const cart = await getOrCreateCart(req.user._id);
+    let cartItems = [];
+    if (req.user) {
+      const cart = await getOrCreateCart(req.user._id);
+      cartItems = cart.items;
+    } else if (items && Array.isArray(items)) {
+      cartItems = items;
+    }
+
     const enrichedItems = await Promise.all(
-      cart.items.map(async (item) => {
+      cartItems.map(async (item) => {
         try {
           const obj = item.toObject ? item.toObject() : { ...item };
           if (item.variant) {

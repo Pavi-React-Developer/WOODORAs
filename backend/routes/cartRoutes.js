@@ -10,7 +10,7 @@ const {
   clearCart,
   getCartSummary,
 } = require('../controllers/cartController');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, optionalAuth } = require('../middleware/authMiddleware');
 
 // GET  /api/cart         → fetch user's cart
 // PUT  /api/cart         → replace entire cart (sync)
@@ -20,7 +20,7 @@ router.route('/')
   .put(protect, replaceCart)
   .delete(protect, clearCart);
 
-router.route('/summary').post(protect, getCartSummary);
+router.route('/summary').post(optionalAuth, getCartSummary);
 
 // POST /api/cart/items   → add item (increments qty if exists)
 router.route('/items')

@@ -78,7 +78,6 @@ const modules = [
   { id: 'cart', label: 'Cart', icon: ShoppingBag },
   { id: 'wallet', label: 'Wallet', icon: CreditCard },
   { id: 'wishlist', label: 'Wishlist', icon: Heart },
-  { id: 'saved', label: 'Saved Products', icon: Bookmark },
   { id: 'refunds', label: 'Refunds', icon: ExternalLink },
   { id: 'gift-card', label: 'Gift & Card', icon: Gift },
 ];
@@ -96,7 +95,6 @@ const profileModulePaths = {
   wallet: '/profile/wallet',
   refunds: '/profile/refunds',
   wishlist: '/profile/wishlist',
-  saved: '/profile/saved-products',
   rewards: '/profile/loyalty-rewards',
   password: '/profile/change-password',
   notifications: '/profile/notifications',
@@ -1642,9 +1640,12 @@ export default function CustomerProfilePage({
         ) : (
           <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {wishlistItems.map((item, index) => {
-              const effectiveImages = item.selectedVariant?.images?.length ? item.selectedVariant.images : (item.images?.length ? item.images : [item.image || '/animal_balance_maze.png']);
+              const product = item.product || item;
+              if (!product || !product.name) return null; // Skip dummy or invalid products
+              
+              const effectiveImages = item.selectedVariant?.images?.length ? item.selectedVariant.images : (product.images?.length ? product.images : [product.image || '/animal_balance_maze.png']);
               const image = typeof effectiveImages[0] === 'string' ? effectiveImages[0] : (effectiveImages[0]?.url || '/animal_balance_maze.png');
-              const price = item.selectedVariant ? (item.selectedVariant.basePrice ?? item.selectedVariant.price) : (item.price ?? 0);
+              const price = item.selectedVariant ? (item.selectedVariant.basePrice ?? item.selectedVariant.price) : (product.price ?? 0);
 
               return (
                 <div key={index} className="group relative overflow-hidden rounded-[16px] border border-[#E9DED3] bg-white transition hover:shadow-[0_12px_25px_rgba(62,39,35,0.06)]">
@@ -1652,10 +1653,10 @@ export default function CustomerProfilePage({
                     <Trash2 className="h-4 w-4" />
                   </button>
                   <div className="aspect-square bg-[#F8F3EF] p-4">
-                    <img src={image} alt={item.name} className="h-full w-full object-contain mix-blend-multiply transition duration-300 group-hover:scale-110" />
+                    <img src={image} alt={product.name} className="h-full w-full object-contain mix-blend-multiply transition duration-300 group-hover:scale-110" />
                   </div>
                   <div className="p-4">
-                    <h3 className="font-bold text-[#141225] line-clamp-1">{item.name}</h3>
+                    <h3 className="font-bold text-[#141225] line-clamp-1 cursor-pointer hover:text-[#8B5E3C]" onClick={() => onNavigate(`/product/${product._id || product.id}`)}>{product.name}</h3>
                     <div className="mt-2 flex items-center justify-between">
                       <p className="text-lg font-black text-[#8B5E3C]">Rs. {price}</p>
                       <span className="text-xs font-semibold text-emerald-600">In Stock</span>
@@ -2237,11 +2238,11 @@ export default function CustomerProfilePage({
 
               {/* Financial Breakdown */}
               <div className="space-y-2 border-t border-[#E9DED3] pt-4 mb-4">
-                <div className="flex justify-between text-[13px]">
-                  <span className="text-[#6D625C] font-semibold">Base Shipping</span>
-                  <span className="text-[#141225] font-bold">+₹{(cancelOrderTarget.shippingPrice || 0).toFixed(2)}</span>
-                </div>
-                {cancelOrderTarget.fees && cancelOrderTarget.fees.map((fee, index) => (
+                {cancelOrderTarget.fees && cancelOrderTarget.fees
+                  .filter((fee, index, self) => 
+                    index === self.findIndex((f) => f.name === fee.name && f.amount === fee.amount)
+                  )
+                  .map((fee, index) => (
                   <div key={index} className="flex justify-between text-[13px]">
                     <span className="text-[#6D625C] font-semibold">{fee.name}</span>
                     <span className="text-[#141225] font-bold">+₹{(fee.amount || 0).toFixed(2)}</span>

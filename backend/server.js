@@ -156,14 +156,50 @@ app.use('/api', (req, res) => {
 });
 
 // SPA Fallback: Any route not handled by the API will serve the React app
-app.get(/.*/, (req, res) => {
-    const indexPath = path.resolve(__dirname, 'public', 'index.html');
-    res.sendFile(indexPath, (err) => {
-        if (err) {
-            console.error('SPA Fallback Error: index.html not found at', indexPath);
-            res.status(500).send('Frontend build not found. Please build the frontend and place it in the public folder.');
+app.use((req, res) => {
+    const fs = require('fs');
+    
+    // Attempt to dynamically find the Hostinger public_html folder based on the current path
+    // e.g. /home/user/domains/domain.com/.builds/.../nodejs -> /home/user/domains/domain.com/public_html
+    let hostingerPublicHtml = null;
+    const match = __dirname.match(/(.*?\/domains\/[^/]+)\//);
+    if (match && match[1]) {
+        hostingerPublicHtml = path.join(match[1], 'public_html', 'index.html');
+    }
+
+    const possiblePaths = [
+        path.resolve(__dirname, 'public', 'index.html'), // Local prod
+        path.resolve(__dirname, '..', 'frontend', 'dist', 'index.html'), // Local dev
+    ];
+    if (hostingerPublicHtml) possiblePaths.push(hostingerPublicHtml);
+
+    let foundPath = null;
+    for (const p of possiblePaths) {
+        if (fs.existsSync(p)) {
+            foundPath = p;
+            break;
         }
-    });
+    }
+
+    if (foundPath) {
+        try {
+            const htmlContent = fs.readFileSync(foundPath, 'utf8');
+            res.setHeader('Content-Type', 'text/html');
+            res.send(htmlContent);
+        } catch (err) {
+            console.error('SPA Fallback Error (Read):', err);
+            res.status(500).send(`Failed to read frontend build at ${foundPath}. Error: ${err.message}`);
+        }
+    } else {
+        // If we still can't find the frontend build, redirect to the root domain
+        // because Apache/Hostinger might serve index.html correctly at the root.
+        console.error('SPA Fallback Error: Frontend build not found. Attempting redirect to root.');
+        const frontendUrl = process.env.FRONTEND_URL || req.headers.origin || `https://${req.headers.host}`;
+        // Preserve query parameters
+        const queryStr = Object.keys(req.query).length > 0 ? `?${new URLSearchParams(req.query).toString()}` : '';
+        // Redirect to a hash router path if needed, or just let the frontend router handle it
+        res.redirect(`${frontendUrl}/#${req.originalUrl}`);
+    }
 });
 
 // Global error handler to prevent HTML responses on errors

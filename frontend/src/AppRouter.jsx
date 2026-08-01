@@ -88,14 +88,52 @@ export default function AppRouter() {
     localStorage.setItem('wooden_toys_wishlist', JSON.stringify(wishlistItems));
   }, [wishlistItems]);
 
+  // Validate wishlist items against backend to remove deleted/dummy data
+  useEffect(() => {
+    const validateWishlist = async () => {
+      const currentItems = JSON.parse(localStorage.getItem('wooden_toys_wishlist') || '[]');
+      if (currentItems.length === 0) return;
+      
+      try {
+        const validationResults = await Promise.all(
+          currentItems.map(async (item) => {
+            try {
+              const productId = item._id || item.id;
+              if (!productId) return null;
+              const res = await productV2API.getById(productId);
+              return (res && (res.product || res._id || res.id)) ? item : null;
+            } catch (err) {
+              return null;
+            }
+          })
+        );
+        
+        const validItems = validationResults.filter(Boolean);
+        if (validItems.length !== currentItems.length) {
+          setWishlistItems(validItems);
+        }
+      } catch (err) {
+        console.error('Wishlist validation failed:', err);
+      }
+    };
+    
+    validateWishlist();
+  }, []);
+
   // Navigation handler for backward compatibility
-  const handleNavigate = (path, payload = null) => {
-    if (payload && typeof payload === 'object') {
-      navigate(path, { state: { data: payload } });
+  const handleNavigate = (path, payload = null, options = {}) => {
+    if (path === 'home') {
+      const redirect = localStorage.getItem('checkout_redirect') || '/';
+      localStorage.removeItem('checkout_redirect');
+      navigate(redirect, { replace: true, ...options });
+    } else if (path === 'admin') {
+      navigate('/admin/dashboard', { replace: true, ...options });
+    } else if (payload && typeof payload === 'object') {
+      navigate(path, { state: { data: payload }, ...options });
     } else if (payload) {
-      navigate(`${path}/${payload}`);
+      navigate(`${path}/${payload}`, options);
     } else {
-      navigate(path);
+      navigate(path, options);
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -139,16 +177,14 @@ export default function AppRouter() {
 
     let productToAdd = { ...product };
 
-    // Always fetch full details to ensure we have variants with stock info
-    if (!productToAdd.variants || productToAdd.variants.length === 0) {
-      try {
-        const res = await productV2API.getById(productToAdd._id || productToAdd.id);
-        const fullProduct = res.product || res;
-        // Merge API data but restore gift fields so they aren't overwritten
-        productToAdd = { ...productToAdd, ...fullProduct, ...giftPrefs };
-      } catch (err) {
-        console.error('[Cart] Failed to fetch full product details:', err);
-      }
+    // Always fetch full details to ensure we have complete variants, stock info, and options before adding to cart
+    try {
+      const res = await productV2API.getById(productToAdd._id || productToAdd.id);
+      const fullProduct = res.product || res;
+      // Merge API data but restore gift fields so they aren't overwritten
+      productToAdd = { ...productToAdd, ...fullProduct, ...giftPrefs };
+    } catch (err) {
+      console.error('[Cart] Failed to fetch full product details:', err);
     }
 
     // ── Product already has a pre-selected variant (from ProductDetails page) ──
@@ -167,18 +203,18 @@ export default function AppRouter() {
     return productToAdd;
   };
 
-  const handleAddToCart = async (product) => {
+  const handleAddToCart = async (product, qty = 1, explicitlySelectedVariant = null) => {
     const resolved = await resolveProductForCart(product);
     if (!resolved) return;
-    addToCart(resolved, 1);
+    addToCart(resolved, qty, explicitlySelectedVariant);
     setIsCartOpen(true);
   };
 
-  const handleBuyNow = async (product) => {
+  const handleBuyNow = async (product, qty = 1, explicitlySelectedVariant = null) => {
     const resolved = await resolveProductForCart(product);
     if (!resolved) return;
     clearCart();
-    addToCart(resolved, 1);
+    addToCart(resolved, qty, explicitlySelectedVariant);
     navigate('/review-order');
   };
 

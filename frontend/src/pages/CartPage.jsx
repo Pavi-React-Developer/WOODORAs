@@ -3,13 +3,16 @@ import useCartStore from '../store/useCartStore';
 import useCartCalculation from '../hooks/useCartCalculation';
 import { Trash2, Plus, Minus, ArrowLeft, ShoppingBag, Gift } from 'lucide-react';
 import { getImageSrc } from '../utils/imageUtils';
+import { authService } from '../api/authService';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 export default function CartPage({ onNavigate }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { cartItems, removeFromCart, updateQuantity } = useCartStore();
-  const { subtotal } = useCartCalculation();
+  const { cartItems, removeFromCart, updateQuantity, getSubtotal } = useCartStore();
+  
+  // Use local calculation for immediate UI updates and guest user support
+  const subtotal = getSubtotal();
 
   const handleIncrease = (item) => {
     const maxStock = item.maxStock ?? 999;
@@ -27,10 +30,20 @@ export default function CartPage({ onNavigate }) {
 
   const handleCheckout = () => {
     useCartStore.getState().setCheckoutOrigin(location.pathname);
-    if (onNavigate) {
-      onNavigate('/review-order');
+    const user = authService.getCurrentUser();
+    if (!user) {
+      localStorage.setItem('checkout_redirect', '/review-order');
+      if (onNavigate) {
+        onNavigate('/login');
+      } else {
+        navigate('/login');
+      }
     } else {
-      navigate('/review-order');
+      if (onNavigate) {
+        onNavigate('/review-order');
+      } else {
+        navigate('/review-order');
+      }
     }
   };
 

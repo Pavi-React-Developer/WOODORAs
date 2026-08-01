@@ -3,7 +3,7 @@ import { adminService } from '../api/adminService';
 import toast from 'react-hot-toast';
 import { Ticket, CheckCircle2 } from 'lucide-react';
 
-export default function CouponSection({ subtotal, items = [], onApplyCoupon }) {
+export default function CouponSection({ subtotal, items = [], onApplyCoupon, appliedCoupon }) {
   const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCoupon, setSelectedCoupon] = useState('');
@@ -70,7 +70,27 @@ export default function CouponSection({ subtotal, items = [], onApplyCoupon }) {
         <Ticket size={18} className="text-[#8B5E3C]" />
         <h3 className="text-lg font-bold text-[#2F241D]">Coupons & Offers</h3>
       </div>
-      {loading ? (
+      {appliedCoupon ? (
+        <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-2xl">
+          <div>
+            <div className="text-sm font-bold text-green-800 flex items-center gap-1.5">
+              <CheckCircle2 size={16} /> Coupon Applied
+            </div>
+            <div className="text-lg font-bold text-green-900 mt-1">{appliedCoupon.couponCode || appliedCoupon.code}</div>
+          </div>
+          <button 
+            onClick={() => {
+              setSelectedCoupon('');
+              setManualCode('');
+              onApplyCoupon?.({ coupon: null, discountAmount: 0 });
+              toast.success('Coupon removed');
+            }} 
+            className="text-red-500 hover:text-red-700 text-sm font-semibold px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
+          >
+            Remove
+          </button>
+        </div>
+      ) : loading ? (
         <div className="text-sm text-gray-500">Loading coupons…</div>
       ) : coupons.length === 0 ? (
         <div className="space-y-3">

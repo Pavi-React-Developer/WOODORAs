@@ -562,14 +562,59 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
     return [];
   }, [product, variantAttributeOptions]);
 
-  // selectedAttributeValues: { [attributeName]: string } — single value per attribute
   const [selectedAttributeValues, setSelectedAttributeValues] = useState({});
+  const [hasInitializedVariant, setHasInitializedVariant] = useState(false);
 
-  // Reset when product/attributes change
+  // Reset when product ID changes
   useEffect(() => {
+    setHasInitializedVariant(false);
     setSelectedAttributeValues({});
     setSelectedVariant(null);
   }, [product?._id]);
+
+  // Set default variant once product data with variants is loaded
+  useEffect(() => {
+    if (hasInitializedVariant || loadingProduct) return;
+    if (product && typeof product === 'object') {
+      // If we don't have variants array but hasVariants is true, we might still be loading.
+      // Wait for variants to arrive.
+      if (product.hasVariants && (!product.variants || product.variants.length === 0)) {
+        return; // wait for full load
+      }
+
+      let initialAttributes = {};
+      let initialVariant = null;
+
+      if (product.hasVariants && product.variants?.length > 0) {
+        initialVariant = product.variants.find(v => v.isActive !== false) || product.variants[0];
+        
+        if (initialVariant?.options && Array.isArray(initialVariant.options)) {
+          initialVariant.options.forEach(opt => {
+            const attrName = String(opt.attribute?.name || opt.attributeName || '').trim();
+            if (attrName && opt.value != null) {
+              initialAttributes[attrName] = String(opt.value).trim();
+            }
+          });
+        }
+      }
+
+      // If initialAttributes is still empty (e.g. simple products with product-level attributeValues)
+      if (Object.keys(initialAttributes).length === 0) {
+        const fallbackAttributes = Array.isArray(product.attributeValues) ? product.attributeValues : (Array.isArray(product.attributes) ? product.attributes : []);
+        fallbackAttributes.forEach(attr => {
+          const attrName = String(attr.attribute?.name || attr.attributeName || '').trim();
+          const values = Array.isArray(attr.values) ? attr.values : (attr.value ? [attr.value] : []);
+          if (attrName && values.length > 0) {
+            initialAttributes[attrName] = String(values[0]).trim();
+          }
+        });
+      }
+
+      setSelectedAttributeValues(initialAttributes);
+      setSelectedVariant(initialVariant);
+      setHasInitializedVariant(true);
+    }
+  }, [product, hasInitializedVariant, loadingProduct]);
 
   // Single-select per attribute (radio-like). Clicking the same value deselects it.
   const handleToggleAttributeValue = (attributeLabel, value) => {
@@ -642,14 +687,15 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
       ...product,
       selectedFinish,
       quantity,
+      selectedAttributeValues,
       ...(selectedVariant && { selectedVariant })
     };
     if (type === 'Cart') {
-      onAddToCart?.(item);
+      onAddToCart?.(item, quantity, selectedVariant);
     } else if (type === 'Buy') {
-      onBuyNow?.(item);
+      onBuyNow?.(item, quantity, selectedVariant);
     } else {
-      onAddToWishlist?.(item);
+      onAddToWishlist?.(product, selectedVariant, quantity);
     }
   };
 
@@ -1175,8 +1221,8 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                         product={p} 
                         user={user} 
                         onNavigate={onNavigate} 
-                        onAddToCart={() => {}} 
-                        onAddToWishlist={() => {}} 
+                        onAddToCart={onAddToCart} 
+                        onAddToWishlist={onAddToWishlist} 
                       />
                     </div>
                   </SwiperSlide>

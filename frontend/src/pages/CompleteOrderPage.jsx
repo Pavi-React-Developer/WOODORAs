@@ -633,7 +633,7 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
             </div>
 
             <div className="bg-white p-6 rounded-3xl shadow-sm border border-[#E6DFD4]">
-              <CouponSection subtotal={subtotal} items={cartItems} onApplyCoupon={handleApplyCoupon} />
+              <CouponSection subtotal={subtotal} items={cartItems} onApplyCoupon={handleApplyCoupon} appliedCoupon={appliedCoupon} />
             </div>
 
             {/* Order Notes Card */}

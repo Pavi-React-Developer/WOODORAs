@@ -64,8 +64,9 @@ const userSchema = new mongoose.Schema({
         emailNotifications: { type: Boolean, default: true },
     },
     wishlist: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Product'
+        product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+        variant: { type: mongoose.Schema.Types.Mixed, default: null },
+        qty: { type: Number, default: 1 }
     }],
     loyalty: {
         points: { type: Number, default: 0 },

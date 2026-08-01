@@ -66,8 +66,11 @@ export default function WishlistPage({ wishlistItems, onRemove, onMoveToCart, on
         <div className="bg-white rounded-3xl shadow-sm border border-[#E6DFD4] overflow-hidden mb-8">
           <div className="divide-y divide-[#E6DFD4]">
             {wishlistItems.map((item, index) => {
-              const effectivePrice = getEffectivePrice(item);
-              const firstImage = getEffectiveImage(item);
+              const product = item.product || item;
+              if (!product || !product.name) return null; // Skip dummy or invalid products
+
+              const effectivePrice = getEffectivePrice(product);
+              const firstImage = getEffectiveImage(product);
               const variantText = getVariantText(item);
               
               return (
@@ -77,14 +80,14 @@ export default function WishlistPage({ wishlistItems, onRemove, onMoveToCart, on
                     <div className="w-28 h-28 bg-[#F8F4EC] rounded-2xl overflow-hidden shrink-0 border border-gray-100">
                       <img 
                         src={firstImage || '/wood-placeholder.png'} 
-                        alt={item.name} 
+                        alt={product.name} 
                         className="w-full h-full object-cover mix-blend-multiply"
                         onError={(e) => { e.target.src = '/wood-placeholder.png'; }}
                       />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-bold text-gray-800 text-xl line-clamp-2 leading-snug mb-1 cursor-pointer hover:text-[#8B5E3C]" onClick={() => onNavigate(`/product/${item._id}`)}>
-                        {item.name}
+                      <h3 className="font-bold text-gray-800 text-xl line-clamp-2 leading-snug mb-1 cursor-pointer hover:text-[#8B5E3C]" onClick={() => onNavigate(`/product/${product._id || product.id}`)}>
+                        {product.name}
                       </h3>
                       {variantText && (
                         <p className="text-sm text-gray-500 mb-2">{variantText}</p>

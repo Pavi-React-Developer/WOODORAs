@@ -1,23 +1,32 @@
 import React from 'react';
 import { getImageSrc, normalizeImageValue } from '../utils/imageUtils';
+import { Minus, Plus } from 'lucide-react';
+import useWishlistStore from '../store/useWishlistStore';
 
 export default function WishlistOffcanvas({ isOpen, onClose, wishlistItems, onRemove, onMoveToCart }) {
   if (!isOpen) return null;
 
+  const { updateQuantity } = useWishlistStore();
+
   // Helper function to get the effective price (variant price or product price)
   const getEffectivePrice = (item) => {
-    if (item.selectedVariant && (item.selectedVariant.basePrice != null || item.selectedVariant.price != null)) {
-      return item.selectedVariant.basePrice ?? item.selectedVariant.price;
+    const variant = item.variant || item.selectedVariant;
+    const prod = item.product || item;
+    if (variant && (variant.basePrice != null || variant.price != null)) {
+      return variant.basePrice ?? variant.price;
     }
-    return item.salePrice || item.price || 0;
+    return prod.salePrice || prod.price || 0;
   };
 
   // Helper function to get the effective images (variant images or product images)
   const getEffectiveImage = (item) => {
-    let imgSrc = item.selectedVariant?.images?.find(img => img.isThumbnail)?.url || item.selectedVariant?.images?.[0]?.url || (typeof item.selectedVariant?.images?.[0] === 'string' ? item.selectedVariant.images[0] : null);
+    const variant = item.variant || item.selectedVariant;
+    const prod = item.product || item;
+    
+    let imgSrc = variant?.images?.find(img => img.isThumbnail)?.url || variant?.images?.[0]?.url || (typeof variant?.images?.[0] === 'string' ? variant.images[0] : null);
     
     if (!imgSrc) {
-       imgSrc = item.images?.find(img => img.isThumbnail)?.url || item.images?.[0]?.url || (typeof item.images?.[0] === 'string' ? item.images[0] : null) || (typeof item.image === 'object' ? item.image?.url : item.image) || null;
+       imgSrc = prod?.images?.find(img => img.isThumbnail)?.url || prod?.images?.[0]?.url || (typeof prod?.images?.[0] === 'string' ? prod.images[0] : null) || (typeof prod?.image === 'object' ? prod.image?.url : prod?.image) || null;
     }
     
     return imgSrc || '/wood-placeholder.png';
@@ -25,10 +34,11 @@ export default function WishlistOffcanvas({ isOpen, onClose, wishlistItems, onRe
 
   // Helper function to get variant details text
   const getVariantText = (item) => {
-    if (!item.selectedVariant?.options || !Array.isArray(item.selectedVariant.options)) {
+    const variant = item.variant || item.selectedVariant;
+    if (!variant?.options || !Array.isArray(variant.options)) {
       return '';
     }
-    return item.selectedVariant.options
+    return variant.options
       .map(opt => `${opt.attribute?.name || opt.attributeName || 'Attr'}: ${opt.value}`)
       .join(', ');
   };
@@ -63,7 +73,14 @@ export default function WishlistOffcanvas({ isOpen, onClose, wishlistItems, onRe
               <p>Your wishlist is empty.</p>
             </div>
           ) : (
-            wishlistItems.map((item, index) => {
+            wishlistItems
+              .filter(item => {
+                const prod = item.product || item;
+                return prod && prod._id && prod.name;
+              })
+              .map((item, index) => {
+              const prod = item.product || item;
+              const qty = item.qty || 1;
               const effectivePrice = getEffectivePrice(item);
               const firstImage = getEffectiveImage(item);
               const variantText = getVariantText(item);
@@ -73,23 +90,43 @@ export default function WishlistOffcanvas({ isOpen, onClose, wishlistItems, onRe
                   <div className="w-20 h-20 bg-white rounded-xl overflow-hidden shrink-0 border border-brand-medium/10 flex items-center justify-center">
                     <img 
                       src={firstImage || '/wood-placeholder.png'} 
-                      alt={item.name} 
+                      alt={prod.name} 
                       className="w-full h-full object-cover"
                       onError={(e) => { e.target.src = '/wood-placeholder.png'; }}
                     />
                   </div>
                   <div className="flex-1 flex flex-col justify-between">
                     <div>
-                      <h4 className="font-bold text-sm text-brand-dark line-clamp-2">{item.name}</h4>
+                      <h4 className="font-bold text-sm text-brand-dark line-clamp-2">{prod.name}</h4>
                       {variantText && (
                         <p className="text-xs text-brand-dark/60 mt-1 line-clamp-1">{variantText}</p>
                       )}
                     </div>
                     <div className="flex flex-col gap-2 mt-2">
                       <span className="font-serif font-bold text-brand-dark">
-                        ₹{effectivePrice.toFixed(2)}
+                        ₹{(effectivePrice * qty).toFixed(2)}
                       </span>
-                      <div className="flex justify-between items-center">
+                      
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center bg-white rounded-lg border border-brand-medium/20 h-8">
+                          <button 
+                            onClick={() => qty > 1 && updateQuantity(index, qty - 1)}
+                            className="w-8 h-full flex items-center justify-center text-brand-dark/60 hover:text-brand-dark transition-colors disabled:opacity-30"
+                            disabled={qty <= 1}
+                          >
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <span className="w-8 text-center text-sm font-semibold text-brand-dark">{qty}</span>
+                          <button 
+                            onClick={() => updateQuantity(index, qty + 1)}
+                            className="w-8 h-full flex items-center justify-center text-brand-dark/60 hover:text-brand-dark transition-colors"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-between items-center mt-1">
                         <button 
                           onClick={() => onMoveToCart(item, index)}
                           className="text-[10px] bg-brand-dark text-white px-2 py-1 rounded hover:bg-brand-medium transition-colors uppercase tracking-wide font-bold"

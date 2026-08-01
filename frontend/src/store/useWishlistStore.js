@@ -17,11 +17,11 @@ export const wishlistService = {
     if (!res.ok) throw new Error('Failed to fetch wishlist');
     return res.json();
   },
-  toggleWishlist: async (productId) => {
+  toggleWishlist: async (productId, variant = null, qty = 1) => {
     const res = await fetch(`${API_BASE_URL}/user/wishlist`, {
       method: 'POST',
       headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-      body: JSON.stringify({ productId })
+      body: JSON.stringify({ productId, variant, qty })
     });
     if (!res.ok) throw new Error('Failed to toggle wishlist');
     return res.json();
@@ -74,18 +74,29 @@ const useWishlistStore = create((set, get) => ({
     }
   },
 
-  toggleWishlist: async (product) => {
+  toggleWishlist: async (product, variant = null, qty = 1) => {
     const { wishlistItems } = get();
     const user = authService.getCurrentUser();
     
-    const existsIndex = wishlistItems.findIndex((item) => (item._id || item.id) === (product._id || product.id));
+    // Normalize IDs for comparison
+    const pId = product._id || product.id || product;
+    const vIdStr = variant && variant._id ? variant._id.toString() : (variant ? variant.toString() : null);
+
+    const existsIndex = wishlistItems.findIndex((item) => {
+      const itemPId = item.product?._id || item.product || item._id || item.id;
+      if (itemPId.toString() !== pId.toString()) return false;
+      
+      const itemVIdStr = item.variant && item.variant._id ? item.variant._id.toString() : (item.variant ? item.variant.toString() : null);
+      return itemVIdStr === vIdStr;
+    });
+
     let newWishlist;
     
     if (existsIndex > -1) {
       newWishlist = [...wishlistItems];
       newWishlist.splice(existsIndex, 1);
     } else {
-      newWishlist = [...wishlistItems, product];
+      newWishlist = [...wishlistItems, { product, variant, qty }];
     }
     
     set({ wishlistItems: newWishlist });
@@ -94,7 +105,7 @@ const useWishlistStore = create((set, get) => ({
       setLocalWishlist(newWishlist);
     } else {
       try {
-        const data = await wishlistService.toggleWishlist(product._id || product.id);
+        const data = await wishlistService.toggleWishlist(pId, variant, qty);
         set({ wishlistItems: data.wishlist || [] });
       } catch (error) {
         console.error('Failed to toggle wishlist on backend', error);
@@ -103,11 +114,43 @@ const useWishlistStore = create((set, get) => ({
     }
   },
 
+  updateQuantity: async (index, newQty) => {
+    const { wishlistItems } = get();
+    const user = authService.getCurrentUser();
+    if (newQty < 1 || index < 0 || index >= wishlistItems.length) return;
+
+    const newWishlist = [...wishlistItems];
+    newWishlist[index].qty = newQty;
+    
+    set({ wishlistItems: newWishlist });
+    
+    if (!user) {
+      setLocalWishlist(newWishlist);
+    } else {
+      // Because backend toggle doesn't strictly have an update function,
+      // we remove the old one and add the new one, OR we could build an update endpoint.
+      // But actually, we don't need to persist qty to backend immediately for wishlist,
+      // or we can just send a full replace if needed.
+      // For now, let's just trigger a re-add by calling merge (which handles multiple).
+      try {
+        const data = await wishlistService.mergeWishlist(newWishlist.map(item => ({
+            product: item.product?._id || item.product,
+            variant: item.variant,
+            qty: item.qty
+        })));
+        set({ wishlistItems: data.wishlist || [] });
+      } catch (error) {
+         console.error('Failed to update qty on backend', error);
+      }
+    }
+  },
+
   removeFromWishlistByIndex: async (index) => {
     const { wishlistItems } = get();
-    const product = wishlistItems[index];
-    if (product) {
-      await get().toggleWishlist(product);
+    const item = wishlistItems[index];
+    if (item) {
+      const product = item.product || item;
+      await get().toggleWishlist(product, item.variant, item.qty);
     }
   },
 
@@ -118,15 +161,69 @@ const useWishlistStore = create((set, get) => ({
     const user = authService.getCurrentUser();
     if (!user) return;
 
-    const productIds = localItems.map(item => item._id || item.id).filter(Boolean);
-    if (productIds.length > 0) {
+    // Send the detailed items for merging
+    const itemsToMerge = localItems.map(item => ({
+        product: item.product?._id || item.product || item._id || item.id,
+        variant: item.variant || null,
+        qty: item.qty || 1
+    })).filter(i => i.product);
+
+    if (itemsToMerge.length > 0) {
       try {
-        const data = await wishlistService.mergeWishlist(productIds);
+        const data = await wishlistService.mergeWishlist(itemsToMerge);
         set({ wishlistItems: data.wishlist || [] });
         localStorage.removeItem('wooden_toys_wishlist');
       } catch (error) {
         console.error('Error merging guest wishlist:', error);
       }
+    }
+  },
+
+  validateWishlist: async () => {
+    const { wishlistItems } = get();
+    if (!wishlistItems || wishlistItems.length === 0) return;
+
+    // We can't import productV2API directly at the top due to potential circular deps or path issues,
+    // but we can use fetch directly to check valid products.
+    try {
+      const validItems = [];
+      let hasChanges = false;
+      for (const item of wishlistItems) {
+        const pId = item.product?._id || item.product || item._id || item.id;
+        if (!pId) {
+          hasChanges = true;
+          continue;
+        }
+        const res = await fetch(`${API_BASE_URL}/products/${pId}`);
+        if (res.ok) {
+           const data = await res.json();
+           if (data && (data.product || data._id || data.id)) {
+              validItems.push(item);
+           } else {
+              hasChanges = true;
+           }
+        } else {
+           hasChanges = true;
+        }
+      }
+
+      if (hasChanges) {
+        set({ wishlistItems: validItems });
+        // Always update local storage so subsequent operations read the cleaned list
+        setLocalWishlist(validItems);
+        
+        if (authService.getCurrentUser()) {
+           // Sync valid wishlist to backend
+           const itemsToMerge = validItems.map(item => ({
+               product: item.product?._id || item.product || item._id || item.id,
+               variant: item.variant || null,
+               qty: item.qty || 1
+           }));
+           await wishlistService.mergeWishlist(itemsToMerge);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to validate wishlist:', err);
     }
   }
 }));

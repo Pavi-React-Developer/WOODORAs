@@ -3,6 +3,7 @@ import { Gift, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
 import useCartStore from '../store/useCartStore';
 import useCartCalculation from '../hooks/useCartCalculation';
 import { useNavigate } from 'react-router-dom';
+import { authService } from '../api/authService';
 
 /**
  * CartOffcanvas — Side drawer cart panel.
@@ -13,8 +14,10 @@ import { useNavigate } from 'react-router-dom';
  */
 export default function CartOffcanvas({ isOpen, onClose }) {
   const navigate = useNavigate();
-  const { cartItems, updateQuantity, removeFromCart } = useCartStore();
-  const { subtotal: total } = useCartCalculation();
+  const { cartItems, updateQuantity, removeFromCart, getSubtotal } = useCartStore();
+  
+  // Use local calculation for immediate UI updates and guest user support
+  const total = getSubtotal();
 
   if (!isOpen) return null;
 
@@ -35,7 +38,13 @@ export default function CartOffcanvas({ isOpen, onClose }) {
 
   const handleCheckout = () => {
     onClose();
-    navigate('/review-order');
+    const user = authService.getCurrentUser();
+    if (!user) {
+      localStorage.setItem('checkout_redirect', '/review-order');
+      navigate('/login');
+    } else {
+      navigate('/review-order');
+    }
   };
 
   return (
@@ -119,6 +128,13 @@ export default function CartOffcanvas({ isOpen, onClose }) {
                       {item.variantOptions && (
                         <p className="text-xs text-brand-dark/60 mt-0.5 line-clamp-1">{item.variantOptions}</p>
                       )}
+                      
+                      {Boolean(item.weight) && Number(item.weight) > 0 && (
+                        <p className="text-[10px] text-brand-dark/50 mt-0.5">
+                          Weight: {item.weight} kg
+                        </p>
+                      )}
+
                       {item.isGift && (
                         <div className="mt-1">
                           <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#FFF0E6] text-[#D95F24] text-[9px] font-bold tracking-wider">

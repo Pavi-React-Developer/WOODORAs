@@ -15,6 +15,8 @@ const orderItemSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'ProductVariant',
   },
+  isGift: { type: Boolean, default: false },
+  isGiftWrapper: { type: Boolean, default: false },
 });
 
 const ORDER_STATUSES = [

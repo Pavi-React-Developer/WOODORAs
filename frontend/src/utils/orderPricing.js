@@ -57,12 +57,23 @@ export const getOrderPricing = (order = {}) => {
   let dynamicFeesTotal = 0;
 
   if (Array.isArray(order.fees) && order.fees.length > 0) {
-    fees = order.fees
+    const feeMap = new Map();
+    order.fees
       .filter((fee) => !isAdvanceFee(fee.name))
-      .map((fee) => ({
-        name: fee.name,
-        amount: number(fee.amount),
-      }));
+      .forEach((fee) => {
+        const name = fee.name;
+        const amount = number(fee.amount);
+        if (feeMap.has(name)) {
+          feeMap.set(name, feeMap.get(name) + amount);
+        } else {
+          feeMap.set(name, amount);
+        }
+      });
+      
+    fees = Array.from(feeMap.entries()).map(([name, amount]) => ({
+      name,
+      amount,
+    }));
     dynamicFeesTotal = fees.reduce((sum, fee) => sum + fee.amount, 0);
   } else {
     // Fallback for older orders without a fees array

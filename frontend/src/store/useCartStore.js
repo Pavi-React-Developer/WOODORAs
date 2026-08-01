@@ -99,7 +99,9 @@ const useCartStore = create(
 
       fetchCartSummary: async (payload = {}) => {
         try {
-          const summary = await cartService.getCartSummary(payload);
+          const state = get();
+          const itemsPayload = !localStorage.getItem('token') ? { items: state.cartItems } : {};
+          const summary = await cartService.getCartSummary({ ...payload, ...itemsPayload });
           set({ cartSummary: summary });
         } catch (error) {
           console.error('[Cart] Failed to fetch cart summary:', error.message);
@@ -194,40 +196,16 @@ const useCartStore = create(
       },
 
       // ─── Core Add to Cart ─────────────────────────────────────────────────
-      addToCart: async (product, qty = 1) => {
+      addToCart: async (product, qty = 1, explicitlySelectedVariant = null) => {
         const productId = toStr(product._id || product.id || product.productId || '');
         if (!productId) return;
 
-        let selectedVariant = product.selectedVariant || null;
+        let selectedVariant = explicitlySelectedVariant || product.selectedVariant || null;
         const variants = product.variants || [];
 
-        // ── FIFO Variant Resolution (only if no variant is pre-selected) ──
+        // ── Fallback Variant Resolution (if no variant is pre-selected) ──
         if (!selectedVariant && variants.length > 0) {
-          const currentState = get();
-          for (const variant of variants) {
-            if (variant.isActive === false) continue;
-
-            const variantStock = Math.max(
-              0,
-              (variant.inventory ?? variant.currentStock ?? variant.stock ?? 0) - (variant.reserveStock || 0)
-            );
-            if (variantStock <= 0) continue;
-
-            const variantIdStr = toStr(variant._id || variant.id);
-            const qtyInCart = currentState.cartItems
-              .filter(item => toStr(item.product) === productId && toStr(item.variant) === variantIdStr)
-              .reduce((sum, item) => sum + item.qty, 0);
-
-            if (variantStock - qtyInCart > 0) {
-              selectedVariant = variant;
-              break;
-            }
-          }
-
-          if (!selectedVariant) {
-            toast.error('All available stock has already been added to your cart.');
-            return;
-          }
+          selectedVariant = variants.find(v => v.isActive !== false) || variants[0];
         }
 
         // ── Calculate Final Details ────────────────────────────────────────
@@ -251,7 +229,7 @@ const useCartStore = create(
         // ── Variant Label ──────────────────────────────────────────────────
         const cap = (s) => (typeof s === 'string' ? s.charAt(0).toUpperCase() + s.slice(1) : s);
         const optParts = [];
-        if (selectedVariant) {
+        if (selectedVariant && ((Array.isArray(selectedVariant.options) && selectedVariant.options.length > 0) || selectedVariant.variantCombination || selectedVariant.color || selectedVariant.size || selectedVariant.weight)) {
           if (Array.isArray(selectedVariant.options) && selectedVariant.options.length > 0) {
             selectedVariant.options.forEach((opt) =>
               optParts.push(`${cap(opt.attribute?.name || opt.attributeName || 'Option')}: ${cap(opt.value)}`)
@@ -263,8 +241,12 @@ const useCartStore = create(
             if (selectedVariant.weight) optParts.push(`Weight: ${cap(String(selectedVariant.weight))}`);
             if (selectedVariant.size) optParts.push(`Size: ${cap(selectedVariant.size)}`);
           }
+        } else if (product.selectedAttributeValues && Object.keys(product.selectedAttributeValues).length > 0) {
+          Object.entries(product.selectedAttributeValues).forEach(([k, v]) => {
+            optParts.push(`${cap(k)}: ${cap(v)}`);
+          });
         }
-        const variantOptions = optParts.join(', ') || null;
+        const variantOptions = optParts.join(' | ') || null;
 
         // ── Max Stock ──────────────────────────────────────────────────────
         const maxStock = selectedVariant

@@ -146,19 +146,33 @@ const deleteAddress = async (req, res) => {
 // check ProductImage first, then fall back to the embedded field.
 const injectWishlistImages = async (wishlistItems) => {
     if (!wishlistItems || wishlistItems.length === 0) return wishlistItems;
-    const productIds = wishlistItems.filter(Boolean).map(p => p._id);
+    const productIds = wishlistItems.map(item => item.product?._id || item._id).filter(Boolean);
     if (!productIds.length) return wishlistItems;
 
     const productImages = await ProductImage.find({ product: { $in: productIds } })
         .sort({ isThumbnail: -1, displayOrder: 1 });
 
-    return wishlistItems.map(product => {
-        if (!product) return product;
-        const productObj = product.toObject ? product.toObject() : { ...product };
+    return wishlistItems.map(item => {
+        if (!item) return item;
+        
+        // Support both old flat format and new nested format
+        const isNested = !!item.product;
+        const rawProduct = isNested ? item.product : item;
+        
+        if (!rawProduct) return item;
+
+        const productObj = rawProduct.toObject ? rawProduct.toObject() : { ...rawProduct };
+        if (!productObj._id) return item;
+
         const imgs = productImages.filter(img => img.product.toString() === productObj._id.toString());
         if (imgs.length > 0) {
-            // Return objects with url field so frontend image logic works correctly
             productObj.images = imgs.map(img => ({ url: img.url, public_id: img.public_id || '', isThumbnail: img.isThumbnail }));
+        }
+        
+        if (isNested) {
+            const itemObj = item.toObject ? item.toObject() : { ...item };
+            itemObj.product = productObj;
+            return itemObj;
         }
         return productObj;
     });
@@ -168,7 +182,7 @@ const injectWishlistImages = async (wishlistItems) => {
 const getWishlist = async (req, res) => {
     try {
         let user = await User.findById(req.user._id).populate({
-            path: 'wishlist',
+            path: 'wishlist.product',
             select: 'name price salePrice discountPrice images isWishlisted slug hasVariants variants',
             populate: {
                 path: 'variants',
@@ -179,7 +193,7 @@ const getWishlist = async (req, res) => {
         if (!user) {
 
             user = await Staff.findById(req.user._id).populate({
-                path: 'wishlist',
+                path: 'wishlist.product',
                 select: 'name price salePrice discountPrice images isWishlisted slug hasVariants variants',
                 populate: {
                     path: 'variants',
@@ -190,6 +204,13 @@ const getWishlist = async (req, res) => {
         
         if (!user) return res.status(404).json({ message: 'User not found' });
         
+        // Clean up any deleted/invalid products from the wishlist
+        const validWishlist = user.wishlist.filter(item => item.product != null);
+        if (validWishlist.length !== user.wishlist.length) {
+            user.wishlist = validWishlist;
+            await user.save();
+        }
+
         const finalWishlist = await injectWishlistImages(user.wishlist || []);
         res.json({ success: true, wishlist: finalWishlist });
     } catch (error) {
@@ -199,36 +220,50 @@ const getWishlist = async (req, res) => {
 
 const toggleWishlist = async (req, res) => {
     try {
-        const { productId } = req.body;
+        const { productId, variant = null, qty = 1 } = req.body;
         if (!productId) return res.status(400).json({ message: 'Product ID is required' });
         
         let user = await User.findById(req.user._id);
         if (!user) {
-
             user = await Staff.findById(req.user._id);
         }
         if (!user) return res.status(404).json({ message: 'User not found' });
 
-        const index = user.wishlist.indexOf(productId);
+        // Try to find exact match of product + variant
+        const variantIdStr = variant && variant._id ? variant._id.toString() : (variant ? variant.toString() : null);
+        const index = user.wishlist.findIndex(item => {
+            const pId = item.product?._id || item.product || item;
+            if (pId.toString() !== productId.toString()) return false;
+            
+            const vId = item.variant && item.variant._id ? item.variant._id.toString() : (item.variant ? item.variant.toString() : null);
+            return vId === variantIdStr;
+        });
+
         let action = '';
         if (index > -1) {
             user.wishlist.splice(index, 1);
             action = 'removed';
         } else {
-            user.wishlist.push(productId);
+            user.wishlist.push({ product: productId, variant, qty });
             action = 'added';
         }
         await user.save();
         
         await user.populate({
-            path: 'wishlist',
+            path: 'wishlist.product',
             select: 'name price salePrice discountPrice images isWishlisted slug hasVariants variants',
             populate: {
                 path: 'variants',
                 select: 'price salePrice discountPrice basePrice options images'
             }
         });
-        
+
+        const validWishlist = user.wishlist.filter(item => item.product != null);
+        if (validWishlist.length !== user.wishlist.length) {
+            user.wishlist = validWishlist;
+            await user.save();
+        }
+
         const finalWishlist = await injectWishlistImages(user.wishlist || []);
         res.json({ success: true, action, wishlist: finalWishlist });
     } catch (error) {
@@ -238,36 +273,62 @@ const toggleWishlist = async (req, res) => {
 
 const mergeWishlist = async (req, res) => {
     try {
-        const { productIds } = req.body;
+        // Can be array of strings (legacy) or array of {product, variant, qty}
+        const { productIds } = req.body; 
         if (!productIds || !Array.isArray(productIds)) {
             return res.status(400).json({ message: 'Product IDs array is required' });
         }
 
         let user = await User.findById(req.user._id);
         if (!user) {
-
             user = await Staff.findById(req.user._id);
         }
         if (!user) return res.status(404).json({ message: 'User not found' });
 
-        const currentWishlistStr = user.wishlist.map(id => id.toString());
-        
-        for (const pid of productIds) {
-            if (!currentWishlistStr.includes(pid.toString())) {
-                user.wishlist.push(pid);
-                currentWishlistStr.push(pid.toString());
+        for (const item of productIds) {
+            let pid, variant, qty;
+            if (typeof item === 'string' || item instanceof mongoose.Types.ObjectId) {
+                pid = item;
+                variant = null;
+                qty = 1;
+            } else {
+                pid = item.product?._id || item.product || item.id;
+                variant = item.variant;
+                qty = item.qty || 1;
+            }
+            if (!pid) continue;
+
+            const variantIdStr = variant && variant._id ? variant._id.toString() : (variant ? variant.toString() : null);
+            
+            // Check if exists
+            const exists = user.wishlist.some(w => {
+                const wPid = w.product?._id || w.product || w;
+                if (wPid.toString() !== pid.toString()) return false;
+                
+                const wVid = w.variant && w.variant._id ? w.variant._id.toString() : (w.variant ? w.variant.toString() : null);
+                return wVid === variantIdStr;
+            });
+
+            if (!exists) {
+                user.wishlist.push({ product: pid, variant, qty });
             }
         }
         await user.save();
 
         await user.populate({
-            path: 'wishlist',
+            path: 'wishlist.product',
             select: 'name price salePrice discountPrice images isWishlisted slug hasVariants variants',
             populate: {
                 path: 'variants',
                 select: 'price salePrice discountPrice basePrice options images'
             }
         });
+
+        const validWishlist = user.wishlist.filter(item => item.product != null);
+        if (validWishlist.length !== user.wishlist.length) {
+            user.wishlist = validWishlist;
+            await user.save();
+        }
 
         const finalWishlist = await injectWishlistImages(user.wishlist || []);
         res.json({ success: true, wishlist: finalWishlist });
