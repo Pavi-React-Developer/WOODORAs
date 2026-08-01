@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Settings, ToggleLeft, ToggleRight, List, Columns, ShieldAlert, Download, RefreshCw, Sparkles, Layers, Globe , SquarePen , Trash } from 'lucide-react';
 import { productV2API, categoryV2API, subCategoryV2API } from '../../../api/catalogV2Service';
+import toast from 'react-hot-toast';
 import { downloadExcelFile } from '../../../utils/exportUtils';
 import { SearchBar, Button, Badge, Card } from '../../../components/admin/CommonComponents';
 import ConfirmDialog from '../../../components/admin/ConfirmDialog';
@@ -362,6 +363,8 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
 
     const handleSave = async (e) => {
         e.preventDefault();
+        console.log('--- SAVE PRODUCT BUTTON CLICKED ---');
+        console.log('Current form data:', formData);
         setErrorMsg('');
         
         let errors = {};
@@ -369,10 +372,18 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
         if (!formData.category) errors.category = 'Category is required.';
         if (!formData.subCategory) errors.subCategory = 'Sub-Category is required.';
         if (formData.price < 0) errors.price = 'Price cannot be negative.';
-        if (formData.description && formData.description.length < 10) errors.description = 'Description must be at least 10 characters long.';
+        if (!formData.description || formData.description.trim().length < 10) errors.description = 'Description must be at least 10 characters long.';
 
         if (Object.keys(errors).length > 0) {
             setFormErrors(errors);
+            toast.error("Please fix the validation errors at the top of the form before saving.");
+            
+            setTimeout(() => {
+                const firstErrorEl = document.querySelector('.border-red-500');
+                if (firstErrorEl) {
+                    firstErrorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 100);
             return;
         }
 
@@ -436,7 +447,9 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
             handleCloseForm();
             fetchProducts();
         } catch (err) {
-            setErrorMsg(err.message || 'Failed to save product');
+            const msg = err.message || 'Failed to save product';
+            setErrorMsg(msg);
+            toast.error(msg);
         } finally {
             setFormLoading(false);
         }
@@ -799,7 +812,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                         </div>
 
                         {/* Drawer Content */}
-                        <form onSubmit={handleSave} className="flex-1 overflow-y-auto p-6 space-y-8">
+                        <form onSubmit={handleSave} noValidate className="flex-1 overflow-y-auto p-6 space-y-8">
                             {errorMsg && (
                                 <div className="p-4 bg-red-50 text-red-700 text-sm rounded-lg font-medium">
                                     {errorMsg}
@@ -878,13 +891,14 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                                 generateSKU(formData.category, newSubId);
                                             }}
                                             disabled={!formData.category}
-                                            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm bg-white disabled:opacity-50"
+                                            className={`px-4 py-2 border ${formErrors.subCategory ? 'border-red-500 bg-red-50 focus:ring-red-500' : 'border-gray-300 focus:ring-amber-500'} rounded-lg focus:outline-none focus:ring-2 text-sm bg-white disabled:opacity-50`}
                                         >
                                             <option value="">Select Sub-Category</option>
                                             {formSubCategories.map(s => (
                                                 <option key={s._id} value={s._id}>{s.name}</option>
                                             ))}
                                         </select>
+                                        {formErrors.subCategory && <p className="text-red-500 text-[10px]">{formErrors.subCategory}</p>}
                                     </div>
                                 </div>
 
@@ -903,10 +917,14 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                         required
                                         rows={4}
                                         value={formData.description}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                                        onChange={(e) => {
+                                            setFormData(prev => ({ ...prev, description: e.target.value }));
+                                            if (formErrors.description) setFormErrors({ ...formErrors, description: '' });
+                                        }}
                                         placeholder="Detailed description of the product features, benefits..."
-                                        className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
+                                        className={`px-4 py-2 border ${formErrors.description ? 'border-red-500 bg-red-50 focus:ring-red-500' : 'border-gray-300 focus:ring-amber-500'} rounded-lg focus:outline-none focus:ring-2 text-sm`}
                                     />
+                                    {formErrors.description && <p className="text-red-500 text-[10px]">{formErrors.description}</p>}
                                     
                                     {formData.additionalInfo?.map((info, idx) => (
                                         <div key={idx} className="flex gap-2 mt-2 items-start">

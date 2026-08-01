@@ -191,10 +191,20 @@ exports.getProductGrids = asyncHandler(async (req, res) => {
       const variants = await ProductVariant.find({ product: prod._id }).limit(3);
       const pricing = productService.buildProductPricing(prod, variants, productImages.length > 0 ? productImages : fallbackImages);
 
+      const Review = require('../models/Review');
+      const ratingAgg = await Review.aggregate([
+          { $match: { product: prod._id, status: 'approved' } },
+          { $group: { _id: null, avg: { $avg: '$rating' }, count: { $sum: 1 } } }
+      ]);
+      const averageRating = ratingAgg[0]?.avg ? Math.round(ratingAgg[0].avg * 10) / 10 : 0;
+      const reviewCount = ratingAgg[0]?.count || 0;
+
       return {
         ...prod,
         ...pricing,
         images: productImages.length > 0 ? productImages : fallbackImages,
+        averageRating,
+        reviewCount,
       };
     }));
     return gridObj;
@@ -247,10 +257,20 @@ exports.getCategoryGrids = asyncHandler(async (req, res) => {
       const variants = await ProductVariant.find({ product: prod._id }).limit(3);
       const pricing = productService.buildProductPricing(prod, variants, productImages.length > 0 ? productImages : fallbackImages);
 
+      const Review = require('../models/Review');
+      const ratingAgg = await Review.aggregate([
+          { $match: { product: prod._id, status: 'approved' } },
+          { $group: { _id: null, avg: { $avg: '$rating' }, count: { $sum: 1 } } }
+      ]);
+      const averageRating = ratingAgg[0]?.avg ? Math.round(ratingAgg[0].avg * 10) / 10 : 0;
+      const reviewCount = ratingAgg[0]?.count || 0;
+
       return {
         ...prod,
         ...pricing,
         images: productImages.length > 0 ? productImages : fallbackImages,
+        averageRating,
+        reviewCount,
       };
     }));
     return gridObj;

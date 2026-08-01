@@ -50,6 +50,13 @@ const addAddress = async (req, res) => {
             user.addresses[0].isDefault = true;
         }
 
+        // Sync default address details to profile automatically
+        const isDefaultNow = newAddress.isDefault || user.addresses.length === 1;
+        if (isDefaultNow) {
+            if (newAddress.fullName) user.name = newAddress.fullName;
+            if (newAddress.phone) user.phone = newAddress.phone;
+        }
+
         await user.save();
         res.status(201).json({ success: true, addresses: user.addresses });
     } catch (error) {
@@ -87,6 +94,12 @@ const updateAddress = async (req, res) => {
         
         if (req.body.isDefault !== undefined) {
             address.isDefault = req.body.isDefault;
+        }
+
+        // Sync default address details to profile automatically
+        if (address.isDefault) {
+            if (address.fullName) user.name = address.fullName;
+            if (address.phone) user.phone = address.phone;
         }
 
         await user.save();

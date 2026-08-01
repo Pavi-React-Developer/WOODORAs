@@ -55,11 +55,10 @@ export default function ProductCard({ product, viewMode = 'grid', onNavigate, on
   const pricing = getPricingInfo(product);
 
   const getDynamicReview = (p) => {
-    if (p.reviewCount > 0) return { rating: p.averageRating, count: p.reviewCount };
-    const nameHash = (p.name || '').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const rating = (4.0 + (nameHash % 11) / 10).toFixed(1);
-    const count = (nameHash % 150) + 15;
-    return { rating, count };
+    return { 
+      rating: p.averageRating ? Number(p.averageRating).toFixed(1) : "0.0", 
+      count: p.reviewCount || 0 
+    };
   };
 
   const reviewInfo = getDynamicReview(product);

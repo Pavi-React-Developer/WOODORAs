@@ -24,7 +24,6 @@ const productFeeRoutes = require('./routes/productFeeRoutes');
 const giftCardRoutes = require('./routes/giftCardRoutes');
 const customizeRoutes = require('./routes/customizeRoutes');
 const walletRoutes = require('./routes/walletRoutes');
-const seedAttributes = require('./seedAttributes');
 const Order = require('./models/Order');
 const Review = require('./models/Review');
 const Module = require('./models/Module');
@@ -32,13 +31,14 @@ const StaffModel = require('./models/Staff');
 
 // Load env vars
 dotenv.config();
+process.env.BACKEND_URL = 'https://linen-finch-820225.hostingersite.com';
+process.env.FRONTEND_URL = 'https://marakathai.com';
 
 // Connect to database
 connectDB();
 
 // Seed default attributes once DB is open
 mongoose.connection.once('open', async () => {
-    seedAttributes();
     try {
         await Review.collection.dropIndex('product_1_user_1');
         console.log('Dropped legacy review unique index product_1_user_1');
@@ -98,9 +98,12 @@ const passport = require('./config/passport');
 app.use(passport.initialize());
 app.use(cors({
     origin: function (origin, callback) {
-        const allowedOrigins = process.env.CORS_ORIGIN
-            ? process.env.CORS_ORIGIN.split(',').map(s => s.trim())
-            : ['http://localhost:5173'];
+        const allowedOrigins = [
+            'https://marakathai.com',
+            'https://linen-finch-820225.hostingersite.com',
+            'http://localhost:4173',
+            'http://localhost:5173'
+        ];
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
@@ -146,8 +149,12 @@ app.use('/api/product-fees', productFeeRoutes);
 app.use('/api/refunds', refundRoutes);
 app.use('/api/settings', require('./routes/systemSettingRoutes'));
 
-app.get('/', (req, res) => {
-    res.send('API is running...');
+// Serve static frontend build
+app.use(express.static(path.join(__dirname, 'public')));
+
+// SPA Fallback: Any route not handled by the API will serve the React app
+app.get(/(.*)/, (req, res) => {
+    res.sendFile(path.resolve(__dirname, 'public', 'index.html'));
 });
 
 // Global error handler to prevent HTML responses on errors

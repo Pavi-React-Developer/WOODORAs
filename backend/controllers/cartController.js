@@ -551,8 +551,8 @@ const getCartSummary = async (req, res) => {
         paymentMethod: paymentMethod || ''
       });
       feeSummaryAppliedFees = feeSummary.appliedFees || [];
-      if (feeSummary.isFreeShipping) {
-        feeSummaryAppliedFees.push({ name: 'Shipping Fee', amount: 0, isFree: true });
+      if (feeSummary.isFreeShipping && !feeSummaryAppliedFees.some(f => f.name.toLowerCase().includes('shipping') && f.isFree)) {
+        feeSummaryAppliedFees.push({ name: 'Shipping Charge', amount: 0, isFree: true });
       }
     }
     

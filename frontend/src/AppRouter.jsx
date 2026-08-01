@@ -470,7 +470,7 @@ export default function AppRouter() {
                   wishlistCount={wishlistItems.length}
                   onOpenWishlist={() => setIsWishlistOpen(true)}
                 />
-                <OrderHistoryPage onNavigate={handleNavigate} />
+                <OrderHistoryPage onNavigate={handleNavigate} user={user} />
               </PageLayout>
             </ProtectedRoute>
           }

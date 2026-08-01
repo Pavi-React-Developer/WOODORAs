@@ -14,4 +14,7 @@ export default defineConfig({
       port: 5173,       // always point HMR WS at the same port
     },
   },
+  build: {
+    sourcemap: true,
+  },
 })

@@ -1,4 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Swiper, SwiperSlide, useSwiper } from 'swiper/react';
+import { Navigation, Pagination } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
 import toast from 'react-hot-toast';
 import { reviewService } from '../api/reviewService';
 import {
@@ -410,6 +415,54 @@ function ReviewCard({ review, user, onVote, onOpenImage }) {
   );
 }
 
+const ReviewNavButtons = () => {
+  const swiper = useSwiper();
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => swiper.slidePrev()}
+        className="absolute left-0 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full border border-[#E9DED3] bg-white text-[#141225] hover:text-[#B0611C] hover:border-[#B0611C] shadow-md flex items-center justify-center transition-colors z-[10]"
+        aria-label="Previous review"
+      >
+        <ChevronLeft size={24} />
+      </button>
+      <button
+        type="button"
+        onClick={() => swiper.slideNext()}
+        className="absolute right-0 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full border border-[#E9DED3] bg-white text-[#141225] hover:text-[#B0611C] hover:border-[#B0611C] shadow-md flex items-center justify-center transition-colors z-[10]"
+        aria-label="Next review"
+      >
+        <ChevronRight size={24} />
+      </button>
+    </>
+  );
+};
+
+const GalleryNavButtons = () => {
+  const swiper = useSwiper();
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => swiper.slidePrev()}
+        className="absolute left-0 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/95 backdrop-blur border border-[#E9DED3] text-[#141225] hover:text-[#B0611C] hover:border-[#B0611C] shadow-md flex items-center justify-center transition-all z-[10] opacity-0 group-hover/gallery:opacity-100"
+        aria-label="Previous photos"
+      >
+        <ChevronLeft size={20} />
+      </button>
+      <button
+        type="button"
+        onClick={() => swiper.slideNext()}
+        className="absolute right-0 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/95 backdrop-blur border border-[#E9DED3] text-[#141225] hover:text-[#B0611C] hover:border-[#B0611C] shadow-md flex items-center justify-center transition-all z-[10] opacity-0 group-hover/gallery:opacity-100"
+        aria-label="Next photos"
+      >
+        <ChevronRight size={20} />
+      </button>
+    </>
+  );
+};
+
 /* ═══════════════════════════════════════════════════
    MAIN EXPORT: ProductReviewSection
 ═══════════════════════════════════════════════════ */
@@ -574,10 +627,10 @@ export default function ProductReviewSection({ product, user }) {
             </div>
           </div>
 
-          <div className="grid lg:grid-cols-[260px_1fr] xl:grid-cols-[280px_1fr] gap-4 lg:gap-6 items-start px-2 pb-2">
+          <div className="flex lg:grid lg:grid-cols-[260px_1fr] xl:grid-cols-[280px_1fr] gap-4 lg:gap-6 items-start px-2 pb-2 overflow-x-auto snap-x snap-mandatory scroll-smooth hide-scrollbar">
             {/* RATING SUMMARY (Left Column) */}
             {stats?.total > 0 && (
-              <div ref={statsBoxRef} className="flex flex-col items-center shrink-0 w-full lg:border-r lg:border-[#E9DED3] lg:pr-6">
+              <div ref={statsBoxRef} className="flex flex-col items-center shrink-0 w-[90vw] snap-center lg:w-full lg:border-r lg:border-[#E9DED3] lg:pr-6">
                 <div className="relative flex flex-col items-center justify-center">
                   {/* Big brown star */}
                   <svg viewBox="0 0 24 24" className="w-44 h-44 md:w-48 md:h-48 text-[#B0611C]" fill="currentColor">
@@ -598,9 +651,46 @@ export default function ProductReviewSection({ product, user }) {
             )}
 
             {/* RIGHT COLUMN (Two Rows) */}
-            <div className="relative flex-1 min-w-0 flex flex-col gap-0">
+            <div className="relative flex flex-col gap-0 shrink-0 w-[90vw] snap-center lg:w-auto lg:flex-1 min-w-0">
               
-              {/* ── CUSTOMER REVIEWS SLIDER (Row 1) ── */}
+              {/* ── PHOTO GALLERY (Row 1) ── */}
+              {gallery.length > 0 && (
+                <div className="relative group/gallery mb-6">
+                  <h2 className="text-base lg:text-lg font-serif font-bold text-[#141225] mb-3 flex items-center gap-1.5">
+                    <Camera size={20} className="text-[#B0611C]" /> Customer Photo Gallery
+                  </h2>
+                  
+                  <div className="relative w-full">
+                    <Swiper
+                      modules={[Navigation]}
+                      spaceBetween={12}
+                      slidesPerView={3.5}
+                      breakpoints={{
+                        640: { slidesPerView: 4.5 },
+                        768: { slidesPerView: 5.5 },
+                        1024: { slidesPerView: 4 },
+                        1280: { slidesPerView: 5 }
+                      }}
+                      className="px-6 md:px-8"
+                    >
+                      {gallery.map((g, index) => (
+                        <SwiperSlide key={index}>
+                          <div onClick={() => setLightbox({ images: gallery.map(x => x.url), index: index })}
+                            className="relative group cursor-pointer h-20 md:h-24 w-full overflow-hidden rounded-2xl border border-[#E9DED3] shadow-sm">
+                            <img src={normalizeMediaUrl(g.url)} alt="" className="w-full h-full object-cover group-hover:scale-105 transition duration-500" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/animal_balance_maze.png'; }} />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
+                              <ZoomIn size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 drop-shadow-md scale-75 group-hover:scale-100" />
+                            </div>
+                          </div>
+                        </SwiperSlide>
+                      ))}
+                      <GalleryNavButtons />
+                    </Swiper>
+                  </div>
+                </div>
+              )}
+
+              {/* ── CUSTOMER REVIEWS SLIDER (Row 2) ── */}
               <div className="relative">
                 {/* Review List */}
                 {loading && reviews.length === 0 ? (
@@ -615,56 +705,35 @@ export default function ProductReviewSection({ product, user }) {
                     <p className="text-sm text-[#8A817C] mt-1">Be the first customer to review this product.</p>
                   </div>
                 ) : (
-                  <div className="relative group">
-                    <div className="overflow-hidden rounded-2xl">
-                      <div
-                        className="flex transition-transform duration-500 ease-in-out"
-                        style={{ transform: `translateX(-${reviewSlide * 100}%)` }}
-                      >
-                        {reviewPages.map((pageReviews, pageIndex) => (
-                          <div key={pageReviews.map(r => r._id).join('-') || pageIndex} className="w-full shrink-0 px-1 py-1">
-                            <div className="grid gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-start">
-                              {pageReviews.map(r => (
-                                <ReviewCard
-                                  key={r._id}
-                                  review={r}
-                                  user={user}
-                                  onVote={handleVote}
-                                  onOpenImage={(imgs, i) => setLightbox({ images: imgs, index: i })}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Left & Right Arrows Positioned on edges vertically centered */}
-                    {hasReviewSlider && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={prevReview}
-                          className="absolute -left-4 md:-left-6 lg:-left-8 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full border border-[#E9DED3] bg-white text-[#141225] hover:text-[#B0611C] hover:border-[#B0611C] shadow-md flex items-center justify-center transition-colors z-10"
-                          aria-label="Previous customer review"
-                        >
-                          <ChevronLeft size={24} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={nextReview}
-                          className="absolute -right-4 md:-right-6 lg:-right-8 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full border border-[#E9DED3] bg-white text-[#141225] hover:text-[#B0611C] hover:border-[#B0611C] shadow-md flex items-center justify-center transition-colors z-10"
-                          aria-label="Next customer review"
-                        >
-                          <ChevronRight size={24} />
-                        </button>
-                      </>
-                    )}
+                  <div className="relative group w-full">
+                    <Swiper
+                      modules={[Pagination]}
+                      spaceBetween={20}
+                      slidesPerView={1}
+                      breakpoints={{
+                        768: { slidesPerView: 2 },
+                        1024: { slidesPerView: 3 },
+                      }}
+                      className="px-10 md:px-14 lg:px-16 !pb-2 h-full"
+                    >
+                      {reviews.map(r => (
+                        <SwiperSlide key={r._id} className="h-auto">
+                          <ReviewCard
+                            review={r}
+                            user={user}
+                            onVote={handleVote}
+                            onOpenImage={(imgs, i) => setLightbox({ images: imgs, index: i })}
+                          />
+                        </SwiperSlide>
+                      ))}
+                      
+                      <ReviewNavButtons />
+                    </Swiper>
 
                     {hasMore && (
-                      <div className="text-center pt-6 mt-auto">
+                      <div className="text-center pt-6 mt-4 border-t border-[#E9DED3]">
                         <button onClick={loadMore}
-                          className="px-8 py-2.5 border border-[#E9DED3] rounded-full text-sm font-bold text-[#6D625C] hover:border-[#9A6031] hover:text-[#9A6031] bg-white transition">
+                          className="px-8 py-2.5 border border-[#E9DED3] rounded-full text-sm font-bold text-[#6D625C] hover:border-[#9A6031] hover:text-[#9A6031] bg-white transition shadow-sm">
                           Load More Reviews
                         </button>
                       </div>
@@ -672,58 +741,6 @@ export default function ProductReviewSection({ product, user }) {
                   </div>
                 )}
               </div>
-
-              {/* ── PHOTO GALLERY (Row 2) ── */}
-              {gallery.length > 0 && (
-                <div className="relative group/gallery border-t border-[#E9DED3] pt-2 mt-2">
-                  <h2 className="text-base lg:text-lg font-serif font-bold text-[#141225] mb-2 flex items-center gap-1.5">
-                    <Camera size={20} className="text-[#B0611C]" /> Customer Photo Gallery
-                  </h2>
-                  
-                  <div className="relative overflow-hidden rounded-2xl mx-auto px-1 py-1">
-                    <div
-                      className="flex transition-transform duration-500 ease-in-out"
-                      style={{ transform: `translateX(-${gallerySlide * 100}%)` }}
-                    >
-                      {galleryPages.map((pagePhotos, pageIndex) => (
-                        <div key={pageIndex} className="w-full shrink-0 flex gap-4">
-                          {pagePhotos.map((g, i) => (
-                            <div key={i} onClick={() => setLightbox({ images: gallery.map(x => x.url), index: pageIndex * 4 + i })}
-                              className="relative group cursor-pointer h-20 md:h-24 w-[calc(25%-12px)] min-w-[80px] overflow-hidden rounded-2xl border border-[#E9DED3] shrink-0 shadow-sm">
-                              <img src={normalizeMediaUrl(g.url)} alt="" className="w-full h-full object-cover group-hover:scale-105 transition duration-500" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/animal_balance_maze.png'; }} />
-                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
-                                <ZoomIn size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 drop-shadow-md scale-75 group-hover:scale-100" />
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Slider Arrows */}
-                    {hasGallerySlider && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={prevGallery}
-                          className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/95 backdrop-blur border border-[#E9DED3] text-[#141225] hover:text-[#B0611C] hover:border-[#B0611C] shadow-md flex items-center justify-center transition-all z-10 opacity-0 group-hover/gallery:opacity-100"
-                          aria-label="Previous photos"
-                        >
-                          <ChevronLeft size={20} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={nextGallery}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/95 backdrop-blur border border-[#E9DED3] text-[#141225] hover:text-[#B0611C] hover:border-[#B0611C] shadow-md flex items-center justify-center transition-all z-10 opacity-0 group-hover/gallery:opacity-100"
-                          aria-label="Next photos"
-                        >
-                          <ChevronRight size={20} />
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              )}
             </div> {/* Closes Right Column */}
           </div> {/* Closes Grid */}
         </div> {/* Closes Beige Container */}

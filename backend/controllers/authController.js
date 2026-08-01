@@ -240,6 +240,16 @@ const updateProfile = async (req, res) => {
         if (gender !== undefined) user.gender = gender || '';
         if (profileImage !== undefined) user.profileImage = profileImage;
         if (addresses !== undefined) user.addresses = normalizeAddresses(addresses);
+        
+        // Sync profile personal details to default address automatically
+        if (user.addresses && user.addresses.length > 0) {
+            const defaultAddr = user.addresses.find(a => a.isDefault) || user.addresses[0];
+            if (defaultAddr) {
+                if (name !== undefined) defaultAddr.fullName = String(name).trim();
+                if (phone !== undefined) defaultAddr.phone = String(phone).trim();
+            }
+        }
+
         if (preferences !== undefined) {
             user.preferences = {
                 preferredAgeGroup: preferences.preferredAgeGroup || user.preferences?.preferredAgeGroup || 'All Ages',

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { productV2API } from '../api/catalogV2Service';
@@ -19,6 +19,91 @@ const featureBullets = [
   'Hand-finished for safe smooth edges',
   'Designed for lasting open-ended play',
 ];
+
+const ProductImageZoom = ({ src, alt }) => {
+  const [showZoom, setShowZoom] = useState(false);
+  const [lensState, setLensState] = useState({ x: 0, y: 0, w: 0, h: 0 });
+  const [bgState, setBgState] = useState({ x: 0, y: 0, w: 0, h: 0 });
+  const imgRef = useRef(null);
+
+  const ZOOM_LEVEL = 2.5;
+
+  const handleMouseMove = (e) => {
+    if (!imgRef.current) return;
+    const { left, top, width, height } = imgRef.current.getBoundingClientRect();
+    
+    const zoomWinW = 500;
+    const zoomWinH = 500;
+
+    const bgW = width * ZOOM_LEVEL;
+    const bgH = height * ZOOM_LEVEL;
+
+    const lensW = Math.min(zoomWinW / ZOOM_LEVEL, width);
+    const lensH = Math.min(zoomWinH / ZOOM_LEVEL, height);
+
+    let x = e.clientX - left;
+    let y = e.clientY - top;
+
+    let lensX = x - lensW / 2;
+    let lensY = y - lensH / 2;
+
+    if (lensX < 0) lensX = 0;
+    if (lensY < 0) lensY = 0;
+    if (lensX > width - lensW) lensX = width - lensW;
+    if (lensY > height - lensH) lensY = height - lensH;
+
+    setLensState({ x: lensX, y: lensY, w: lensW, h: lensH });
+    setBgState({ 
+      x: -(lensX * ZOOM_LEVEL), 
+      y: -(lensY * ZOOM_LEVEL), 
+      w: bgW, 
+      h: bgH
+    });
+  };
+
+  return (
+    <div className="relative w-full h-full flex items-center justify-center bg-white rounded-[2rem]">
+      {/* Mobile view (no zoom) */}
+      <img src={src} alt={alt} className="w-full h-auto max-h-[460px] object-cover md:hidden rounded-[2rem]" onError={(e) => { e.target.src = '/wood-placeholder.png'; }} />
+
+      {/* Desktop view (with zoom) */}
+      <div 
+        className="hidden md:block relative w-full h-full cursor-crosshair group rounded-[2rem] overflow-hidden"
+        onMouseEnter={() => setShowZoom(true)}
+        onMouseLeave={() => setShowZoom(false)}
+        onMouseMove={handleMouseMove}
+      >
+        <img ref={imgRef} src={src} alt={alt} className="w-full h-auto max-h-[460px] object-cover rounded-[2rem]" onError={(e) => { e.target.src = '/wood-placeholder.png'; }} />
+        
+        {showZoom && (
+          <div 
+            className="absolute bg-white/30 border border-[#AA7327]/50 pointer-events-none"
+            style={{
+              left: lensState.x,
+              top: lensState.y,
+              width: lensState.w,
+              height: lensState.h,
+              boxShadow: '0 0 0 9999px rgba(0,0,0,0.15)'
+            }}
+          />
+        )}
+      </div>
+
+      {/* Zoomed Result Window */}
+      {showZoom && (
+        <div 
+          className="hidden lg:block absolute top-0 left-[calc(100%+40px)] w-[500px] h-[500px] bg-white z-[9999] border border-gray-200 shadow-2xl overflow-hidden rounded-2xl pointer-events-none"
+          style={{
+            backgroundImage: `url(${src})`,
+            backgroundPosition: `${bgState.x}px ${bgState.y}px`,
+            backgroundSize: `${bgState.w}px ${bgState.h}px`,
+            backgroundRepeat: 'no-repeat'
+          }}
+        />
+      )}
+    </div>
+  );
+};
 const certifications = ['EN71 Certified', 'ASTM F963', 'CPSC Compliant'];
 const relatedProducts = [
   { title: 'Building Blocks', price: '₹42.00' },
@@ -341,11 +426,7 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
   const LIVE_REFRESH_MS = 8000;
 
   const isWishlisted = wishlistItems.some((item) => {
-    const isSameProduct = (item._id && product?._id && item._id === product._id) || (item.id && product?.id && item.id === product.id);
-    if (!isSameProduct) return false;
-    const itemVariantId = item.selectedVariant?._id || item.selectedVariant?.id;
-    const productVariantId = selectedVariant?._id || selectedVariant?.id;
-    return itemVariantId === productVariantId;
+    return (item._id && product?._id && item._id === product._id) || (item.id && product?.id && item.id === product.id);
   });
 
   useEffect(() => {
@@ -620,17 +701,12 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
           <div className="grid gap-10 lg:grid-cols-[1.35fr_0.9fr] items-start">
 
             {/* LEFT COLUMN: IMAGES */}
-            <div className="space-y-6 min-w-0 w-full">
-              <div className="overflow-hidden rounded-[2rem] bg-white shadow-sm flex items-center justify-center">
+            <div className="space-y-6 min-w-0 w-full relative">
+              <div className="rounded-[2rem] bg-white shadow-sm flex items-center justify-center">
                 {selectedImage && selectedImage.trim() !== '' ? (
-                  <img
-                    src={selectedImage}
-                    alt={product.name}
-                    className="w-full h-auto max-h-[460px] object-cover"
-                    onError={(e) => { e.target.src = '/wood-placeholder.png'; }}
-                  />
+                  <ProductImageZoom src={selectedImage} alt={product.name} />
                 ) : (
-                  <div className="h-[460px] flex items-center justify-center text-slate-500">No image available</div>
+                  <div className="h-[460px] flex items-center justify-center text-slate-500 overflow-hidden rounded-[2rem]">No image available</div>
                 )}
               </div>
 
@@ -667,8 +743,7 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                   onClick={() => {
                     if (isWishlisted) {
                       const index = wishlistItems.findIndex(item => 
-                        ((item._id && product?._id && item._id === product._id) || (item.id && product?.id && item.id === product.id)) &&
-                        ((item.selectedVariant?._id || item.selectedVariant?.id) === (selectedVariant?._id || selectedVariant?.id))
+                        (item._id && product?._id && item._id === product._id) || (item.id && product?.id && item.id === product.id)
                       );
                       if (index !== -1 && onRemoveFromWishlist) {
                         onRemoveFromWishlist(index);
@@ -710,7 +785,7 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                 <div className="flex items-center gap-2 text-sm text-[#141225] font-medium mb-6">
                   <div className="flex text-[#F5C518]">
                     {[1, 2, 3, 4, 5].map((star) => (
-                      <svg key={star} className={`w-4 h-4 ${star <= (product.averageRating || 5) ? 'text-[#F5C518]' : 'text-slate-300'}`} fill="currentColor" viewBox="0 0 20 20">
+                      <svg key={star} className={`w-4 h-4 ${star <= (product.averageRating || 0) ? 'text-[#F5C518]' : 'text-slate-300'}`} fill="currentColor" viewBox="0 0 20 20">
                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                       </svg>
                     ))}

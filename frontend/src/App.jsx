@@ -516,7 +516,7 @@ export default function App() {
                 onLogout={handleLogout}
                 onNavigate={handleNavigate}
               >
-                <OrderHistoryPage onNavigate={handleNavigate} />
+                <OrderHistoryPage onNavigate={handleNavigate} user={user} />
               </LayoutWithHeader>
             </ProtectedRoute>
           }

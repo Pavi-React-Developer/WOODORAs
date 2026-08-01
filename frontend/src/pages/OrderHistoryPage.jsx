@@ -6,7 +6,7 @@ import { API_ORIGIN } from '../api/apiClient';
 import { formatDeliveryDate, getDeliveryDate } from '../utils/deliveryDate';
 import OrderPricingSummary from '../components/OrderPricingSummary';
 
-export default function OrderHistoryPage({ onNavigate }) {
+export default function OrderHistoryPage({ onNavigate, user }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 

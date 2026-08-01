@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Swiper, SwiperSlide } from 'swiper/react';
+import { Swiper, SwiperSlide, useSwiper } from 'swiper/react';
 import { Autoplay, Pagination, EffectFade, EffectCreative, Navigation, Controller } from 'swiper/modules';
 import { ChevronLeft, ChevronRight, Truck, Package, ShieldCheck, Banknote, Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -298,6 +298,30 @@ export function HomeFooter({ context = {} }) {
   );
 }
 
+function HeroNavButtons() {
+  const swiper = useSwiper();
+  return (
+    <>
+      <button 
+        type="button" 
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); swiper.slidePrev(); }}
+        className="hero-prev absolute top-1/2 left-2 md:left-4 z-[50] -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center bg-black/20 hover:bg-black/40 text-white rounded-full backdrop-blur-md transition-all md:opacity-0 md:group-hover:opacity-100 cursor-pointer"
+        aria-label="Previous slide"
+      >
+        <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
+      </button>
+      <button 
+        type="button" 
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); swiper.slideNext(); }}
+        className="hero-next absolute top-1/2 right-2 md:right-4 z-[50] -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center bg-black/20 hover:bg-black/40 text-white rounded-full backdrop-blur-md transition-all md:opacity-0 md:group-hover:opacity-100 cursor-pointer"
+        aria-label="Next slide"
+      >
+        <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
+      </button>
+    </>
+  );
+}
+
 export function HomeHeroBanner({ context = {}, specificData }) {
   let heroSlides = [];
   
@@ -326,7 +350,7 @@ export function HomeHeroBanner({ context = {}, specificData }) {
   const [paginationEl, setPaginationEl] = useState(null);
 
   useEffect(() => {
-    console.log("[HeroBanner Debug] Number of banners received/rendered slides:", heroSlides?.length || 0);
+    // Debug log removed
   }, [heroSlides]);
 
   if (!heroSlides || !heroSlides.length) return null;
@@ -335,9 +359,7 @@ export function HomeHeroBanner({ context = {}, specificData }) {
     <section className="relative w-full h-[50vh] md:h-[70vh] lg:h-[90vh] min-h-[350px] md:min-h-[450px] lg:min-h-[600px] overflow-hidden bg-brand-dark group">
       <Swiper
         onSwiper={setSwiperInstance}
-        modules={[Autoplay, Pagination, EffectFade, EffectCreative]}
-        effect="fade"
-        fadeEffect={{ crossFade: true }}
+        modules={[Autoplay, Pagination, EffectCreative]}
         observer={true}
         observeParents={true}
         autoplay={{ delay: 5000, disableOnInteraction: false }}
@@ -345,6 +367,7 @@ export function HomeHeroBanner({ context = {}, specificData }) {
         loop={heroSlides.length > 1}
         className="w-full h-full"
       >
+        <HeroNavButtons />
         {heroSlides.map((slide, i) => (
           <SwiperSlide key={slide._id || i}>
             <div className="relative w-full h-full">
@@ -377,30 +400,6 @@ export function HomeHeroBanner({ context = {}, specificData }) {
           </SwiperSlide>
         ))}
       </Swiper>
-      <button 
-        type="button" 
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          swiperInstance?.slidePrev();
-        }}
-        className="hero-prev absolute top-1/2 left-4 z-[50] -translate-y-1/2 w-12 h-12 flex items-center justify-center bg-white/20 hover:bg-white/40 text-white rounded-full backdrop-blur transition-all md:opacity-0 md:group-hover:opacity-100 cursor-pointer"
-        aria-label="Previous slide"
-      >
-        <ChevronLeft className="w-6 h-6" />
-      </button>
-      <button 
-        type="button" 
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          swiperInstance?.slideNext();
-        }}
-        className="hero-next absolute top-1/2 right-4 z-[50] -translate-y-1/2 w-12 h-12 flex items-center justify-center bg-white/20 hover:bg-white/40 text-white rounded-full backdrop-blur transition-all md:opacity-0 md:group-hover:opacity-100 cursor-pointer"
-        aria-label="Next slide"
-      >
-        <ChevronRight className="w-6 h-6" />
-      </button>
       <div ref={setPaginationEl} className="hero-dots absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-3" />
     </section>
   );
