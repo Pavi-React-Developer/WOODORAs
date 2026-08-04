@@ -61,6 +61,13 @@ export const orderService = {
     );
   },
 
+  downloadInvoice: async (id) => {
+    return withAuthRetry(
+      (config) => axios.get(`${API_URL}/${id}/invoice`, { ...config, responseType: 'blob' }),
+      'Failed to download invoice'
+    );
+  },
+
   getAllOrders: async () => {
     return withAuthRetry(
       (config) => axios.get(API_URL, config),

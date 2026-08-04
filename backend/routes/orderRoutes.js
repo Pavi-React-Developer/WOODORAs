@@ -13,6 +13,7 @@ const {
   getCancellationPreview,
   getDashboardStats,
   deleteOrder,
+  downloadInvoice,
 } = require('../controllers/orderController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
@@ -27,6 +28,8 @@ router.route('/myorders').get(protect, getMyOrders);
 router.route('/:id')
   .get(protect, getOrderById)
   .delete(protect, authorize('admin', 'manager'), deleteOrder);
+
+router.route('/:id/invoice').get(protect, downloadInvoice);
 
 
 router.route('/:id/details').put(protect, authorize('admin', 'manager', 'staff'), updateOrderDetails);

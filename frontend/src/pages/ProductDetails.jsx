@@ -11,6 +11,7 @@ import 'swiper/css/pagination';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import { IoLeaf } from 'react-icons/io5';
+import { FaWhatsapp } from 'react-icons/fa';
 
 const finishOptions = ['Natural Maple', 'Oak Tint'];
 const featureBullets = [
@@ -426,9 +427,11 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
   const [recPaginationEl, setRecPaginationEl] = useState(null);
   const LIVE_REFRESH_MS = 8000;
 
-  const isWishlisted = wishlistItems.some((item) => {
-    return (item._id && product?._id && item._id === product._id) || (item.id && product?.id && item.id === product.id);
-  });
+  const isWishlisted = (wishlistItems || []).some((w) => {
+    const pId = w.product?._id || w.product || w._id || w;
+    const currentPId = product?._id || product?.id;
+    return pId && currentPId && String(pId) === String(currentPId);
+  }) || product?.isWishlisted;
 
   useEffect(() => {
     if (!productId) {
@@ -789,9 +792,11 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                   type="button"
                   onClick={() => {
                     if (isWishlisted) {
-                      const index = wishlistItems.findIndex(item => 
-                        (item._id && product?._id && item._id === product._id) || (item.id && product?.id && item.id === product.id)
-                      );
+                      const index = wishlistItems.findIndex(w => {
+                        const pId = w.product?._id || w.product || w._id || w;
+                        const currentPId = product?._id || product?.id;
+                        return pId && currentPId && String(pId) === String(currentPId);
+                      });
                       if (index !== -1 && onRemoveFromWishlist) {
                         onRemoveFromWishlist(index);
                       }
@@ -1233,6 +1238,19 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
             </div>
           </div>
         </div>
+      )}
+
+      {/* Floating WhatsApp Enquiry Button */}
+      {product && (
+        <a 
+          href={`https://wa.me/919789660115?text=${encodeURIComponent(`Hi, I'm inquiring about ${product.name}: ${window.location.href}`)}`}
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[60] bg-[#25D366] text-white p-3 md:p-4 rounded-full shadow-lg hover:scale-110 transition-transform duration-300 flex items-center justify-center cursor-pointer"
+          aria-label="WhatsApp Enquiry"
+        >
+          <FaWhatsapp className="w-6 h-6 md:w-8 md:h-8" />
+        </a>
       )}
     </>
   );

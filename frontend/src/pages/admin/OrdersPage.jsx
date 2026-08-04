@@ -16,15 +16,67 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
   const [saving, setSaving] = useState(false);
   const [isEditingShipping, setIsEditingShipping] = useState(false);
   
+  const [couriers, setCouriers] = useState([]);
+  const [showNewCourierInput, setShowNewCourierInput] = useState(false);
+  const [newCourierName, setNewCourierName] = useState('');
+
+  const [newCourierTrackingUrl, setNewCourierTrackingUrl] = useState('');
+
   // Shipping Modal State
   const [showShippingModal, setShowShippingModal] = useState(false);
   const [shippingModalOrder, setShippingModalOrder] = useState(null);
   const [shippingTrackingId, setShippingTrackingId] = useState('');
   const [shippingTrackingUrl, setShippingTrackingUrl] = useState('');
+  const [shippingAdditionalTracking, setShippingAdditionalTracking] = useState([]);
+  const [shippingCourierName, setShippingCourierName] = useState('');
 
   useEffect(() => {
     fetchOrders();
+    fetchCouriers();
   }, []);
+
+  const fetchCouriers = async () => {
+    try {
+      const { courierService } = await import('../../api/courierService');
+      const data = await courierService.getCouriers();
+      setCouriers(data);
+    } catch (error) {
+      console.error('Failed to fetch couriers:', error);
+    }
+  };
+
+  const handleAddCourier = async () => {
+    if (!newCourierName.trim()) return;
+    try {
+      const { courierService } = await import('../../api/courierService');
+      const newCourier = await courierService.createCourier(newCourierName, newCourierTrackingUrl);
+      setCouriers([...couriers, newCourier]);
+      setShippingCourierName(newCourier.name);
+      if (editFormData.status === 'Shipping') {
+        setEditFormData({ ...editFormData, courierName: newCourier.name });
+      }
+      setNewCourierName('');
+      setNewCourierTrackingUrl('');
+      setShowNewCourierInput(false);
+      toast.success('Courier added');
+    } catch (error) {
+      toast.error(error.message || 'Failed to add courier');
+    }
+  };
+
+  const handleDeleteCourier = async (e, id) => {
+    e.stopPropagation();
+    try {
+      const { courierService } = await import('../../api/courierService');
+      await courierService.deleteCourier(id);
+      setCouriers(couriers.filter(c => c._id !== id));
+      toast.success('Courier deleted');
+    } catch (error) {
+      toast.error(error.message || 'Failed to delete courier');
+    }
+  };
+
+
 
   const fetchOrders = async () => {
     try {
@@ -69,6 +121,8 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
       setShippingModalOrder(order);
       setShippingTrackingId(order.trackingId || '');
       setShippingTrackingUrl(order.trackingUrl || '');
+      setShippingAdditionalTracking(order.additionalTracking || []);
+      setShippingCourierName(order.courierName || '');
       setShowShippingModal(true);
     } else {
       handleStatusChange(order._id, normalizedStatus);
@@ -76,8 +130,8 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
   };
 
   const submitShippingDetails = async () => {
-    if (!shippingTrackingId || !shippingTrackingUrl) {
-      toast.error('Please provide both tracking ID and URL');
+    if (!shippingTrackingId || !shippingTrackingUrl || !shippingCourierName) {
+      toast.error('Please provide courier, tracking ID, and URL');
       return;
     }
     try {
@@ -85,7 +139,9 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
       await orderService.updateOrderDetails(shippingModalOrder._id, {
         status: 'Shipping',
         trackingId: shippingTrackingId,
-        trackingUrl: shippingTrackingUrl
+        trackingUrl: shippingTrackingUrl,
+        additionalTracking: shippingAdditionalTracking,
+        courierName: shippingCourierName
       });
       toast.success('Order status updated to Shipping');
       setShowShippingModal(false);
@@ -130,6 +186,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
       isPaid: order.isPaid || false,
       trackingId: order.trackingId || '',
       trackingUrl: order.trackingUrl || '',
+      additionalTracking: order.additionalTracking || [],
       shippingAddress: { ...order.shippingAddress }
     });
     setShowEditModal(true);
@@ -371,6 +428,11 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                       </select>
                       <span className="pointer-events-none px-3 text-gray-500">▾</span>
                     </div>
+                    {order.courierName && (
+                      <div className="mt-2 text-xs font-bold text-[#8B5E3C]">
+                        {order.courierName}
+                      </div>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-right flex justify-end gap-2">
                     {canView && (
@@ -513,6 +575,42 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                   <p className="mt-2 font-semibold text-gray-900">{selectedOrder.isDelivered ? 'Delivered' : 'Not delivered'}</p>
                 </div>
               </div>
+
+              {(selectedOrder.trackingId || selectedOrder.trackingUrl) && (
+                <div className="rounded-3xl bg-[#F8F4EC] p-4">
+                  <h4 className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-wider">Tracking Information</h4>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4 border-b border-[#E6DFD4] last:border-0 last:pb-0">
+                      {selectedOrder.courierName && (
+                        <div>
+                          <p className="text-xs uppercase tracking-widest text-gray-500">Courier</p>
+                          <p className="mt-1 font-semibold text-gray-900">{selectedOrder.courierName}</p>
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-xs uppercase tracking-widest text-gray-500">Primary Tracking ID</p>
+                        <p className="mt-1 font-semibold text-gray-900">{selectedOrder.trackingId || 'N/A'}</p>
+                      </div>
+                      <div className="md:col-span-2">
+                        <p className="text-xs uppercase tracking-widest text-gray-500">Primary Tracking URL</p>
+                        <p className="mt-1 font-semibold text-blue-600 break-all">
+                          {selectedOrder.trackingUrl ? <a href={selectedOrder.trackingUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">{selectedOrder.trackingUrl}</a> : 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                    {selectedOrder.additionalTracking && selectedOrder.additionalTracking.map((pkg, idx) => (
+                      <div key={idx} className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4 border-b border-[#E6DFD4] last:border-0 last:pb-0">
+                        <div className="md:col-span-2">
+                          <p className="text-xs uppercase tracking-widest text-gray-500">Field {idx + 1} - Tracking URL</p>
+                          <p className="mt-1 font-semibold text-blue-600 break-all">
+                            {pkg.trackingUrl ? <a href={pkg.trackingUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">{pkg.trackingUrl}</a> : 'N/A'}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {selectedOrder.isGiftOrder && (
                 <div className="rounded-3xl border border-[#D04E26] bg-[#FDF0EB] p-4 mt-6">
@@ -708,27 +806,66 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                 </div>
 
                 {editFormData.status === 'Shipping' && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 p-4 bg-[#F8F4EC] rounded-2xl border border-[#E6DFD4]">
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-500 mb-1">Tracking ID</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. AWB123456789"
-                        className="w-full px-4 py-2 rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30"
-                        value={editFormData.trackingId}
-                        onChange={(e) => setEditFormData({ ...editFormData, trackingId: e.target.value })}
-                      />
+                  <div className="mt-4 p-4 bg-[#F8F4EC] rounded-2xl border border-[#E6DFD4] space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">Primary Tracking ID</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. AWB123456789"
+                          className="w-full px-4 py-2 rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30"
+                          value={editFormData.trackingId}
+                          onChange={(e) => setEditFormData({ ...editFormData, trackingId: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">Primary Tracking URL</label>
+                        <input
+                          type="url"
+                          placeholder="https://tracker.example.com/..."
+                          className="w-full px-4 py-2 rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30"
+                          value={editFormData.trackingUrl || ''}
+                          onChange={(e) => setEditFormData({ ...editFormData, trackingUrl: e.target.value })}
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-500 mb-1">Tracking URL</label>
-                      <input
-                        type="url"
-                        placeholder="https://tracker.example.com/..."
-                        className="w-full px-4 py-2 rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30"
-                        value={editFormData.trackingUrl}
-                        onChange={(e) => setEditFormData({ ...editFormData, trackingUrl: e.target.value })}
-                      />
-                    </div>
+
+                    {editFormData.additionalTracking && editFormData.additionalTracking.map((pkg, idx) => (
+                      <div key={idx} className="relative mt-2">
+                        <input
+                          type="url"
+                          placeholder="https://tracker.example.com/..."
+                          className="w-full pl-4 pr-10 py-2 text-sm rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30"
+                          value={pkg.trackingUrl}
+                          onChange={(e) => {
+                            const newArr = [...editFormData.additionalTracking];
+                            newArr[idx].trackingUrl = e.target.value;
+                            setEditFormData({ ...editFormData, additionalTracking: newArr });
+                          }}
+                        />
+                        <button
+                          onClick={() => {
+                            const newArr = [...editFormData.additionalTracking];
+                            newArr.splice(idx, 1);
+                            setEditFormData({ ...editFormData, additionalTracking: newArr });
+                          }}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded"
+                          title="Remove Field"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                    
+                    <button
+                      onClick={() => setEditFormData({ 
+                        ...editFormData, 
+                        additionalTracking: [...(editFormData.additionalTracking || []), { trackingId: '', trackingUrl: '' }] 
+                      })}
+                      className="text-xs font-bold text-[#8B5E3C] hover:text-[#7a5234] inline-flex items-center gap-1 mt-2"
+                    >
+                      + ADD
+                    </button>
                   </div>
                 )}
               </div>
@@ -770,8 +907,80 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                 <p className="font-semibold text-gray-900">{shippingModalOrder._id.substring(shippingModalOrder._id.length - 8)}</p>
               </div>
 
+              <div className="relative">
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-semibold text-gray-500">Courier</label>
+                  {!showNewCourierInput && (
+                    <button onClick={() => setShowNewCourierInput(true)} className="text-[10px] font-bold text-[#8B5E3C] hover:text-[#7a5234]">
+                      + ADD COURIER
+                    </button>
+                  )}
+                </div>
+                
+                {showNewCourierInput ? (
+                  <div className="flex flex-col gap-2 p-3 bg-[#F8F4EC] rounded-xl border border-[#E6DFD4]">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        placeholder="Courier Name (e.g. ST Courier)"
+                        className="w-full px-4 py-2 text-sm rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30"
+                        value={newCourierName}
+                        onChange={(e) => setNewCourierName(e.target.value)}
+                        autoFocus
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="url"
+                        placeholder="Tracking Base URL (Optional)"
+                        className="w-full px-4 py-2 text-sm rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30"
+                        value={newCourierTrackingUrl}
+                        onChange={(e) => setNewCourierTrackingUrl(e.target.value)}
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2 mt-1">
+                      <button onClick={() => { setShowNewCourierInput(false); setNewCourierName(''); setNewCourierTrackingUrl(''); }} className="px-3 py-1.5 border border-gray-200 text-gray-500 text-xs font-bold rounded-lg hover:bg-gray-50">
+                        Cancel
+                      </button>
+                      <button onClick={handleAddCourier} className="px-3 py-1.5 bg-[#8B5E3C] text-white text-xs font-bold rounded-lg hover:bg-[#7a5234] flex items-center gap-1">
+                        <Save className="w-3 h-3" /> Save
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative group">
+                    <select
+                      className="w-full px-4 py-2 text-sm rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 appearance-none pr-10"
+                      value={shippingCourierName}
+                      onChange={(e) => {
+                        const selectedName = e.target.value;
+                        setShippingCourierName(selectedName);
+                        const selectedCourier = couriers.find(c => c.name === selectedName);
+                        if (selectedCourier && selectedCourier.trackingUrl) {
+                          setShippingTrackingUrl(selectedCourier.trackingUrl);
+                        }
+                      }}
+                    >
+                      <option value="">Select Courier</option>
+                      {couriers.map(c => (
+                        <option key={c._id} value={c.name}>{c.name}</option>
+                      ))}
+                    </select>
+                    {shippingCourierName && couriers.find(c => c.name === shippingCourierName) && (
+                      <button 
+                        onClick={(e) => handleDeleteCourier(e, couriers.find(c => c.name === shippingCourierName)._id)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded"
+                        title="Delete this courier"
+                      >
+                        <Trash className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Tracking ID</label>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Primary Tracking ID</label>
                 <input
                   type="text"
                   placeholder="e.g. AWB123456789"
@@ -781,7 +990,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Tracking URL</label>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Primary Tracking URL</label>
                 <input
                   type="url"
                   placeholder="https://tracker.example.com/..."
@@ -790,6 +999,40 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                   onChange={(e) => setShippingTrackingUrl(e.target.value)}
                 />
               </div>
+
+              {shippingAdditionalTracking.map((pkg, idx) => (
+                <div key={idx} className="relative mt-2">
+                  <input
+                    type="url"
+                    placeholder="https://tracker.example.com/..."
+                    className="w-full pl-4 pr-10 py-2 text-sm rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30"
+                    value={pkg.trackingUrl}
+                    onChange={(e) => {
+                      const newArr = [...shippingAdditionalTracking];
+                      newArr[idx].trackingUrl = e.target.value;
+                      setShippingAdditionalTracking(newArr);
+                    }}
+                  />
+                  <button
+                    onClick={() => {
+                      const newArr = [...shippingAdditionalTracking];
+                      newArr.splice(idx, 1);
+                      setShippingAdditionalTracking(newArr);
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded"
+                    title="Remove Field"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+
+              <button
+                onClick={() => setShippingAdditionalTracking([...shippingAdditionalTracking, { trackingId: '', trackingUrl: '' }])}
+                className="text-xs font-bold text-[#8B5E3C] hover:text-[#7a5234] mt-2 inline-flex items-center gap-1"
+              >
+                + ADD
+              </button>
             </div>
             
             <div className="border-t border-[#E6DFD4] p-6 flex justify-end gap-3 bg-gray-50">

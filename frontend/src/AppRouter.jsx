@@ -1,29 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
+import { Routes, Route, Navigate, useNavigate, useParams, Outlet } from 'react-router-dom';
 import { Toaster, toast } from 'react-hot-toast';
 import { productV2API } from './api/catalogV2Service';
 import Header from './components/Header';
 import Footer from './components/Footer';
-import Home from './pages/Home';
-import ProductDetails from './pages/ProductDetails';
-import Login from './pages/Login';
-import AdminDashboard from './pages/AdminDashboard';
-import CartPage from './pages/CartPage';
-import ReviewOrderPage from './pages/ReviewOrderPage';
-import CompleteOrderPage from './pages/CompleteOrderPage';
-import OrderSuccessPage from './pages/OrderSuccessPage';
-import OrderHistoryPage from './pages/OrderHistoryPage';
-import CashfreeCallbackPage from './pages/CashfreeCallbackPage';
-import CustomerProfilePage from './pages/CustomerProfilePage';
-import WishlistPage from './pages/WishlistPage';
 import { authService } from './api/authService';
 import CartOffcanvas from './components/CartOffcanvas';
 import WishlistOffcanvas from './components/WishlistOffcanvas';
 import useCartStore from './store/useCartStore';
 import useAddressStore from './store/useAddressStore';
-import GiftAndCardPage from './pages/GiftAndCardPage';
+import useWishlistStore from './store/useWishlistStore';
 
-import OAuthCallback from './pages/OAuthCallback';
+// Lazy loaded pages (Code Splitting)
+const Home = lazy(() => import('./pages/Home'));
+const ProductDetails = lazy(() => import('./pages/ProductDetails'));
+const Login = lazy(() => import('./pages/Login'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const CartPage = lazy(() => import('./pages/CartPage'));
+const ReviewOrderPage = lazy(() => import('./pages/ReviewOrderPage'));
+const CompleteOrderPage = lazy(() => import('./pages/CompleteOrderPage'));
+const OrderSuccessPage = lazy(() => import('./pages/OrderSuccessPage'));
+const OrderHistoryPage = lazy(() => import('./pages/OrderHistoryPage'));
+const CashfreeCallbackPage = lazy(() => import('./pages/CashfreeCallbackPage'));
+const CustomerProfilePage = lazy(() => import('./pages/CustomerProfilePage'));
+const WishlistPage = lazy(() => import('./pages/WishlistPage'));
+const GiftAndCardPage = lazy(() => import('./pages/GiftAndCardPage'));
+const OAuthCallback = lazy(() => import('./pages/OAuthCallback'));
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children, user, requiredRole }) => {
@@ -41,11 +43,14 @@ const ProtectedRoute = ({ children, user, requiredRole }) => {
   return children;
 };
 
-// Layout Wrapper for hiding header/footer on certain pages
-const PageLayout = ({ children, hideHeaderFooter }) => (
+// DRY Layout Wrapper using React Router Outlet
+const PageLayout = ({ headerProps, hideHeaderFooter }) => (
   <div className="flex flex-col min-h-screen bg-brand-beige/10">
+    {!hideHeaderFooter && <Header {...headerProps} />}
     <main className="flex-grow">
-      {children}
+      <Suspense fallback={<div className="flex items-center justify-center min-h-[50vh]"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-brown"></div></div>}>
+        <Outlet />
+      </Suspense>
     </main>
     {!hideHeaderFooter && <Footer />}
   </div>
@@ -71,53 +76,13 @@ export default function AppRouter() {
   const { cartItems, addToCart, updateQuantity, removeFromCart, hydrateCartFromBackend, clearCartState, clearCart, getUniqueProductCount } = useCartStore();
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  // Wishlist state
-  const [wishlistItems, setWishlistItems] = useState(() => {
-    try {
-      const saved = localStorage.getItem('wooden_toys_wishlist');
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      return [];
-    }
-  });
+  // Wishlist state from store
+  const { wishlistItems, toggleWishlist, removeFromWishlistByIndex } = useWishlistStore();
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-
-  // Sync wishlist to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('wooden_toys_wishlist', JSON.stringify(wishlistItems));
-  }, [wishlistItems]);
 
   // Validate wishlist items against backend to remove deleted/dummy data
   useEffect(() => {
-    const validateWishlist = async () => {
-      const currentItems = JSON.parse(localStorage.getItem('wooden_toys_wishlist') || '[]');
-      if (currentItems.length === 0) return;
-      
-      try {
-        const validationResults = await Promise.all(
-          currentItems.map(async (item) => {
-            try {
-              const productId = item._id || item.id;
-              if (!productId) return null;
-              const res = await productV2API.getById(productId);
-              return (res && (res.product || res._id || res.id)) ? item : null;
-            } catch (err) {
-              return null;
-            }
-          })
-        );
-        
-        const validItems = validationResults.filter(Boolean);
-        if (validItems.length !== currentItems.length) {
-          setWishlistItems(validItems);
-        }
-      } catch (err) {
-        console.error('Wishlist validation failed:', err);
-      }
-    };
-    
-    validateWishlist();
+    useWishlistStore.getState().validateWishlist();
   }, []);
 
   // Navigation handler for backward compatibility
@@ -151,13 +116,13 @@ export default function AppRouter() {
     navigate('/');
   };
 
-  // On logout: wipe cart + wishlist from memory — no previous user data lingers
+  // On logout: wipe cart + wishlist from memory
   const handleLogout = () => {
     authService.logout();
-    clearCartState();      // Clear cart state in memory (backend data is preserved)
+    clearCartState();      
     setUser(null);
     setProfileData(null);
-    setWishlistItems([]);  // Clear wishlist too
+    useWishlistStore.setState({ wishlistItems: [] });  
     try {
       useAddressStore.getState().clearAddresses();
     } catch(e) {}
@@ -165,7 +130,6 @@ export default function AppRouter() {
   };
 
   const resolveProductForCart = async (product) => {
-    // Preserve gift-specific fields set before calling addToCart
     const giftPrefs = {
       isGift: product.isGift,
       isGiftWrapper: product.isGiftWrapper,
@@ -177,17 +141,19 @@ export default function AppRouter() {
 
     let productToAdd = { ...product };
 
-    // Always fetch full details to ensure we have complete variants, stock info, and options before adding to cart
     try {
       const res = await productV2API.getById(productToAdd._id || productToAdd.id);
       const fullProduct = res.product || res;
-      // Merge API data but restore gift fields so they aren't overwritten
       productToAdd = { ...productToAdd, ...fullProduct, ...giftPrefs };
     } catch (err) {
       console.error('[Cart] Failed to fetch full product details:', err);
     }
 
-    // ── Product already has a pre-selected variant (from ProductDetails page) ──
+    // Default to the first variant if no variant is currently selected
+    if (!productToAdd.selectedVariant && productToAdd.variants && productToAdd.variants.length > 0) {
+      productToAdd.selectedVariant = productToAdd.variants[0];
+    }
+
     if (productToAdd.selectedVariant) {
       const sv = productToAdd.selectedVariant;
       const availableStock = Math.max(
@@ -225,10 +191,8 @@ export default function AppRouter() {
     const newQty = item.qty + delta;
 
     if (newQty < 1) {
-      // Quantity going below 1 = remove item
       removeFromCart(String(item.product), item.variant ? String(item.variant) : undefined);
     } else if (item.maxStock != null && newQty > item.maxStock) {
-      // Cap at maxStock, don't remove
       updateQuantity(String(item.product), item.maxStock, item.variant ? String(item.variant) : undefined);
     } else {
       updateQuantity(String(item.product), newQty, item.variant ? String(item.variant) : undefined);
@@ -242,25 +206,40 @@ export default function AppRouter() {
     }
   };
 
-  const handleAddToWishlist = (product) => {
-    const exists = wishlistItems.some(item => {
-      const isSameProduct = (item._id && product._id && item._id === product._id) ||
-        (item.id && product.id && item.id === product.id);
-      if (!isSameProduct) return false;
-      const itemVariantId = item.selectedVariant?._id || item.selectedVariant?.id;
-      const productVariantId = product.selectedVariant?._id || product.selectedVariant?.id;
-      return itemVariantId === productVariantId;
-    });
-    if (!exists) {
-      setWishlistItems([...wishlistItems, product]);
+  const handleAddToWishlist = async (product, explicitlySelectedVariant = null, explicitQty = 1) => {
+    let productToAdd = { ...product };
+
+    // Always fetch full product details to ensure we have all variant attributes (color, weight, images)
+    try {
+      const res = await productV2API.getById(productToAdd._id || productToAdd.id);
+      const fullProduct = res.product || res;
+      productToAdd = { ...productToAdd, ...fullProduct };
+    } catch (err) {
+      console.error('[Wishlist] Failed to fetch full product details:', err);
     }
+
+    let finalVariant = explicitlySelectedVariant;
+
+    // Map partial explicitlySelectedVariant to the full variant object from the fetched product
+    if (finalVariant && productToAdd.variants && productToAdd.variants.length > 0) {
+      const fullVariantMatch = productToAdd.variants.find(v => String(v._id || v.id) === String(finalVariant._id || finalVariant.id));
+      if (fullVariantMatch) {
+        finalVariant = fullVariantMatch;
+      }
+    }
+
+    // Default to the first variant if no variant is currently selected
+    if (!finalVariant && productToAdd.variants && productToAdd.variants.length > 0) {
+      finalVariant = productToAdd.variants[0];
+    }
+
+    // Rely on store to handle toggle properly (add or remove if exists)
+    await toggleWishlist(productToAdd, finalVariant, explicitQty);
     setIsWishlistOpen(true);
   };
 
   const handleRemoveFromWishlist = (index) => {
-    const newWishlist = [...wishlistItems];
-    newWishlist.splice(index, 1);
-    setWishlistItems(newWishlist);
+    removeFromWishlistByIndex(index);
   };
 
   const handleMoveToCart = (item, index) => {
@@ -273,13 +252,10 @@ export default function AppRouter() {
     navigate('/review-order');
   };
 
-  // Always run on mount — when no token exists, hydrateCartFromBackend clears
-  // any stale localStorage cart data so the badge never shows 0-login items.
   useEffect(() => {
     hydrateCartFromBackend();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
-  // Fetch full profile from backend whenever user is logged in (persists across refresh)
   useEffect(() => {
     if (!user) {
       setProfileData(null);
@@ -314,7 +290,6 @@ export default function AppRouter() {
     }));
   };
 
-  // Re-fetch full profile from backend after address change from order page
   const handleAddressUpdated = async () => {
     if (!user) return;
     try {
@@ -325,11 +300,20 @@ export default function AppRouter() {
     }
   };
 
+  const headerProps = {
+    user,
+    onLogout: handleLogout,
+    onNavigate: handleNavigate,
+    cartCount: getUniqueProductCount(),
+    onOpenCart: () => setIsCartOpen(true),
+    wishlistCount: wishlistItems.length,
+    onOpenWishlist: () => setIsWishlistOpen(true)
+  };
+
   return (
     <>
       <Toaster position="top-center" toastOptions={{ duration: 4000 }} />
 
-      {/* Cart Offcanvas */}
       <CartOffcanvas
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
@@ -339,7 +323,6 @@ export default function AppRouter() {
         onCheckout={handleCheckoutClick}
       />
 
-      {/* Wishlist Offcanvas */}
       <WishlistOffcanvas
         isOpen={isWishlistOpen}
         onClose={() => setIsWishlistOpen(false)}
@@ -348,277 +331,43 @@ export default function AppRouter() {
         onMoveToCart={handleMoveToCart}
       />
 
-      {/* Routes */}
       <Routes>
-        {/* Public Routes */}
-        <Route
-          path="/"
-          element={
-            <PageLayout>
-              <Header
-                user={user}
-                onLogout={handleLogout}
-                onNavigate={handleNavigate}
-                cartCount={getUniqueProductCount()}
-                onOpenCart={() => setIsCartOpen(true)}
-                wishlistCount={wishlistItems.length}
-                onOpenWishlist={() => setIsWishlistOpen(true)}
-              />
-              <Home
-                user={user}
-                onNavigate={handleNavigate}
-                onAddToCart={handleAddToCart}
-                onAddToWishlist={handleAddToWishlist}
-              />
-            </PageLayout>
-          }
-        />
+        {/* Main Application Layout with DRY Header/Footer */}
+        <Route element={<PageLayout headerProps={headerProps} />}>
+          <Route path="/" element={<Home user={user} onNavigate={handleNavigate} onAddToCart={handleAddToCart} onAddToWishlist={handleAddToWishlist} />} />
+          <Route path="/product/:id" element={<ProductDetails user={user} onNavigate={handleNavigate} onAddToCart={handleAddToCart} onBuyNow={handleBuyNow} onAddToWishlist={handleAddToWishlist} onRemoveFromWishlist={handleRemoveFromWishlist} wishlistItems={wishlistItems} />} />
+          <Route path="/cart" element={<CartPage onNavigate={handleNavigate} />} />
+          <Route path="/review-order" element={<ReviewOrderPage onNavigate={handleNavigate} />} />
+          <Route path="/complete-order" element={<CompleteOrderPage onNavigate={handleNavigate} user={user} onAuthSuccess={handleAuthSuccess} onAddressUpdated={handleAddressUpdated} />} />
+          <Route path="/wishlist" element={<WishlistPage wishlistItems={wishlistItems} onRemove={handleRemoveFromWishlist} onMoveToCart={handleMoveToCart} onNavigate={handleNavigate} />} />
+          <Route path="/gift-and-card" element={<GiftAndCardPage onNavigate={handleNavigate} onAddToCart={handleAddToCart} />} />
+          
+          <Route path="/order-success/:orderId" element={<ProtectedRoute user={user}><OrderSuccessPage onNavigate={handleNavigate} /></ProtectedRoute>} />
+          <Route path="/order-history" element={<ProtectedRoute user={user}><OrderHistoryPage onNavigate={handleNavigate} user={user} /></ProtectedRoute>} />
+          <Route path="/profile/*" element={<ProtectedRoute user={user}><CustomerProfilePage user={user} profileData={profileData} profileLoading={profileLoading} profileError={profileError} onNavigate={handleNavigate} onLogout={handleLogout} onProfileUpdated={handleProfileUpdated} wishlistItems={wishlistItems} onRemoveFromWishlist={handleRemoveFromWishlist} onMoveToCart={handleMoveToCart} /></ProtectedRoute>} />
+          <Route path="/cashfree-callback" element={<ProtectedRoute user={user}><CashfreeCallbackPage onNavigate={handleNavigate} /></ProtectedRoute>} />
+        </Route>
 
-        <Route
-          path="/product/:id"
-          element={
-            <PageLayout>
-              <Header
-                user={user}
-                onLogout={handleLogout}
-                onNavigate={handleNavigate}
-                cartCount={getUniqueProductCount()}
-                onOpenCart={() => setIsCartOpen(true)}
-                wishlistCount={wishlistItems.length}
-                onOpenWishlist={() => setIsWishlistOpen(true)}
-              />
-              <ProductDetails
-                user={user}
-                onNavigate={handleNavigate}
-                onAddToCart={handleAddToCart}
-                onBuyNow={handleBuyNow}
-                onAddToWishlist={handleAddToWishlist}
-                onRemoveFromWishlist={handleRemoveFromWishlist}
-                wishlistItems={wishlistItems}
-              />
-            </PageLayout>
-          }
-        />
+        {/* Auth Layout without Header/Footer */}
+        <Route element={<PageLayout headerProps={headerProps} hideHeaderFooter={true} />}>
+          <Route path="/login" element={<Login onAuthSuccess={handleAuthSuccess} onNavigate={handleNavigate} />} />
+          <Route path="/oauth-success" element={<OAuthCallback onAuthSuccess={handleAuthSuccess} />} />
+        </Route>
 
-        <Route
-          path="/login"
-          element={
-            <PageLayout hideHeaderFooter={true}>
-              <Login onAuthSuccess={handleAuthSuccess} onNavigate={handleNavigate} />
-            </PageLayout>
-          }
-        />
-
-        <Route
-          path="/oauth-success"
-          element={
-            <PageLayout hideHeaderFooter={true}>
-              <OAuthCallback onAuthSuccess={handleAuthSuccess} />
-            </PageLayout>
-          }
-        />
-
-        <Route
-          path="/cart"
-          element={
-            <PageLayout>
-              <Header
-                user={user}
-                onLogout={handleLogout}
-                onNavigate={handleNavigate}
-                cartCount={getUniqueProductCount()}
-                onOpenCart={() => setIsCartOpen(true)}
-                wishlistCount={wishlistItems.length}
-                onOpenWishlist={() => setIsWishlistOpen(true)}
-              />
-              <CartPage onNavigate={handleNavigate} />
-            </PageLayout>
-          }
-        />
-
-        <Route
-          path="/review-order"
-          element={
-            <PageLayout>
-              <Header
-                user={user}
-                onLogout={handleLogout}
-                onNavigate={handleNavigate}
-                cartCount={getUniqueProductCount()}
-                onOpenCart={() => setIsCartOpen(true)}
-                wishlistCount={wishlistItems.length}
-                onOpenWishlist={() => setIsWishlistOpen(true)}
-              />
-              <ReviewOrderPage onNavigate={handleNavigate} />
-            </PageLayout>
-          }
-        />
-
-        <Route
-          path="/complete-order"
-          element={
-            <PageLayout>
-              <Header
-                user={user}
-                onLogout={handleLogout}
-                onNavigate={handleNavigate}
-                cartCount={getUniqueProductCount()}
-                onOpenCart={() => setIsCartOpen(true)}
-                wishlistCount={wishlistItems.length}
-                onOpenWishlist={() => setIsWishlistOpen(true)}
-              />
-              <CompleteOrderPage onNavigate={handleNavigate} user={user} onAuthSuccess={handleAuthSuccess} onAddressUpdated={handleAddressUpdated} />
-            </PageLayout>
-          }
-        />
-
-        <Route
-          path="/order-success/:orderId"
-          element={
-            <ProtectedRoute user={user}>
-              <PageLayout>
-                <Header
-                  user={user}
-                  onLogout={handleLogout}
-                  onNavigate={handleNavigate}
-                  cartCount={getUniqueProductCount()}
-                  onOpenCart={() => setIsCartOpen(true)}
-                  wishlistCount={wishlistItems.length}
-                  onOpenWishlist={() => setIsWishlistOpen(true)}
-                />
-                <OrderSuccessPage onNavigate={handleNavigate} />
-              </PageLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/order-history"
-          element={
-            <ProtectedRoute user={user}>
-              <PageLayout>
-                <Header
-                  user={user}
-                  onLogout={handleLogout}
-                  onNavigate={handleNavigate}
-                  cartCount={getUniqueProductCount()}
-                  onOpenCart={() => setIsCartOpen(true)}
-                  wishlistCount={wishlistItems.length}
-                  onOpenWishlist={() => setIsWishlistOpen(true)}
-                />
-                <OrderHistoryPage onNavigate={handleNavigate} user={user} />
-              </PageLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/profile/*"
-          element={
-            <ProtectedRoute user={user}>
-              <PageLayout>
-                <Header
-                  user={user}
-                  onLogout={handleLogout}
-                  onNavigate={handleNavigate}
-                  cartCount={getUniqueProductCount()}
-                  onOpenCart={() => setIsCartOpen(true)}
-                  wishlistCount={wishlistItems.length}
-                  onOpenWishlist={() => setIsWishlistOpen(true)}
-                />
-                <CustomerProfilePage
-                  user={user}
-                  profileData={profileData}
-                  profileLoading={profileLoading}
-                  profileError={profileError}
-                  onNavigate={handleNavigate}
-                  onLogout={handleLogout}
-                  onProfileUpdated={handleProfileUpdated}
-                  wishlistItems={wishlistItems}
-                  onRemoveFromWishlist={handleRemoveFromWishlist}
-                  onMoveToCart={handleMoveToCart}
-                />
-              </PageLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/wishlist"
-          element={
-            <PageLayout>
-              <Header
-                user={user}
-                onLogout={handleLogout}
-                onNavigate={handleNavigate}
-                cartCount={getUniqueProductCount()}
-                onOpenCart={() => setIsCartOpen(true)}
-                wishlistCount={wishlistItems.length}
-                onOpenWishlist={() => setIsWishlistOpen(true)}
-              />
-              <WishlistPage
-                wishlistItems={wishlistItems}
-                onRemove={handleRemoveFromWishlist}
-                onMoveToCart={handleMoveToCart}
-                onNavigate={handleNavigate}
-              />
-            </PageLayout>
-          }
-        />
-
-        <Route
-          path="/cashfree-callback"
-          element={
-            <ProtectedRoute user={user}>
-              <PageLayout>
-                <Header
-                  user={user}
-                  onLogout={handleLogout}
-                  onNavigate={handleNavigate}
-                  cartCount={getUniqueProductCount()}
-                  onOpenCart={() => setIsCartOpen(true)}
-                  wishlistCount={wishlistItems.length}
-                  onOpenWishlist={() => setIsWishlistOpen(true)}
-                />
-                <CashfreeCallbackPage onNavigate={handleNavigate} />
-              </PageLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Admin Routes */}
+        {/* Admin Dashboard */}
         <Route
           path="/admin/*"
           element={
             <ProtectedRoute user={user} requiredRole="admin">
               <AdminLayout>
-                <AdminDashboard user={user} onNavigate={handleNavigate} onLogout={handleLogout} />
+                <Suspense fallback={<div className="flex items-center justify-center min-h-[50vh]"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-brown"></div></div>}>
+                  <AdminDashboard user={user} onNavigate={handleNavigate} onLogout={handleLogout} />
+                </Suspense>
               </AdminLayout>
             </ProtectedRoute>
           }
         />
 
-        {/* Catch-all - 404 */}
-        <Route
-          path="/gift-and-card"
-          element={
-            <PageLayout>
-              <Header
-                user={user}
-                onLogout={handleLogout}
-                onNavigate={handleNavigate}
-                cartCount={getUniqueProductCount()}
-                onOpenCart={() => setIsCartOpen(true)}
-                wishlistCount={wishlistItems.length}
-                onOpenWishlist={() => setIsWishlistOpen(true)}
-              />
-              <GiftAndCardPage
-                onNavigate={handleNavigate}
-                onAddToCart={handleAddToCart}
-              />
-            </PageLayout>
-          }
-        />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>

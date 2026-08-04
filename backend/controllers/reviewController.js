@@ -5,7 +5,7 @@ const ProductImage = require('../models/catalog/ProductImage');
 const Order   = require('../models/Order');
 const { uploadToCloudinary, deleteFromCloudinary } = require('../services/uploadService');
 const { getCloudinaryFolder, getImageOptimizationParams, getVideoOptimizationParams } = require('../utils/cloudinaryHelper');
-const upload = require('../middlewares/upload');
+const upload = require('../middleware/upload');
 
 /* ── helpers ──────────────────────────────────────── */
 

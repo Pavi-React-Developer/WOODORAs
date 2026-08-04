@@ -34,8 +34,11 @@ import {
   Truck,
   Check,
   CreditCard,
-  Settings
+  Settings,
+  Loader2,
+  Download
 } from 'lucide-react';
+import { saveAs } from 'file-saver';
 import { authService } from '../api/authService';
 import { orderService } from '../api/orderService';
 import { uploadAPI } from '../api/catalogAdminService';
@@ -204,6 +207,21 @@ export default function CustomerProfilePage({
   const [refunds, setRefunds] = useState([]);
   const [refundsLoading, setRefundsLoading] = useState(false);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
+  const [downloadingInvoice, setDownloadingInvoice] = useState(null);
+
+  const handleDownloadInvoice = async (orderId) => {
+    try {
+      setDownloadingInvoice(orderId);
+      const blob = await orderService.downloadInvoice(orderId);
+      saveAs(blob, `invoice-${orderId}.pdf`);
+      toast.success('Invoice downloaded successfully');
+    } catch (error) {
+      toast.error(error.message || 'Failed to download invoice');
+    } finally {
+      setDownloadingInvoice(null);
+    }
+  };
+
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [cancelOrderTarget, setCancelOrderTarget] = useState(null);
   const [cancellationPreviewData, setCancellationPreviewData] = useState(null);
@@ -232,6 +250,12 @@ export default function CustomerProfilePage({
     setIsEditing(normalizedPath === '/profile/edit');
     if (nextModule === 'order-details' && location.state?.data) {
       setActiveOrder(location.state.data);
+      // Fetch fresh order details so if admin changed status, it updates on refresh
+      if (location.state.data._id) {
+        orderService.getOrderById(location.state.data._id).then(freshOrder => {
+          setActiveOrder(freshOrder);
+        }).catch(err => console.error('Failed to fetch fresh order details:', err));
+      }
     } else if (nextModule !== 'order-details') {
       setActiveOrder(null);
     }
@@ -1445,26 +1469,69 @@ export default function CustomerProfilePage({
     if (!activeOrder) return null;
     return (
       <section className="px-5 py-7 lg:px-7">
-        <div className="flex items-center justify-between gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div>
             <h2 className="text-lg font-bold text-[#141225]">Order Details</h2>
             <p className="mt-1 text-sm text-[#6D625C]">Order #{activeOrder._id.slice(-8).toUpperCase()}</p>
           </div>
-          <button type="button" onClick={() => openProfileModule('orders')} className="rounded-[8px] border border-[#E9DED3] px-4 py-2 text-sm font-bold text-[#141225] hover:bg-gray-50">Back to Orders</button>
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            {activeOrder.isPaid && (
+              <button 
+                type="button" 
+                onClick={() => handleDownloadInvoice(activeOrder._id)}
+                disabled={downloadingInvoice === activeOrder._id}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 rounded-[8px] bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 transition-colors"
+              >
+                {downloadingInvoice === activeOrder._id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                Invoice
+              </button>
+            )}
+            <button 
+              type="button" 
+              onClick={() => openProfileModule('orders')} 
+              className="flex-1 sm:flex-none rounded-[8px] border border-[#E9DED3] px-4 py-2 text-sm font-bold text-[#141225] hover:bg-gray-50 transition-colors"
+            >
+              Back to Orders
+            </button>
+          </div>
         </div>
 
-        <div className="space-y-6">
-          <div className="rounded-[14px] border border-[#E9DED3] bg-white p-5 sm:p-7">
+        <div className="flex flex-col gap-6 md:block md:space-y-6">
+          <div className="rounded-[14px] border border-[#E9DED3] bg-white p-5 sm:p-7 overflow-x-auto">
             {renderTrackingTimeline(activeOrder)}
           </div>
 
-          <div className="rounded-[14px] border border-[#E9DED3] bg-white p-5">
+          {/* Mobile Tracking ID (Order 1) */}
+          {activeOrder.trackingId && (
+            <div className="md:hidden order-1 rounded-[14px] border border-[#E9DED3] bg-white p-5">
+              {activeOrder.courierName && (
+                <div className="flex justify-between items-center mb-2">
+                  <p className="text-sm font-bold text-[#6D625C]">Courier:</p>
+                  <p className="text-sm font-semibold text-[#141225]">{activeOrder.courierName}</p>
+                </div>
+              )}
+              <div className="flex justify-between items-center">
+                <p className="text-sm font-bold text-[#6D625C]">Tracking ID:</p>
+                <p className="text-sm font-semibold text-[#141225]">{activeOrder.trackingId}</p>
+              </div>
+              {activeOrder.trackingUrl && (
+                <div className="flex justify-between items-center mt-2">
+                  <p className="text-sm font-bold text-[#6D625C]">Tracking Link:</p>
+                  <a href={activeOrder.trackingUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-blue-600 hover:underline flex items-center gap-1">
+                    Track Order <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="order-2 rounded-[14px] border border-[#E9DED3] bg-white p-5">
             <h3 className="font-bold text-[#141225] mb-4">Products</h3>
             <div className="divide-y divide-[#E9DED3]">
               {activeOrder.orderItems?.map((item, idx) => {
                 const imageSrc = item.image ? (item.image.startsWith('http') || item.image.startsWith('data:') ? item.image : (item.image.startsWith('/uploads') || item.image.startsWith('uploads/')) ? `http://localhost:5000${item.image.startsWith('/') ? '' : '/'}${item.image}` : item.image) : '/animal_balance_maze.png';
                 return (
-                  <div key={idx} className="py-4 flex flex-col sm:flex-row gap-4 sm:items-center">
+                  <div key={idx} className="py-4 flex flex-row gap-4 items-center">
                     <div className="h-20 w-20 shrink-0 overflow-hidden rounded-[8px] bg-[#F8F3EF]">
                       <img src={imageSrc} alt={item.name} className="h-full w-full object-cover" />
                     </div>
@@ -1475,10 +1542,10 @@ export default function CustomerProfilePage({
                         {(item.weight && item.weight !== '0' && item.weight !== 0) ? ` | Weight: ${item.weight}` : ''}
                       </p>
                     </div>
-                    <div>
+                    <div className="hidden md:block">
                       <button 
                         onClick={() => onNavigate(`/product/${item.product}`)}
-                        className="rounded-[8px] bg-[#9A6031] px-5 py-2.5 text-xs font-bold text-white transition hover:bg-[#7E4B25] w-full sm:w-auto mt-2 sm:mt-0 shadow-sm"
+                        className="rounded-[8px] bg-[#9A6031] px-5 py-2.5 text-xs font-bold text-white transition hover:bg-[#7E4B25] shadow-sm"
                       >
                         Buy Again
                       </button>
@@ -1490,7 +1557,7 @@ export default function CustomerProfilePage({
                             orderItemId: item._id,
                             reviewKey: `${activeOrder._id}:${item._id}`,
                           })}
-                          className="sm:ml-2 rounded-[8px] border border-[#9A6031] text-[#9A6031] px-5 py-2.5 text-xs font-bold transition hover:bg-[#FAF8F5] w-full sm:w-auto mt-2 sm:mt-0 shadow-sm"
+                          className="ml-2 rounded-[8px] border border-[#9A6031] text-[#9A6031] px-5 py-2.5 text-xs font-bold transition hover:bg-[#FAF8F5] shadow-sm"
                         >
                           Write Review
                         </button>
@@ -1507,7 +1574,13 @@ export default function CustomerProfilePage({
               </span>
             </div>
             {activeOrder.trackingId && (
-              <div className="mt-4 pt-4 border-t border-[#E9DED3] flex flex-col gap-2">
+              <div className="hidden md:flex mt-4 pt-4 border-t border-[#E9DED3] flex-col gap-2">
+                {activeOrder.courierName && (
+                  <div className="flex justify-between items-center">
+                    <p className="text-sm font-bold text-[#6D625C]">Courier:</p>
+                    <p className="text-sm font-semibold text-[#141225]">{activeOrder.courierName}</p>
+                  </div>
+                )}
                 <div className="flex justify-between items-center">
                   <p className="text-sm font-bold text-[#6D625C]">Tracking ID:</p>
                   <p className="text-sm font-semibold text-[#141225]">{activeOrder.trackingId}</p>
@@ -1524,12 +1597,7 @@ export default function CustomerProfilePage({
             )}
           </div>
 
-          <div className="rounded-[14px] border border-[#E9DED3] bg-white p-5">
-            <h3 className="font-bold text-[#141225] mb-4">Payment Summary</h3>
-            <OrderPricingSummary order={activeOrder} />
-          </div>
-
-          <div className="rounded-[14px] border border-[#E9DED3] bg-white p-5">
+          <div className="order-3 rounded-[14px] border border-[#E9DED3] bg-white p-5">
             <h3 className="font-bold text-[#141225] mb-3">Shipping Address</h3>
             {activeOrder.shippingAddress ? (
               <div className="text-sm text-[#6D625C] space-y-1.5">
@@ -1542,8 +1610,43 @@ export default function CustomerProfilePage({
               <p className="text-sm text-[#6D625C]">No address provided.</p>
             )}
           </div>
+
+          {/* Mobile Buy Again Card (Order 4) */}
+          <div className="md:hidden order-4 rounded-[14px] border border-[#E9DED3] bg-white p-5">
+             <h3 className="font-bold text-[#141225] mb-4">Actions</h3>
+             <div className="flex flex-col gap-3">
+               {activeOrder.orderItems?.map((item, idx) => (
+                 <div key={idx} className="flex flex-col gap-2">
+                    <button 
+                      onClick={() => onNavigate(`/product/${item.product}`)}
+                      className="w-full rounded-[8px] bg-[#9A6031] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#7E4B25] shadow-sm"
+                    >
+                      Buy {item.name} Again
+                    </button>
+                    {activeOrder.status === 'Delivered' && (
+                      <button 
+                        onClick={() => setReviewModalProduct({
+                          productId: item.product,
+                          orderId: activeOrder._id,
+                          orderItemId: item._id,
+                          reviewKey: `${activeOrder._id}:${item._id}`,
+                        })}
+                        className="w-full rounded-[8px] border border-[#9A6031] text-[#9A6031] px-5 py-3 text-sm font-bold transition hover:bg-[#FAF8F5] shadow-sm"
+                      >
+                        Write Review for {item.name}
+                      </button>
+                    )}
+                 </div>
+               ))}
+             </div>
+          </div>
+
+          <div className="order-5 rounded-[14px] border border-[#E9DED3] bg-white p-5">
+            <h3 className="font-bold text-[#141225] mb-4">Payment Summary</h3>
+            <OrderPricingSummary order={activeOrder} />
+          </div>
           
-          <div className="pt-4">
+          <div className="order-6 pt-4">
             <h3 className="font-bold text-[#141225] mb-4">Recently Viewed Products</h3>
             {recentlyViewed && recentlyViewed.length > 0 ? (
                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">

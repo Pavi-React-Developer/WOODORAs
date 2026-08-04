@@ -2,6 +2,8 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const path = require('path');
+const helmet = require('helmet');
+const compression = require('compression');
 const mongoose = require('mongoose');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
@@ -24,6 +26,8 @@ const productFeeRoutes = require('./routes/productFeeRoutes');
 const giftCardRoutes = require('./routes/giftCardRoutes');
 const customizeRoutes = require('./routes/customizeRoutes');
 const walletRoutes = require('./routes/walletRoutes');
+const sitemapRoutes = require('./routes/sitemapRoutes');
+const courierRoutes = require('./routes/courierRoutes');
 const Order = require('./models/Order');
 const Review = require('./models/Review');
 const Module = require('./models/Module');
@@ -89,7 +93,11 @@ mongoose.connection.once('open', async () => {
 
 const app = express();
 
-// Middleware
+// Security and Optimization Middlewares
+app.use(helmet());
+app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" })); // Allow loading assets across origins
+app.use(compression()); // GZIP compress responses
+// Standard Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 const passport = require('./config/passport');
@@ -146,6 +154,10 @@ app.use('/api/customize', customizeRoutes);
 app.use('/api/product-fees', productFeeRoutes);
 app.use('/api/refunds', refundRoutes);
 app.use('/api/settings', require('./routes/systemSettingRoutes'));
+app.use('/api/couriers', courierRoutes);
+
+// Sitemap Route (serves /sitemap.xml)
+app.use('/sitemap.xml', sitemapRoutes);
 
 // Serve static frontend build
 app.use(express.static(path.join(__dirname, 'public')));

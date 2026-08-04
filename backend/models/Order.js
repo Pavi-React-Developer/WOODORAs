@@ -205,6 +205,13 @@ const orderSchema = new mongoose.Schema(
     trackingUrl: {
       type: String,
     },
+    additionalTracking: [{
+      trackingId: String,
+      trackingUrl: String
+    }],
+    courierName: {
+      type: String,
+    },
     status: {
       type: String,
       enum: ORDER_STATUSES,

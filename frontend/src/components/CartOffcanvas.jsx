@@ -52,11 +52,33 @@ function CartVariantSuggestion({ productId, currentVariantId, cartItems }) {
 
   const optionText = suggestion.options?.map(o => o.value).join(' / ') || 'another';
 
+  let suggestionImgSrc = '/wood-placeholder.png';
+  if (suggestion?.images && Array.isArray(suggestion.images) && suggestion.images.length > 0) {
+    const img = suggestion.images[0];
+    suggestionImgSrc = typeof img === 'string' ? img : (img?.url || suggestionImgSrc);
+  } else if (productData?.image) {
+    const img = productData.image;
+    suggestionImgSrc = typeof img === 'string' ? img : (img?.url || suggestionImgSrc);
+  } else if (productData?.images && Array.isArray(productData.images) && productData.images.length > 0) {
+    const img = productData.images[0];
+    suggestionImgSrc = typeof img === 'string' ? img : (img?.url || suggestionImgSrc);
+  }
+
   return (
     <div className="mt-3 bg-amber-50 rounded-lg p-2.5 flex flex-wrap items-center justify-between gap-2 border border-amber-200 shadow-sm animate-in fade-in slide-in-from-top-1">
-      <span className="text-[11px] text-amber-800 font-medium flex-1">
-        Try our <span className="font-bold">{optionText}</span> version instead!
-      </span>
+      <div className="flex items-center gap-2 flex-1 min-w-0">
+        <div className="w-8 h-8 rounded border border-amber-200 overflow-hidden shrink-0 bg-white flex items-center justify-center">
+          <img 
+            src={suggestionImgSrc} 
+            alt={optionText} 
+            className="w-full h-full object-cover" 
+            onError={(e) => { e.target.src = '/wood-placeholder.png'; }} 
+          />
+        </div>
+        <span className="text-[11px] text-amber-800 font-medium truncate">
+          Try our <span className="font-bold">{optionText}</span> version instead!
+        </span>
+      </div>
       <button 
         type="button"
         onClick={handleAdd}

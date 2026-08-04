@@ -8,9 +8,13 @@ export default function ProductCard({ product, viewMode = 'grid', onNavigate, on
   
   // Use global wishlist state to stay in sync with sidebar removals
   const wishlistItems = useWishlistStore(state => state.wishlistItems);
-  const isInWishlist = wishlistItems.some(w => (w._id || w) === product._id) || 
-                       user?.wishlist?.some?.((w) => (w._id || w) === product._id) || 
-                       product.isWishlisted;
+  const isInWishlist = wishlistItems.some(w => {
+      const pId = w.product?._id || w.product || w._id || w;
+      return String(pId) === String(product._id);
+  }) || user?.wishlist?.some?.((w) => {
+      const pId = w.product?._id || w.product || w._id || w;
+      return String(pId) === String(product._id);
+  }) || product.isWishlisted;
   // Fallback to local state just for immediate UI feedback before store updates
   const [localWishlist, setLocalWishlist] = useState(isInWishlist);
 
@@ -48,14 +52,21 @@ export default function ProductCard({ product, viewMode = 'grid', onNavigate, on
         setIsAdding(false);
       }
     } else {
-      setLocalWishlist(!localWishlist);
+      const isCurrentlyWishlisted = localWishlist;
+      setLocalWishlist(!isCurrentlyWishlisted);
       
       let defaultVariant = null;
       if (p.hasVariants && p.variants && p.variants.length > 0) {
           defaultVariant = p.variants[0];
       }
       
-      onAddToWishlist?.(p, defaultVariant, 1);
+      if (isCurrentlyWishlisted) {
+         // If already wishlisted, just remove it directly via store
+         useWishlistStore.getState().toggleWishlist(p, defaultVariant, 1);
+      } else {
+         // If adding, use the passed function so it can open the offcanvas
+         onAddToWishlist?.(p, defaultVariant, 1);
+      }
     }
   };
 
@@ -102,16 +113,20 @@ export default function ProductCard({ product, viewMode = 'grid', onNavigate, on
           </div>
         )}
         <div className={`absolute flex flex-col gap-2 z-10 ${viewMode === 'list' ? 'top-3 right-3' : 'top-2 right-2'}`}>
-          <button
+          <motion.button
+            whileTap={{ scale: 0.7 }}
+            transition={{ type: "spring", stiffness: 400, damping: 10 }}
             onClick={(e) => { e.stopPropagation(); handleAction('Wishlist', product, e); }}
             className={`bg-white rounded-full flex items-center justify-center hover:shadow-md transition-all shadow-sm ${viewMode === 'list' ? 'w-10 h-10' : 'w-8 h-8'}`}
           >
-            <svg className={`transition-colors ${localWishlist ? 'text-red-500 fill-red-500' : 'text-[#999999] hover:text-[#B1621F] fill-none'} ${viewMode === 'list' ? 'w-5 h-5' : 'w-4 h-4'}`} stroke="currentColor" viewBox="0 0 24 24">
+            <svg className={`transition-colors duration-300 ${localWishlist ? 'text-red-500 fill-red-500 scale-110' : 'text-[#999999] hover:text-[#B1621F] fill-none'} ${viewMode === 'list' ? 'w-5 h-5' : 'w-4 h-4'}`} stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
             </svg>
-          </button>
+          </motion.button>
           
-          <button
+          <motion.button
+            whileTap={{ scale: 0.7 }}
+            transition={{ type: "spring", stiffness: 400, damping: 10 }}
             onClick={(e) => { e.stopPropagation(); handleAction('Cart', product, e); }}
             className={`bg-white rounded-full flex items-center justify-center hover:shadow-md transition-all shadow-sm text-[#999999] hover:text-[#B1621F] ${viewMode === 'list' ? 'w-10 h-10' : 'w-8 h-8'}`}
           >
@@ -122,7 +137,7 @@ export default function ProductCard({ product, viewMode = 'grid', onNavigate, on
                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                </svg>
             )}
-          </button>
+          </motion.button>
         </div>
       </div>
       <div className={`flex flex-col flex-1 bg-white ${viewMode === 'list' ? 'p-4 sm:p-8 justify-center gap-2' : 'p-4'}`}>

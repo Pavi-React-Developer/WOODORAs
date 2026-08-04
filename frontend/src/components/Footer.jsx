@@ -58,7 +58,7 @@ export default function Footer() {
             <h3 className="font-serif text-xl font-bold text-white">
               {footerData?.logo
                 ? <img src={getImageSrc(footerData.logo)} alt="Logo" className="h-8 object-contain brightness-0 invert" />
-                : 'Woodora'
+                : <img src="/brand-logo.jpeg" alt="Marakathai Logo" className="h-8 object-contain brightness-0 invert" />
               }
             </h3>
             <p className="text-xs text-white/60 leading-relaxed max-w-xs">

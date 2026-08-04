@@ -149,6 +149,21 @@ const verifyPayment = async (req, res) => {
         console.error('Failed to clear cart after Cashfree success:', cartErr);
       }
 
+      // Automatically send the invoice email
+      try {
+        const { generateInvoice } = require('../services/invoiceService');
+        const { sendInvoiceEmail } = require('../services/emailService');
+        
+        const populatedOrder = await Order.findById(updatedOrder._id).populate('user', 'name email');
+        if (populatedOrder) {
+          generateInvoice(populatedOrder)
+            .then(pdfBuffer => sendInvoiceEmail(populatedOrder, pdfBuffer))
+            .catch(err => console.error('[Cashfree] Failed to generate/send invoice email:', err));
+        }
+      } catch (emailErr) {
+        console.error('[Cashfree] Error preparing invoice email:', emailErr);
+      }
+
       return res.json({
         success: true,
         isPaid: updatedOrder.isPaid,

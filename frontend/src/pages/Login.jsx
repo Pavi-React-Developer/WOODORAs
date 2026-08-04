@@ -59,10 +59,8 @@ export default function Login({ onAuthSuccess, onNavigate }) {
           role: data.role,
           isStaff: data.isStaff
         };
-        setTimeout(() => {
-          onAuthSuccess(data);
-          onNavigate(data.role === 'admin' || data.isStaff ? 'admin' : 'home', mappedUser);
-        }, 1500);
+        onAuthSuccess(data);
+        onNavigate(data.role === 'admin' || data.isStaff ? 'admin' : 'home', mappedUser);
       } 
       
       else if (mode === 'register') {
@@ -84,10 +82,8 @@ export default function Login({ onAuthSuccess, onNavigate }) {
           email: data.email,
           role: data.role
         };
-        setTimeout(() => {
-          onAuthSuccess(data);
-          onNavigate(data.role === 'admin' ? 'admin' : 'home', mappedUser);
-        }, 1500);
+        onAuthSuccess(data);
+        onNavigate(data.role === 'admin' ? 'admin' : 'home', mappedUser);
       } 
       
       else if (mode === 'forgot') {
@@ -111,15 +107,15 @@ export default function Login({ onAuthSuccess, onNavigate }) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-brand-light font-sans text-brand-dark">
+    <div className="h-screen flex flex-col bg-brand-light font-sans text-brand-dark overflow-hidden">
       
       {/* ── TOP HEADER ── */}
       <header className="h-16 shrink-0 bg-[#F9FAFB] flex items-center justify-between px-6 border-b border-gray-200">
         <button 
           onClick={() => onNavigate('/')}
-          className="font-serif text-xl font-bold tracking-tight text-brand-dark cursor-pointer"
+          className="shrink-0 cursor-pointer"
         >
-          WoodenToys
+          <img src="/brand-logo.jpeg" alt="Marakathai Logo" className="h-8 w-auto object-contain" />
         </button>
         <button className="text-brand-medium hover:text-brand-dark transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -127,14 +123,14 @@ export default function Login({ onAuthSuccess, onNavigate }) {
       </header>
 
       {/* ── MAIN CONTENT ── */}
-      <div className="flex-1 flex flex-col md:flex-row">
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         
         {/* Left Image Section */}
-        <div className="hidden md:flex md:w-1/2 relative bg-brand-light">
+        <div className="hidden md:block md:w-1/2 relative h-full bg-brand-light overflow-hidden">
           <img 
             src="/hero1.jpeg" 
             alt="Children playing" 
-            className="w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-cover"
             onError={(e) => {
               // fallback if image not found to a solid elegant color
               e.target.style.display = 'none';
@@ -150,12 +146,12 @@ export default function Login({ onAuthSuccess, onNavigate }) {
         </div>
 
         {/* Right Form Section */}
-        <div className="w-full md:w-1/2 flex items-center justify-center p-8 bg-white">
+        <div className="w-full md:w-1/2 flex items-center justify-center p-8 bg-white overflow-y-auto h-full">
           <div className="max-w-sm w-full py-8">
             
             {/* Header Text */}
             <div className="text-center mb-8">
-              <h2 className="font-sans text-3xl font-bold text-brand-dark mb-2">WoodenToys</h2>
+              <img src="/brand-logo.jpeg" alt="Marakathai Logo" className="h-12 w-auto mx-auto mb-4 object-contain" />
               <h3 className="text-xl font-medium text-brand-dark">
                 {mode === 'login' && 'Welcome back'}
                 {mode === 'register' && 'Create Account'}
@@ -232,20 +228,7 @@ export default function Login({ onAuthSuccess, onNavigate }) {
                 </div>
               )}
 
-              {/* Role selector inside Registration (hidden normally, kept for testing) */}
-              {mode === 'register' && (
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium">Account Role (Testing)</label>
-                  <select
-                    value={role}
-                    onChange={(e) => setRole(e.target.value)}
-                    className="w-full border border-gray-200 rounded px-4 py-2.5 text-sm focus:outline-none focus:border-brand-medium"
-                  >
-                    <option value="user">User</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </div>
-              )}
+
 
               <button
                 type="submit"
@@ -336,8 +319,8 @@ export default function Login({ onAuthSuccess, onNavigate }) {
       {/* ── BOTTOM FOOTER ── */}
       <footer className="h-14 shrink-0 bg-[#F9FAFB] flex flex-col md:flex-row items-center justify-between px-6 border-t border-gray-200">
         <div className="flex items-center gap-3">
-          <span className="text-[10px] font-bold tracking-widest uppercase text-brand-dark">WoodenToys</span>
-          <span className="text-[10px] text-brand-medium">© 2026 WoodenToys. Sustainable Play.</span>
+          <span className="text-[10px] font-bold tracking-widest uppercase text-brand-dark">Marakathai</span>
+          <span className="text-[10px] text-brand-medium">© 2026 Marakathai. Sustainable Play.</span>
         </div>
         <div className="flex items-center gap-4 mt-2 md:mt-0">
           <a href="#" className="text-[10px] text-brand-medium hover:text-brand-dark">Privacy Policy</a>

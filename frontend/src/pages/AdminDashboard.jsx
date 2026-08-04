@@ -5,6 +5,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsToolti
 import { catalogService } from '../api/catalogService';
 import { adminService } from '../api/adminService';
 import apiClient from '../api/apiClient';
+import { downloadExcelFile } from '../utils/exportUtils';
 import CategoriesPage from './admin/catalog/CategoriesPage';
 import SubCategoriesPage from './admin/catalog/SubCategoriesPage';
 import AttributesPage from './admin/catalog/AttributesPage';
@@ -287,20 +288,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
       return;
     }
     const headers = ['Date', 'Revenue'];
-    const csvContent = [
-      headers.join(','),
-      ...revenueAnalytics.map(item => `${item.date},${item.revenue}`)
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'dashboard_revenue.csv';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    const rows = revenueAnalytics.map(item => [item.date, item.revenue]);
+    downloadExcelFile('dashboard_revenue', headers, rows);
   };
 
   useEffect(() => {

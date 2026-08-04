@@ -1,6 +1,6 @@
 const { uploadToCloudinary, deleteFromCloudinary } = require('../services/uploadService');
 const { getCloudinaryFolder, getImageOptimizationParams, getVideoOptimizationParams } = require('../utils/cloudinaryHelper');
-const upload = require('../middlewares/upload');
+const upload = require('../middleware/upload');
 
 // @desc    Upload one or more media files
 // @route   POST /api/catalog/upload

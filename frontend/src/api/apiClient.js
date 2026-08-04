@@ -8,6 +8,7 @@
  *  - Interceptors handle auth headers, 401 logout, and structured errors.
  */
 import axios from 'axios';
+import { setupCache } from 'axios-cache-interceptor';
 
 // ── Base URL ─────────────────────────────────────────────────────────────────
 // VITE_API_BASE_URL must be set in .env / .env.production.
@@ -18,10 +19,16 @@ export const API_ORIGIN = BASE_URL;           // e.g. "https://api.example.com"
 export const API_BASE   = `${BASE_URL}/api`;  // e.g. "https://api.example.com/api"
 
 // ── Axios instance ────────────────────────────────────────────────────────────
-const apiClient = axios.create({
+const baseClient = axios.create({
   baseURL: API_BASE,
   timeout: 15000,            // 15 s – prevents requests hanging forever
   headers: { 'Content-Type': 'application/json' },
+});
+
+// Setup caching: Cache GET requests for 5 minutes by default
+const apiClient = setupCache(baseClient, {
+  ttl: 1000 * 60 * 5, // 5 minutes
+  methods: ['get'],
 });
 
 // ── Request interceptor: attach Bearer token ──────────────────────────────────

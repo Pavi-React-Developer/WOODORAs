@@ -184,21 +184,12 @@ const getWishlist = async (req, res) => {
         let user = await User.findById(req.user._id).populate({
             path: 'wishlist.product',
             select: 'name price salePrice discountPrice images isWishlisted slug hasVariants variants',
-            populate: {
-                path: 'variants',
-                select: 'price salePrice discountPrice basePrice options images'
-            }
         });
         
         if (!user) {
-
             user = await Staff.findById(req.user._id).populate({
                 path: 'wishlist.product',
-                select: 'name price salePrice discountPrice images isWishlisted slug hasVariants variants',
-                populate: {
-                    path: 'variants',
-                    select: 'price salePrice discountPrice basePrice options images'
-                }
+                select: 'name price salePrice discountPrice images isWishlisted slug hasVariants variants'
             });
         }
         
@@ -252,10 +243,6 @@ const toggleWishlist = async (req, res) => {
         await user.populate({
             path: 'wishlist.product',
             select: 'name price salePrice discountPrice images isWishlisted slug hasVariants variants',
-            populate: {
-                path: 'variants',
-                select: 'price salePrice discountPrice basePrice options images'
-            }
         });
 
         const validWishlist = user.wishlist.filter(item => item.product != null);
@@ -318,10 +305,6 @@ const mergeWishlist = async (req, res) => {
         await user.populate({
             path: 'wishlist.product',
             select: 'name price salePrice discountPrice images isWishlisted slug hasVariants variants',
-            populate: {
-                path: 'variants',
-                select: 'price salePrice discountPrice basePrice options images'
-            }
         });
 
         const validWishlist = user.wishlist.filter(item => item.product != null);

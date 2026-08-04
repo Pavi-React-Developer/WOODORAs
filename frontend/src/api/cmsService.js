@@ -5,10 +5,24 @@ const getAuthHeaders = () => {
   return token ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
 };
 
+const cache = new Map();
+
 const request = async (url, options = {}) => {
+  const method = options.method || 'GET';
+  if (method === 'GET') {
+    const cached = cache.get(url);
+    if (cached && Date.now() - cached.time < 5 * 60 * 1000) return cached.data; // 5 min TTL
+  }
+
   const res = await fetch(url, { ...options, headers: { ...getAuthHeaders(), ...(options.headers || {}) } });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || 'Request failed');
+
+  if (method === 'GET') {
+    cache.set(url, { time: Date.now(), data });
+  } else {
+    cache.clear(); // Clear cache on mutations
+  }
   return data;
 };
 

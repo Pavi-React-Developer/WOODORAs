@@ -139,8 +139,8 @@ export default function Header({
           className="shrink-0"
         >
           <img
-            src={navbarConfig?.logo?.url || "/woodora-logo.png"}
-            alt="Woodora Logo"
+            src={navbarConfig?.logo?.url || "/brand-logo.jpeg"}
+            alt="Marakathai Logo"
             className="h-10 w-[160px] object-contain scale-125 origin-left"
           />
         </button>
@@ -218,14 +218,20 @@ export default function Header({
               aria-label="Account"
             >
               {(() => {
-                const imgSrc = resolveProfileImage(user?.profileImage) || resolveProfileImage(user?.avatar);
-                return imgSrc ? (
-                  <img src={imgSrc} alt={user.name} className="h-[22px] w-[22px] rounded-full object-cover" />
-                ) : (
-                  <User className="h-[22px] w-[22px]" strokeWidth={1.5} />
-                );
+                if (user) {
+                  const imgSrc = resolveProfileImage(user?.profileImage) || resolveProfileImage(user?.avatar);
+                  if (imgSrc) {
+                    return <img src={imgSrc} alt={user.name} className="h-[22px] w-[22px] rounded-full object-cover border border-[#E9DED3]" />;
+                  }
+                  return (
+                    <div className="h-[22px] w-[22px] rounded-full bg-[#B0611C] text-white flex items-center justify-center text-[10px] font-bold uppercase shadow-sm">
+                      {user.name ? user.name.charAt(0) : 'U'}
+                    </div>
+                  );
+                }
+                return <User className="h-[22px] w-[22px]" strokeWidth={1.5} />;
               })()}
-              <span className="text-[11px] font-medium leading-none">Account</span>
+              <span className="text-[11px] font-medium leading-none">{user ? user.name.split(' ')[0] : 'Account'}</span>
             </button>
             {dropdownOpen && user && (
               <div className="absolute right-0 top-12 z-[60] mt-2 w-[220px] overflow-hidden rounded-xl border border-[#E9DED3] bg-white shadow-xl">
@@ -403,7 +409,7 @@ export default function Header({
       {/* ── MOBILE: Logo + icons + hamburger ── */}
       <div className="flex lg:hidden items-center justify-between gap-2 px-3 py-3 sm:px-6">
         <button type="button" onClick={() => onNavigate(navbarConfig?.logoUrl || '/')} className="shrink-0">
-          <img src={navbarConfig?.logo?.url || "/woodora-logo.png"} alt="Woodora Logo" className="h-14 w-auto object-contain" />
+          <img src={navbarConfig?.logo?.url || "/brand-logo.jpeg"} alt="Marakathai Logo" className="h-14 w-auto object-contain" />
         </button>
         <div className="flex items-center gap-3 text-[#B0611C]">
           <div className="relative">
@@ -413,11 +419,20 @@ export default function Header({
               className="flex items-center justify-center rounded-full transition hover:opacity-80"
               aria-label="Account"
             >
-              {(user?.profileImage?.url || user?.avatar) ? (
-                <img src={user.profileImage?.url || user.avatar} alt={user.name} className="h-[22px] w-[22px] rounded-full object-cover" />
-              ) : (
-                <User className="h-[22px] w-[22px]" strokeWidth={1.5} />
-              )}
+              {(() => {
+                if (user) {
+                  const imgSrc = resolveProfileImage(user?.profileImage) || resolveProfileImage(user?.avatar);
+                  if (imgSrc) {
+                    return <img src={imgSrc} alt={user.name} className="h-[22px] w-[22px] rounded-full object-cover border border-[#E9DED3]" />;
+                  }
+                  return (
+                    <div className="h-[22px] w-[22px] rounded-full bg-[#B0611C] text-white flex items-center justify-center text-[10px] font-bold uppercase shadow-sm">
+                      {user.name ? user.name.charAt(0) : 'U'}
+                    </div>
+                  );
+                }
+                return <User className="h-[22px] w-[22px]" strokeWidth={1.5} />;
+              })()}
             </button>
             {dropdownOpen && user && (
               <div className="absolute right-0 top-10 z-[60] mt-2 w-[220px] overflow-hidden rounded-xl border border-[#E9DED3] bg-white shadow-xl">
@@ -662,12 +677,18 @@ export default function Header({
               aria-label="Account"
             >
               {(() => {
-                const imgSrc = resolveProfileImage(user?.profileImage) || resolveProfileImage(user?.avatar);
-                return imgSrc ? (
-                  <img src={imgSrc} alt={user.name} className="h-[22px] w-[22px] sm:h-[26px] sm:w-[26px] rounded-full object-cover" />
-                ) : (
-                  <User className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px]" strokeWidth={1.5} />
-                );
+                if (user) {
+                  const imgSrc = resolveProfileImage(user?.profileImage) || resolveProfileImage(user?.avatar);
+                  if (imgSrc) {
+                    return <img src={imgSrc} alt={user.name} className="h-[22px] w-[22px] sm:h-[26px] sm:w-[26px] rounded-full object-cover border border-[#E9DED3]" />;
+                  }
+                  return (
+                    <div className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px] rounded-full bg-[#B0611C] text-white flex items-center justify-center text-[10px] font-bold uppercase shadow-sm">
+                      {user.name ? user.name.charAt(0) : 'U'}
+                    </div>
+                  );
+                }
+                return <User className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px]" strokeWidth={1.5} />;
               })()}
             </button>
 

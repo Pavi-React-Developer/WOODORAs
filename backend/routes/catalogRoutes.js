@@ -10,19 +10,27 @@ const productController = require('../controllers/productController');
 const productVariantController = require('../controllers/productVariantController');
 const catalogController = require('../controllers/catalogController');
 const uploadController = require('../controllers/uploadController');
+const { uploadLimiter } = require('../middleware/rateLimiter');
+const { cacheMiddleware, clearCache } = require('../middleware/cacheMiddleware');
+
+// Helper to clear cache on updates
+const bustCache = (req, res, next) => {
+    clearCache();
+    next();
+};
 
 // ==========================================
 // CATEGORY ROUTES
 // ==========================================
-router.get('/shop-categories', categoryController.getShopCategories);
-router.post('/categories', categoryController.createCategory);
-router.post('/categories/bulk', categoryController.bulkCreateCategory);
-router.get('/categories', categoryController.getCategories);
-router.get('/categories/:id', categoryController.getCategoryById);
-router.get('/categories/:id/attributes', categoryController.getCategoryAttributes);
-router.put('/categories/:id', categoryController.updateCategory);
-router.delete('/categories/:id', categoryController.deleteCategory);
-router.patch('/categories/:id/toggle-status', categoryController.toggleCategoryStatus);
+router.get('/shop-categories', cacheMiddleware(300), categoryController.getShopCategories);
+router.post('/categories', protect, authorize('admin', 'staff'), bustCache, categoryController.createCategory);
+router.post('/categories/bulk', protect, authorize('admin', 'staff'), bustCache, categoryController.bulkCreateCategory);
+router.get('/categories', cacheMiddleware(300), categoryController.getCategories);
+router.get('/categories/:id', cacheMiddleware(300), categoryController.getCategoryById);
+router.get('/categories/:id/attributes', cacheMiddleware(300), categoryController.getCategoryAttributes);
+router.put('/categories/:id', protect, authorize('admin', 'staff'), bustCache, categoryController.updateCategory);
+router.delete('/categories/:id', protect, authorize('admin', 'staff'), bustCache, categoryController.deleteCategory);
+router.patch('/categories/:id/toggle-status', protect, authorize('admin', 'staff'), bustCache, categoryController.toggleCategoryStatus);
 
 // Legacy routes for backward compatibility
 router.get('/category', categoryController.getCategories);
@@ -67,19 +75,19 @@ router.get('/sku/generate', productController.generateSKU);
 // ==========================================
 // IMAGE UPLOAD ROUTES
 // ==========================================
-router.post('/upload', uploadController.uploadImages);
-router.delete('/upload', uploadController.deleteImage);
+router.post('/upload', uploadLimiter, uploadController.uploadImages);
+router.delete('/upload', uploadLimiter, uploadController.deleteImage);
 
 // ==========================================
 // PRODUCT ROUTES
 // ==========================================
-router.post('/products', productController.createProduct);
-router.get('/products', productController.getProducts);
-router.get('/products/:id', productController.getProductById);
-router.put('/products/:id', productController.updateProduct);
-router.delete('/products/:id', productController.deleteProduct);
-router.patch('/products/:id/toggle-status', productController.toggleProductStatus);
-router.get('/subcategories/:subCategoryId/attributes', productController.getSubCategoryAttributes);
+router.post('/products', protect, authorize('admin', 'staff'), bustCache, productController.createProduct);
+router.get('/products', cacheMiddleware(300), productController.getProducts);
+router.get('/products/:id', cacheMiddleware(300), productController.getProductById);
+router.put('/products/:id', protect, authorize('admin', 'staff'), bustCache, productController.updateProduct);
+router.delete('/products/:id', protect, authorize('admin', 'staff'), bustCache, productController.deleteProduct);
+router.patch('/products/:id/toggle-status', protect, authorize('admin', 'staff'), bustCache, productController.toggleProductStatus);
+router.get('/subcategories/:subCategoryId/attributes', cacheMiddleware(300), productController.getSubCategoryAttributes);
 
 // Legacy routes for backward compatibility
 router.get('/product', productController.getProducts);

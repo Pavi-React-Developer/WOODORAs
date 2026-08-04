@@ -34,13 +34,35 @@ export default function WishlistOffcanvas({ isOpen, onClose, wishlistItems, onRe
 
   // Helper function to get variant details text
   const getVariantText = (item) => {
-    const variant = item.variant || item.selectedVariant;
-    if (!variant?.options || !Array.isArray(variant.options)) {
-      return '';
+    let variant = item.variant || item.selectedVariant;
+    const prod = item.product || item;
+    
+    // If variant is just an ID string/ObjectId, try to resolve it from product.variants
+    if (variant && typeof variant === 'string' && prod.variants && Array.isArray(prod.variants)) {
+       variant = prod.variants.find(v => String(v._id || v.id) === String(variant)) || variant;
     }
-    return variant.options
-      .map(opt => `${opt.attribute?.name || opt.attributeName || 'Attr'}: ${opt.value}`)
-      .join(', ');
+
+    const cap = (s) => (typeof s === 'string' ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+    const optParts = [];
+    
+    if (variant && typeof variant === 'object' && ((Array.isArray(variant.options) && variant.options.length > 0) || variant.variantCombination || variant.color || variant.size || variant.weight)) {
+      if (Array.isArray(variant.options) && variant.options.length > 0) {
+        variant.options.forEach((opt) =>
+          optParts.push(`${cap(opt.attribute?.name || opt.attributeName || 'Option')}: ${cap(opt.value)}`)
+        );
+      } else if (variant.variantCombination) {
+        optParts.push(variant.variantCombination.split('-').map(cap).join(', '));
+      } else {
+        if (variant.color) optParts.push(`Colour: ${cap(variant.color)}`);
+        if (variant.weight) optParts.push(`Weight: ${cap(String(variant.weight))} kg`);
+        if (variant.size) optParts.push(`Size: ${cap(variant.size)}`);
+      }
+    } else if (prod.selectedAttributeValues && Object.keys(prod.selectedAttributeValues).length > 0) {
+      Object.entries(prod.selectedAttributeValues).forEach(([k, v]) => {
+        optParts.push(`${cap(k)}: ${cap(v)}`);
+      });
+    }
+    return optParts.join(' | ') || null;
   };
 
   return (

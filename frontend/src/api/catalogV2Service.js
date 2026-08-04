@@ -25,10 +25,20 @@ const handleResponse = async (response) => {
     return response.json();
 };
 
+const cache = new Map();
+
 const request = async (path, options = {}) => {
-    const doFetch = () => fetch(`${V2_BASE_URL}${path}`, {
+    const method = options.method || 'GET';
+    const cacheKey = `${V2_BASE_URL}${path}`;
+
+    if (method === 'GET') {
+        const cached = cache.get(cacheKey);
+        if (cached && Date.now() - cached.time < 5 * 60 * 1000) return cached.data; // 5 min TTL
+    }
+
+    const doFetch = () => fetch(cacheKey, {
         ...options,
-        cache: 'no-store', // Always fetch fresh data from backend — no browser caching
+        cache: 'no-store', // Always fetch fresh data from backend if not in memory cache
         headers: {
             ...getHeaders(),
             ...options.headers,
@@ -47,7 +57,15 @@ const request = async (path, options = {}) => {
         }
     }
 
-    return handleResponse(response);
+    const data = await handleResponse(response);
+
+    if (method === 'GET') {
+        cache.set(cacheKey, { time: Date.now(), data });
+    } else {
+        cache.clear(); // Clear cache on mutations
+    }
+
+    return data;
 };
 
 export const categoryV2API = {

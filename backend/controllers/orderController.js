@@ -672,7 +672,7 @@ const updateOrderDetails = async (req, res) => {
       return res.status(404).json({ message: 'Order not found' });
     }
 
-    const { shippingAddress, status, isPaid, paymentMethod, trackingId, trackingUrl } = req.body;
+    const { shippingAddress, status, isPaid, paymentMethod, trackingId, trackingUrl, courierName } = req.body;
 
     if (shippingAddress) {
       order.shippingAddress = shippingAddress;
@@ -683,6 +683,9 @@ const updateOrderDetails = async (req, res) => {
     }
     if (trackingUrl !== undefined) {
       order.trackingUrl = trackingUrl;
+    }
+    if (courierName !== undefined) {
+      order.courierName = courierName;
     }
 
     if (status && status !== order.status) {
@@ -978,6 +981,36 @@ const deleteOrder = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Download order invoice as PDF
+ * @route   GET /api/orders/:id/invoice
+ * @access  Private (User can download own, admin can download any)
+ */
+const downloadInvoice = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id).populate('user', 'name email');
+    
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // Check ownership or admin status
+    if (order.user._id.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized to view this invoice' });
+    }
+
+    const { generateInvoice } = require('../services/invoiceService');
+    const pdfBuffer = await generateInvoice(order);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=invoice-${order._id}.pdf`);
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error('[Download Invoice] Error:', error);
+    res.status(500).json({ message: 'Failed to generate invoice', error: error.message });
+  }
+};
+
 module.exports = {
   addOrderItems,
   getOrderById,
@@ -991,5 +1024,6 @@ module.exports = {
   cancelOrder,
   getCancellationPreview,
   deleteOrder,
+  downloadInvoice,
 };
 

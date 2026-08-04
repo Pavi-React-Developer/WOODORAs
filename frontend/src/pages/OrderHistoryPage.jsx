@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { orderService } from '../api/orderService';
-import { ShoppingBag, Loader2, Package, Calendar, MapPin, ExternalLink } from 'lucide-react';
+import { ShoppingBag, Loader2, Package, Calendar, MapPin, ExternalLink, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { saveAs } from 'file-saver';
 import { API_ORIGIN } from '../api/apiClient';
 import { formatDeliveryDate, getDeliveryDate } from '../utils/deliveryDate';
 import OrderPricingSummary from '../components/OrderPricingSummary';
@@ -23,6 +24,21 @@ export default function OrderHistoryPage({ onNavigate, user }) {
       toast.error(error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const [downloadingInvoice, setDownloadingInvoice] = useState(null);
+
+  const handleDownloadInvoice = async (orderId) => {
+    try {
+      setDownloadingInvoice(orderId);
+      const blob = await orderService.downloadInvoice(orderId);
+      saveAs(blob, `invoice-${orderId}.pdf`);
+      toast.success('Invoice downloaded successfully');
+    } catch (error) {
+      toast.error(error.message || 'Failed to download invoice');
+    } finally {
+      setDownloadingInvoice(null);
     }
   };
 
@@ -103,12 +119,24 @@ export default function OrderHistoryPage({ onNavigate, user }) {
                       <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(order.status)}`}>
                         {order.status}
                       </span>
-                      <button 
-                        onClick={() => onNavigate('/profile/order-history/details', order)}
-                        className="text-sm font-bold text-[#8B5E3C] hover:text-[#7a5234] flex items-center gap-1"
-                      >
-                        View Details <ExternalLink className="w-4 h-4" />
-                      </button>
+                      <div className="flex gap-4 items-center">
+                        {order.isPaid && (
+                          <button 
+                            onClick={() => handleDownloadInvoice(order._id)}
+                            disabled={downloadingInvoice === order._id}
+                            className="text-sm font-bold text-[#6D625C] hover:text-[#4A403B] flex items-center gap-1 disabled:opacity-50"
+                          >
+                            {downloadingInvoice === order._id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                            Invoice
+                          </button>
+                        )}
+                        <button 
+                          onClick={() => onNavigate('/profile/order-history/details', order)}
+                          className="text-sm font-bold text-[#8B5E3C] hover:text-[#7a5234] flex items-center gap-1"
+                        >
+                          View Details <ExternalLink className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                     {order.trackingId && (
                       <div className="text-right mt-1">
