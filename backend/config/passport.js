@@ -59,7 +59,7 @@ const linkOrCreateUser = async (providerName, profile, done) => {
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID || 'placeholder',
     clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'placeholder',
-    callbackURL: `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/auth/google/callback`,
+    callbackURL: process.env.GOOGLE_CALLBACK_URL || `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/auth/google/callback`,
     scope: ['profile', 'email']
 }, (accessToken, refreshToken, profile, done) => {
     linkOrCreateUser('google', profile, done);

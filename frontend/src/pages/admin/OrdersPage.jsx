@@ -598,12 +598,17 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                         </p>
                       </div>
                     </div>
-                    {selectedOrder.additionalTracking && selectedOrder.additionalTracking.map((pkg, idx) => (
+                    {selectedOrder.additionalTracking && selectedOrder.additionalTracking.map((pkg, idx) => pkg.trackingUrl && (
                       <div key={idx} className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4 border-b border-[#E6DFD4] last:border-0 last:pb-0">
+                        <div></div>
                         <div className="md:col-span-2">
-                          <p className="text-xs uppercase tracking-widest text-gray-500">Field {idx + 1} - Tracking URL</p>
-                          <p className="mt-1 font-semibold text-blue-600 break-all">
-                            {pkg.trackingUrl ? <a href={pkg.trackingUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">{pkg.trackingUrl}</a> : 'N/A'}
+                          <p className="text-xs uppercase tracking-widest text-gray-500">Additional Details {idx + 1}</p>
+                          <p className="mt-1 font-semibold break-all">
+                            {pkg.trackingUrl.startsWith('http') ? (
+                              <a href={pkg.trackingUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{pkg.trackingUrl}</a>
+                            ) : (
+                              <span className="text-gray-900">{pkg.trackingUrl}</span>
+                            )}
                           </p>
                         </div>
                       </div>
@@ -962,6 +967,9 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                       }}
                     >
                       <option value="">Select Courier</option>
+                      {shippingModalOrder?.courierName && !couriers.find(c => c.name === shippingModalOrder.courierName) && (
+                        <option value={shippingModalOrder.courierName}>{shippingModalOrder.courierName}</option>
+                      )}
                       {couriers.map(c => (
                         <option key={c._id} value={c.name}>{c.name}</option>
                       ))}
@@ -989,50 +997,53 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                   onChange={(e) => setShippingTrackingId(e.target.value)}
                 />
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Primary Tracking URL</label>
-                <input
-                  type="url"
-                  placeholder="https://tracker.example.com/..."
-                  className="w-full px-4 py-2 rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30"
-                  value={shippingTrackingUrl}
-                  onChange={(e) => setShippingTrackingUrl(e.target.value)}
-                />
-              </div>
 
-              {shippingAdditionalTracking.map((pkg, idx) => (
-                <div key={idx} className="relative mt-2">
+              <div className="mt-4">
+                <label className="block text-xs font-bold text-gray-800 uppercase tracking-wider mb-2">
+                  Primary Tracking URL
+                </label>
+                <div className="space-y-2">
                   <input
                     type="url"
                     placeholder="https://tracker.example.com/..."
-                    className="w-full pl-4 pr-10 py-2 text-sm rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30"
-                    value={pkg.trackingUrl}
-                    onChange={(e) => {
-                      const newArr = [...shippingAdditionalTracking];
-                      newArr[idx].trackingUrl = e.target.value;
-                      setShippingAdditionalTracking(newArr);
-                    }}
+                    className="w-full px-4 py-2.5 text-sm rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 transition-all bg-white"
+                    value={shippingTrackingUrl}
+                    onChange={(e) => setShippingTrackingUrl(e.target.value)}
                   />
-                  <button
-                    onClick={() => {
-                      const newArr = [...shippingAdditionalTracking];
-                      newArr.splice(idx, 1);
-                      setShippingAdditionalTracking(newArr);
-                    }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded"
-                    title="Remove Field"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+                  {shippingAdditionalTracking.map((pkg, idx) => (
+                    <div key={idx} className="relative">
+                      <input
+                        type="text"
+                        placeholder="AWB Number, URL, or Description"
+                        className="w-full px-4 py-2.5 pr-10 text-sm rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 transition-all bg-white"
+                        value={pkg.trackingUrl || ''}
+                        onChange={(e) => {
+                          const newArr = [...shippingAdditionalTracking];
+                          newArr[idx].trackingUrl = e.target.value;
+                          setShippingAdditionalTracking(newArr);
+                        }}
+                      />
+                      <button
+                        onClick={() => {
+                          const newArr = [...shippingAdditionalTracking];
+                          newArr.splice(idx, 1);
+                          setShippingAdditionalTracking(newArr);
+                        }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-red-400 hover:text-red-600"
+                        title="Remove URL"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
-              ))}
-
-              <button
-                onClick={() => setShippingAdditionalTracking([...shippingAdditionalTracking, { trackingId: '', trackingUrl: '' }])}
-                className="text-xs font-bold text-[#8B5E3C] hover:text-[#7a5234] mt-2 inline-flex items-center gap-1"
-              >
-                + ADD
-              </button>
+                <button
+                  onClick={() => setShippingAdditionalTracking([...shippingAdditionalTracking, { trackingUrl: '' }])}
+                  className="text-xs font-bold text-[#8B5E3C] hover:text-[#7a5234] mt-3 inline-flex items-center gap-1"
+                >
+                  + ADD
+                </button>
+              </div>
             </div>
             
             <div className="border-t border-[#E6DFD4] p-6 flex justify-end gap-3 bg-gray-50">

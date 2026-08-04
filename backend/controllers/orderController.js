@@ -672,7 +672,7 @@ const updateOrderDetails = async (req, res) => {
       return res.status(404).json({ message: 'Order not found' });
     }
 
-    const { shippingAddress, status, isPaid, paymentMethod, trackingId, trackingUrl, courierName } = req.body;
+    const { shippingAddress, status, isPaid, paymentMethod, trackingId, trackingUrl, courierName, additionalTracking } = req.body;
 
     if (shippingAddress) {
       order.shippingAddress = shippingAddress;
@@ -686,6 +686,9 @@ const updateOrderDetails = async (req, res) => {
     }
     if (courierName !== undefined) {
       order.courierName = courierName;
+    }
+    if (additionalTracking !== undefined) {
+      order.additionalTracking = additionalTracking;
     }
 
     if (status && status !== order.status) {

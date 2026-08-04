@@ -206,6 +206,7 @@ const orderSchema = new mongoose.Schema(
       type: String,
     },
     additionalTracking: [{
+      label: String,
       trackingId: String,
       trackingUrl: String
     }],

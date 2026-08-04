@@ -54,6 +54,8 @@ import useAddressStore from '../store/useAddressStore';
 import WriteReviewModal from '../components/WriteReviewModal';
 import CustomerAddressManager from '../components/CustomerAddressManager';
 import OrderPricingSummary from '../components/OrderPricingSummary';
+import ProductCard from '../components/ProductCard';
+import { productV2API } from '../api/catalogV2Service';
 
 const getProductName = (details) => {
   if (!details) return 'Custom Order';
@@ -265,12 +267,43 @@ export default function CustomerProfilePage({
   }, [location.pathname, location.state]);
   
   useEffect(() => {
-    try {
-      const recent = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
-      setRecentlyViewed(recent);
-    } catch (e) {
-      console.error('Failed to parse recently viewed', e);
-    }
+    const fetchRecent = async () => {
+      try {
+        const recent = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+        setRecentlyViewed(recent);
+        
+        const top3 = recent.slice(0, 3);
+        if (top3.length > 0) {
+          const freshData = await Promise.all(
+            top3.map(item => productV2API.getById(item.id || item._id).catch(() => null))
+          );
+          
+          const updatedRecent = recent.map((item, index) => {
+            if (index < 3 && freshData[index]) {
+              const fresh = freshData[index];
+              const p = fresh?.product || fresh?.data || fresh;
+              if (p && (p._id === item.id || p._id === item._id || p.id === item.id || p.id === item._id)) {
+                 return {
+                   ...item,
+                   basePrice: p.compareAtPrice || p.basePrice || p.price || item.price,
+                   salePrice: p.price || p.salePrice || p.discountPrice || item.price,
+                   discountPrice: p.discountPrice || p.price,
+                   hasVariants: p.hasVariants,
+                   variants: p.variants,
+                   averageRating: p.averageRating || 0,
+                   reviewCount: p.reviewCount || 0
+                 };
+              }
+            }
+            return item;
+          });
+          setRecentlyViewed(updatedRecent);
+        }
+      } catch (e) {
+        console.error('Failed to parse recently viewed', e);
+      }
+    };
+    fetchRecent();
   }, [activeModule]);
 
   const [form, setForm] = useState({
@@ -1502,26 +1535,44 @@ export default function CustomerProfilePage({
           </div>
 
           {/* Mobile Tracking ID (Order 1) */}
-          {activeOrder.trackingId && (
+          {(activeOrder.trackingId || (activeOrder.additionalTracking && activeOrder.additionalTracking.length > 0)) && (
             <div className="md:hidden order-1 rounded-[14px] border border-[#E9DED3] bg-white p-5">
               {activeOrder.courierName && (
-                <div className="flex justify-between items-center mb-2">
+                <div className="flex justify-between items-center mb-2 pb-2 border-b border-[#E9DED3]">
                   <p className="text-sm font-bold text-[#6D625C]">Courier:</p>
                   <p className="text-sm font-semibold text-[#141225]">{activeOrder.courierName}</p>
                 </div>
               )}
-              <div className="flex justify-between items-center">
-                <p className="text-sm font-bold text-[#6D625C]">Tracking ID:</p>
-                <p className="text-sm font-semibold text-[#141225]">{activeOrder.trackingId}</p>
-              </div>
-              {activeOrder.trackingUrl && (
-                <div className="flex justify-between items-center mt-2">
-                  <p className="text-sm font-bold text-[#6D625C]">Tracking Link:</p>
-                  <a href={activeOrder.trackingUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-blue-600 hover:underline flex items-center gap-1">
-                    Track Order <ExternalLink className="w-3 h-3" />
-                  </a>
+              {activeOrder.trackingId && (
+                <div className="mb-3">
+                  <div className="flex justify-between items-center">
+                    <p className="text-sm font-bold text-[#6D625C]">Tracking ID:</p>
+                    <p className="text-sm font-semibold text-[#141225]">{activeOrder.trackingId}</p>
+                  </div>
+                  {activeOrder.trackingUrl && (
+                    <div className="flex justify-between items-center mt-2">
+                      <p className="text-sm font-bold text-[#6D625C]">Tracking Link:</p>
+                      <a href={activeOrder.trackingUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-blue-600 hover:underline flex items-center gap-1">
+                        Track Order <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  )}
                 </div>
               )}
+              {activeOrder.additionalTracking && activeOrder.additionalTracking.map((track, idx) => track.trackingUrl && (
+                <div key={idx} className="mb-2">
+                  <div className="flex justify-between items-center">
+                    <p className="text-sm font-bold text-[#6D625C]">Additional Details {idx + 1}:</p>
+                    {track.trackingUrl.startsWith('http') ? (
+                      <a href={track.trackingUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-blue-600 hover:underline flex items-center gap-1">
+                        Track Order <ExternalLink className="w-3 h-3" />
+                      </a>
+                    ) : (
+                      <p className="text-sm font-semibold text-[#141225]">{track.trackingUrl}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 
@@ -1573,26 +1624,44 @@ export default function CustomerProfilePage({
                 {activeOrder.status || 'Pending'}
               </span>
             </div>
-            {activeOrder.trackingId && (
-              <div className="hidden md:flex mt-4 pt-4 border-t border-[#E9DED3] flex-col gap-2">
+            {(activeOrder.trackingId || (activeOrder.additionalTracking && activeOrder.additionalTracking.length > 0)) && (
+              <div className="hidden md:flex mt-4 pt-4 border-t border-[#E9DED3] flex-col gap-3">
                 {activeOrder.courierName && (
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center pb-2 border-b border-[#E9DED3]">
                     <p className="text-sm font-bold text-[#6D625C]">Courier:</p>
                     <p className="text-sm font-semibold text-[#141225]">{activeOrder.courierName}</p>
                   </div>
                 )}
-                <div className="flex justify-between items-center">
-                  <p className="text-sm font-bold text-[#6D625C]">Tracking ID:</p>
-                  <p className="text-sm font-semibold text-[#141225]">{activeOrder.trackingId}</p>
-                </div>
-                {activeOrder.trackingUrl && (
-                  <div className="flex justify-between items-center">
-                    <p className="text-sm font-bold text-[#6D625C]">Tracking Link:</p>
-                    <a href={activeOrder.trackingUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-blue-600 hover:underline flex items-center gap-1">
-                      Track Order <ExternalLink className="w-3 h-3" />
-                    </a>
+                {activeOrder.trackingId && (
+                  <div>
+                    <div className="flex justify-between items-center">
+                      <p className="text-sm font-bold text-[#6D625C]">Tracking ID:</p>
+                      <p className="text-sm font-semibold text-[#141225]">{activeOrder.trackingId}</p>
+                    </div>
+                    {activeOrder.trackingUrl && (
+                      <div className="flex justify-between items-center mt-2">
+                        <p className="text-sm font-bold text-[#6D625C]">Tracking Link:</p>
+                        <a href={activeOrder.trackingUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-blue-600 hover:underline flex items-center gap-1">
+                          Track Order <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+                    )}
                   </div>
                 )}
+                {activeOrder.additionalTracking && activeOrder.additionalTracking.map((track, idx) => track.trackingUrl && (
+                  <div key={idx}>
+                    <div className="flex justify-between items-center mt-2">
+                      <p className="text-sm font-bold text-[#6D625C]">Additional Details {idx + 1}:</p>
+                      {track.trackingUrl.startsWith('http') ? (
+                        <a href={track.trackingUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-blue-600 hover:underline flex items-center gap-1">
+                          Track Order <ExternalLink className="w-3 h-3" />
+                        </a>
+                      ) : (
+                        <p className="text-sm font-semibold text-[#141225]">{track.trackingUrl}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -1651,18 +1720,29 @@ export default function CustomerProfilePage({
             {recentlyViewed && recentlyViewed.length > 0 ? (
                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                  {recentlyViewed.slice(0, 3).map((item, i) => {
-                   const imgUrl = typeof item.image === 'string' ? item.image : (item.image?.url || '');
-                   const imageSrc = imgUrl ? (imgUrl.startsWith('http') || imgUrl.startsWith('data:') ? imgUrl : (imgUrl.startsWith('/uploads') || imgUrl.startsWith('uploads/')) ? `http://localhost:5000${imgUrl.startsWith('/') ? '' : '/'}${imgUrl}` : imgUrl) : '/animal_balance_maze.png';
-                   return (
-                     <div key={i} className="group relative overflow-hidden rounded-[12px] border border-[#E9DED3] bg-white p-3 cursor-pointer shadow-sm hover:shadow-md transition-shadow" onClick={() => onNavigate(`/product/${item.id || item._id}`)}>
-                       <div className="aspect-square bg-[#F8F3EF] mb-3 rounded-lg overflow-hidden">
-                         <img src={imageSrc} alt={item.name} className="h-full w-full object-contain mix-blend-multiply transition duration-300 group-hover:scale-110" />
-                       </div>
-                       <p className="font-bold text-[#141225] text-sm line-clamp-1">{item.name}</p>
-                       <p className="font-bold text-[#8B5E3C] text-sm mt-1">Rs. {Number(item.price).toLocaleString()}</p>
-                     </div>
-                   );
-                 })}
+                    const imgUrl = typeof item.image === 'string' ? item.image : (item.image?.url || '');
+                    const imageSrc = imgUrl ? (imgUrl.startsWith('http') || imgUrl.startsWith('data:') ? imgUrl : (imgUrl.startsWith('/uploads') || imgUrl.startsWith('uploads/')) ? `http://localhost:5000${imgUrl.startsWith('/') ? '' : '/'}${imgUrl}` : imgUrl) : '/animal_balance_maze.png';
+                    
+                    const productObj = {
+                      ...item,
+                      _id: item.id || item._id,
+                      name: item.name,
+                      image: imageSrc,
+                      basePrice: item.basePrice || item.price,
+                      salePrice: item.salePrice || item.discountPrice || item.price,
+                      averageRating: item.averageRating || 0,
+                      reviewCount: item.reviewCount || 0
+                    };
+                    
+                    return (
+                      <ProductCard 
+                        key={i} 
+                        product={productObj} 
+                        onNavigate={onNavigate} 
+                        user={user} 
+                      />
+                    );
+                  })}
                </div>
             ) : (
                <div className="rounded-[12px] border border-[#E9DED3] bg-white p-6 text-center">

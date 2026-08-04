@@ -465,6 +465,13 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
               _id: productData._id,
               name: productData.name,
               price: productData.price,
+              basePrice: productData.basePrice,
+              salePrice: productData.salePrice,
+              discountPrice: productData.discountPrice,
+              hasVariants: productData.hasVariants,
+              variants: productData.variants,
+              averageRating: productData.averageRating,
+              reviewCount: productData.reviewCount,
               image: productData.image || (productData.images && productData.images.length > 0 ? productData.images[0] : null)
             });
             localStorage.setItem('recentlyViewed', JSON.stringify(filtered.slice(0, 10)));
