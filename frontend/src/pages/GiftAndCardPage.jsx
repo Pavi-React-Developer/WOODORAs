@@ -7,8 +7,119 @@ import { productV2API, categoryV2API, subCategoryV2API } from '../api/catalogV2S
 import { getImageSrc } from '../utils/imageUtils';
 import useWishlistStore from '../store/useWishlistStore';
 import useCartStore from '../store/useCartStore';
+import { cmsService } from '../api/cmsService';
+import { motion } from 'framer-motion';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, Pagination, EffectFade, EffectCreative, Controller } from 'swiper/modules';
+import { IoLeaf } from 'react-icons/io5';
 
 const API_URL = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api`;
+
+const fadeUp = { hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } } };
+
+function DynamicGiftCardBanner({ bannerData, onNavigate }) {
+  const [firstSwiper, setFirstSwiper] = useState(null);
+  const [secondSwiper, setSecondSwiper] = useState(null);
+
+  if (!bannerData || !bannerData.leftImages?.length) return null;
+
+  const isSlide = !bannerData.animation || bannerData.animation === 'Slide';
+  const effectMap = { 'Fade': 'fade', 'Creative': 'creative', 'Zoom': 'creative' };
+  const currentEffect = effectMap[bannerData.animation] || undefined;
+  const swiperDirection = isSlide ? 'vertical' : 'horizontal';
+  const creativeOptions = currentEffect === 'creative'
+    ? { prev: { shadow: true, translate: ['-120%', 0, -500] }, next: { translate: ['100%', 0, 0] } }
+    : undefined;
+
+  const leftCtaLabel = bannerData.leftButtonText || 'Explore Here';
+  const rightCtaLabel = bannerData.rightButtonText || 'Explore Here';
+
+  return (
+    <div className="max-w-4xl mx-auto w-full mb-12">
+      {bannerData.title && (
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="relative flex flex-col md:flex-row items-center justify-center mb-8 min-h-[40px]">
+          <div className="flex justify-center items-center gap-3 sm:gap-4">
+            <IoLeaf className="text-[#B0611C] w-6 h-6 sm:w-8 sm:h-8" />
+            <h2 className="text-xl md:text-2xl font-serif text-[#B0611C] tracking-widest uppercase text-center">{bannerData.title}</h2>
+            <IoLeaf className="text-[#B0611C] transform scale-x-[-1] w-6 h-6 sm:w-8 sm:h-8" />
+          </div>
+        </motion.div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+        {/* LEFT banner */}
+        <div className="relative bg-[#8f827a] text-white p-10 h-80 flex flex-col justify-end overflow-hidden group rounded-sm">
+          <div className="absolute inset-0 z-0">
+            <Swiper
+              modules={[Autoplay, Controller, EffectFade, EffectCreative]}
+              effect={currentEffect}
+              creativeEffect={creativeOptions}
+              onSwiper={setFirstSwiper}
+              controller={{ control: secondSwiper }}
+              autoplay={{ delay: 3500, disableOnInteraction: false }}
+              loop={(bannerData.leftImages?.length || 0) > 1}
+              direction={swiperDirection}
+              className="w-full h-full"
+            >
+              {bannerData.leftImages.map((img, i) => (
+                <SwiperSlide key={i}>
+                  <img src={img?.url || img || '/wood-placeholder.png'} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" onError={(e) => { e.target.src = '/wood-placeholder.png'; }} />
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          </div>
+          <div className="absolute inset-0 bg-black/40 z-0 pointer-events-none"></div>
+          <div className="relative z-10 pointer-events-none">
+            {bannerData.leftTitle && (
+              <h3 className="text-2xl md:text-3xl font-serif mb-2 max-w-sm">{bannerData.leftTitle}</h3>
+            )}
+            {bannerData.leftDescription && (
+              <p className="text-sm opacity-90 mb-6 max-w-sm">{bannerData.leftDescription}</p>
+            )}
+            <button onClick={() => onNavigate && onNavigate(bannerData.leftCtaUrl || '/')} className="pointer-events-auto bg-[#A66C1C] text-white px-6 py-3 text-sm font-semibold tracking-wider hover:bg-[#8B5E3C] transition-colors">
+              {leftCtaLabel}
+            </button>
+          </div>
+        </div>
+
+        {/* RIGHT banner */}
+        <div className="relative bg-[#e6e2df] text-white p-10 h-80 flex flex-col justify-end overflow-hidden group rounded-sm">
+          <div className="absolute inset-0 z-0">
+            <Swiper
+              modules={[Controller, EffectFade, EffectCreative]}
+              effect={currentEffect}
+              creativeEffect={creativeOptions}
+              onSwiper={setSecondSwiper}
+              controller={{ control: firstSwiper }}
+              loop={(bannerData.rightImages?.length || 0) > 1}
+              direction={swiperDirection}
+              allowTouchMove={false}
+              className="w-full h-full"
+            >
+              {bannerData.rightImages?.map((img, i) => (
+                <SwiperSlide key={i}>
+                  <img src={img?.url || img || '/wood-placeholder.png'} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" onError={(e) => { e.target.src = '/wood-placeholder.png'; }} />
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          </div>
+          <div className="absolute inset-0 bg-black/30 z-0 pointer-events-none"></div>
+          <div className="relative z-10 pointer-events-none">
+            {bannerData.rightTitle && (
+              <h3 className="text-2xl md:text-3xl font-serif mb-2 max-w-sm">{bannerData.rightTitle}</h3>
+            )}
+            {bannerData.rightDescription && (
+              <p className="text-sm opacity-90 mb-6 max-w-sm">{bannerData.rightDescription}</p>
+            )}
+            <button onClick={() => onNavigate && onNavigate(bannerData.rightCtaUrl || '/')} className="pointer-events-auto bg-white text-[#A66C1C] px-6 py-3 text-sm font-semibold tracking-wider hover:bg-[#F9F6F0] transition-colors">
+              {rightCtaLabel}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
   const navigate = useNavigate();
@@ -19,6 +130,7 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
   const [selectedDate, setSelectedDate] = useState('');
   const [showCalendar, setShowCalendar] = useState(false);
   const [isGiftWrapper, setIsGiftWrapper] = useState(true);
+  const [dynamicBanner, setDynamicBanner] = useState(null);
 
   // Product Selection States
   const [categories, setCategories] = useState([]);
@@ -40,6 +152,16 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
     };
     fetchConfig();
     
+    // Fetch dynamic banner
+    cmsService.getGiftCardBanners()
+      .then(res => {
+        if (res.data && res.data.length > 0) {
+          const activeBanner = res.data.find(b => b.status);
+          if (activeBanner) setDynamicBanner(activeBanner);
+        }
+      })
+      .catch(console.error);
+
     // Fetch initial categories
     categoryV2API.getAll({ isActive: 'true' })
       .then(res => {
@@ -161,28 +283,32 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         
         {/* Top Hero Section */}
-        <div className="max-w-4xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-          <div className="relative bg-[#8f827a] text-white p-10 h-80 flex flex-col justify-end overflow-hidden group rounded-sm">
-            <img src="/gift-box-custom.png" alt="Build Your Own Box" className="absolute inset-0 w-full h-full object-cover z-0 group-hover:scale-105 transition-transform duration-700" />
-            <div className="absolute inset-0 bg-black/40 z-0"></div>
-            <div className="relative z-10">
-              <span className="bg-white text-black px-2 py-1 text-xs font-bold tracking-widest uppercase mb-4 inline-block">CUSTOM CURATION</span>
-              <h2 className="text-4xl font-semibold mb-2">Build Your Own Box</h2>
-              <p className="text-sm opacity-90 mb-6 max-w-sm">Choose from our curated collection of wooden toys and organic textiles to create a unique, meaningful gift.</p>
-              <button className="bg-[#A66C1C] text-white px-6 py-3 text-sm font-semibold tracking-wider hover:bg-[#8B5E3C] transition-colors">START BUILDING</button>
+        {dynamicBanner ? (
+          <DynamicGiftCardBanner bannerData={dynamicBanner} onNavigate={navigate} />
+        ) : (
+          <div className="max-w-4xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            <div className="relative bg-[#8f827a] text-white p-10 h-80 flex flex-col justify-end overflow-hidden group rounded-sm">
+              <img src="/gift-box-custom.png" alt="Build Your Own Box" className="absolute inset-0 w-full h-full object-cover z-0 group-hover:scale-105 transition-transform duration-700" />
+              <div className="absolute inset-0 bg-black/40 z-0"></div>
+              <div className="relative z-10">
+                <span className="bg-white text-black px-2 py-1 text-xs font-bold tracking-widest uppercase mb-4 inline-block">CUSTOM CURATION</span>
+                <h2 className="text-4xl font-semibold mb-2">Build Your Own Box</h2>
+                <p className="text-sm opacity-90 mb-6 max-w-sm">Choose from our curated collection of wooden toys and organic textiles to create a unique, meaningful gift.</p>
+                <button className="bg-[#A66C1C] text-white px-6 py-3 text-sm font-semibold tracking-wider hover:bg-[#8B5E3C] transition-colors">START BUILDING</button>
+              </div>
+            </div>
+            <div className="relative bg-[#e6e2df] text-white p-10 h-80 flex flex-col justify-end overflow-hidden group rounded-sm">
+              <img src="/digital-gift-card.png" alt="Digital Gift Cards" className="absolute inset-0 w-full h-full object-cover z-0 group-hover:scale-105 transition-transform duration-700" />
+              <div className="absolute inset-0 bg-black/30 z-0"></div>
+              <div className="relative z-10">
+                <span className="bg-white text-black px-2 py-1 text-xs font-bold tracking-widest uppercase mb-4 inline-block">INSTANT DELIVERY</span>
+                <h2 className="text-4xl font-semibold mb-2">Digital Gift Cards</h2>
+                <p className="text-sm opacity-90 mb-6 max-w-sm">Let them choose their favorite treasures. Available instantly and valid on all collections.</p>
+                <button className="bg-white text-[#A66C1C] px-6 py-3 text-sm font-semibold tracking-wider hover:bg-[#F9F6F0] transition-colors">PURCHASE CARD</button>
+              </div>
             </div>
           </div>
-          <div className="relative bg-[#e6e2df] text-white p-10 h-80 flex flex-col justify-end overflow-hidden group rounded-sm">
-            <img src="/digital-gift-card.png" alt="Digital Gift Cards" className="absolute inset-0 w-full h-full object-cover z-0 group-hover:scale-105 transition-transform duration-700" />
-            <div className="absolute inset-0 bg-black/30 z-0"></div>
-            <div className="relative z-10">
-              <span className="bg-white text-black px-2 py-1 text-xs font-bold tracking-widest uppercase mb-4 inline-block">INSTANT DELIVERY</span>
-              <h2 className="text-4xl font-semibold mb-2">Digital Gift Cards</h2>
-              <p className="text-sm opacity-90 mb-6 max-w-sm">Let them choose their favorite treasures. Available instantly and valid on all collections.</p>
-              <button className="bg-white text-[#A66C1C] px-6 py-3 text-sm font-semibold tracking-wider hover:bg-[#F9F6F0] transition-colors">PURCHASE CARD</button>
-            </div>
-          </div>
-        </div>
+        )}
 
         {/* Categories Section - Replaced with Product Selection */}
         <div className="bg-white p-8 shadow-sm rounded-sm border border-gray-100 max-w-4xl mx-auto w-full">
@@ -231,7 +357,7 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
 
           <div className="mb-6">
             <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Available Products</label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 max-h-[400px] overflow-y-auto p-1">
+            <div className="grid grid-cols-2 sm:grid-cols-3 content-start gap-4 p-1">
               {products.map(product => (
                 <div 
                   key={product._id}
@@ -240,7 +366,7 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
                     selectedProduct?._id === product._id ? 'border-[#A66C1C] ring-1 ring-[#A66C1C]' : 'border-[#E6DFD4]'
                   }`}
                 >
-                  <div className="aspect-square bg-[#F7F3EE] relative overflow-hidden shrink-0">
+                  <div className="aspect-[4/5] sm:aspect-[4/3] bg-[#F7F3EE] relative overflow-hidden shrink-0">
                     {product.images?.[0] ? (
                       <img src={getImageSrc(product.images[0])} alt={product.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                     ) : (
@@ -270,11 +396,13 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
                   <div className="p-3 flex flex-col flex-grow text-left">
                     <h3 className="text-[13px] font-medium text-gray-900 truncate mb-1.5">{product.name}</h3>
                     <div className="flex flex-col gap-1 mt-auto">
-                      <div className="flex items-center gap-1.5">
-                        <p className="text-[13px] font-bold text-[#A66C1C]">₹{(product.salePrice || product.discountPrice || product.price || 0).toLocaleString()}</p>
-                        {(product.price > (product.salePrice || product.discountPrice || product.price)) && (
-                          <p className="text-[10px] text-gray-400 line-through">₹{product.price.toLocaleString()}</p>
-                        )}
+                      <div className="flex flex-col sm:flex-row sm:items-center items-start gap-1 sm:gap-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-[13px] font-bold text-[#A66C1C]">₹{(product.salePrice || product.discountPrice || product.price || 0).toLocaleString()}</p>
+                          {(product.price > (product.salePrice || product.discountPrice || product.price)) && (
+                            <p className="text-[10px] text-gray-400 line-through">₹{product.price.toLocaleString()}</p>
+                          )}
+                        </div>
                         {(product.price > (product.salePrice || product.discountPrice || product.price)) && (
                           <span className="inline-flex items-center rounded-full bg-[#EFE6DB] px-1.5 py-0.5 text-[9px] font-bold text-[#A66C1C]">
                             -{Math.round(((product.price - (product.salePrice || product.discountPrice)) / product.price) * 100)}%
@@ -328,9 +456,9 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
               </div>
               <button 
                 onClick={() => setIsGiftWrapper(!isGiftWrapper)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isGiftWrapper ? 'bg-[#A66C1C]' : 'bg-gray-300'}`}
+                className={`flex-none shrink-0 relative inline-flex h-6 w-11 min-w-[44px] max-w-[44px] min-h-[24px] max-h-[24px] items-center rounded-full transition-colors ${isGiftWrapper ? 'bg-[#A66C1C]' : 'bg-gray-300'}`}
               >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isGiftWrapper ? 'translate-x-6' : 'translate-x-1'}`} />
+                <span className={`flex-none shrink-0 inline-block h-4 w-4 min-w-[16px] max-w-[16px] min-h-[16px] max-h-[16px] transform rounded-full bg-white transition-transform ${isGiftWrapper ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
             </div>
 
@@ -340,10 +468,12 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Write your heartfelt message here..."
-              className="w-full border border-gray-200 p-3 text-sm focus:ring-[#A66C1C] focus:border-[#A66C1C] resize-none mb-4 rounded-sm"
+              className={`w-full border border-gray-200 p-3 focus:ring-[#A66C1C] focus:border-[#A66C1C] resize-none mb-4 rounded-sm ${
+                style === 'Classic' ? 'font-serif text-sm' : style === 'Elegant' ? 'font-script italic text-base' : 'font-sans tracking-wide text-sm'
+              }`}
             ></textarea>
             
-            <div className="flex gap-2 mb-6">
+            <div className="flex flex-wrap gap-2 mb-6">
               {['Classic', 'Elegant', 'Modernist'].map(s => (
                 <button
                   key={s}
@@ -374,7 +504,7 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
                   type="text" 
                   value={new Date().toLocaleDateString('en-GB')} 
                   disabled 
-                  className="w-full border border-gray-200 p-3 text-sm bg-gray-50 text-gray-500 rounded-sm cursor-not-allowed"
+                  className="w-full h-11 border border-gray-200 px-3 text-sm bg-gray-50 text-gray-500 rounded-sm cursor-not-allowed"
                 />
               </div>
 
@@ -382,13 +512,13 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
                 <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Delivery Date</label>
                 <div className="relative">
                   <div 
-                    className="w-full border border-gray-200 p-3 text-sm bg-white cursor-pointer hover:border-gray-300 rounded-sm flex justify-between items-center"
+                    className="w-full h-11 border border-gray-200 px-3 text-sm bg-white cursor-pointer hover:border-gray-300 rounded-sm flex justify-between items-center"
                     onClick={() => setShowCalendar(!showCalendar)}
                   >
-                    <span className={selectedDate ? "text-gray-900" : "text-gray-400"}>
+                    <span className={`truncate mr-2 ${selectedDate ? "text-gray-900" : "text-gray-400"}`}>
                       {selectedDate ? new Date(selectedDate).toLocaleDateString('en-GB') : 'Select a date'}
                     </span>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-[#A66C1C]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="shrink-0 h-4 w-4 text-[#A66C1C]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                   </div>

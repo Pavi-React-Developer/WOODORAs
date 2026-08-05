@@ -33,7 +33,7 @@ export default function CategoriesPage({ onNavigate }) {
         <div className="text-xs text-gray-500 mt-4 mb-8 flex items-center gap-2">
           <span className="cursor-pointer hover:text-gray-900 transition-colors" onClick={() => onNavigate('/')}>Home</span>
           <span>&gt;</span>
-          <span className="cursor-pointer hover:text-gray-900 transition-colors" onClick={() => onNavigate('/products')}>Woodora</span>
+          <span className="cursor-pointer hover:text-gray-900 transition-colors" onClick={() => onNavigate('/products')}>Marakathai</span>
           <span>&gt;</span>
           <span className="font-semibold text-gray-900">Categories</span>
         </div>

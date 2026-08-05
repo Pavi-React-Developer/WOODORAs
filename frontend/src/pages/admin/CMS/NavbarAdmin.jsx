@@ -51,7 +51,7 @@ function LogoUploader({ value, onChange }) {
   );
 }
 
-const emptyItem = { title: '', url: '', icon: '', textColor: '', backgroundColor: '', isDropdown: false, order: 0, status: true };
+const emptyItem = { title: '', url: '', icon: '', textColor: '', backgroundColor: '', isDropdown: false, order: 0, status: true, position: 'left' };
 
 export default function NavbarAdmin() {
   const [config, setConfig] = useState(null);
@@ -230,6 +230,15 @@ export default function NavbarAdmin() {
               <label className="text-xs font-semibold text-brand-medium uppercase tracking-wider block mb-1">CTA URL *</label>
               <input required value={currentItem.url} onChange={e => setCurrentItem({ ...currentItem, url: e.target.value })}
                 className="w-full border border-[#E6DFD4] rounded-lg px-3 py-2 text-sm" placeholder="e.g. /shop" />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-brand-medium uppercase tracking-wider block mb-1">Position</label>
+              <select value={currentItem.position || 'left'} onChange={e => setCurrentItem({ ...currentItem, position: e.target.value })}
+                className="w-full border border-[#E6DFD4] rounded-lg px-3 py-2 text-sm">
+                <option value="left">Left</option>
+                <option value="center">Center</option>
+                <option value="right">Right</option>
+              </select>
             </div>
             <div className="relative">
               <label className="text-xs font-semibold text-brand-medium uppercase tracking-wider block mb-1">Auto-fill from Catalog</label>

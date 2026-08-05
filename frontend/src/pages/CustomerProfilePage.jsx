@@ -1416,13 +1416,34 @@ export default function CustomerProfilePage({
     const steps = [
       { id: 'ordered', label: 'Ordered', statuses: ['Placed', 'Pending', 'Packed', 'Shipping', 'Shipped', 'Out for delivery', 'Delivered'] },
       { id: 'packed', label: 'Packed', statuses: ['Packed', 'Shipping', 'Shipped', 'Out for delivery', 'Delivered'] },
-      { id: 'shipped', label: 'Shipped', statuses: ['Shipping', 'Shipped', 'Out for delivery', 'Delivered'] },
+      { id: 'shipped', label: 'Shipped', statuses: ['Shipped', 'Out for delivery', 'Delivered'] },
       { id: 'out_for_delivery', label: 'Out for Delivery', statuses: ['Out for delivery', 'Delivered'] },
       { id: 'delivery', label: 'Delivery', statuses: ['Delivered'] }
     ];
 
     const currentStatusIndex = steps.map(s => s.statuses.includes(order.status)).lastIndexOf(true);
     
+    // Calculate exact progress to place truck and tooltip
+    const progressMap = {
+      'Pending': 0,
+      'Placed': 0,
+      'Packed': 1,
+      'Shipping': 1.5,
+      'Shipped': 2,
+      'Out for delivery': 3,
+      'Delivered': 4
+    };
+    const exactProgress = progressMap[order.status] ?? 0;
+    
+    let displayProgress = exactProgress;
+    // Visually push the line and truck past the Packed node so it travels between Packed and Shipped
+    if (order.status === 'Packed') {
+      displayProgress = 1.3;
+    } else if (order.status === 'Shipping') {
+      displayProgress = 1.7;
+    }
+    const progressPercent = (displayProgress / (steps.length - 1)) * 100;
+
     const orderDate = new Date(order.createdAt);
     const deliveryDate = new Date(orderDate.getTime() + 7 * 24 * 60 * 60 * 1000);
 
@@ -1453,35 +1474,40 @@ export default function CustomerProfilePage({
             {/* Active progress bar */}
             <div 
               className="absolute top-0 left-0 h-full bg-emerald-500 rounded-full transition-all duration-500"
-              style={{ width: `${(currentStatusIndex / (steps.length - 1)) * 100}%` }}
+              style={{ width: `${progressPercent}%` }}
             />
-          </div>
-
-          {steps.map((step, idx) => {
-            const isCompleted = currentStatusIndex >= idx;
-            const isCurrent = currentStatusIndex === idx;
-            
-            return (
-              <div key={step.id} className="relative z-10 flex flex-col items-center gap-2">
-                {isCurrent && idx === 0 && (
-                  <div className="absolute -top-10 bg-gray-800 text-white text-[10px] sm:text-xs font-bold px-2 py-1 rounded-lg shadow-lg flex items-center gap-1.5 whitespace-nowrap">
+            {/* Current status icon / tooltip on the track */}
+            {(order.status === 'Packed' || order.status === 'Shipping') && (
+              <div 
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-20 transition-all duration-500"
+                style={{ left: `${progressPercent}%` }}
+              >
+                <div className="relative flex justify-center items-center">
+                  <div className="bg-white rounded-full p-1 shadow-sm border border-[rgb(176,97,28)]/20 flex items-center justify-center">
+                    <Truck className="w-6 h-6 text-[rgb(176,97,28)] fill-current" />
+                  </div>
+                  <div className="absolute -top-11 bg-gray-800 text-white text-[10px] sm:text-xs font-bold px-2 py-1 rounded-lg shadow-lg flex items-center gap-1.5 whitespace-nowrap">
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     Shipping Soon!
                     <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45" />
                   </div>
-                )}
-                
+                </div>
+              </div>
+            )}
+          </div>
+
+          {steps.map((step, idx) => {
+            const isCompleted = exactProgress >= idx;
+            const isCurrent = currentStatusIndex === idx;
+            
+            return (
+              <div key={step.id} className="relative z-10 flex flex-col items-center gap-2">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 shadow-sm transition-colors duration-300 ${isCompleted ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-gray-300 text-transparent'}`}>
                   {isCompleted ? <Check className="w-4 h-4" /> : <div className="w-2.5 h-2.5 rounded-full bg-gray-200" />}
                 </div>
 
-                {isCurrent && idx === 1 && (
-                  <div className="absolute top-1 -right-4 sm:-right-6 text-[#9A6031] bg-white p-0.5 rounded-full z-20 shadow-sm border border-[#E9DED3]">
-                    <Package className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
-                  </div>
-                )}
                 {isCurrent && (idx === 2 || idx === 3) && (
-                  <div className="absolute top-1 -right-4 sm:-right-6 text-blue-500 bg-white p-0.5 rounded-full z-20 shadow-sm border border-blue-100">
+                  <div className="absolute top-1 -right-4 sm:-right-6 text-[rgb(176,97,28)] bg-white p-0.5 rounded-full z-20 shadow-sm border border-[rgb(176,97,28)]/20">
                     <Truck className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
                   </div>
                 )}

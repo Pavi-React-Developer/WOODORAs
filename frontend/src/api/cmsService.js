@@ -53,6 +53,16 @@ export const cmsService = {
   updateThirdBanner: (id, body) => request(`${BASE}/third-banner/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   deleteThirdBanner: (id) => request(`${BASE}/third-banner/${id}`, { method: 'DELETE' }),
 
+  // Gift Card Banner
+  getGiftCardBanners: () => request(`${BASE}/gift-card-banner`),
+  createGiftCardBanner: (body) => request(`${BASE}/gift-card-banner`, { method: 'POST', body: JSON.stringify(body) }),
+  updateGiftCardBanner: (id, body) => request(`${BASE}/gift-card-banner/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deleteGiftCardBanner: (id) => request(`${BASE}/gift-card-banner/${id}`, { method: 'DELETE' }),
+
+  // Customize Banner
+  getCustomizeBanner: () => request(`${BASE}/customize-banner`),
+  updateCustomizeBanner: (body) => request(`${BASE}/customize-banner`, { method: 'PUT', body: JSON.stringify(body) }),
+
   // Product Grid
   getProductGrids: () => request(`${BASE}/product-grid`),
   createProductGrid: (body) => request(`${BASE}/product-grid`, { method: 'POST', body: JSON.stringify(body) }),

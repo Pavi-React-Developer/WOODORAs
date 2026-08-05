@@ -2,6 +2,8 @@ const mongoose = require('mongoose');
 const CmsNavbar = require('../models/CmsNavbar');
 const CmsHeroBanner = require('../models/CmsHeroBanner');
 const CmsThirdBanner = require('../models/CmsThirdBanner');
+const CmsGiftCardBanner = require('../models/CmsGiftCardBanner');
+const CmsCustomizeBanner = require('../models/CmsCustomizeBanner');
 const CmsProductGrid = require('../models/CmsProductGrid');
 const CmsCategoryGrid = require('../models/CmsCategoryGrid');
 const CmsCategoriesGrid = require('../models/CmsCategoriesGrid');
@@ -156,6 +158,57 @@ exports.deleteThirdBanner = asyncHandler(async (req, res) => {
     await banner.deleteOne();
   }
   res.json({ success: true, message: 'Banner deleted' });
+});
+
+// --- GIFT CARD BANNER ---
+exports.getGiftCardBanners = asyncHandler(async (req, res) => {
+  const banners = await CmsGiftCardBanner.find().sort({ sortOrder: 1 });
+  res.json({ success: true, data: banners });
+});
+
+exports.createGiftCardBanner = asyncHandler(async (req, res) => {
+  const banner = await CmsGiftCardBanner.create(req.body);
+  res.status(201).json({ success: true, data: banner });
+});
+
+exports.updateGiftCardBanner = asyncHandler(async (req, res) => {
+  const banner = await CmsGiftCardBanner.findByIdAndUpdate(req.params.id, req.body, { returnDocument: 'after', runValidators: true });
+  res.json({ success: true, data: banner });
+});
+
+exports.deleteGiftCardBanner = asyncHandler(async (req, res) => {
+  const banner = await CmsGiftCardBanner.findById(req.params.id);
+  if (banner) {
+    for (let img of (banner.leftImages || [])) {
+      if (img.public_id) await deleteFromCloudinary(img.public_id, img.resource_type || 'image').catch(console.error);
+    }
+    for (let img of (banner.rightImages || [])) {
+      if (img.public_id) await deleteFromCloudinary(img.public_id, img.resource_type || 'image').catch(console.error);
+    }
+    await banner.deleteOne();
+  }
+  res.json({ success: true, message: 'Banner deleted' });
+});
+
+// --- CUSTOMIZE BANNER ---
+exports.getCustomizeBanner = asyncHandler(async (req, res) => {
+  let item = await CmsCustomizeBanner.findOne();
+  if (!item) {
+    item = await CmsCustomizeBanner.create({ title: 'Request a Custom Order', description: "Design your own handcrafted wooden toy. Share your idea, and we'll create it just for you.", image: null });
+  }
+  res.json({ success: true, data: item });
+});
+
+exports.updateCustomizeBanner = asyncHandler(async (req, res) => {
+  const body = processMediaFields(req.body);
+  let item = await CmsCustomizeBanner.findOne();
+  if (!item) {
+    item = await CmsCustomizeBanner.create(body);
+  } else {
+    Object.assign(item, body);
+    await item.save();
+  }
+  res.json({ success: true, data: item });
 });
 
 // --- PRODUCT GRID ---

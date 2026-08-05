@@ -214,12 +214,12 @@ export const DynamicFormBuilder = ({
                         {attrType === 'ColorPicker' && (
                             <div className="flex flex-wrap gap-3 py-1">
                                 {(attr.values || []).map((opt) => {
-                                    const isSelected = currentVal === opt.value;
+                                    const isSelected = currentVals.includes(opt.value);
                                     return (
                                         <button
                                             key={opt.value}
                                             type="button"
-                                            onClick={() => handleFieldChange(attrId, opt.value, 'ColorPicker')}
+                                            onClick={() => handleCheckboxToggle(attrId, opt.value, !isSelected)}
                                             style={{ backgroundColor: opt.colorCode || '#ccc' }}
                                             title={opt.value}
                                             className={`w-8 h-8 rounded-full border-2 transition-all relative ${

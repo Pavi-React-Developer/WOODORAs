@@ -60,6 +60,7 @@ passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID || 'placeholder',
     clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'placeholder',
     callbackURL: process.env.GOOGLE_CALLBACK_URL || `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/auth/google/callback`,
+    proxy: true,
     scope: ['profile', 'email']
 }, (accessToken, refreshToken, profile, done) => {
     linkOrCreateUser('google', profile, done);
@@ -72,6 +73,7 @@ passport.use(new FacebookStrategy({
     clientID: process.env.FACEBOOK_APP_ID || 'placeholder',
     clientSecret: process.env.FACEBOOK_APP_SECRET || 'placeholder',
     callbackURL: `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/auth/facebook/callback`,
+    proxy: true,
     profileFields: ['id', 'displayName', 'photos', 'email']
 }, (accessToken, refreshToken, profile, done) => {
     linkOrCreateUser('facebook', profile, done);
@@ -84,6 +86,7 @@ passport.use(new GitHubStrategy({
     clientID: process.env.GITHUB_CLIENT_ID || 'placeholder',
     clientSecret: process.env.GITHUB_CLIENT_SECRET || 'placeholder',
     callbackURL: `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/auth/github/callback`,
+    proxy: true,
     scope: ['user:email']
 }, (accessToken, refreshToken, profile, done) => {
     linkOrCreateUser('github', profile, done);
@@ -96,6 +99,7 @@ passport.use(new MicrosoftStrategy({
     clientID: process.env.MICROSOFT_CLIENT_ID || 'placeholder',
     clientSecret: process.env.MICROSOFT_CLIENT_SECRET || 'placeholder',
     callbackURL: `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/auth/microsoft/callback`,
+    proxy: true,
     scope: ['user.read']
 }, (accessToken, refreshToken, profile, done) => {
     linkOrCreateUser('microsoft', profile, done);

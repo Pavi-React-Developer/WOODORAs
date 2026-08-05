@@ -131,6 +131,10 @@ const verifyPayment = async (req, res) => {
       order.paid_amount = paidAmount;
       order.balance_amount = Math.max(0, totalAmount - paidAmount);
       order.balanceAmount = order.balance_amount;
+      
+      if (order.status === 'Pending') {
+        order.status = 'Placed';
+      }
       order.paymentResult = {
         id: cfOrder.cf_order_id,
         status: cfOrder.order_status,

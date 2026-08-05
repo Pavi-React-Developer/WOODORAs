@@ -12,7 +12,8 @@ const navItemSchema = new mongoose.Schema({
   }],
   icon: { type: String, default: '' },
   order: { type: Number, default: 0 },
-  status: { type: Boolean, default: true }
+  status: { type: Boolean, default: true },
+  position: { type: String, enum: ['left', 'center', 'right'], default: 'left' }
 }, { _id: true });
 
 const navbarSchema = new mongoose.Schema({

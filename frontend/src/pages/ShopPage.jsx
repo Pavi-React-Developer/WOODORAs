@@ -277,24 +277,65 @@ export default function ShopPage({ onNavigate, onAddToCart, onAddToWishlist, use
         const attr = attrMap.attribute || attrMap;
         const options = attr.values || attr.options || [];
         if (!attr || options.length === 0) return null;
+        
+        const isColorAttribute = attr.name?.toLowerCase() === 'color' || attr.name?.toLowerCase() === 'colour';
+
         return (
           <div key={attr._id || idx} className="pt-5">
             <h3 className="text-xs font-bold uppercase tracking-wider mb-3 text-gray-400">{attr.name}</h3>
-            <div className="space-y-2.5 max-h-48 overflow-y-auto pr-1">
-              {options.map(opt => {
-                const optId = opt._id?.toString() || opt._id;
-                const isChecked = (selectedAttributes[attr._id] || []).includes(optId);
-                return (
-                  <label key={optId} className="flex items-center gap-3 cursor-pointer group">
-                    <input type="checkbox" className="hidden" checked={isChecked} onChange={() => toggleAttribute(attr._id, optId)} />
-                    <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${isChecked ? 'bg-[#8B5E3C] border-[#8B5E3C] text-white' : 'border-gray-300 bg-white group-hover:border-[#8B5E3C]'}`}>
-                      {isChecked && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L4 7L9 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+            
+            {isColorAttribute ? (
+              <div className="flex flex-wrap gap-4 max-h-48 overflow-y-auto pr-1">
+                {options.map(opt => {
+                  const optId = opt._id?.toString() || opt._id;
+                  const isChecked = (selectedAttributes[attr._id] || []).includes(optId);
+                  const value = opt.name || opt.value;
+                  
+                  const valKey = value.toLowerCase();
+                  let bgStyle = opt.colorCode || opt.hex || valKey.replace(/\s+/g, '');
+                  if (bgStyle === 'natural' && !opt.colorCode) bgStyle = '#A67B5B';
+                  if (bgStyle === 'sagegreen' && !opt.colorCode) bgStyle = '#839773';
+                  if (bgStyle === 'oceanblue' && !opt.colorCode) bgStyle = '#4A7596';
+                  if (bgStyle === 'pastelpink' && !opt.colorCode) bgStyle = '#D78B85';
+                  if (bgStyle === 'mustardyellow' && !opt.colorCode) bgStyle = '#D49B42';
+
+                  return (
+                    <div
+                      key={optId}
+                      className="flex flex-col items-center gap-1.5 cursor-pointer group"
+                      onClick={() => toggleAttribute(attr._id, optId)}
+                    >
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center transition p-0.5 ${isChecked
+                          ? 'border-2 border-[#AA7327]'
+                          : 'border-2 border-transparent group-hover:border-[#AA7327]'
+                        }`}>
+                        <div
+                          className="w-full h-full rounded-full border border-black/10"
+                          style={{ backgroundColor: bgStyle }}
+                        />
+                      </div>
+                      <span className={`text-[12px] text-center leading-tight transition-colors ${isChecked ? 'text-[#0057b7]' : 'text-gray-700'}`}>{value}</span>
                     </div>
-                    <span className={`text-sm transition-colors ${isChecked ? 'font-semibold text-[#8B5E3C]' : 'text-gray-600 group-hover:text-gray-900'}`}>{opt.name || opt.value}</span>
-                  </label>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="space-y-2.5 max-h-48 overflow-y-auto pr-1">
+                {options.map(opt => {
+                  const optId = opt._id?.toString() || opt._id;
+                  const isChecked = (selectedAttributes[attr._id] || []).includes(optId);
+                  return (
+                    <label key={optId} className="flex items-center gap-3 cursor-pointer group">
+                      <input type="checkbox" className="hidden" checked={isChecked} onChange={() => toggleAttribute(attr._id, optId)} />
+                      <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${isChecked ? 'bg-[#8B5E3C] border-[#8B5E3C] text-white' : 'border-gray-300 bg-white group-hover:border-[#8B5E3C]'}`}>
+                        {isChecked && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L4 7L9 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                      </div>
+                      <span className={`text-sm transition-colors ${isChecked ? 'font-semibold text-[#8B5E3C]' : 'text-gray-600 group-hover:text-gray-900'}`}>{opt.name || opt.value}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
           </div>
         );
       })}
@@ -399,7 +440,7 @@ export default function ShopPage({ onNavigate, onAddToCart, onAddToWishlist, use
         <div className="text-xs text-gray-500 mt-4 mb-6 flex items-center gap-2">
           <span className="cursor-pointer hover:text-gray-900 transition-colors" onClick={() => onNavigate('/')}>Home</span>
           <span>&gt;</span>
-          <span className="cursor-pointer hover:text-gray-900 transition-colors" onClick={() => onNavigate('/categories')}>Woodora</span>
+          <span className="cursor-pointer hover:text-gray-900 transition-colors" onClick={() => onNavigate('/categories')}>Marakathai</span>
           <span>&gt;</span>
           <span className="font-semibold text-gray-900">{pageTitle}</span>
         </div>
@@ -515,7 +556,7 @@ export default function ShopPage({ onNavigate, onAddToCart, onAddToWishlist, use
             ))}
           </div>
         ) : paginatedProducts.length > 0 ? (
-          <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12" : "flex flex-col gap-6 mb-12"}>
+          <div className={viewMode === 'grid' ? "grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6 mb-12" : "flex flex-col gap-4 sm:gap-6 mb-12"}>
             {paginatedProducts.map(product => (
               <ProductCard
                 key={product._id}

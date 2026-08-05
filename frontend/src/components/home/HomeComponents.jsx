@@ -324,41 +324,100 @@ function HeroNavButtons() {
 
 export function HomeHeroBanner({ context = {}, specificData }) {
   let heroSlides = [];
-  
+
   if (specificData) {
     const banner = specificData;
     if (banner.status) {
-        if (banner.desktopVideo || banner.mobileVideo) {
-            heroSlides.push({ ...banner, itemType: 'video', desktopUrl: getImageSrc(banner.desktopVideo), mobileUrl: getImageSrc(banner.mobileVideo) });
-        } else if (banner.bannerImage || banner.mobileBanner) {
-            heroSlides.push({ ...banner, itemType: 'image', desktopUrl: getImageSrc(banner.bannerImage), mobileUrl: getImageSrc(banner.mobileBanner) });
-        }
-        if (banner.items && banner.items.length > 0) {
-            banner.items.forEach(item => {
-                heroSlides.push({ ...banner, itemType: item.mediaType || 'image', desktopUrl: getImageSrc(item.desktopUrl), mobileUrl: getImageSrc(item.mobileUrl) });
-            });
-        }
-        if (heroSlides.length === 0) {
-            heroSlides.push({ ...banner, desktopUrl: getImageSrc(banner.bannerImage), mobileUrl: getImageSrc(banner.mobileBanner) });
-        }
+      // Use only items[] if admin has defined them (preserves admin-set order)
+      if (banner.items && banner.items.length > 0) {
+        banner.items.forEach(item => {
+          heroSlides.push({
+            ...banner,
+            itemType: item.mediaType || 'image',
+            desktopUrl: getImageSrc(item.desktopUrl),
+            mobileUrl: getImageSrc(item.mobileUrl),
+          });
+        });
+      } else if (banner.desktopVideo || banner.mobileVideo) {
+        // Legacy: single video
+        heroSlides.push({ ...banner, itemType: 'video', desktopUrl: getImageSrc(banner.desktopVideo), mobileUrl: getImageSrc(banner.mobileVideo) });
+      } else if (banner.bannerImage || banner.mobileBanner) {
+        // Legacy: single image
+        heroSlides.push({ ...banner, itemType: 'image', desktopUrl: getImageSrc(banner.bannerImage), mobileUrl: getImageSrc(banner.mobileBanner) });
+      }
+      if (heroSlides.length === 0) {
+        heroSlides.push({ ...banner, itemType: 'image', desktopUrl: getImageSrc(banner.bannerImage), mobileUrl: getImageSrc(banner.mobileBanner) });
+      }
     }
   } else {
-      heroSlides = context.heroSlides;
+    heroSlides = context.heroSlides;
   }
 
-  const [swiperInstance, setSwiperInstance] = useState(null);
+  // Use refs (not state) so callbacks always read the live instance — no stale closures
+  const swiperRef = useRef(null);
   const [paginationEl, setPaginationEl] = useState(null);
+  const videoRefs = useRef({});
+  const advancedRef = useRef({}); // guard: prevent double slideNext per slide
 
-  useEffect(() => {
-    // Debug log removed
-  }, [heroSlides]);
+  // Determine if a slide is a video slide
+  const isVideoSlide = (slide) => {
+    if (!slide) return false;
+    if (slide.itemType === 'video') return true;
+    const deskVid = slide.desktopUrl && /\.(mp4|webm)$/i.test(slide.desktopUrl);
+    const mobVid = slide.mobileUrl && /\.(mp4|webm)$/i.test(slide.mobileUrl);
+    return !!(deskVid || mobVid);
+  };
+
+  const handleSwiperInit = (swiper) => {
+    swiperRef.current = swiper;
+    // Fire initial slide setup
+    setupSlide(swiper, heroSlides);
+  };
+
+  const setupSlide = (swiper, slides) => {
+    if (!swiper || swiper.destroyed || !slides?.length) return;
+    const realIdx = swiper.realIndex;
+    const slide = slides[realIdx];
+    // Reset guard
+    advancedRef.current = {};
+    // Stop + reset all videos
+    Object.values(videoRefs.current).forEach(vids => {
+      vids.forEach(v => { if (v) { v.pause(); v.currentTime = 0; } });
+    });
+    if (isVideoSlide(slide)) {
+      swiper.autoplay.stop();
+      const refs = videoRefs.current[realIdx] || [];
+      refs.forEach(v => { if (v) v.play().catch(() => {}); });
+    } else {
+      swiper.autoplay.start();
+    }
+  };
+
+  // Called when any video ends
+  const handleVideoEnded = (slideIdx, el) => {
+    const swiper = swiperRef.current;
+    if (!swiper || swiper.destroyed) return;
+    // Only the visible video (offsetParent !== null) advances
+    if (el.offsetParent !== null) {
+      if (advancedRef.current[slideIdx]) return;
+      advancedRef.current[slideIdx] = true;
+      swiper.slideNext();
+      swiper.autoplay.start();
+    }
+  };
+
+  const registerVideoRef = (slideIdx, isMobile, el) => {
+    if (!videoRefs.current[slideIdx]) videoRefs.current[slideIdx] = [];
+    videoRefs.current[slideIdx][isMobile ? 1 : 0] = el;
+  };
 
   if (!heroSlides || !heroSlides.length) return null;
 
   return (
     <section className="relative w-full h-[50vh] md:h-[70vh] lg:h-[90vh] min-h-[350px] md:min-h-[450px] lg:min-h-[600px] overflow-hidden bg-brand-dark group">
       <Swiper
-        onSwiper={setSwiperInstance}
+        onSwiper={handleSwiperInit}
+        onSlideChange={(swiper) => setupSlide(swiper, heroSlides)}
         modules={[Autoplay, Pagination, EffectCreative]}
         observer={true}
         observeParents={true}
@@ -368,37 +427,65 @@ export function HomeHeroBanner({ context = {}, specificData }) {
         className="w-full h-full"
       >
         <HeroNavButtons />
-        {heroSlides.map((slide, i) => (
-          <SwiperSlide key={slide._id || i}>
-            <div className="relative w-full h-full">
-              {(() => {
-                const isDesktopVid = slide.desktopUrl && slide.desktopUrl.match(/\.(mp4|webm)$/i);
-                const isMobileVid = slide.mobileUrl && slide.mobileUrl.match(/\.(mp4|webm)$/i);
-                return (
-                  <>
-                    {slide.desktopUrl && (
-                      isDesktopVid ? (
-                        <video src={slide.desktopUrl} className={`w-full h-full object-cover object-center brightness-90 ${slide.mobileUrl ? 'hidden md:block' : ''}`} autoPlay muted loop playsInline />
-                      ) : (
-                        <img src={slide.desktopUrl} alt={slide.title} className={`w-full h-full object-cover object-center brightness-90 ${slide.mobileUrl ? 'hidden md:block' : ''}`} onError={e => { e.target.src = '/wood-placeholder.png'; }} />
-                      )
-                    )}
-                    {slide.mobileUrl && (
-                      isMobileVid ? (
-                        <video src={slide.mobileUrl} className={`w-full h-full object-cover object-center brightness-90 ${slide.desktopUrl ? 'block md:hidden' : ''}`} autoPlay muted loop playsInline />
-                      ) : (
-                        <img src={slide.mobileUrl} alt={slide.title} className={`w-full h-full object-cover object-center brightness-90 ${slide.desktopUrl ? 'block md:hidden' : ''}`} onError={e => { e.target.src = '/wood-placeholder.png'; }} />
-                      )
-                    )}
-                    {(!slide.desktopUrl && !slide.mobileUrl) && (
-                      <img src={slide.bannerImage || '/wood-placeholder.png'} alt={slide.title} className="w-full h-full object-cover object-center brightness-90" onError={e => { e.target.src = '/wood-placeholder.png'; }} />
-                    )}
-                  </>
-                );
-              })()}
-            </div>
-          </SwiperSlide>
-        ))}
+        {heroSlides.map((slide, i) => {
+          const isDesktopVid = slide.desktopUrl && /\.(mp4|webm)$/i.test(slide.desktopUrl);
+          const isMobileVid = slide.mobileUrl && /\.(mp4|webm)$/i.test(slide.mobileUrl);
+          return (
+            <SwiperSlide key={slide._id ? `${slide._id}-${i}` : i}>
+              <div className="relative w-full h-full">
+                {/* Desktop media */}
+                {slide.desktopUrl && (
+                  isDesktopVid ? (
+                    <video
+                      ref={el => registerVideoRef(i, false, el)}
+                      src={slide.desktopUrl}
+                      className={`w-full h-full object-cover object-center brightness-90 ${slide.mobileUrl ? 'hidden md:block' : ''}`}
+                      muted
+                      playsInline
+                      onEnded={(e) => handleVideoEnded(i, e.target)}
+                    />
+                  ) : (
+                    <img
+                      src={slide.desktopUrl}
+                      alt={slide.title}
+                      className={`w-full h-full object-cover object-center brightness-90 ${slide.mobileUrl ? 'hidden md:block' : ''}`}
+                      onError={e => { e.target.src = '/wood-placeholder.png'; }}
+                    />
+                  )
+                )}
+                {/* Mobile media */}
+                {slide.mobileUrl && (
+                  isMobileVid ? (
+                    <video
+                      ref={el => registerVideoRef(i, true, el)}
+                      src={slide.mobileUrl}
+                      className={`w-full h-full object-cover object-center brightness-90 ${slide.desktopUrl ? 'block md:hidden' : ''}`}
+                      muted
+                      playsInline
+                      onEnded={(e) => handleVideoEnded(i, e.target)}
+                    />
+                  ) : (
+                    <img
+                      src={slide.mobileUrl}
+                      alt={slide.title}
+                      className={`w-full h-full object-cover object-center brightness-90 ${slide.desktopUrl ? 'block md:hidden' : ''}`}
+                      onError={e => { e.target.src = '/wood-placeholder.png'; }}
+                    />
+                  )
+                )}
+                {/* Fallback if no URLs */}
+                {(!slide.desktopUrl && !slide.mobileUrl) && (
+                  <img
+                    src={slide.bannerImage || '/wood-placeholder.png'}
+                    alt={slide.title}
+                    className="w-full h-full object-cover object-center brightness-90"
+                    onError={e => { e.target.src = '/wood-placeholder.png'; }}
+                  />
+                )}
+              </div>
+            </SwiperSlide>
+          );
+        })}
       </Swiper>
       <div ref={setPaginationEl} className="hero-dots absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-3" />
     </section>
@@ -408,7 +495,16 @@ export function HomeHeroBanner({ context = {}, specificData }) {
 function ThirdBannerItem({ bannerData, onNavigate }) {
   const [firstSwiper, setFirstSwiper] = useState(null);
   const [secondSwiper, setSecondSwiper] = useState(null);
-  const [paginationEl, setPaginationEl] = useState(null);
+  // Use ref (not state) for pagination element — avoids setState-during-render React error
+  const paginationRef = useRef(null);
+  const [paginationReady, setPaginationReady] = useState(false);
+
+  const setPaginationEl = useCallback((el) => {
+    if (el && !paginationRef.current) {
+      paginationRef.current = el;
+      setPaginationReady(true);
+    }
+  }, []);
 
   if (!bannerData || !bannerData.leftImages?.length) return null;
 
@@ -422,9 +518,32 @@ function ThirdBannerItem({ bannerData, onNavigate }) {
 
   const leftCtaLabel = bannerData.leftButtonText || 'Explore Here';
   const rightCtaLabel = bannerData.rightButtonText || 'Explore Here';
+  const slideCount = bannerData.leftImages.length;
 
   return (
     <section className="py-5 bg-[#FDF9F1]">
+      <style>{`
+        .dual-banner-pagination .swiper-pagination-bullet {
+          width: 10px; height: 10px; border-radius: 50%;
+          background: #D4C3A3; opacity: 1; cursor: pointer;
+          transition: all 0.25s; flex-shrink: 0;
+        }
+        .dual-banner-pagination .swiper-pagination-bullet-active {
+          background: #B0611C; width: 12px; height: 12px;
+          box-shadow: 0 0 0 2px #fff, 0 0 0 3px #B0611C;
+        }
+        /* Desktop: dots column, shown inside the center grid column */
+        @media (min-width: 768px) {
+          .dual-banner-pagination {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+          }
+        }
+      `}</style>
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {bannerData.title && (
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="relative flex flex-col md:flex-row items-center justify-center mb-10 min-h-[40px]">
@@ -435,74 +554,85 @@ function ThirdBannerItem({ bannerData, onNavigate }) {
             </div>
           </motion.div>
         )}
-        <div className="relative">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 max-w-5xl mx-auto">
-            <div className="overflow-hidden rounded-2xl shadow-sm relative group h-[30vh] md:h-[50vh] min-h-[220px] md:min-h-[350px] max-h-[500px]">
-              {paginationEl ? (
-                <Swiper
-                  modules={[Autoplay, Pagination, Controller, EffectFade, EffectCreative]}
-                  effect={currentEffect}
-                  creativeEffect={creativeOptions}
-                  onSwiper={setFirstSwiper}
-                  controller={{ control: secondSwiper }}
-                  autoplay={{ delay: 3500, disableOnInteraction: false }}
-                  loop={bannerData.leftImages.length > 1}
-                  direction={swiperDirection}
-                  pagination={{ clickable: true, el: paginationEl }}
-                  className="w-full h-full"
-                >
-                  {bannerData.leftImages.map((img, i) => (
-                    <SwiperSlide key={i}>
-                      <img src={img?.url || img || '/wood-placeholder.png'} alt="" className="w-full h-full object-cover" onError={(e) => { e.target.src = '/wood-placeholder.png'; }} />
-                    </SwiperSlide>
-                  ))}
-                </Swiper>
-              ) : (
-                <div className="w-full h-full bg-[#E6DFD4]" />
-              )}
-              <div className="absolute inset-0 z-10 bg-gradient-to-r from-black/55 via-black/20 to-transparent pointer-events-none" />
-              <div className="absolute inset-0 z-20 flex items-end p-8 pointer-events-none">
-                <button onClick={() => onNavigate && onNavigate(bannerData.leftCtaUrl || '/')} className="pointer-events-auto bg-white text-brand-dark text-xs font-bold px-8 py-4 uppercase tracking-widest hover:bg-brand-dark hover:text-white transition-colors">
-                  {leftCtaLabel} <span className="ml-1">→</span>
-                </button>
-              </div>
-            </div>
 
-            <div className="overflow-hidden rounded-2xl shadow-sm relative group h-[30vh] md:h-[50vh] min-h-[220px] md:min-h-[350px] max-h-[500px]">
+        {/*
+          3-column grid on desktop: [left banner | dots gap | right banner]
+          Mobile: single column (dot column hidden), gap-4 between stacked banners
+        */}
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_48px_1fr] gap-4 md:gap-0 max-w-5xl mx-auto">
+
+          {/* LEFT banner */}
+          <div className="overflow-hidden rounded-2xl shadow-sm relative group h-[30vh] md:h-[50vh] min-h-[220px] md:min-h-[350px] max-h-[500px]">
+            {paginationReady ? (
               <Swiper
-                modules={[Controller, EffectFade, EffectCreative]}
+                modules={[Autoplay, Pagination, Controller, EffectFade, EffectCreative]}
                 effect={currentEffect}
                 creativeEffect={creativeOptions}
-                onSwiper={setSecondSwiper}
-                controller={{ control: firstSwiper }}
-                loop={(bannerData.rightImages?.length || 0) > 1}
+                onSwiper={setFirstSwiper}
+                controller={{ control: secondSwiper }}
+                autoplay={{ delay: 3500, disableOnInteraction: false }}
+                loop={bannerData.leftImages.length > 1}
                 direction={swiperDirection}
-                allowTouchMove={false}
+                pagination={slideCount > 1 ? { clickable: true, el: paginationRef.current } : false}
                 className="w-full h-full"
               >
-                {bannerData.rightImages?.map((img, i) => (
+                {bannerData.leftImages.map((img, i) => (
                   <SwiperSlide key={i}>
                     <img src={img?.url || img || '/wood-placeholder.png'} alt="" className="w-full h-full object-cover" onError={(e) => { e.target.src = '/wood-placeholder.png'; }} />
                   </SwiperSlide>
                 ))}
               </Swiper>
-              <div className="absolute inset-0 z-10 bg-gradient-to-r from-black/55 via-black/20 to-transparent pointer-events-none" />
-              <div className="absolute inset-0 z-20 flex items-end p-8 pointer-events-none">
-                <button onClick={() => onNavigate && onNavigate(bannerData.rightCtaUrl || '/')} className="pointer-events-auto bg-white text-brand-dark text-xs font-bold px-8 py-4 uppercase tracking-widest hover:bg-brand-dark hover:text-white transition-colors">
-                  {rightCtaLabel} <span className="ml-1">→</span>
-                </button>
-              </div>
+            ) : (
+              <div className="w-full h-full bg-[#E6DFD4]" />
+            )}
+            <div className="absolute inset-0 z-10 bg-gradient-to-r from-black/55 via-black/20 to-transparent pointer-events-none" />
+            <div className="absolute inset-0 z-20 flex items-end p-8 pointer-events-none">
+              <button onClick={() => onNavigate && onNavigate(bannerData.leftCtaUrl || '/')} className="pointer-events-auto bg-white text-brand-dark text-xs font-bold px-8 py-4 uppercase tracking-widest hover:bg-brand-dark hover:text-white transition-colors">
+                {leftCtaLabel} <span className="ml-1">→</span>
+              </button>
             </div>
           </div>
-          
-          <div className="absolute top-0 bottom-4 md:bottom-0 left-0 md:left-1/2 md:-translate-x-1/2 right-0 md:right-auto flex flex-col md:items-center justify-end md:justify-center z-30 pointer-events-none">
-            <div ref={setPaginationEl} className="dual-banner-pagination flex flex-row md:flex-col justify-center gap-3 pointer-events-auto mb-4 md:mb-0" style={{ position: 'relative', top: 'auto', bottom: 'auto', left: 'auto', right: 'auto', transform: 'none', width: 'auto', height: 'auto' }} />
+
+          {/* CENTER column: dots on desktop, hidden on mobile */}
+          <div className="hidden md:flex items-center justify-center z-30">
+            {slideCount > 1 && (
+              <div ref={setPaginationEl} className="dual-banner-pagination" />
+            )}
+          </div>
+
+          {/* RIGHT banner */}
+          <div className="overflow-hidden rounded-2xl shadow-sm relative group h-[30vh] md:h-[50vh] min-h-[220px] md:min-h-[350px] max-h-[500px]">
+            <Swiper
+              modules={[Controller, EffectFade, EffectCreative]}
+              effect={currentEffect}
+              creativeEffect={creativeOptions}
+              onSwiper={setSecondSwiper}
+              controller={{ control: firstSwiper }}
+              loop={(bannerData.rightImages?.length || 0) > 1}
+              direction={swiperDirection}
+              allowTouchMove={false}
+              className="w-full h-full"
+            >
+              {bannerData.rightImages?.map((img, i) => (
+                <SwiperSlide key={i}>
+                  <img src={img?.url || img || '/wood-placeholder.png'} alt="" className="w-full h-full object-cover" onError={(e) => { e.target.src = '/wood-placeholder.png'; }} />
+                </SwiperSlide>
+              ))}
+            </Swiper>
+            <div className="absolute inset-0 z-10 bg-gradient-to-r from-black/55 via-black/20 to-transparent pointer-events-none" />
+            <div className="absolute inset-0 z-20 flex items-end p-8 pointer-events-none">
+              <button onClick={() => onNavigate && onNavigate(bannerData.rightCtaUrl || '/')} className="pointer-events-auto bg-white text-brand-dark text-xs font-bold px-8 py-4 uppercase tracking-widest hover:bg-brand-dark hover:text-white transition-colors">
+                {rightCtaLabel} <span className="ml-1">→</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </section>
   );
 }
+
+
 
 export function HomeThirdBanner({ context = {}, specificData }) {
   const { onNavigate } = context;
@@ -564,6 +694,9 @@ function ProductGridBlock({ grid, onNavigate, onAddToCart, onAddToWishlist, user
               .pg-prev-${grid._id}.swiper-button-disabled, .pg-next-${grid._id}.swiper-button-disabled { opacity: 0.3; cursor: not-allowed; }
               .pg-prev-${grid._id} { left: -12px; }
               .pg-next-${grid._id} { right: -12px; }
+              @media (max-width: 767px) {
+                .pg-prev-${grid._id}, .pg-next-${grid._id} { display: none !important; }
+              }
               @media (min-width: 768px) {
                 .pg-prev-${grid._id} { left: -10px; }
                 .pg-next-${grid._id} { right: -10px; }
@@ -629,6 +762,9 @@ export function HomeProductGrid({ context = {}, specificData }) {
 export function HomeCategoryGrid({ context = {}, specificData }) {
   const { onNavigate, onAddToCart, onAddToWishlist, user } = context;
   const [activeIdx, setActiveIdx] = useState(0);
+  const prevRef = useRef(null);
+  const nextRef = useRef(null);
+  const swiperRef = useRef(null);
 
   const allSections = specificData
     ? [specificData]
@@ -638,6 +774,7 @@ export function HomeCategoryGrid({ context = {}, specificData }) {
 
   const activeSection = allSections[activeIdx];
   const activeProducts = Array.isArray(activeSection?.products) ? activeSection.products.filter(Boolean) : [];
+  const useSlider = activeProducts.length > 3;
 
   return (
     <section className="py-5">
@@ -664,11 +801,16 @@ export function HomeCategoryGrid({ context = {}, specificData }) {
           </motion.div>
 
           {/* Main two-column container */}
-          <motion.div variants={fadeUp} className="flex flex-col sm:flex-row rounded-2xl border border-[#E6DFD4] overflow-hidden shadow-sm">
+          <motion.div variants={fadeUp} className="flex flex-col sm:flex-row rounded-2xl border border-[#E6DFD4] shadow-sm overflow-visible">
 
             {/* LEFT: Category list */}
-            <div className="w-full sm:w-[200px] md:w-[220px] shrink-0 border-b sm:border-b-0 sm:border-r border-[#E6DFD4] bg-[#FDFAF7]">
-              <div className="flex sm:flex-col overflow-x-auto sm:overflow-visible">
+            <div className="w-full sm:w-[200px] md:w-[220px] shrink-0 border-b sm:border-b-0 sm:border-r border-[#E6DFD4] bg-[#FDFAF7] rounded-l-2xl overflow-hidden">
+            <style>{`
+              .cat-tab-scroll::-webkit-scrollbar { display: none; }
+              /* Firefox */
+              .cat-tab-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+            `}</style>
+            <div className="flex sm:flex-col overflow-x-auto sm:overflow-visible cat-tab-scroll gap-2 sm:gap-0 p-3 sm:p-0">
                 {allSections.map((section, i) => {
                   const imgUrl = section?.images?.find(img => img.isThumbnail)?.url || section?.images?.[0]?.url || '';
                   const isActive = i === activeIdx;
@@ -676,14 +818,14 @@ export function HomeCategoryGrid({ context = {}, specificData }) {
                     <button
                       key={section._id || i}
                       onClick={() => setActiveIdx(i)}
-                      className={`flex items-center gap-3 px-4 py-3 text-left transition-all duration-200 shrink-0 sm:w-full border-r sm:border-r-0 sm:border-b border-[#E6DFD4] last:border-0 ${
+                      className={`flex items-center gap-2 sm:gap-3 px-3 py-1.5 sm:px-4 sm:py-3 text-left transition-all duration-200 shrink-0 sm:w-full sm:border-b border-[#E6DFD4] last:border-0 rounded-full sm:rounded-none ${
                         isActive
-                          ? 'bg-[#B0611C] text-white'
-                          : 'hover:bg-[#F3EDE4] text-brand-dark'
+                          ? 'bg-[#B0611C] text-white shadow-md sm:shadow-none'
+                          : 'bg-white sm:bg-transparent border border-[#E6DFD4] sm:border-0 hover:bg-[#F3EDE4] text-brand-dark'
                       }`}
                     >
                       {/* Small category thumbnail */}
-                      <div className={`w-10 h-10 rounded-lg overflow-hidden shrink-0 ${isActive ? 'ring-2 ring-white/60' : 'ring-1 ring-[#E6DFD4]'}`}>
+                      <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full sm:rounded-lg overflow-hidden shrink-0 ${isActive ? 'ring-2 ring-white/60' : 'ring-1 ring-[#E6DFD4]'}`}>
                         {imgUrl ? (
                           <img
                             src={imgUrl}
@@ -696,13 +838,13 @@ export function HomeCategoryGrid({ context = {}, specificData }) {
                         )}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-semibold truncate">{section.title}</p>
-                        <p className={`text-[10px] truncate mt-0.5 ${isActive ? 'text-white/70' : 'text-brand-medium'}`}>
+                        <p className="text-[11px] sm:text-xs font-semibold truncate">{section.title}</p>
+                        <p className={`text-[9px] sm:text-[10px] truncate mt-0.5 ${isActive ? 'text-white/70' : 'text-brand-medium'}`}>
                           {Array.isArray(section?.products) ? section.products.length : 0} products
                         </p>
                       </div>
                       {isActive && (
-                        <div className="ml-auto shrink-0 w-1.5 h-1.5 rounded-full bg-white/80" />
+                        <div className="hidden sm:block ml-auto shrink-0 w-1.5 h-1.5 rounded-full bg-white/80" />
                       )}
                     </button>
                   );
@@ -711,29 +853,54 @@ export function HomeCategoryGrid({ context = {}, specificData }) {
             </div>
 
             {/* RIGHT: Products of selected category */}
-            <div className="flex-1 min-w-0 p-4 sm:p-5 bg-white">
+            <div className="flex-1 min-w-0 bg-white rounded-r-2xl overflow-visible">
               {activeProducts.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                  {activeProducts.slice(0, 6).map((product) => (
-                    <div key={product._id} className="h-full">
-                      <ProductCard
-                        product={product}
-                        onNavigate={onNavigate}
-                        onAddToCart={onAddToCart}
-                        onAddToWishlist={onAddToWishlist}
-                        user={user}
-                      />
-                    </div>
-                  ))}
-                </div>
+                useSlider ? (
+                  /* Slider mode: touch/swipe only — no arrow buttons */
+                  <div className="p-4 sm:p-5">
+                    <Swiper
+                      slidesPerView={2}
+                      spaceBetween={10}
+                      breakpoints={{ 640: { slidesPerView: 3, spaceBetween: 12 } }}
+                      className="w-full"
+                    >
+                      {activeProducts.map((product) => (
+                        <SwiperSlide key={product._id}>
+                          <ProductCard
+                            product={product}
+                            onNavigate={onNavigate}
+                            onAddToCart={onAddToCart}
+                            onAddToWishlist={onAddToWishlist}
+                            user={user}
+                          />
+                        </SwiperSlide>
+                      ))}
+                    </Swiper>
+                  </div>
+                ) : (
+                  <div className="p-4 sm:p-5 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    {activeProducts.map((product) => (
+                      <div key={product._id} className="h-full">
+                        <ProductCard
+                          product={product}
+                          onNavigate={onNavigate}
+                          onAddToCart={onAddToCart}
+                          onAddToWishlist={onAddToWishlist}
+                          user={user}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )
               ) : (
-                <div className="flex h-full min-h-[180px] items-center justify-center rounded-xl border border-dashed border-[#E6DFD4] text-sm text-brand-medium">
+                <div className="flex h-full min-h-[180px] items-center justify-center rounded-xl border border-dashed border-[#E6DFD4] text-sm text-brand-medium m-4">
                   No products added to this category yet.
                 </div>
               )}
             </div>
 
           </motion.div>
+
 
         </motion.div>
       </div>
@@ -773,7 +940,7 @@ function CategoriesGridBlock({ grid, onNavigate }) {
             )}
           </motion.div>
 
-          <div className="relative px-4 md:px-14 mt-4">
+          <div className="relative md:px-14 mt-4">
             <style>{`
               .cat-pagination-${grid._id} { position: relative; margin-top: 2rem; display: flex; justify-content: center; gap: 12px; }
               .cat-pagination-${grid._id} .swiper-pagination-bullet { width: 16px; height: 16px; background: #fff; border: 1px solid #999; opacity: 1; transition: all 0.2s; border-radius: 50%; cursor: pointer; }
@@ -781,7 +948,6 @@ function CategoriesGridBlock({ grid, onNavigate }) {
 
               .cat-prev-${grid._id}, .cat-next-${grid._id} {
                 position: absolute;
-                /* mobile: py-2(8px) + half of h-28(56px) = 64px, centre the 44px button */
                 top: 64px;
                 transform: translateY(-50%);
                 z-index: 10;
@@ -803,9 +969,13 @@ function CategoriesGridBlock({ grid, onNavigate }) {
               .cat-prev-${grid._id} { left: -4px; }
               .cat-next-${grid._id} { right: -4px; }
 
+              /* MOBILE: hide arrows completely */
+              @media (max-width: 767px) {
+                .cat-prev-${grid._id}, .cat-next-${grid._id} { display: none !important; }
+              }
+
               @media (min-width: 768px) {
                 .cat-prev-${grid._id}, .cat-next-${grid._id} {
-                  /* desktop: py-2(8px) + half of h-36(72px) = 80px */
                   top: 80px;
                   width: 48px; height: 48px;
                 }
@@ -816,8 +986,8 @@ function CategoriesGridBlock({ grid, onNavigate }) {
 
             {showArrows && (
               <>
-                <button ref={setPrevEl} className={`cat-prev-${grid._id}`}><ChevronLeft className="w-5 h-5" /></button>
-                <button ref={setNextEl} className={`cat-next-${grid._id}`}><ChevronRight className="w-5 h-5" /></button>
+                <button ref={setPrevEl} className={`cat-prev-${grid._id} hidden md:flex`}><ChevronLeft className="w-5 h-5" /></button>
+                <button ref={setNextEl} className={`cat-next-${grid._id} hidden md:flex`}><ChevronRight className="w-5 h-5" /></button>
               </>
             )}
 

@@ -5,6 +5,8 @@ import ThirdBannerAdmin from './ThirdBannerAdmin';
 import ProductGridAdmin from './ProductGridAdmin';
 import CategoryGridAdmin from './CategoryGridAdmin';
 import CategoriesGridAdmin from './CategoriesGridAdmin';
+import GiftCardBannerAdmin from './GiftCardBannerAdmin';
+import CustomizeBannerAdmin from './CustomizeBannerAdmin';
 import FooterAdmin from './FooterAdmin';
 import ReviewAdmin from './ReviewAdmin';
 import HomeLayoutBuilder from './HomeLayoutBuilder';
@@ -18,6 +20,8 @@ const TABS = [
   { id: 'grid', label: '📦 Product Grid' },
   { id: 'category-grid', label: '🗂️ Category Grid' },
   { id: 'categories-grid', label: '🗂️ Categories Grid' },
+  { id: 'gift-card', label: '🎁 Gift & Card' },
+  { id: 'customize', label: '🖌️ Customize' },
   { id: 'footer', label: '📋 Footer' },
   { id: 'reviews', label: '⭐ Reviews' },
 ];
@@ -35,6 +39,8 @@ export default function HomePageCMS() {
       case 'grid': return <ProductGridAdmin key={refreshKey} />;
       case 'category-grid': return <CategoryGridAdmin key={refreshKey} />;
       case 'categories-grid': return <CategoriesGridAdmin key={refreshKey} />;
+      case 'gift-card': return <GiftCardBannerAdmin key={refreshKey} />;
+      case 'customize': return <CustomizeBannerAdmin key={refreshKey} />;
       case 'footer': return <FooterAdmin key={refreshKey} />;
       case 'reviews': return <ReviewAdmin key={refreshKey} />;
       default: return null;

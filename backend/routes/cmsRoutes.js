@@ -8,6 +8,8 @@ const { cacheMiddleware, clearCache } = require('../middleware/cacheMiddleware')
 router.get('/navbar', cacheMiddleware(300), cmsController.getNavbar);
 router.get('/hero', cacheMiddleware(300), cmsController.getHeroBanners);
 router.get('/third-banner', cacheMiddleware(300), cmsController.getThirdBanners);
+router.get('/gift-card-banner', cacheMiddleware(300), cmsController.getGiftCardBanners);
+router.get('/customize-banner', cacheMiddleware(300), cmsController.getCustomizeBanner);
 router.get('/product-grid', cacheMiddleware(300), cmsController.getProductGrids);
 router.get('/category-grid', cacheMiddleware(300), cmsController.getCategoryGrids);
 router.get('/categories-grid', cacheMiddleware(300), cmsController.getCategoriesGrids);
@@ -33,6 +35,10 @@ router.post('/third-banner', protect, authorize('admin'), bustCache, cmsControll
 router.put('/third-banner/:id', protect, authorize('admin'), bustCache, cmsController.updateThirdBanner);
 router.delete('/third-banner/:id', protect, authorize('admin'), bustCache, cmsController.deleteThirdBanner);
 
+router.post('/gift-card-banner', protect, authorize('admin'), bustCache, cmsController.createGiftCardBanner);
+router.put('/gift-card-banner/:id', protect, authorize('admin'), bustCache, cmsController.updateGiftCardBanner);
+router.delete('/gift-card-banner/:id', protect, authorize('admin'), bustCache, cmsController.deleteGiftCardBanner);
+
 router.post('/product-grid', protect, authorize('admin'), bustCache, cmsController.createProductGrid);
 router.put('/product-grid/:id', protect, authorize('admin'), bustCache, cmsController.updateProductGrid);
 router.delete('/product-grid/:id', protect, authorize('admin'), bustCache, cmsController.deleteProductGrid);
@@ -44,6 +50,8 @@ router.delete('/category-grid/:id', protect, authorize('admin'), bustCache, cmsC
 router.post('/categories-grid', protect, authorize('admin'), bustCache, cmsController.createCategoriesGrid);
 router.put('/categories-grid/:id', protect, authorize('admin'), bustCache, cmsController.updateCategoriesGrid);
 router.delete('/categories-grid/:id', protect, authorize('admin'), bustCache, cmsController.deleteCategoriesGrid);
+
+router.put('/customize-banner', protect, authorize('admin'), bustCache, cmsController.updateCustomizeBanner);
 
 router.put('/footer', protect, authorize('admin'), bustCache, cmsController.updateFooter);
 router.put('/layout', protect, authorize('admin'), bustCache, cmsController.updateLayout);

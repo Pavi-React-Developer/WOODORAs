@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Gift, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
+import { Gift, Minus, Plus, Trash2 } from 'lucide-react';
+import { FiShoppingCart } from "react-icons/fi";
 import useCartStore from '../store/useCartStore';
 import useCartCalculation from '../hooks/useCartCalculation';
 import { useNavigate } from 'react-router-dom';
@@ -147,7 +148,7 @@ export default function CartOffcanvas({ isOpen, onClose }) {
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-brand-medium/20">
           <div className="flex items-center gap-2">
-            <ShoppingBag className="w-5 h-5 text-brand-dark" />
+            <FiShoppingCart className="w-5 h-5 text-brand-dark" style={{ color: 'inherit' }} />
             <h2 className="font-serif text-xl font-bold text-brand-dark">Your Cart</h2>
             {cartItems.length > 0 && (
               <span className="bg-brand-dark text-white text-xs font-bold px-2 py-0.5 rounded-full">
@@ -169,15 +170,9 @@ export default function CartOffcanvas({ isOpen, onClose }) {
           {cartItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-brand-dark/50 space-y-4 py-16">
               <div className="w-20 h-20 bg-brand-beige/60 rounded-full flex items-center justify-center">
-                <ShoppingBag className="w-10 h-10 text-brand-dark/30" />
+                <FiShoppingCart className="w-10 h-10 text-brand-dark/30" style={{ color: 'inherit' }} />
               </div>
               <p className="font-medium text-brand-dark/60">Your cart is empty.</p>
-              <button
-                onClick={onClose}
-                className="text-sm text-brand-dark underline underline-offset-2 hover:opacity-70 transition-opacity"
-              >
-                Continue Shopping
-              </button>
             </div>
           ) : (
             cartItems.map((item) => {

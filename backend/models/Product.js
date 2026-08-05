@@ -164,6 +164,10 @@ const productSchema = new mongoose.Schema({
         type: [String],
         default: [],
     },
+    soldCount: {
+        type: Number,
+        default: 0
+    },
     relatedProducts: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Product',

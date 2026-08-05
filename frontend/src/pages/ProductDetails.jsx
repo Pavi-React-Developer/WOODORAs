@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { productV2API } from '../api/catalogV2Service';
+import { productV2API, subCategoryV2API } from '../api/catalogV2Service';
 import ProductReviewSection from '../components/ProductReviewSection';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
@@ -576,6 +576,37 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
   const [selectedAttributeValues, setSelectedAttributeValues] = useState({});
   const [hasInitializedVariant, setHasInitializedVariant] = useState(false);
 
+  const [subCategoryAttributes, setSubCategoryAttributes] = useState([]);
+
+  useEffect(() => {
+    if (!product?.subCategory) return;
+    const subCatId = typeof product.subCategory === 'object' ? product.subCategory._id : product.subCategory;
+    if (subCatId) {
+      subCategoryV2API.getMappedAttributes(subCatId)
+        .then(res => {
+          const raw = res.mappings || res.data || res || [];
+          setSubCategoryAttributes(Array.isArray(raw) ? raw : []);
+        })
+        .catch(console.error);
+    }
+  }, [product?.subCategory]);
+
+  const colorMap = useMemo(() => {
+    const map = {};
+    subCategoryAttributes.forEach(attrMap => {
+      const attr = attrMap.attribute || attrMap;
+      if (attr?.name?.toLowerCase() === 'color' || attr?.name?.toLowerCase() === 'colour') {
+        (attr.values || []).forEach(val => {
+          const valName = (val.name || val.value || '').toLowerCase();
+          if (val.colorCode) {
+            map[valName] = val.colorCode;
+          }
+        });
+      }
+    });
+    return map;
+  }, [subCategoryAttributes]);
+
   // Reset when product ID changes
   useEffect(() => {
     setHasInitializedVariant(false);
@@ -906,12 +937,13 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                                 const isSelected = selectedValue === value;
 
                                 if (isColorAttribute) {
-                                  let bgStyle = value.toLowerCase().replace(/\s+/g, '');
-                                  if (bgStyle === 'natural') bgStyle = '#A67B5B';
-                                  if (bgStyle === 'sagegreen') bgStyle = '#839773';
-                                  if (bgStyle === 'oceanblue') bgStyle = '#4A7596';
-                                  if (bgStyle === 'pastelpink') bgStyle = '#D78B85';
-                                  if (bgStyle === 'mustardyellow') bgStyle = '#D49B42';
+                                  const valKey = value.toLowerCase();
+                                  let bgStyle = colorMap[valKey] || valKey.replace(/\s+/g, '');
+                                  if (bgStyle === 'natural' && !colorMap[valKey]) bgStyle = '#A67B5B';
+                                  if (bgStyle === 'sagegreen' && !colorMap[valKey]) bgStyle = '#839773';
+                                  if (bgStyle === 'oceanblue' && !colorMap[valKey]) bgStyle = '#4A7596';
+                                  if (bgStyle === 'pastelpink' && !colorMap[valKey]) bgStyle = '#D78B85';
+                                  if (bgStyle === 'mustardyellow' && !colorMap[valKey]) bgStyle = '#D49B42';
 
                                   return (
                                     <div

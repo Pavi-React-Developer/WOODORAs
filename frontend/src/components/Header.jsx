@@ -35,6 +35,8 @@ export default function Header({
   const [activeMenu, setActiveMenu] = useState(null);
   const [navItems, setNavItems] = useState([]);
   const [navbarConfig, setNavbarConfig] = useState(null);
+  const [allProducts, setAllProducts] = useState([]);
+  const [isProductsLoading, setIsProductsLoading] = useState(true);
   
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -61,6 +63,20 @@ export default function Header({
       }
     };
 
+    const fetchProducts = async () => {
+      try {
+        setIsProductsLoading(true);
+        const res = await productV2API.getAll({ limit: 500, select: 'name,slug,category' }); 
+        if (res.success && res.products) {
+          setAllProducts(res.products);
+        }
+      } catch (err) {
+        console.error('Failed to load products for navbar mega menu', err);
+      } finally {
+        setIsProductsLoading(false);
+      }
+    };
+
     const fetchNavbars = async () => {
       try {
         const res = await cmsService.getNavbar();
@@ -74,6 +90,7 @@ export default function Header({
     };
 
     fetchCategories();
+    fetchProducts();
     fetchNavbars();
   }, []);
 
@@ -120,6 +137,104 @@ export default function Header({
         (category.parentCategory && category.parentCategory._id === parentId),
     );
 
+  const renderNavItem = (item, idx) => {
+    const titleLower = item.title.toLowerCase();
+    const navLinkCls = "flex h-[46px] items-center px-4 text-[14px] font-medium whitespace-nowrap border-b-2 border-transparent hover:border-current transition-colors";
+    const isCategories = titleLower === 'categories' || titleLower === 'categoeris' || (item.url && item.url.includes('/categories'));
+
+    if (isCategories) {
+      return (
+        <div key={item._id || `nav-${idx}`} className="relative flex h-[46px] items-center" onMouseEnter={() => setActiveMenu(titleLower)} onMouseLeave={() => setActiveMenu(null)}>
+          <button type="button" onClick={() => onNavigate('/categories')} className={`${navLinkCls} gap-1`} style={{ color: item.textColor || '#B1621D' }}>
+            {item.title} <ChevronDown className="h-3.5 w-3.5" strokeWidth={1.5} />
+          </button>
+          {activeMenu === titleLower && (
+            <div className="absolute left-1/2 -translate-x-[45%] top-full mt-0 w-[950px] max-w-[95vw] rounded-b-2xl rounded-t-sm border border-t-0 border-[#E9DED3] bg-[#FDFCF8] p-10 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] z-50">
+              {mainCategories.length === 0 ? (<div className="text-sm text-[#8B827C]">Loading...</div>) : (
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-12 gap-y-10">
+                  {mainCategories.map((mainCat) => {
+                    const subs = getSubCategories(mainCat._id);
+                    const subCatIds = subs.map(s => s._id);
+                    const catProducts = allProducts.filter(p => {
+                      const pCatId = typeof p.category === 'object' ? p.category?._id : p.category;
+                      return pCatId === mainCat._id || subCatIds.includes(pCatId);
+                    });
+                    return (
+                      <div key={mainCat._id} className="flex flex-col">
+                        <button type="button" onClick={() => onNavigate(`/products?category=${mainCat._id}`)} className="text-left text-[11px] font-bold uppercase tracking-widest text-[#33302E] pb-3 border-b border-[#F0EBE6] mb-5 hover:text-[#9C755A] transition-colors">
+                          {mainCat.name}
+                        </button>
+                        {isProductsLoading ? (
+                          <div className="flex flex-col gap-4 mt-2">
+                            {[1, 2, 3].map(i => (
+                              <div key={i} className="flex items-center gap-3">
+                                <div className="w-1 h-1 rounded-full bg-gray-200 animate-pulse"></div>
+                                <div className="h-2.5 bg-gray-100 rounded animate-pulse w-3/4"></div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : catProducts.length > 0 ? (
+                          <ul className="flex flex-col gap-3.5">
+                            {catProducts.map((prod) => (
+                              <li key={prod._id}>
+                                <button type="button" onClick={() => onNavigate(`/product/${prod.slug || prod._id}`)} className="flex items-center text-left text-[13.5px] text-[#78716C] hover:text-[#9C755A] transition-colors group w-full">
+                                  <span className="w-[4px] h-[4px] rounded-full bg-[#B4AFA9] group-hover:bg-[#9C755A] mr-3.5 transition-colors shrink-0"></span>
+                                  <span className="line-clamp-1 flex-1">{prod.name}</span>
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <div className="text-[12px] text-[#A8A19D] italic">No products available</div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    if (titleLower === 'shop' || item.isDropdown) {
+      return (
+        <div key={item._id || `nav-${idx}`} className="relative flex h-[46px] items-center" onMouseEnter={() => setActiveMenu(titleLower)} onMouseLeave={() => setActiveMenu(null)}>
+          <button type="button" className={`${navLinkCls} gap-1`} style={{ color: item.textColor || navbarConfig?.textColor || '#B1621D' }}>
+            {item.title} <ChevronDown className="h-3.5 w-3.5" strokeWidth={1.5} />
+          </button>
+          {activeMenu === titleLower && (
+            <div className="absolute left-0 top-full min-w-[208px] rounded-xl border border-[#E9DED3] bg-white py-2 shadow-lg z-50">
+              {titleLower === 'shop' ? (<>
+                <button onClick={() => onNavigate('/products')} type="button" className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">All Products</button>
+                <button onClick={() => onNavigate('/products?sort=newest')} type="button" className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">New Arrivals</button>
+                <button onClick={() => onNavigate('/products?sort=bestselling')} type="button" className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">Best Sellers</button>
+              </>) : (item.subItems?.length > 0 ? item.subItems.map((subItem, sIdx) => {
+                const isExt = subItem.url.startsWith('http://') || subItem.url.startsWith('https://');
+                if (isExt) return <a key={sIdx} href={subItem.url} className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">{subItem.title}</a>;
+                return <button key={sIdx} onClick={() => onNavigate(subItem.url)} type="button" className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">{subItem.title}</button>;
+              }) : null)}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    if (titleLower === 'gift & card') {
+      return (
+        <button key={item._id || `nav-${idx}`} type="button" onClick={() => onNavigate('/gift-and-card')} className={navLinkCls} style={{ color: item.textColor || navbarConfig?.textColor || '#B1621D' }}>{item.title}</button>
+      );
+    }
+
+    const isExternalItem = item.url && (item.url.startsWith('http://') || item.url.startsWith('https://'));
+    if (isExternalItem) return <a key={item._id || `nav-${idx}`} href={item.url} className={navLinkCls} style={{ color: item.textColor || navbarConfig?.textColor || '#B1621D' }}>{item.title}</a>;
+
+    return <Link key={item._id || `nav-${idx}`} to={item.url} className={navLinkCls} style={{ color: item.textColor || navbarConfig?.textColor || '#B1621D' }}>{item.title}</Link>;
+  };
+
+  const sortedNavItems = [...navItems].sort((a, b) => (a.order || 0) - (b.order || 0));
+
   return (
     <>
     <header 
@@ -147,7 +262,7 @@ export default function Header({
 
         {/* Wide Persistent Search Bar */}
         <div className="relative flex-1 max-w-2xl mx-auto">
-          <div className="flex items-center rounded-lg border border-[#E6D9CE] bg-[#FAF4EF] px-4 py-1.5 gap-3 focus-within:border-[#B0611C] transition-colors">
+          <div className="flex items-center rounded-lg border border-[#E6D9CE] bg-[#FAF4EF] px-4 py-1.5 gap-3 focus-within:border-[#B1621D] transition-colors">
             <input
               type="text"
               placeholder="Search for wooden toys, games & more..."
@@ -157,7 +272,7 @@ export default function Header({
             />
             <button
               type="button"
-              className="shrink-0 flex items-center justify-center h-8 w-8 rounded-md bg-[#B0611C] text-white hover:bg-[#9A5218] transition-colors"
+              className="shrink-0 flex items-center justify-center h-8 w-8 rounded-md bg-[#B1621D] text-white hover:bg-[#9A5218] transition-colors"
               aria-label="Search"
             >
               <Search className="h-4 w-4" strokeWidth={2} />
@@ -214,7 +329,7 @@ export default function Header({
             <button
               type="button"
               onClick={() => (user ? setDropdownOpen((open) => !open) : onNavigate('/login'))}
-              className="flex flex-col items-center gap-1 hover:text-[#B0611C] transition-colors"
+              className="flex flex-col items-center gap-1 hover:text-[#B1621D] transition-colors"
               aria-label="Account"
             >
               {(() => {
@@ -224,7 +339,7 @@ export default function Header({
                     return <img src={imgSrc} alt={user.name} className="h-[22px] w-[22px] rounded-full object-cover border border-[#E9DED3]" />;
                   }
                   return (
-                    <div className="h-[22px] w-[22px] rounded-full bg-[#B0611C] text-white flex items-center justify-center text-[10px] font-bold uppercase shadow-sm">
+                    <div className="h-[22px] w-[22px] rounded-full bg-[#B1621D] text-white flex items-center justify-center text-[10px] font-bold uppercase shadow-sm">
                       {user.name ? user.name.charAt(0) : 'U'}
                     </div>
                   );
@@ -234,7 +349,7 @@ export default function Header({
               <span className="text-[11px] font-medium leading-none">{user ? user.name.split(' ')[0] : 'Account'}</span>
             </button>
             {dropdownOpen && user && (
-              <div className="absolute right-0 top-12 z-[60] mt-2 w-[220px] overflow-hidden rounded-xl border border-[#E9DED3] bg-white shadow-xl">
+              <div className="absolute left-1/2 -translate-x-1/2 top-12 z-[60] mt-2 w-[220px] overflow-hidden rounded-xl border border-[#E9DED3] bg-white shadow-xl">
                 <div className="border-b border-[#EFE6DD] px-5 py-4">
                   <p className="text-xs text-[#7C7370]">Logged in as</p>
                   <p className="truncate text-base font-bold text-[#206945] mt-0.5">{user.name}</p>
@@ -267,7 +382,7 @@ export default function Header({
           <button
             type="button"
             onClick={() => onOpenWishlist?.()}
-            className="relative flex flex-col items-center gap-1 hover:text-[#B0611C] transition-colors"
+            className="relative flex flex-col items-center gap-1 hover:text-[#B1621D] transition-colors"
             aria-label="Wishlist"
           >
             <Heart className="h-[22px] w-[22px]" strokeWidth={1.5} />
@@ -281,7 +396,7 @@ export default function Header({
           <button
             type="button"
             onClick={() => onOpenCart?.()}
-            className="relative flex flex-col items-center gap-1 hover:text-[#B0611C] transition-colors"
+            className="relative flex flex-col items-center gap-1 hover:text-[#B1621D] transition-colors"
             aria-label="Cart"
           >
             <ShoppingCart className="h-[22px] w-[22px]" strokeWidth={1.5} />
@@ -295,87 +410,28 @@ export default function Header({
 
       {/* ── DESKTOP ROW 2: Nav Links ── */}
       <div className="hidden lg:block border-t border-[#F1E8E0]">
-        <nav className="mx-auto flex max-w-[1500px] items-center gap-0 px-10">
+        <nav className="mx-auto flex max-w-[1500px] items-center justify-between px-10 w-full relative">
           {navItems.length > 0 ? (
-            [...navItems].sort((a, b) => (a.order || 0) - (b.order || 0)).map((item, idx) => {
-              const titleLower = item.title.toLowerCase();
-              const navLinkCls = "flex h-[46px] items-center px-4 text-[14px] font-medium whitespace-nowrap border-b-2 border-transparent hover:border-current transition-colors";
-
-              if (titleLower === 'shop' || item.isDropdown) {
-                return (
-                  <div key={item._id || `nav-${idx}`} className="relative flex h-[46px] items-center" onMouseEnter={() => setActiveMenu(titleLower)} onMouseLeave={() => setActiveMenu(null)}>
-                    <button type="button" className={`${navLinkCls} gap-1`} style={{ color: item.textColor || navbarConfig?.textColor || '#B0611C' }}>
-                      {item.title} <ChevronDown className="h-3.5 w-3.5" strokeWidth={1.5} />
-                    </button>
-                    {activeMenu === titleLower && (
-                      <div className="absolute left-0 top-full min-w-[208px] rounded-xl border border-[#E9DED3] bg-white py-2 shadow-lg z-50">
-                        {titleLower === 'shop' ? (<>
-                          <button onClick={() => onNavigate('/products')} type="button" className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">All Products</button>
-                          <button onClick={() => onNavigate('/products?sort=newest')} type="button" className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">New Arrivals</button>
-                          <button onClick={() => onNavigate('/products?sort=bestselling')} type="button" className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">Best Sellers</button>
-                        </>) : (item.subItems?.length > 0 ? item.subItems.map((subItem, sIdx) => {
-                          const isExt = subItem.url.startsWith('http://') || subItem.url.startsWith('https://');
-                          if (isExt) return <a key={sIdx} href={subItem.url} className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">{subItem.title}</a>;
-                          return <button key={sIdx} onClick={() => onNavigate(subItem.url)} type="button" className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">{subItem.title}</button>;
-                        }) : null)}
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-
-              if (titleLower === 'categories') {
-                return (
-                  <div key={item._id || `nav-${idx}`} className="relative flex h-[46px] items-center" onMouseEnter={() => setActiveMenu(titleLower)} onMouseLeave={() => setActiveMenu(null)}>
-                    <button type="button" onClick={() => onNavigate('/categories')} className={`${navLinkCls} gap-1`} style={{ color: item.textColor || '#B0611C' }}>
-                      {item.title} <ChevronDown className="h-3.5 w-3.5" strokeWidth={1.5} />
-                    </button>
-                    {activeMenu === titleLower && (
-                      <div className="absolute left-0 top-full w-64 rounded-xl border border-[#E9DED3] bg-white py-2 shadow-lg z-50">
-                        {mainCategories.length === 0 ? (<div className="px-4 py-3 text-sm text-[#8B827C]">Loading...</div>) : (
-                          mainCategories.map((mainCat) => {
-                            const subs = getSubCategories(mainCat._id);
-                            return (
-                              <div key={mainCat._id} className="group relative">
-                                <button type="button" onClick={() => onNavigate(`/products?category=${mainCat._id}`)} className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">
-                                  {mainCat.name}{subs.length > 0 && <ChevronDown className="-rotate-90 h-4 w-4" strokeWidth={1.5} />}
-                                </button>
-                                {subs.length > 0 && (<div className="absolute left-full top-0 hidden w-52 rounded-xl border border-[#E9DED3] bg-white py-2 shadow-lg group-hover:block">
-                                  {subs.map((subCat) => (<button key={subCat._id} onClick={() => onNavigate(`/products?category=${subCat._id}`)} type="button" className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">{subCat.name}</button>))}
-                                </div>)}
-                              </div>
-                            );
-                          })
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-
-              if (titleLower === 'gift & card') {
-                return (
-                  <React.Fragment key={item._id || `nav-${idx}`}>
-                    <button type="button" onClick={() => onNavigate('/gift-and-card')} className={navLinkCls} style={{ color: item.textColor || navbarConfig?.textColor || '#B0611C' }}>{item.title}</button>
-                    <button type="button" onClick={() => onNavigate('/customize')} className={navLinkCls} style={{ color: item.textColor || navbarConfig?.textColor || '#B0611C' }}>Customize</button>
-                  </React.Fragment>
-                );
-              }
-
-              const isExternalItem = item.url && (item.url.startsWith('http://') || item.url.startsWith('https://'));
-              if (isExternalItem) return <a key={item._id || `nav-${idx}`} href={item.url} className={navLinkCls} style={{ color: item.textColor || navbarConfig?.textColor || '#B0611C' }}>{item.title}</a>;
-
-              return <Link key={item._id || `nav-${idx}`} to={item.url} className={navLinkCls} style={{ color: item.textColor || navbarConfig?.textColor || '#B0611C' }}>{item.title}</Link>;
-            })
+            <>
+              <div className="flex items-center flex-1 justify-start">
+                {sortedNavItems.filter(i => !i.position || i.position === 'left').map(renderNavItem)}
+              </div>
+              <div className="flex items-center justify-center">
+                {sortedNavItems.filter(i => i.position === 'center').map(renderNavItem)}
+              </div>
+              <div className="flex items-center flex-1 justify-end">
+                {sortedNavItems.filter(i => i.position === 'right').map(renderNavItem)}
+              </div>
+            </>
           ) : (
             <>
               {[
                 { label: 'Home', action: () => onNavigate('/') },
               ].map(({ label, action }) => (
-                <button key={label} type="button" onClick={action} className="flex h-[46px] items-center px-4 text-[14px] font-medium border-b-2 border-transparent hover:border-current transition-colors" style={{ color: navbarConfig?.textColor || '#B0611C' }}>{label}</button>
+                <button key={label} type="button" onClick={action} className="flex h-[46px] items-center px-4 text-[14px] font-medium border-b-2 border-transparent hover:border-current transition-colors" style={{ color: navbarConfig?.textColor || '#B1621D' }}>{label}</button>
               ))}
               <div className="relative flex h-[46px] items-center" onMouseEnter={() => setActiveMenu('shop')} onMouseLeave={() => setActiveMenu(null)}>
-                <button type="button" className="flex h-full items-center gap-1 px-4 text-[14px] font-medium border-b-2 border-transparent hover:border-current transition-colors" style={{ color: navbarConfig?.textColor || '#B0611C' }}>Shop <ChevronDown className="h-3.5 w-3.5" strokeWidth={1.5} /></button>
+                <button type="button" className="flex h-full items-center gap-1 px-4 text-[14px] font-medium border-b-2 border-transparent hover:border-current transition-colors" style={{ color: navbarConfig?.textColor || '#B1621D' }}>Shop <ChevronDown className="h-3.5 w-3.5" strokeWidth={1.5} /></button>
                 {activeMenu === 'shop' && (<div className="absolute left-0 top-full w-52 rounded-xl border border-[#E9DED3] bg-white py-2 shadow-lg z-50">
                   <button onClick={() => onNavigate('/products')} type="button" className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">All Products</button>
                   <button onClick={() => onNavigate('/products?sort=newest')} type="button" className="block w-full px-4 py-2.5 text-left text-sm text-[#4A403B] hover:bg-[#FAF4EF] hover:text-[#9C755A]">New Arrivals</button>
@@ -383,7 +439,7 @@ export default function Header({
                 </div>)}
               </div>
               <div className="relative flex h-[46px] items-center" onMouseEnter={() => setActiveMenu('categories')} onMouseLeave={() => setActiveMenu(null)}>
-                <button type="button" onClick={() => onNavigate('/categories')} className="flex h-full items-center gap-1 px-4 text-[14px] font-medium border-b-2 border-transparent hover:border-current transition-colors" style={{ color: navbarConfig?.textColor || '#B0611C' }}>Categories <ChevronDown className="h-3.5 w-3.5" strokeWidth={1.5} /></button>
+                <button type="button" onClick={() => onNavigate('/categories')} className="flex h-full items-center gap-1 px-4 text-[14px] font-medium border-b-2 border-transparent hover:border-current transition-colors" style={{ color: navbarConfig?.textColor || '#B1621D' }}>Categories <ChevronDown className="h-3.5 w-3.5" strokeWidth={1.5} /></button>
                 {activeMenu === 'categories' && (<div className="absolute left-0 top-full w-64 rounded-xl border border-[#E9DED3] bg-white py-2 shadow-lg z-50">
                   {mainCategories.length === 0 ? (<div className="px-4 py-3 text-sm text-[#8B827C]">Loading...</div>) : mainCategories.map((mainCat) => {
                     const subs = getSubCategories(mainCat._id);
@@ -399,7 +455,7 @@ export default function Header({
                 { label: 'Gift & Card', path: '/gift-and-card' },
                 { label: 'Customize', path: '/customize' },
               ].map(({ label, path }) => (
-                <button key={label} type="button" onClick={() => onNavigate(path)} className="flex h-[46px] items-center px-4 text-[14px] font-medium whitespace-nowrap border-b-2 border-transparent hover:border-current transition-colors" style={{ color: navbarConfig?.textColor || '#B0611C' }}>{label}</button>
+                <button key={label} type="button" onClick={() => onNavigate(path)} className="flex h-[46px] items-center px-4 text-[14px] font-medium whitespace-nowrap border-b-2 border-transparent hover:border-current transition-colors" style={{ color: navbarConfig?.textColor || '#B1621D' }}>{label}</button>
               ))}
             </>
           )}
@@ -411,7 +467,7 @@ export default function Header({
         <button type="button" onClick={() => onNavigate(navbarConfig?.logoUrl || '/')} className="shrink-0">
           <img src={navbarConfig?.logo?.url || "/brand-logo.jpeg"} alt="Marakathai Logo" className="h-14 w-auto object-contain" />
         </button>
-        <div className="flex items-center gap-3 text-[#B0611C]">
+        <div className="flex items-center gap-3 text-[#B1621D]">
           <div className="relative">
             <button
               type="button"
@@ -426,7 +482,7 @@ export default function Header({
                     return <img src={imgSrc} alt={user.name} className="h-[22px] w-[22px] rounded-full object-cover border border-[#E9DED3]" />;
                   }
                   return (
-                    <div className="h-[22px] w-[22px] rounded-full bg-[#B0611C] text-white flex items-center justify-center text-[10px] font-bold uppercase shadow-sm">
+                    <div className="h-[22px] w-[22px] rounded-full bg-[#B1621D] text-white flex items-center justify-center text-[10px] font-bold uppercase shadow-sm">
                       {user.name ? user.name.charAt(0) : 'U'}
                     </div>
                   );
@@ -435,7 +491,7 @@ export default function Header({
               })()}
             </button>
             {dropdownOpen && user && (
-              <div className="absolute right-0 top-10 z-[60] mt-2 w-[220px] overflow-hidden rounded-xl border border-[#E9DED3] bg-white shadow-xl">
+              <div className="absolute left-1/2 -translate-x-1/2 top-full z-[60] mt-3 w-[220px] overflow-hidden rounded-xl border border-[#E9DED3] bg-white shadow-xl">
                 <div className="border-b border-[#EFE6DD] px-5 py-4">
                   <p className="text-xs text-[#7C7370]">Logged in as</p>
                   <p className="truncate text-base font-bold text-[#206945] mt-0.5">{user.name}</p>
@@ -480,7 +536,7 @@ export default function Header({
       {/* Mobile Search Bar */}
       <div className="border-t border-[#F1E8E0] px-4 py-3 lg:hidden">
         <div className="relative mx-auto max-w-xl">
-          <label className="flex items-center gap-3 rounded-[10px] border border-[#E6D9CE] bg-white px-4 py-3 text-[#8B5E3C] focus-within:border-[#B0611C] transition-colors">
+          <label className="flex items-center gap-3 rounded-[10px] border border-[#E6D9CE] bg-white px-4 py-3 text-[#8B5E3C] focus-within:border-[#B1621D] transition-colors">
             <Search className="h-5 w-5" strokeWidth={1.8} />
             <input
               type="search"
@@ -501,7 +557,7 @@ export default function Header({
               <button 
                 type="button" 
                 onClick={() => setSearchQuery('')}
-                className="p-1 text-[#8A817C] hover:text-[#B0611C]"
+                className="p-1 text-[#8A817C] hover:text-[#B1621D]"
               >
                 <X className="h-4 w-4" strokeWidth={2} />
               </button>
@@ -659,7 +715,7 @@ export default function Header({
             )}
           </div>
 
-        <div className="flex shrink-0 items-center gap-3 sm:gap-6 text-[#B0611C] relative z-20">
+        <div className="flex shrink-0 items-center gap-3 sm:gap-6 text-[#B1621D] relative z-20">
           <button 
             type="button" 
             className={`transition hover:opacity-80 hidden sm:block ${isSearchOpen ? 'md:block opacity-0 pointer-events-none' : 'opacity-100'}`}
@@ -683,7 +739,7 @@ export default function Header({
                     return <img src={imgSrc} alt={user.name} className="h-[22px] w-[22px] sm:h-[26px] sm:w-[26px] rounded-full object-cover border border-[#E9DED3]" />;
                   }
                   return (
-                    <div className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px] rounded-full bg-[#B0611C] text-white flex items-center justify-center text-[10px] font-bold uppercase shadow-sm">
+                    <div className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px] rounded-full bg-[#B1621D] text-white flex items-center justify-center text-[10px] font-bold uppercase shadow-sm">
                       {user.name ? user.name.charAt(0) : 'U'}
                     </div>
                   );
@@ -693,7 +749,7 @@ export default function Header({
             </button>
 
             {dropdownOpen && user && (
-              <div className="absolute right-0 top-12 z-[60] mt-2 w-[220px] overflow-hidden rounded-xl border border-[#E9DED3] bg-white shadow-xl">
+              <div className="absolute left-1/2 -translate-x-1/2 top-full z-[60] mt-3 w-[220px] overflow-hidden rounded-xl border border-[#E9DED3] bg-white shadow-xl">
                 <div className="border-b border-[#EFE6DD] px-5 py-4">
                   <p className="text-xs text-[#7C7370]">Logged in as</p>
                   <p className="truncate text-base font-bold text-[#206945] mt-0.5">{user.name}</p>
@@ -791,6 +847,60 @@ export default function Header({
             [...navItems].sort((a, b) => (a.order || 0) - (b.order || 0)).map((item, idx) => {
               const titleLower = item.title.toLowerCase();
 
+              const isCategories = titleLower === 'categories' || titleLower === 'categoeris' || (item.url && item.url.includes('/categories'));
+
+              if (isCategories) {
+                const menuId = item._id || `mobile-nav-${idx}`;
+                return (
+                  <div key={menuId} className="space-y-3">
+                    <div className="flex w-full items-center justify-between text-base font-bold text-[#B1621D]">
+                      <button type="button" onClick={() => { onNavigate('/categories'); setIsMobileMenuOpen(false); }} className="flex-1 text-left">
+                        {item.title}
+                      </button>
+                      <button type="button" onClick={() => toggleMobileMenu(menuId)} className="p-2">
+                        <ChevronDown className={`h-4 w-4 transition-transform duration-300 ${expandedMobileMenus[menuId] ? 'rotate-180' : ''}`} />
+                      </button>
+                    </div>
+                    {expandedMobileMenus[menuId] && (
+                      <div className="pl-4 space-y-4">
+                      {mainCategories.map((mainCat) => {
+                        const subs = getSubCategories(mainCat._id);
+                        const subCatIds = subs.map(s => s._id);
+                        const catProducts = allProducts.filter(p => {
+                          const pCatId = typeof p.category === 'object' ? p.category?._id : p.category;
+                          return pCatId === mainCat._id || subCatIds.includes(pCatId);
+                        });
+                        return (
+                          <div key={mainCat._id} className="space-y-2">
+                            <div className="flex w-full items-center justify-between group">
+                              <button onClick={() => { onNavigate(`/products?category=${mainCat._id}`); setIsMobileMenuOpen(false); }} type="button" className="flex-1 text-left text-[13px] text-[#33302E] uppercase font-bold tracking-wider hover:text-[#9C755A] active:text-[#9C755A] transition-colors">
+                                {mainCat.name}
+                              </button>
+                              {catProducts.length > 0 && (
+                                <button type="button" onClick={() => toggleMobileMenu(mainCat._id)} className="p-2 text-[#4A403B] hover:text-[#9C755A] active:text-[#9C755A] transition-colors">
+                                  <ChevronDown className={`h-4 w-4 transition-transform duration-300 ${expandedMobileMenus[mainCat._id] ? 'rotate-180' : ''}`} />
+                                </button>
+                              )}
+                            </div>
+                            {catProducts.length > 0 && expandedMobileMenus[mainCat._id] && (
+                              <div className="pl-3 space-y-3 pt-1 ml-1 pb-1">
+                                {catProducts.map((prod) => (
+                                  <button key={prod._id} onClick={() => { onNavigate(`/product/${prod.slug || prod._id}`); setIsMobileMenuOpen(false); }} type="button" className="flex items-center text-left text-[14px] text-[#78716C] hover:text-[#9C755A] active:text-[#9C755A] transition-colors group w-full">
+                                    <span className="w-[4px] h-[4px] rounded-full bg-[#B4AFA9] group-hover:bg-[#9C755A] group-active:bg-[#9C755A] mr-3 shrink-0 transition-colors"></span>
+                                    <span className="line-clamp-1 flex-1">{prod.name}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
               if (titleLower === 'shop' || item.isDropdown) {
                 const menuId = item._id || `mobile-nav-${idx}`;
                 return (
@@ -832,49 +942,16 @@ export default function Header({
                 );
               }
 
-              if (titleLower === 'categories') {
-                const menuId = item._id || `mobile-nav-${idx}`;
-                return (
-                  <div key={menuId} className="space-y-3">
-                    <div className="flex w-full items-center justify-between text-base font-bold text-[#B1621D]">
-                      <button type="button" onClick={() => { onNavigate('/categories'); setIsMobileMenuOpen(false); }} className="flex-1 text-left">
-                        {item.title}
-                      </button>
-                      <button type="button" onClick={() => toggleMobileMenu(menuId)} className="p-2">
-                        <ChevronDown className={`h-4 w-4 transition-transform duration-300 ${expandedMobileMenus[menuId] ? 'rotate-180' : ''}`} />
-                      </button>
-                    </div>
-                    {expandedMobileMenus[menuId] && (
-                      <div className="pl-4 space-y-3 border-l-2 border-[#E9DED3]">
-                      {mainCategories.map((mainCat) => (
-                        <button key={mainCat._id} onClick={() => { onNavigate(`/products?category=${mainCat._id}`); setIsMobileMenuOpen(false); }} type="button" className="block w-full text-left text-[#7C7370]">
-                          {mainCat.name}
-                        </button>
-                      ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-
               if (titleLower === 'gift & card') {
                 return (
-                  <React.Fragment key={item._id || `nav-mobile-${idx}`}>
                     <button
+                      key={item._id || `nav-mobile-${idx}`}
                       type="button"
                       onClick={() => { onNavigate('/gift-and-card'); setIsMobileMenuOpen(false); }}
-                      className="block w-full text-left py-2 text-base font-medium text-[#4A403B]"
+                      className="block w-full text-left text-base font-bold text-[#B1621D]"
                     >
                       {item.title}
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => { onNavigate('/customize'); setIsMobileMenuOpen(false); }}
-                      className="block w-full text-left py-2 text-base font-medium text-[#4A403B]"
-                    >
-                      Customize
-                    </button>
-                  </React.Fragment>
                 );
               }
 

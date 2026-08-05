@@ -68,6 +68,14 @@ const updateVariantStock = async (variantId, qty, type) => {
     const variant = await ProductVariant.findById(variantId);
     if (!variant) return;
 
+    if (variant.product) {
+      if (type === 'reserve') {
+        await Product.findByIdAndUpdate(variant.product, { $inc: { soldCount: qty } }).catch(() => {});
+      } else if (type === 'refund' || type === 'cancel') {
+        await Product.findByIdAndUpdate(variant.product, { $inc: { soldCount: -qty } }).catch(() => {});
+      }
+    }
+
     if (type === 'reserve') {
       variant.reserveStock = (variant.reserveStock || 0) + qty;
     } else if (type === 'deliver') {
@@ -93,6 +101,12 @@ const updateVariantStock = async (variantId, qty, type) => {
 
 const updateProductStock = async (productId, qty, type = 'reserve') => {
   try {
+    if (type === 'reserve') {
+      await Product.findByIdAndUpdate(productId, { $inc: { soldCount: qty } }).catch(() => {});
+    } else if (type === 'refund' || type === 'cancel') {
+      await Product.findByIdAndUpdate(productId, { $inc: { soldCount: -qty } }).catch(() => {});
+    }
+
     const inventory = await Inventory.findOne({ product: productId });
     if (!inventory) return;
 
@@ -370,6 +384,7 @@ const addOrderItems = async (req, res) => {
         discount: pricing.coupon_discount,
         grand_total: pricing.total_amount,
         gift_toggle: giftToggle,
+        status: (paymentMethod === 'COD' && pricing.advance_payment === 0) ? 'Placed' : 'Pending',
         ...pricing,
       });
 
