@@ -4,6 +4,7 @@ const CmsHeroBanner = require('../models/CmsHeroBanner');
 const CmsThirdBanner = require('../models/CmsThirdBanner');
 const CmsGiftCardBanner = require('../models/CmsGiftCardBanner');
 const CmsCustomizeBanner = require('../models/CmsCustomizeBanner');
+const CmsBulkOrderBanner = require('../models/CmsBulkOrderBanner');
 const CmsProductGrid = require('../models/CmsProductGrid');
 const CmsCategoryGrid = require('../models/CmsCategoryGrid');
 const CmsCategoriesGrid = require('../models/CmsCategoriesGrid');
@@ -204,6 +205,27 @@ exports.updateCustomizeBanner = asyncHandler(async (req, res) => {
   let item = await CmsCustomizeBanner.findOne();
   if (!item) {
     item = await CmsCustomizeBanner.create(body);
+  } else {
+    Object.assign(item, body);
+    await item.save();
+  }
+  res.json({ success: true, data: item });
+});
+
+// --- BULK ORDER BANNER ---
+exports.getBulkOrderBanner = asyncHandler(async (req, res) => {
+  let item = await CmsBulkOrderBanner.findOne();
+  if (!item) {
+    item = await CmsBulkOrderBanner.create({ title: 'Bulk Orders', description: 'Looking for a large quantity of toys for your school, corporate event, or retail store? Fill out the form below and we will get back to you with a custom quote.', image: null });
+  }
+  res.json({ success: true, data: item });
+});
+
+exports.updateBulkOrderBanner = asyncHandler(async (req, res) => {
+  const body = processMediaFields(req.body);
+  let item = await CmsBulkOrderBanner.findOne();
+  if (!item) {
+    item = await CmsBulkOrderBanner.create(body);
   } else {
     Object.assign(item, body);
     await item.save();

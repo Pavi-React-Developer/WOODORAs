@@ -63,6 +63,10 @@ export const cmsService = {
   getCustomizeBanner: () => request(`${BASE}/customize-banner`),
   updateCustomizeBanner: (body) => request(`${BASE}/customize-banner`, { method: 'PUT', body: JSON.stringify(body) }),
 
+  // Bulk Order Banner
+  getBulkOrderBanner: () => request(`${BASE}/bulk-order-banner`),
+  updateBulkOrderBanner: (body) => request(`${BASE}/bulk-order-banner`, { method: 'PUT', body: JSON.stringify(body) }),
+
   // Product Grid
   getProductGrids: () => request(`${BASE}/product-grid`),
   createProductGrid: (body) => request(`${BASE}/product-grid`, { method: 'POST', body: JSON.stringify(body) }),

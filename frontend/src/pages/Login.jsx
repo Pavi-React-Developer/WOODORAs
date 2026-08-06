@@ -115,7 +115,9 @@ export default function Login({ onAuthSuccess, onNavigate }) {
           onClick={() => onNavigate('/')}
           className="shrink-0 cursor-pointer"
         >
-          <img src="/brand-logo.jpeg" alt="Marakathai Logo" className="h-8 w-auto object-contain" />
+          {typeof window !== 'undefined' && localStorage.getItem('cms_cached_logo') && (
+            <img src={localStorage.getItem('cms_cached_logo')} alt="Marakathai Logo" className="h-8 w-auto object-contain" />
+          )}
         </button>
         <button className="text-brand-medium hover:text-brand-dark transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -126,17 +128,7 @@ export default function Login({ onAuthSuccess, onNavigate }) {
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         
         {/* Left Image Section */}
-        <div className="hidden md:block md:w-1/2 relative h-full bg-brand-light overflow-hidden">
-          <img 
-            src="/hero1.jpeg" 
-            alt="Children playing" 
-            className="absolute inset-0 w-full h-full object-cover"
-            onError={(e) => {
-              // fallback if image not found to a solid elegant color
-              e.target.style.display = 'none';
-              e.target.parentElement.classList.add('bg-[#D4C9B8]');
-            }}
-          />
+        <div className="hidden md:block md:w-1/2 relative h-full bg-[#D4C9B8] overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent"></div>
           <div className="absolute bottom-10 left-10 right-10">
             <h2 className="text-white text-3xl font-medium leading-tight">
@@ -151,7 +143,9 @@ export default function Login({ onAuthSuccess, onNavigate }) {
             
             {/* Header Text */}
             <div className="text-center mb-8">
-              <img src="/brand-logo.jpeg" alt="Marakathai Logo" className="h-12 w-auto mx-auto mb-4 object-contain" />
+              {typeof window !== 'undefined' && localStorage.getItem('cms_cached_logo') && (
+                <img src={localStorage.getItem('cms_cached_logo')} alt="Marakathai Logo" className="h-12 w-auto mx-auto mb-4 object-contain" />
+              )}
               <h3 className="text-xl font-medium text-brand-dark">
                 {mode === 'login' && 'Welcome back'}
                 {mode === 'register' && 'Create Account'}

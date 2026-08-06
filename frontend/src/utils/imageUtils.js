@@ -19,7 +19,7 @@ export const normalizeImageValue = (image) => {
   return null;
 };
 
-export const getImageSrc = (image, fallback = '/animal_balance_maze.png') => {
+export const getImageSrc = (image, fallback = '') => {
   const normalized = normalizeImageValue(image);
 
   if (!normalized) return fallback;

@@ -290,7 +290,9 @@ export default function CustomizePage() {
   return (
     <div className="min-h-screen bg-[#FDFBF7] pb-24 relative">
       <div className="h-64 bg-[#3B2920] relative overflow-hidden flex flex-col justify-center px-8 md:px-16 lg:px-32">
-        <img src={banner?.image?.url || banner?.image || "/customize banner.jpeg"} alt="Customize Banner" className="absolute inset-0 w-full h-full object-cover opacity-50" />
+        {(banner?.image?.url || banner?.image) && (
+          <img src={banner.image.url || banner.image} alt="Customize Banner" className="absolute inset-0 w-full h-full object-cover opacity-50" />
+        )}
         <div className="relative z-10 max-w-7xl mx-auto w-full">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">{banner?.title || 'Request a Custom Order'}</h1>
           <p className="text-[#D3C7BD] text-lg max-w-xl">{banner?.description || "Design your own handcrafted wooden toy. Share your idea, and we'll create it just for you."}</p>

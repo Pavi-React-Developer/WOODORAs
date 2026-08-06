@@ -18,7 +18,7 @@ export default function WishlistPage({ wishlistItems, onRemove, onMoveToCart, on
        imgSrc = item.images?.find(img => img.isThumbnail)?.url || item.images?.[0]?.url || (typeof item.images?.[0] === 'string' ? item.images[0] : null) || (typeof item.image === 'object' ? item.image?.url : item.image) || null;
     }
     
-    return imgSrc || '/wood-placeholder.png';
+    return imgSrc || '';
   };
 
   const getVariantText = (item) => {
@@ -79,10 +79,10 @@ export default function WishlistPage({ wishlistItems, onRemove, onMoveToCart, on
                   <div className="col-span-8 flex items-center gap-6 w-full">
                     <div className="w-28 h-28 bg-[#F8F4EC] rounded-2xl overflow-hidden shrink-0 border border-gray-100">
                       <img 
-                        src={firstImage || '/wood-placeholder.png'} 
+                        src={firstImage || ''} 
                         alt={product.name} 
                         className="w-full h-full object-cover mix-blend-multiply"
-                        onError={(e) => { e.target.src = '/wood-placeholder.png'; }}
+                        onError={(e) => { e.target.style.display = 'none'; }}
                       />
                     </div>
                     <div className="flex-1">

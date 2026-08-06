@@ -449,7 +449,7 @@ export function HomeHeroBanner({ context = {}, specificData }) {
                       src={slide.desktopUrl}
                       alt={slide.title}
                       className={`w-full h-full object-cover object-center brightness-90 ${slide.mobileUrl ? 'hidden md:block' : ''}`}
-                      onError={e => { e.target.src = '/wood-placeholder.png'; }}
+                      onError={e => { e.target.style.display = 'none'; }}
                     />
                   )
                 )}
@@ -469,17 +469,17 @@ export function HomeHeroBanner({ context = {}, specificData }) {
                       src={slide.mobileUrl}
                       alt={slide.title}
                       className={`w-full h-full object-cover object-center brightness-90 ${slide.desktopUrl ? 'block md:hidden' : ''}`}
-                      onError={e => { e.target.src = '/wood-placeholder.png'; }}
+                      onError={e => { e.target.style.display = 'none'; }}
                     />
                   )
                 )}
                 {/* Fallback if no URLs */}
                 {(!slide.desktopUrl && !slide.mobileUrl) && (
                   <img
-                    src={slide.bannerImage || '/wood-placeholder.png'}
+                    src={slide.bannerImage || ''}
                     alt={slide.title}
                     className="w-full h-full object-cover object-center brightness-90"
-                    onError={e => { e.target.src = '/wood-placeholder.png'; }}
+                    onError={e => { e.target.style.display = 'none'; }}
                   />
                 )}
               </div>
@@ -579,7 +579,7 @@ function ThirdBannerItem({ bannerData, onNavigate }) {
               >
                 {bannerData.leftImages.map((img, i) => (
                   <SwiperSlide key={i}>
-                    <img src={img?.url || img || '/wood-placeholder.png'} alt="" className="w-full h-full object-cover" onError={(e) => { e.target.src = '/wood-placeholder.png'; }} />
+                    <img src={img?.url || img} alt="" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
                   </SwiperSlide>
                 ))}
               </Swiper>
@@ -616,7 +616,7 @@ function ThirdBannerItem({ bannerData, onNavigate }) {
             >
               {bannerData.rightImages?.map((img, i) => (
                 <SwiperSlide key={i}>
-                  <img src={img?.url || img || '/wood-placeholder.png'} alt="" className="w-full h-full object-cover" onError={(e) => { e.target.src = '/wood-placeholder.png'; }} />
+                  <img src={img?.url || img} alt="" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
                 </SwiperSlide>
               ))}
             </Swiper>

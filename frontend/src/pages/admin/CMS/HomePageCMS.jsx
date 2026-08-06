@@ -7,6 +7,7 @@ import CategoryGridAdmin from './CategoryGridAdmin';
 import CategoriesGridAdmin from './CategoriesGridAdmin';
 import GiftCardBannerAdmin from './GiftCardBannerAdmin';
 import CustomizeBannerAdmin from './CustomizeBannerAdmin';
+import BulkOrderBannerAdmin from './BulkOrderBannerAdmin';
 import FooterAdmin from './FooterAdmin';
 import ReviewAdmin from './ReviewAdmin';
 import HomeLayoutBuilder from './HomeLayoutBuilder';
@@ -22,6 +23,7 @@ const TABS = [
   { id: 'categories-grid', label: '🗂️ Categories Grid' },
   { id: 'gift-card', label: '🎁 Gift & Card' },
   { id: 'customize', label: '🖌️ Customize' },
+  { id: 'bulk-order', label: '📦 Bulk Order' },
   { id: 'footer', label: '📋 Footer' },
   { id: 'reviews', label: '⭐ Reviews' },
 ];
@@ -41,6 +43,7 @@ export default function HomePageCMS() {
       case 'categories-grid': return <CategoriesGridAdmin key={refreshKey} />;
       case 'gift-card': return <GiftCardBannerAdmin key={refreshKey} />;
       case 'customize': return <CustomizeBannerAdmin key={refreshKey} />;
+      case 'bulk-order': return <BulkOrderBannerAdmin key={refreshKey} />;
       case 'footer': return <FooterAdmin key={refreshKey} />;
       case 'reviews': return <ReviewAdmin key={refreshKey} />;
       default: return null;

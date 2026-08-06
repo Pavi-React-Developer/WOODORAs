@@ -75,20 +75,7 @@ const useCMSStore = create((set, get) => ({
         });
 
         if (heroSlides.length === 0) {
-           heroSlides = [
-             {
-               bannerImage: '/hero1.jpeg',
-               subtitle: 'Sustainable & Timeless',
-               title: 'Play that grows\nwith them.',
-               description: 'Our heirloom quality wooden toys are designed to spark curiosity, creativity, and conscious growth in every child.',
-               buttonText: 'Shop Collection',
-               ctaURL: '/',
-               animation: 'Fade',
-               itemType: 'image',
-               desktopUrl: '/hero1.jpeg',
-               mobileUrl: '/hero1.jpeg'
-             }
-           ];
+           heroSlides = [];
         }
       }
 

@@ -47,7 +47,7 @@ const Avatar = ({ user, size = 40 }) => {
     <img src={normalizeMediaUrl(user.profileImage)} alt={name}
       className="rounded-full object-cover shrink-0"
       style={{ width: size, height: size }}
-      onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/animal_balance_maze.png'; }} />
+      onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.style.display = 'none'; }} />
   ) : (
     <div className="rounded-full flex items-center justify-center text-white font-bold shrink-0"
       style={{ width: size, height: size, background: bg, fontSize: size * 0.38 }}>
@@ -83,7 +83,7 @@ function Lightbox({ images, startIndex, onClose }) {
         className="absolute left-4 top-1/2 -translate-y-1/2 text-white/70 hover:text-white text-4xl px-2"
         style={{ display: idx === 0 ? 'none' : undefined }}>‹</button>
       <img src={normalizeMediaUrl(images[idx])} alt="" className="max-h-[85vh] max-w-[90vw] rounded-xl object-contain"
-        onClick={e => e.stopPropagation()} onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/animal_balance_maze.png'; }} />
+        onClick={e => e.stopPropagation()} onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.style.display = 'none'; }} />
       <button onClick={(e) => { e.stopPropagation(); next(); }}
         className="absolute right-4 top-1/2 -translate-y-1/2 text-white/70 hover:text-white text-4xl px-2"
         style={{ display: idx === images.length - 1 ? 'none' : undefined }}>›</button>
@@ -254,7 +254,7 @@ function WriteReviewForm({ productId, user, onSuccess }) {
               <div className="flex flex-wrap gap-2 mt-2">
                 {previews.map((src, i) => (
                   <div key={i} className="relative">
-                    <img src={normalizeMediaUrl(src)} alt="" className="w-16 h-16 object-cover rounded-lg border border-[#E9DED3]" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/animal_balance_maze.png'; }} />
+                    <img src={normalizeMediaUrl(src)} alt="" className="w-16 h-16 object-cover rounded-lg border border-[#E9DED3]" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.style.display = 'none'; }} />
                     <button type="button" onClick={() => removeImg(i)}
                       className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px]">
                       ✕
@@ -333,7 +333,7 @@ function ReviewCard({ review, user, onVote, onOpenImage }) {
         <div className="flex overflow-x-auto gap-2 snap-x scrollbar-hide mt-2 w-full py-1">
           {review.images.map((img, i) => (
             <div key={i} className="shrink-0 w-24 h-20 md:w-32 md:h-24 relative cursor-pointer snap-start rounded-xl border border-[#E9DED3] overflow-hidden group/reviewimg" onClick={() => onOpenImage(review.images, i)}>
-              <img src={normalizeMediaUrl(img)} alt="" className="w-full h-full object-cover group-hover/reviewimg:scale-105 transition duration-500" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/animal_balance_maze.png'; }} />
+              <img src={normalizeMediaUrl(img)} alt="" className="w-full h-full object-cover group-hover/reviewimg:scale-105 transition duration-500" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.style.display = 'none'; }} />
               <div className="absolute inset-0 bg-black/0 group-hover/reviewimg:bg-black/30 transition-all duration-300 flex items-center justify-center">
                 <ZoomIn size={20} className="text-white opacity-0 group-hover/reviewimg:opacity-100 transition-opacity duration-300 drop-shadow-md scale-75 group-hover/reviewimg:scale-100" />
               </div>
@@ -612,7 +612,7 @@ export default function ProductReviewSection({ product, user }) {
                         <SwiperSlide key={index}>
                           <div onClick={() => setLightbox({ images: gallery.map(x => x.url), index: index })}
                             className="relative group cursor-pointer h-20 md:h-24 w-full overflow-hidden rounded-2xl border border-[#E9DED3] shadow-sm">
-                            <img src={normalizeMediaUrl(g.url)} alt="" className="w-full h-full object-cover group-hover:scale-105 transition duration-500" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/animal_balance_maze.png'; }} />
+                            <img src={normalizeMediaUrl(g.url)} alt="" className="w-full h-full object-cover group-hover:scale-105 transition duration-500" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.style.display = 'none'; }} />
                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
                               <ZoomIn size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 drop-shadow-md scale-75 group-hover:scale-100" />
                             </div>

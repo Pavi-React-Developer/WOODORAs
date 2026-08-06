@@ -56,10 +56,9 @@ export default function Footer() {
           {/* Brand Col */}
           <div className="flex-1 space-y-4 px-6 md:pl-0 md:pr-10 py-4 md:py-0">
             <h3 className="font-serif text-xl font-bold text-white">
-              {footerData?.logo
-                ? <img src={getImageSrc(footerData.logo)} alt="Logo" className="h-8 object-contain brightness-0 invert" />
-                : <img src="/brand-logo.jpeg" alt="Marakathai Logo" className="h-8 object-contain brightness-0 invert" />
-              }
+              {footerData?.logo && (
+                <img src={getImageSrc(footerData.logo)} alt="Logo" className="h-8 object-contain brightness-0 invert" />
+              )}
             </h3>
             <p className="text-xs text-white/60 leading-relaxed max-w-xs">
               {footerData?.description || 'Crafting heirloom quality toys from sustainable forests for a cleaner tomorrow and more creative today.'}

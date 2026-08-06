@@ -29,7 +29,7 @@ export default function WishlistOffcanvas({ isOpen, onClose, wishlistItems, onRe
        imgSrc = prod?.images?.find(img => img.isThumbnail)?.url || prod?.images?.[0]?.url || (typeof prod?.images?.[0] === 'string' ? prod.images[0] : null) || (typeof prod?.image === 'object' ? prod.image?.url : prod?.image) || null;
     }
     
-    return imgSrc || '/wood-placeholder.png';
+    return imgSrc || '';
   };
 
   // Helper function to get variant details text
@@ -111,10 +111,10 @@ export default function WishlistOffcanvas({ isOpen, onClose, wishlistItems, onRe
                 <div key={index} className="flex gap-4 p-3 bg-brand-beige/30 rounded-2xl border border-brand-medium/10">
                   <div className="w-20 h-20 bg-white rounded-xl overflow-hidden shrink-0 border border-brand-medium/10 flex items-center justify-center">
                     <img 
-                      src={firstImage || '/wood-placeholder.png'} 
+                      src={firstImage || ''} 
                       alt={prod.name} 
                       className="w-full h-full object-cover"
-                      onError={(e) => { e.target.src = '/wood-placeholder.png'; }}
+                      onError={(e) => { e.target.style.display = 'none'; }}
                     />
                   </div>
                   <div className="flex-1 flex flex-col justify-between">

@@ -64,7 +64,7 @@ function DynamicGiftCardBanner({ bannerData, onNavigate }) {
             >
               {bannerData.leftImages.map((img, i) => (
                 <SwiperSlide key={i}>
-                  <img src={img?.url || img || '/wood-placeholder.png'} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" onError={(e) => { e.target.src = '/wood-placeholder.png'; }} />
+                  <img src={img?.url || img} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" onError={(e) => { e.target.style.display = 'none'; }} />
                 </SwiperSlide>
               ))}
             </Swiper>
@@ -99,7 +99,7 @@ function DynamicGiftCardBanner({ bannerData, onNavigate }) {
             >
               {bannerData.rightImages?.map((img, i) => (
                 <SwiperSlide key={i}>
-                  <img src={img?.url || img || '/wood-placeholder.png'} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" onError={(e) => { e.target.src = '/wood-placeholder.png'; }} />
+                  <img src={img?.url || img} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" onError={(e) => { e.target.style.display = 'none'; }} />
                 </SwiperSlide>
               ))}
             </Swiper>
@@ -289,7 +289,6 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
         ) : (
           <div className="max-w-4xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <div className="relative bg-[#8f827a] text-white p-10 h-80 flex flex-col justify-end overflow-hidden group rounded-sm">
-              <img src="/gift-box-custom.png" alt="Build Your Own Box" className="absolute inset-0 w-full h-full object-cover z-0 group-hover:scale-105 transition-transform duration-700" />
               <div className="absolute inset-0 bg-black/40 z-0"></div>
               <div className="relative z-10">
                 <span className="bg-white text-black px-2 py-1 text-xs font-bold tracking-widest uppercase mb-4 inline-block">CUSTOM CURATION</span>
@@ -299,7 +298,6 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
               </div>
             </div>
             <div className="relative bg-[#e6e2df] text-white p-10 h-80 flex flex-col justify-end overflow-hidden group rounded-sm">
-              <img src="/digital-gift-card.png" alt="Digital Gift Cards" className="absolute inset-0 w-full h-full object-cover z-0 group-hover:scale-105 transition-transform duration-700" />
               <div className="absolute inset-0 bg-black/30 z-0"></div>
               <div className="relative z-10">
                 <span className="bg-white text-black px-2 py-1 text-xs font-bold tracking-widest uppercase mb-4 inline-block">INSTANT DELIVERY</span>

@@ -10,6 +10,7 @@ router.get('/hero', cacheMiddleware(300), cmsController.getHeroBanners);
 router.get('/third-banner', cacheMiddleware(300), cmsController.getThirdBanners);
 router.get('/gift-card-banner', cacheMiddleware(300), cmsController.getGiftCardBanners);
 router.get('/customize-banner', cacheMiddleware(300), cmsController.getCustomizeBanner);
+router.get('/bulk-order-banner', cacheMiddleware(300), cmsController.getBulkOrderBanner);
 router.get('/product-grid', cacheMiddleware(300), cmsController.getProductGrids);
 router.get('/category-grid', cacheMiddleware(300), cmsController.getCategoryGrids);
 router.get('/categories-grid', cacheMiddleware(300), cmsController.getCategoriesGrids);
@@ -52,6 +53,7 @@ router.put('/categories-grid/:id', protect, authorize('admin'), bustCache, cmsCo
 router.delete('/categories-grid/:id', protect, authorize('admin'), bustCache, cmsController.deleteCategoriesGrid);
 
 router.put('/customize-banner', protect, authorize('admin'), bustCache, cmsController.updateCustomizeBanner);
+router.put('/bulk-order-banner', protect, authorize('admin'), bustCache, cmsController.updateBulkOrderBanner);
 
 router.put('/footer', protect, authorize('admin'), bustCache, cmsController.updateFooter);
 router.put('/layout', protect, authorize('admin'), bustCache, cmsController.updateLayout);

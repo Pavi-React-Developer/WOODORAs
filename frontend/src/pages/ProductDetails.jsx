@@ -65,7 +65,7 @@ const ProductImageZoom = ({ src, alt }) => {
   return (
     <div className="relative w-full h-full flex items-center justify-center bg-white rounded-[2rem]">
       {/* Mobile view (no zoom) */}
-      <img src={src} alt={alt} className="w-full h-auto max-h-[460px] object-cover md:hidden rounded-[2rem]" onError={(e) => { e.target.src = '/wood-placeholder.png'; }} />
+      <img src={src} alt={alt} className="w-full h-auto max-h-[460px] object-cover md:hidden rounded-[2rem]" onError={(e) => { e.target.style.display = 'none'; }} />
 
       {/* Desktop view (with zoom) */}
       <div 
@@ -74,7 +74,7 @@ const ProductImageZoom = ({ src, alt }) => {
         onMouseLeave={() => setShowZoom(false)}
         onMouseMove={handleMouseMove}
       >
-        <img ref={imgRef} src={src} alt={alt} className="w-full h-auto max-h-[460px] object-cover rounded-[2rem]" onError={(e) => { e.target.src = '/wood-placeholder.png'; }} />
+        <img ref={imgRef} src={src} alt={alt} className="w-full h-auto max-h-[460px] object-cover rounded-[2rem]" onError={(e) => { e.target.style.display = 'none'; }} />
         
         {showZoom && (
           <div 
@@ -813,7 +813,7 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                         src={src}
                         alt={`${product.name} view ${index + 1}`}
                         className="w-full h-full object-cover rounded-[1.2rem]"
-                        onError={(e) => { e.target.src = '/wood-placeholder.png'; }}
+                        onError={(e) => { e.target.style.display = 'none'; }}
                       />
                     </button>
                   );

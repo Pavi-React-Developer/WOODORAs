@@ -116,7 +116,7 @@ export default function CartPage({ onNavigate }) {
                         src={getImageSrc(item.image)}
                         alt={item.name}
                         className="w-full h-full object-cover"
-                        onError={(e) => { e.target.src = '/wood-placeholder.png'; }}
+                        onError={(e) => { e.target.style.display = 'none'; }}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>

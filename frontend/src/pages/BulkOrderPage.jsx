@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { catalogService } from '../api/catalogService';
 import { productV2API } from '../api/catalogV2Service';
 import { bulkOrderService } from '../api/bulkOrderService';
+import { cmsService } from '../api/cmsService';
 import { API_ORIGIN } from '../api/apiClient';
 
 export default function BulkOrderPage() {
@@ -28,16 +29,18 @@ export default function BulkOrderPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const [banner, setBanner] = useState(null);
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [catsRes, subsRes, prodsRes, fieldsRes] = await Promise.all([
+        const [catsRes, subsRes, prodsRes, fieldsRes, bannerRes] = await Promise.all([
           catalogService.getCategories(),
           catalogService.getSubCategories(),
           productV2API.getAll({ limit: 1000 }),
-          bulkOrderService.getAllFields()
+          bulkOrderService.getAllFields(),
+          cmsService.getBulkOrderBanner().catch(() => null)
         ]);
         // Extract data depending on API response format
         setCategories(catsRes?.data || catsRes || []);
@@ -45,6 +48,9 @@ export default function BulkOrderPage() {
         setProducts(prodsRes?.products || prodsRes?.data || prodsRes || []);
         if (fieldsRes?.success) {
           setDynamicFields(fieldsRes.data.filter(f => f.isActive));
+        }
+        if (bannerRes && bannerRes.data) {
+          setBanner(bannerRes.data);
         }
       } catch (err) {
         console.error('Failed to load catalog data for bulk orders:', err);
@@ -219,7 +225,9 @@ export default function BulkOrderPage() {
     <div className="min-h-screen bg-[#F9F6F0] py-16 px-4 font-sans">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-serif font-bold text-[#A66C1C] mb-4">Bulk & Wholesale Orders</h1>
+          <h1 className="text-4xl md:text-5xl font-serif font-bold text-[#A66C1C] mb-4">
+            Bulk & Wholesale Orders
+          </h1>
           <p className="text-lg text-[#7C7370] max-w-2xl mx-auto">
             Elevate your corporate gifting, schools, and retail with eco-friendly, handcrafted wooden treasures.
             Designed for endurance, masterfully finished, and delivered with professional precision.
@@ -421,11 +429,9 @@ export default function BulkOrderPage() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <img 
-                        src="/wood-placeholder.png" 
-                        alt="Placeholder" 
-                        className="w-full h-full object-cover opacity-60 mix-blend-multiply"
-                      />
+                      <div className="w-full h-full flex items-center justify-center bg-[#F2EBE4] text-[#A66C1C]">
+                        <Package className="w-12 h-12 opacity-50" />
+                      </div>
                     );
                   })()}
                 </div>
@@ -464,12 +470,25 @@ export default function BulkOrderPage() {
                 </div>
               </div>
             ) : (
-              <div className="rounded-3xl overflow-hidden relative shadow-sm border border-[#E9DED3] group">
-                <img 
-                  src="/bulk-orderbanner.jpeg" 
-                  alt="Bulk Orders Banner" 
-                  className="w-full h-auto object-cover group-hover:scale-[1.02] transition-transform duration-700" 
-                />
+              <div 
+                className={`rounded-3xl overflow-hidden relative shadow-sm border border-[#E9DED3] group bg-gradient-to-br from-[#FAF4EF] to-[#E9DED3] flex items-center justify-center bg-cover bg-center ${banner?.image ? 'min-h-[350px] p-8' : 'h-48'}`}
+                style={banner?.image ? {
+                  backgroundImage: `url(${typeof banner.image === 'string' ? banner.image : banner.image.url})`
+                } : {}}
+              >
+                 {banner?.image && <div className="absolute inset-0 bg-black/30 z-0"></div>}
+                 <div className="relative z-10 flex flex-col items-center justify-center text-center p-4">
+                   {(banner ? banner.title : 'BULK ORDERS') ? (
+                     <p className={`font-bold text-xl tracking-widest ${banner?.image ? 'text-white' : 'text-[#A66C1C] opacity-50'}`}>
+                       {banner ? banner.title : 'BULK ORDERS'}
+                     </p>
+                   ) : null}
+                   {banner?.description && (
+                     <p className={`text-sm mt-2 max-w-xs ${banner?.image ? 'text-white/90' : 'text-[#7C7370]'}`}>
+                       {banner.description}
+                     </p>
+                   )}
+                 </div>
               </div>
             )}
 

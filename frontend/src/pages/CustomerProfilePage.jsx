@@ -482,11 +482,11 @@ export default function CustomerProfilePage({
     return null;
   };
 
-  const profileImage = resolveImage(form.profileImage) || resolveImage(profile.profileImage) || profile.avatar || '/animal_balance_maze.png';
+  const profileImage = resolveImage(form.profileImage) || resolveImage(profile.profileImage) || profile.avatar || '';
 
   const getImageUrl = (image) => {
-    if (!image) return '/animal_balance_maze.png';
-    if (typeof image !== 'string') return '/animal_balance_maze.png';
+    if (!image) return '';
+    if (typeof image !== 'string') return '';
     if (image.startsWith('http') || image.startsWith('data:')) return image;
     if (image.startsWith('/uploads') || image.startsWith('uploads/')) {
       // Use API_ORIGIN from apiClient (reads VITE_API_BASE_URL) — no hardcoded localhost
@@ -970,7 +970,7 @@ export default function CustomerProfilePage({
                 {paginatedOrders.map((order) => {
                   const firstItem = order.orderItems?.[0] || {};
                   const extraItemsCount = (order.orderItems?.length || 1) - 1;
-                  const imageSrc = firstItem.image ? (firstItem.image.startsWith('http') || firstItem.image.startsWith('data:') ? firstItem.image : (firstItem.image.startsWith('/uploads') || firstItem.image.startsWith('uploads/')) ? `http://localhost:5000${firstItem.image.startsWith('/') ? '' : '/'}${firstItem.image}` : firstItem.image) : '/animal_balance_maze.png';
+                  const imageSrc = firstItem.image ? (firstItem.image.startsWith('http') || firstItem.image.startsWith('data:') ? firstItem.image : (firstItem.image.startsWith('/uploads') || firstItem.image.startsWith('uploads/')) ? `http://localhost:5000${firstItem.image.startsWith('/') ? '' : '/'}${firstItem.image}` : firstItem.image) : '';
   
                   const paidAmount = order.paymentMethod === 'COD' ? (order.codAdvance || 200) : order.totalPrice;
                   const balanceAmount = order.paymentMethod === 'COD' ? (order.balanceAmount || Math.max(0, order.totalPrice - paidAmount)) : 0;
@@ -1429,7 +1429,7 @@ export default function CustomerProfilePage({
     if (!activeBulkOrder) return null;
     const { product, category, subCategory, customFields, status, rejectionReason, createdAt } = activeBulkOrder;
     
-    let productImageUrl = '/wood-placeholder.png';
+    let productImageUrl = '';
     
     // Check product image
     if (product?.images?.length > 0) {
@@ -1718,7 +1718,7 @@ export default function CustomerProfilePage({
             <h3 className="font-bold text-[#141225] mb-4">Products</h3>
             <div className="divide-y divide-[#E9DED3]">
               {activeOrder.orderItems?.map((item, idx) => {
-                const imageSrc = item.image ? (item.image.startsWith('http') || item.image.startsWith('data:') ? item.image : (item.image.startsWith('/uploads') || item.image.startsWith('uploads/')) ? `http://localhost:5000${item.image.startsWith('/') ? '' : '/'}${item.image}` : item.image) : '/animal_balance_maze.png';
+                const imageSrc = item.image ? (item.image.startsWith('http') || item.image.startsWith('data:') ? item.image : (item.image.startsWith('/uploads') || item.image.startsWith('uploads/')) ? `http://localhost:5000${item.image.startsWith('/') ? '' : '/'}${item.image}` : item.image) : '';
                 return (
                   <div key={idx} className="py-4 flex flex-row gap-4 items-center">
                     <div className="h-20 w-20 shrink-0 overflow-hidden rounded-[8px] bg-[#F8F3EF]">
@@ -1859,7 +1859,7 @@ export default function CustomerProfilePage({
                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                  {recentlyViewed.slice(0, 3).map((item, i) => {
                     const imgUrl = typeof item.image === 'string' ? item.image : (item.image?.url || '');
-                    const imageSrc = imgUrl ? (imgUrl.startsWith('http') || imgUrl.startsWith('data:') ? imgUrl : (imgUrl.startsWith('/uploads') || imgUrl.startsWith('uploads/')) ? `http://localhost:5000${imgUrl.startsWith('/') ? '' : '/'}${imgUrl}` : imgUrl) : '/animal_balance_maze.png';
+                    const imageSrc = imgUrl ? (imgUrl.startsWith('http') || imgUrl.startsWith('data:') ? imgUrl : (imgUrl.startsWith('/uploads') || imgUrl.startsWith('uploads/')) ? `http://localhost:5000${imgUrl.startsWith('/') ? '' : '/'}${imgUrl}` : imgUrl) : '';
                     
                     const productObj = {
                       ...item,
@@ -1964,8 +1964,8 @@ export default function CustomerProfilePage({
               const product = item.product || item;
               if (!product || !product.name) return null; // Skip dummy or invalid products
               
-              const effectiveImages = item.selectedVariant?.images?.length ? item.selectedVariant.images : (product.images?.length ? product.images : [product.image || '/animal_balance_maze.png']);
-              const image = typeof effectiveImages[0] === 'string' ? effectiveImages[0] : (effectiveImages[0]?.url || '/animal_balance_maze.png');
+              const effectiveImages = item.selectedVariant?.images?.length ? item.selectedVariant.images : (product.images?.length ? product.images : [product.image || '']);
+              const image = typeof effectiveImages[0] === 'string' ? effectiveImages[0] : (effectiveImages[0]?.url || '');
               const price = item.selectedVariant ? (item.selectedVariant.basePrice ?? item.selectedVariant.price) : (product.price ?? 0);
 
               return (
@@ -2543,7 +2543,7 @@ export default function CustomerProfilePage({
               <div className="flex gap-4 items-center mb-5">
                 <div className="w-14 h-14 rounded-lg bg-[#F3E7D7] overflow-hidden border border-[#E9DED3] shrink-0">
                   <img 
-                    src={cancelOrderTarget.orderItems[0]?.image ? (cancelOrderTarget.orderItems[0].image.startsWith('http') || cancelOrderTarget.orderItems[0].image.startsWith('data:') ? cancelOrderTarget.orderItems[0].image : (cancelOrderTarget.orderItems[0].image.startsWith('/uploads') || cancelOrderTarget.orderItems[0].image.startsWith('uploads/')) ? `http://localhost:5000${cancelOrderTarget.orderItems[0].image.startsWith('/') ? '' : '/'}${cancelOrderTarget.orderItems[0].image}` : cancelOrderTarget.orderItems[0].image) : '/animal_balance_maze.png'} 
+                    src={cancelOrderTarget.orderItems[0]?.image ? (cancelOrderTarget.orderItems[0].image.startsWith('http') || cancelOrderTarget.orderItems[0].image.startsWith('data:') ? cancelOrderTarget.orderItems[0].image : (cancelOrderTarget.orderItems[0].image.startsWith('/uploads') || cancelOrderTarget.orderItems[0].image.startsWith('uploads/')) ? `http://localhost:5000${cancelOrderTarget.orderItems[0].image.startsWith('/') ? '' : '/'}${cancelOrderTarget.orderItems[0].image}` : cancelOrderTarget.orderItems[0].image) : ''} 
                     alt={cancelOrderTarget.orderItems[0]?.name} 
                     className="w-full h-full object-cover" 
                   />
