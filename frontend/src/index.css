@@ -85,6 +85,7 @@ body {
 /* Custom scrollbar for a premium feel */
 ::-webkit-scrollbar {
   width: 8px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: #F9F9F9;

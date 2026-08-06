@@ -1093,14 +1093,14 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
 
             return (
               <div className="mt-16 bg-[#F6F1E5] rounded-3xl p-6 md:p-8">
-                <div className="flex flex-wrap gap-4 justify-around border-b border-[#EADFCB] pb-4">
+                <div className="flex overflow-x-auto justify-start md:justify-center gap-4 border-b border-[#EADFCB] pb-4 scrollbar-hide">
                   {tabsArray.map((tab) => {
                     const isActive = activeTab === tab;
                     return (
                       <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
-                        className={`flex items-center gap-2 px-6 py-3 text-[15px] font-semibold transition-colors ${isActive
+                        className={`flex shrink-0 whitespace-nowrap items-center gap-2 px-4 md:px-6 py-3 text-[15px] font-semibold transition-colors ${isActive
                           ? 'text-[#141225] border-b-2 border-[#141225]'
                           : 'text-[#666666] hover:text-[#141225]'
                           }`}
@@ -1230,7 +1230,7 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                 .rec-prev, .rec-next {
                   position: absolute; top: 50%; transform: translateY(-50%); z-index: 10;
                   width: 44px; height: 44px; border-radius: 50%; border: 1px solid #E6DFD4;
-                  background: white; color: #333; display: flex; align-items: center; justify-content: center;
+                  background: white; color: #333; display: none; align-items: center; justify-content: center;
                   cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.2s;
                 }
                 .rec-prev:hover, .rec-next:hover { background: #F7F3EE; }
@@ -1238,6 +1238,7 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                 .rec-prev { left: -12px; }
                 .rec-next { right: -12px; }
                 @media (min-width: 768px) {
+                  .rec-prev, .rec-next { display: flex; }
                   .rec-prev { left: -10px; }
                   .rec-next { right: -10px; }
                 }
@@ -1250,12 +1251,12 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                 modules={[Navigation, Pagination]}
                 navigation={{ prevEl: recPrevEl, nextEl: recNextEl }}
                 pagination={{ clickable: true, el: recPaginationEl }}
-                spaceBetween={16}
-                slidesPerView={1}
+                spaceBetween={12}
+                slidesPerView={2}
                 breakpoints={{
-                  480: { slidesPerView: 2 },
-                  768: { slidesPerView: 3 },
-                  1024: { slidesPerView: 4 }
+                  480: { slidesPerView: 2, spaceBetween: 16 },
+                  768: { slidesPerView: 3, spaceBetween: 16 },
+                  1024: { slidesPerView: 4, spaceBetween: 16 }
                 }}
                 className="w-full pb-4"
               >

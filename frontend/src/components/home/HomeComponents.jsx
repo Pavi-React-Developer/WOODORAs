@@ -574,6 +574,7 @@ function ThirdBannerItem({ bannerData, onNavigate }) {
                 loop={bannerData.leftImages.length > 1}
                 direction={swiperDirection}
                 pagination={slideCount > 1 ? { clickable: true, el: paginationRef.current } : false}
+                allowTouchMove={false}
                 className="w-full h-full"
               >
                 {bannerData.leftImages.map((img, i) => (

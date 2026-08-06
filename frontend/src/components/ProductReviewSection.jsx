@@ -32,16 +32,16 @@ const normalizeMediaUrl = (url) => {
 
 const StarRow = ({ rating, size = 16, filled = 'text-amber-400', empty = 'text-gray-300' }) => (
   <span className="inline-flex gap-0.5">
-    {[1,2,3,4,5].map(s => (
+    {[1, 2, 3, 4, 5].map(s => (
       <Star key={s} size={size} className={s <= rating ? filled : empty} fill={s <= rating ? 'currentColor' : 'none'} />
     ))}
   </span>
 );
 
 const Avatar = ({ user, size = 40 }) => {
-  const colors = ['#9A6031','#5C6BC0','#26A69A','#EC407A','#42A5F5','#66BB6A','#7E4B25'];
-  const name   = user?.name || 'U';
-  const bg     = colors[name.charCodeAt(0) % colors.length];
+  const colors = ['#9A6031', '#5C6BC0', '#26A69A', '#EC407A', '#42A5F5', '#66BB6A', '#7E4B25'];
+  const name = user?.name || 'U';
+  const bg = colors[name.charCodeAt(0) % colors.length];
   const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   return user?.profileImage ? (
     <img src={normalizeMediaUrl(user.profileImage)} alt={name}
@@ -99,7 +99,7 @@ function StarInput({ value, onChange }) {
   const [hover, setHover] = useState(0);
   return (
     <div className="flex gap-1">
-      {[1,2,3,4,5].map(s => (
+      {[1, 2, 3, 4, 5].map(s => (
         <button key={s} type="button"
           onMouseEnter={() => setHover(s)}
           onMouseLeave={() => setHover(0)}
@@ -145,14 +145,14 @@ function RatingBar({ star, pct, count }) {
 ═══════════════════════════════════════════════════ */
 
 function WriteReviewForm({ productId, user, onSuccess }) {
-  const [rating, setRating]   = useState(0);
-  const [title, setTitle]     = useState('');
-  const [desc, setDesc]       = useState('');
-  const [imgFiles, setImg]    = useState([]);
-  const [vidFiles, setVid]    = useState([]);
-  const [previews, setPrev]   = useState([]);
-  const [submitting, setSub]  = useState(false);
-  const [done, setDone]       = useState(false);
+  const [rating, setRating] = useState(0);
+  const [title, setTitle] = useState('');
+  const [desc, setDesc] = useState('');
+  const [imgFiles, setImg] = useState([]);
+  const [vidFiles, setVid] = useState([]);
+  const [previews, setPrev] = useState([]);
+  const [submitting, setSub] = useState(false);
+  const [done, setDone] = useState(false);
   const imgRef = useRef(); const vidRef = useRef();
 
   const handleImages = (e) => {
@@ -214,7 +214,7 @@ function WriteReviewForm({ productId, user, onSuccess }) {
           <label className="block text-sm font-bold text-[#141225] mb-2">Your Rating *</label>
           <StarInput value={rating} onChange={setRating} />
           <p className="text-xs text-[#8A817C] mt-1">
-            {['','Poor','Fair','Good','Very Good','Excellent'][rating] || 'Tap to rate'}
+            {['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'][rating] || 'Tap to rate'}
           </p>
         </div>
 
@@ -303,20 +303,8 @@ function WriteReviewForm({ productId, user, onSuccess }) {
    SINGLE REVIEW CARD
 ═══════════════════════════════════════════════════ */
 function ReviewCard({ review, user, onVote, onOpenImage }) {
-  const [imgSlide, setImgSlide] = useState(0);
-  
-  const nextImg = (e) => {
-    e.stopPropagation();
-    if (review.images?.length) setImgSlide((prev) => (prev + 1) % review.images.length);
-  };
-  
-  const prevImg = (e) => {
-    e.stopPropagation();
-    if (review.images?.length) setImgSlide((prev) => (prev - 1 + review.images.length) % review.images.length);
-  };
-
   return (
-    <div className="bg-white rounded-xl border border-[#E9DED3] shadow-sm p-3 space-y-2">
+    <div className="bg-white rounded-xl border border-[#E9DED3] shadow-sm p-3 space-y-2 flex flex-col h-full w-full">
       {/* Header */}
       <div className="flex items-start justify-between">
         <Avatar user={review.user} size={42} />
@@ -340,42 +328,17 @@ function ReviewCard({ review, user, onVote, onOpenImage }) {
       {review.title && <h4 className="font-bold text-[#141225] text-sm break-all">{review.title}</h4>}
       {review.description && <p className="text-sm text-[#6D625C] leading-relaxed break-all whitespace-pre-wrap">{review.description}</p>}
 
-      {/* Images Slider */}
+      {/* Images */}
       {review.images?.length > 0 && (
-        <div className="relative group/reviewimg overflow-hidden rounded-lg border border-[#E9DED3] h-12 md:h-16">
-          <div 
-            className="flex transition-transform duration-500 ease-in-out h-full"
-            style={{ transform: `translateX(-${imgSlide * 100}%)` }}
-          >
-            {review.images.map((img, i) => (
-              <div key={i} className="w-full h-full shrink-0 relative cursor-pointer" onClick={() => onOpenImage(review.images, i)}>
-                <img src={normalizeMediaUrl(img)} alt="" className="w-full h-full object-cover group-hover/reviewimg:opacity-90 transition" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/animal_balance_maze.png'; }} />
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/reviewimg:opacity-100 transition">
-                  <ZoomIn size={24} className="text-white drop-shadow-md" />
-                </div>
+        <div className="flex overflow-x-auto gap-2 snap-x scrollbar-hide mt-2 w-full py-1">
+          {review.images.map((img, i) => (
+            <div key={i} className="shrink-0 w-24 h-20 md:w-32 md:h-24 relative cursor-pointer snap-start rounded-xl border border-[#E9DED3] overflow-hidden group/reviewimg" onClick={() => onOpenImage(review.images, i)}>
+              <img src={normalizeMediaUrl(img)} alt="" className="w-full h-full object-cover group-hover/reviewimg:scale-105 transition duration-500" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/animal_balance_maze.png'; }} />
+              <div className="absolute inset-0 bg-black/0 group-hover/reviewimg:bg-black/30 transition-all duration-300 flex items-center justify-center">
+                <ZoomIn size={20} className="text-white opacity-0 group-hover/reviewimg:opacity-100 transition-opacity duration-300 drop-shadow-md scale-75 group-hover/reviewimg:scale-100" />
               </div>
-            ))}
-          </div>
-
-          {/* Arrows */}
-          {review.images.length > 1 && (
-            <>
-              <button
-                type="button"
-                onClick={prevImg}
-                className="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/95 border border-[#E9DED3] text-[#141225] hover:text-[#B0611C] shadow-md flex items-center justify-center transition-all opacity-0 group-hover/reviewimg:opacity-100 z-10"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <button
-                type="button"
-                onClick={nextImg}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/95 border border-[#E9DED3] text-[#141225] hover:text-[#B0611C] shadow-md flex items-center justify-center transition-all opacity-0 group-hover/reviewimg:opacity-100 z-10"
-              >
-                <ChevronRight size={16} />
-              </button>
-            </>
-          )}
+            </div>
+          ))}
         </div>
       )}
 
@@ -385,7 +348,7 @@ function ReviewCard({ review, user, onVote, onOpenImage }) {
       ))}
 
       {/* Helpful + Not Helpful */}
-      <div className="flex items-center gap-3 pt-1 border-t border-[#F2EBE4]">
+      <div className="mt-auto flex items-center gap-3 pt-3 border-t border-[#F2EBE4]">
         <span className="text-[11px] text-[#8A817C] font-medium">Helpful?</span>
         <button
           onClick={() => onVote(review._id, review.myVote === 'helpful' ? null : 'helpful')}
@@ -415,30 +378,6 @@ function ReviewCard({ review, user, onVote, onOpenImage }) {
   );
 }
 
-const ReviewNavButtons = () => {
-  const swiper = useSwiper();
-  return (
-    <>
-      <button
-        type="button"
-        onClick={() => swiper.slidePrev()}
-        className="absolute left-0 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full border border-[#E9DED3] bg-white text-[#141225] hover:text-[#B0611C] hover:border-[#B0611C] shadow-md flex items-center justify-center transition-colors z-[10]"
-        aria-label="Previous review"
-      >
-        <ChevronLeft size={24} />
-      </button>
-      <button
-        type="button"
-        onClick={() => swiper.slideNext()}
-        className="absolute right-0 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full border border-[#E9DED3] bg-white text-[#141225] hover:text-[#B0611C] hover:border-[#B0611C] shadow-md flex items-center justify-center transition-colors z-[10]"
-        aria-label="Next review"
-      >
-        <ChevronRight size={24} />
-      </button>
-    </>
-  );
-};
-
 const GalleryNavButtons = () => {
   const swiper = useSwiper();
   return (
@@ -446,7 +385,7 @@ const GalleryNavButtons = () => {
       <button
         type="button"
         onClick={() => swiper.slidePrev()}
-        className="absolute left-0 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/95 backdrop-blur border border-[#E9DED3] text-[#141225] hover:text-[#B0611C] hover:border-[#B0611C] shadow-md flex items-center justify-center transition-all z-[10] opacity-0 group-hover/gallery:opacity-100"
+        className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/95 backdrop-blur border border-[#E9DED3] text-[#141225] hover:text-[#B0611C] hover:border-[#B0611C] shadow-md items-center justify-center transition-all z-[10] opacity-0 group-hover/gallery:opacity-100"
         aria-label="Previous photos"
       >
         <ChevronLeft size={20} />
@@ -454,7 +393,7 @@ const GalleryNavButtons = () => {
       <button
         type="button"
         onClick={() => swiper.slideNext()}
-        className="absolute right-0 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/95 backdrop-blur border border-[#E9DED3] text-[#141225] hover:text-[#B0611C] hover:border-[#B0611C] shadow-md flex items-center justify-center transition-all z-[10] opacity-0 group-hover/gallery:opacity-100"
+        className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/95 backdrop-blur border border-[#E9DED3] text-[#141225] hover:text-[#B0611C] hover:border-[#B0611C] shadow-md items-center justify-center transition-all z-[10] opacity-0 group-hover/gallery:opacity-100"
         aria-label="Next photos"
       >
         <ChevronRight size={20} />
@@ -467,14 +406,14 @@ const GalleryNavButtons = () => {
    MAIN EXPORT: ProductReviewSection
 ═══════════════════════════════════════════════════ */
 export default function ProductReviewSection({ product, user }) {
-  const [reviews, setReviews]     = useState([]);
-  const [stats, setStats]         = useState(null);
-  const [gallery, setGallery]     = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [sort, setSort]           = useState('newest');
-  const [page, setPage]           = useState(1);
-  const [hasMore, setHasMore]     = useState(false);
-  const [lightbox, setLightbox]   = useState(null); // { images, index }
+  const [reviews, setReviews] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [gallery, setGallery] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [sort, setSort] = useState('newest');
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [lightbox, setLightbox] = useState(null); // { images, index }
   const [reviewSlide, setReviewSlide] = useState(0);
   const [gallerySlide, setGallerySlide] = useState(0);
   const [sortOpen, setSortOpen] = useState(false);
@@ -506,7 +445,7 @@ export default function ProductReviewSection({ product, user }) {
     try {
       const data = await reviewService.getGallery(productId);
       setGallery(data || []);
-    } catch {}
+    } catch { }
   }, [productId]);
 
   useEffect(() => {
@@ -586,18 +525,18 @@ export default function ProductReviewSection({ product, user }) {
           <div className="flex items-center justify-between mb-2 px-2 pt-1">
             <h2 className="text-2xl lg:text-3xl font-serif text-[#141225] font-bold">Customer Reviews</h2>
             <div className="flex items-center gap-4">
-              <div 
+              <div
                 className="relative hidden md:block z-30"
                 onMouseLeave={() => setSortOpen(false)}
               >
-                <button 
+                <button
                   onClick={() => setSortOpen(!sortOpen)}
                   className="relative flex items-center justify-between w-40 px-4 py-2 bg-[#9A6031] text-white rounded-xl text-sm font-semibold hover:bg-[#7E4B25] transition-all duration-200"
                 >
                   {sort === 'newest' ? 'Newest' : sort === 'oldest' ? 'Oldest' : sort === 'highest_rating' ? 'Highest Rating' : 'Lowest Rating'}
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform duration-200 ${sortOpen ? 'rotate-180' : ''}`}><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </button>
-                
+
                 {sortOpen && (
                   <div className="absolute top-full mt-2 right-0 w-48 bg-[#FDF9F1] border border-[#9A6031]/20 rounded-xl shadow-lg py-2 overflow-hidden flex flex-col">
                     {[
@@ -606,14 +545,13 @@ export default function ProductReviewSection({ product, user }) {
                       { value: 'highest_rating', label: 'Highest Rating' },
                       { value: 'lowest_rating', label: 'Lowest Rating' }
                     ].map(option => (
-                      <button 
+                      <button
                         key={option.value}
                         onClick={() => { handleSort(option.value); setSortOpen(false); }}
-                        className={`text-left px-4 py-2.5 cursor-pointer transition-colors text-sm ${
-                          sort === option.value 
-                            ? 'bg-[#9A6031] text-white font-semibold' 
-                            : 'text-[#5C2E0E] hover:bg-[#9A6031]/10 hover:text-[#9A6031] font-medium'
-                        }`}
+                        className={`text-left px-4 py-2.5 cursor-pointer transition-colors text-sm ${sort === option.value
+                          ? 'bg-[#9A6031] text-white font-semibold'
+                          : 'text-[#5C2E0E] hover:bg-[#9A6031]/10 hover:text-[#9A6031] font-medium'
+                          }`}
                       >
                         {option.label}
                       </button>
@@ -621,9 +559,6 @@ export default function ProductReviewSection({ product, user }) {
                   </div>
                 )}
               </div>
-              <button className="text-sm font-bold text-[#141225] hover:text-[#B0611C] transition whitespace-nowrap">
-                View All Reviews &rarr;
-              </button>
             </div>
           </div>
 
@@ -634,7 +569,7 @@ export default function ProductReviewSection({ product, user }) {
                 <div className="relative flex flex-col items-center justify-center">
                   {/* Big brown star */}
                   <svg viewBox="0 0 24 24" className="w-44 h-44 md:w-48 md:h-48 text-[#B0611C]" fill="currentColor">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-white mt-3">
                     <span className="text-4xl md:text-5xl font-black leading-none">{fmt(stats.avg)}</span>
@@ -652,26 +587,26 @@ export default function ProductReviewSection({ product, user }) {
 
             {/* RIGHT COLUMN (Two Rows) */}
             <div className="relative flex flex-col gap-0 shrink-0 w-[90vw] snap-center lg:w-auto lg:flex-1 min-w-0">
-              
+
               {/* ── PHOTO GALLERY (Row 1) ── */}
               {gallery.length > 0 && (
-                <div className="relative group/gallery mb-6">
+                <div className="relative group/gallery mb-6 px-4 md:px-8">
                   <h2 className="text-base lg:text-lg font-serif font-bold text-[#141225] mb-3 flex items-center gap-1.5">
                     <Camera size={20} className="text-[#B0611C]" /> Customer Photo Gallery
                   </h2>
-                  
+
                   <div className="relative w-full">
                     <Swiper
                       modules={[Navigation]}
                       spaceBetween={12}
-                      slidesPerView={3.5}
+                      slidesPerView={3}
                       breakpoints={{
                         640: { slidesPerView: 4.5 },
                         768: { slidesPerView: 5.5 },
                         1024: { slidesPerView: 4 },
                         1280: { slidesPerView: 5 }
                       }}
-                      className="px-6 md:px-8"
+                      className="!px-0"
                     >
                       {gallery.map((g, index) => (
                         <SwiperSlide key={index}>
@@ -705,19 +640,19 @@ export default function ProductReviewSection({ product, user }) {
                     <p className="text-sm text-[#8A817C] mt-1">Be the first customer to review this product.</p>
                   </div>
                 ) : (
-                  <div className="relative group w-full">
+                  <div className="relative group w-full px-4 md:px-16 lg:px-20">
                     <Swiper
                       modules={[Pagination]}
-                      spaceBetween={20}
+                      spaceBetween={16}
                       slidesPerView={1}
                       breakpoints={{
                         768: { slidesPerView: 2 },
                         1024: { slidesPerView: 3 },
                       }}
-                      className="px-10 md:px-14 lg:px-16 !pb-2 h-full"
+                      className="!px-0 !pb-2 h-full"
                     >
                       {reviews.map(r => (
-                        <SwiperSlide key={r._id} className="h-auto">
+                        <SwiperSlide key={r._id} className="!h-auto flex min-w-0">
                           <ReviewCard
                             review={r}
                             user={user}
@@ -726,8 +661,6 @@ export default function ProductReviewSection({ product, user }) {
                           />
                         </SwiperSlide>
                       ))}
-                      
-                      <ReviewNavButtons />
                     </Swiper>
 
                     {hasMore && (

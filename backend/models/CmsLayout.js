@@ -6,7 +6,7 @@ const sectionSchema = new mongoose.Schema({
   title: { type: String },
   order: { type: Number, required: true },
   visible: { type: Boolean, default: true }
-}, { _id: false });
+}, { _id: false, id: false });
 
 const cmsLayoutSchema = new mongoose.Schema({
   page: { type: String, required: true, default: 'home' },

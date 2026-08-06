@@ -36,6 +36,8 @@ import {
   CreditCard,
   Settings,
   Loader2,
+  RotateCw,
+  RefreshCw,
   Download
 } from 'lucide-react';
 import { saveAs } from 'file-saver';
@@ -201,6 +203,8 @@ export default function CustomerProfilePage({
     confirm: false,
   });
   const [orders, setOrders] = useState([]);
+  const [ordersPage, setOrdersPage] = useState(1);
+  const itemsPerPage = 10;
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [bulkOrders, setBulkOrders] = useState([]);
   const [bulkOrdersLoading, setBulkOrdersLoading] = useState(false);
@@ -402,65 +406,64 @@ export default function CustomerProfilePage({
     }
   }, [activeModule]);
 
+  const fetchOrders = async () => {
+    try {
+      setOrdersLoading(true);
+      const data = await orderService.getMyOrders();
+      setOrders(data || []);
+
+      // Collect product IDs for avg ratings and order-item IDs for the user's own reviews.
+      const deliveredProductIds = [...new Set(
+        (data || [])
+          .filter(o => o.status === 'Delivered')
+          .flatMap(o => o.orderItems?.map(item => item.product).filter(Boolean) || [])
+      )];
+      const deliveredReviewTargets = (data || [])
+        .filter(o => o.status === 'Delivered')
+        .flatMap(o => (o.orderItems || [])
+          .filter(item => item.product && item._id)
+          .map(item => ({
+            key: `${o._id}:${item._id}`,
+            orderId: o._id,
+            orderItemId: item._id,
+          }))
+        );
+
+      if (deliveredProductIds.length > 0 || deliveredReviewTargets.length > 0) {
+        const [avgEntries, userEntries] = await Promise.all([
+          Promise.all(
+            deliveredProductIds.map(async (productId) => {
+              try {
+                // Use reviewService (which uses apiClient + VITE_API_BASE_URL)
+                const stats = await reviewService.getReviews(productId, { limit: 1 }).catch(() => null)
+                  || await fetch(`${API_ORIGIN}/api/reviews/${productId}/stats`).then(r => r.json()).catch(() => ({}));
+                return [productId, stats?.avg ?? stats?.stats?.avg ?? 0];
+              } catch { return [productId, 0]; }
+            })
+          ),
+          Promise.all(
+            deliveredReviewTargets.map(async ({ key, orderId, orderItemId }) => {
+              try {
+                const review = await reviewService.getMyOrderItemReview(orderId, orderItemId);
+                return [key, review?.rating ?? null];
+              } catch { return [key, null]; }
+            })
+          ),
+        ]);
+
+        setProductRatings(Object.fromEntries(avgEntries));
+        setUserReviews(Object.fromEntries(userEntries));
+      }
+    } catch (error) {
+      toast.error(error.message || 'Failed to load orders');
+    } finally {
+      setOrdersLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!['orders', 'reviews'].includes(activeModule)) return;
-
-    const loadOrders = async () => {
-      try {
-        setOrdersLoading(true);
-        const data = await orderService.getMyOrders();
-        setOrders(data || []);
-
-        // Collect product IDs for avg ratings and order-item IDs for the user's own reviews.
-        const deliveredProductIds = [...new Set(
-          (data || [])
-            .filter(o => o.status === 'Delivered')
-            .flatMap(o => o.orderItems?.map(item => item.product).filter(Boolean) || [])
-        )];
-        const deliveredReviewTargets = (data || [])
-          .filter(o => o.status === 'Delivered')
-          .flatMap(o => (o.orderItems || [])
-            .filter(item => item.product && item._id)
-            .map(item => ({
-              key: `${o._id}:${item._id}`,
-              orderId: o._id,
-              orderItemId: item._id,
-            }))
-          );
-
-        if (deliveredProductIds.length > 0 || deliveredReviewTargets.length > 0) {
-          const [avgEntries, userEntries] = await Promise.all([
-            Promise.all(
-              deliveredProductIds.map(async (productId) => {
-                try {
-                  // Use reviewService (which uses apiClient + VITE_API_BASE_URL)
-                  const stats = await reviewService.getReviews(productId, { limit: 1 }).catch(() => null)
-                    || await fetch(`${API_ORIGIN}/api/reviews/${productId}/stats`).then(r => r.json()).catch(() => ({}));
-                  return [productId, stats?.avg ?? stats?.stats?.avg ?? 0];
-                } catch { return [productId, 0]; }
-              })
-            ),
-            Promise.all(
-              deliveredReviewTargets.map(async ({ key, orderId, orderItemId }) => {
-                try {
-                  const review = await reviewService.getMyOrderItemReview(orderId, orderItemId);
-                  return [key, review?.rating ?? null];
-                } catch { return [key, null]; }
-              })
-            ),
-          ]);
-
-          setProductRatings(Object.fromEntries(avgEntries));
-          setUserReviews(Object.fromEntries(userEntries));
-        }
-      } catch (error) {
-        toast.error(error.message || 'Failed to load orders');
-      } finally {
-        setOrdersLoading(false);
-      }
-    };
-
-    loadOrders();
+    fetchOrders();
   }, [activeModule]);
 
   const stats = useMemo(() => ({
@@ -915,13 +918,29 @@ export default function CustomerProfilePage({
     </section>
   );
 
-  const renderOrders = () => (
+  const renderOrders = () => {
+    const totalPages = Math.ceil(orders.length / itemsPerPage);
+    const paginatedOrders = orders.slice((ordersPage - 1) * itemsPerPage, ordersPage * itemsPerPage);
+
+    return (
     <section className="px-5 py-7 lg:px-7">
-      <div className="flex items-center justify-between gap-4">
+      {/* Desktop Header */}
+      <div className="hidden sm:flex items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-bold text-[#141225]">Order History</h2>
         </div>
         <button type="button" onClick={() => onNavigate('/order-history')} className="rounded-[8px] bg-[#9A6031] px-4 py-2 text-sm font-bold text-white">Open Full Page</button>
+      </div>
+
+      {/* Mobile Header */}
+      <div className="sm:hidden mb-6">
+        <div className="flex items-center justify-between mb-1">
+           <h1 className="text-2xl font-black text-[#111]">Order History</h1>
+           <button onClick={() => { fetchOrders(); setOrdersPage(1); }} className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 rounded-lg bg-white shadow-sm text-sm font-bold text-gray-700 active:bg-gray-50">
+             <RotateCw className="w-3.5 h-3.5" /> Refresh
+           </button>
+        </div>
+        <p className="text-[#666] text-sm">View and manage your recent orders.</p>
       </div>
 
       {ordersLoading ? (
@@ -929,164 +948,257 @@ export default function CustomerProfilePage({
       ) : orders.length === 0 ? (
         <EmptyState icon={Package} title="No orders yet" text="Your placed orders will appear here after checkout." action="Start Shopping" onAction={() => onNavigate('/')} />
       ) : (
-        <div className="mt-6 overflow-x-auto rounded-[14px] border border-[#E9DED3] bg-white">
-          <table className="w-full text-left text-sm text-[#4A403B]">
-            <thead className="border-b border-[#E9DED3] bg-[#FAF8F5] text-xs font-bold uppercase tracking-wider text-[#6D625C]">
-              <tr>
-                <th className="p-4">Product Details</th>
-                <th className="p-4">Date</th>
-                <th className="p-4 whitespace-nowrap">Total</th>
-                <th className="p-4 whitespace-nowrap">Paid</th>
-                <th className="p-4 whitespace-nowrap">Balance</th>
-                <th className="p-4 text-center">Status</th>
-                <th className="p-4 text-center">Payment</th>
-                <th className="p-4 text-center">Rating</th>
-                <th className="p-4 text-center">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#E9DED3]">
-              {orders.map((order) => {
-                const firstItem = order.orderItems?.[0] || {};
-                const extraItemsCount = (order.orderItems?.length || 1) - 1;
-                const imageSrc = firstItem.image ? (firstItem.image.startsWith('http') || firstItem.image.startsWith('data:') ? firstItem.image : (firstItem.image.startsWith('/uploads') || firstItem.image.startsWith('uploads/')) ? `http://localhost:5000${firstItem.image.startsWith('/') ? '' : '/'}${firstItem.image}` : firstItem.image) : '/animal_balance_maze.png';
-
-                const paidAmount = order.paymentMethod === 'COD' ? (order.codAdvance || 200) : order.totalPrice;
-                const balanceAmount = order.paymentMethod === 'COD' ? (order.balanceAmount || Math.max(0, order.totalPrice - paidAmount)) : 0;
-
-                return (
-                  <tr key={order._id} className="transition-colors hover:bg-[#FAF8F5]/50">
-                    <td className="p-4">
-                      <div className="flex items-center gap-3 min-w-[200px]">
-                        <div className="h-12 w-12 shrink-0 overflow-hidden rounded-[8px] bg-[#F8F3EF]">
-                          <img src={imageSrc} alt={firstItem.name || 'Product'} className="h-full w-full object-cover" />
-                        </div>
-                        <div>
-                          <p className="font-bold text-[#141225] line-clamp-1">{firstItem.name || `Order #${order._id.slice(-8).toUpperCase()}`}</p>
-                          {order.isGiftOrder && (
-                            <span className="mt-1 mb-1 inline-flex w-max items-center gap-1 rounded bg-[#FDF0EB] px-2 py-0.5 text-[10px] font-bold text-[#D04E26] uppercase tracking-wider">
-                              <Gift size={10} />
-                              Gift & Card
-                            </span>
-                          )}
-                          {extraItemsCount > 0 && <p className="text-xs font-semibold text-[#9A6031]">+{extraItemsCount} more item(s)</p>}
-                          <p className="text-xs text-[#6D625C] mt-0.5">#{order._id.slice(-8).toUpperCase()}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-4 whitespace-nowrap font-medium text-[#6D625C]">{formatDate(order.createdAt)}</td>
-                    <td className="p-4 whitespace-nowrap font-black text-[#141225]">Rs. {Number(order.totalPrice || 0).toLocaleString()}</td>
-                    <td className="p-4 whitespace-nowrap font-bold text-emerald-600">Rs. {Number(paidAmount).toLocaleString()}</td>
-                    <td className="p-4 whitespace-nowrap font-bold text-red-500">Rs. {Number(balanceAmount).toLocaleString()}</td>
-                    <td className="p-4 whitespace-nowrap text-center">
-                      <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' : order.status === 'Cancelled' ? 'bg-red-100 text-red-700' : 'bg-[#F2E3D1] text-[#8B5E3C]'}`}>
-                        {order.status || 'Pending'}
-                      </span>
-                    </td>
-                    <td className="p-4 whitespace-nowrap font-medium text-center text-[#6D625C]">{order.paymentMethod || 'Online'}</td>
-                    <td className="p-4 text-center">
-                      {order.status === 'Delivered' ? (() => {
-                        const productId = firstItem?.product;
-                        const reviewKey = firstItem?._id ? `${order._id}:${firstItem._id}` : '';
-                        const myRating = reviewKey ? userReviews[reviewKey] : undefined;
-                        const hasReviewed = myRating != null && myRating > 0;
-                        const avg = productRatings[productId] ?? 0;
-                        const displayRating = hasReviewed ? myRating : Math.round(avg * 2) / 2;
-
-                        const StarDisplay = ({ rating, clickable }) => (
-                          <div className="flex items-center gap-0.5">
-                            {[1,2,3,4,5].map(i => {
-                              const filled = rating >= i;
-                              const half = !filled && rating >= i - 0.5;
-                              return (
-                                <span key={i} className="relative inline-block h-4 w-4">
-                                  <Star className="absolute inset-0 h-4 w-4 text-gray-200 fill-gray-200" />
-                                  {(filled || half) && (
-                                    <span
-                                      className="absolute inset-0 overflow-hidden"
-                                      style={{ width: filled ? '100%' : '50%' }}
-                                    >
-                                      <Star className={`h-4 w-4 fill-amber-400 ${clickable ? 'text-amber-400 group-hover:text-amber-500 group-hover:fill-amber-500 transition-colors' : 'text-amber-400'}`} />
-                                    </span>
-                                  )}
-                                </span>
-                              );
-                            })}
+        <>
+        <div className="mt-6">
+          {/* Desktop Table Container */}
+          <div className="hidden sm:block overflow-x-auto rounded-[14px] border border-[#E9DED3] bg-white">
+            <table className="w-full text-left text-sm text-[#4A403B]">
+              <thead className="border-b border-[#E9DED3] bg-[#FAF8F5] text-xs font-bold uppercase tracking-wider text-[#6D625C]">
+                <tr>
+                  <th className="p-4">Product Details</th>
+                  <th className="p-4">Date</th>
+                  <th className="p-4 whitespace-nowrap">Total</th>
+                  <th className="p-4 whitespace-nowrap">Paid</th>
+                  <th className="p-4 whitespace-nowrap">Balance</th>
+                  <th className="p-4 text-center">Status</th>
+                  <th className="p-4 text-center">Payment</th>
+                  <th className="p-4 text-center">Rating</th>
+                  <th className="p-4 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#E9DED3]">
+                {paginatedOrders.map((order) => {
+                  const firstItem = order.orderItems?.[0] || {};
+                  const extraItemsCount = (order.orderItems?.length || 1) - 1;
+                  const imageSrc = firstItem.image ? (firstItem.image.startsWith('http') || firstItem.image.startsWith('data:') ? firstItem.image : (firstItem.image.startsWith('/uploads') || firstItem.image.startsWith('uploads/')) ? `http://localhost:5000${firstItem.image.startsWith('/') ? '' : '/'}${firstItem.image}` : firstItem.image) : '/animal_balance_maze.png';
+  
+                  const paidAmount = order.paymentMethod === 'COD' ? (order.codAdvance || 200) : order.totalPrice;
+                  const balanceAmount = order.paymentMethod === 'COD' ? (order.balanceAmount || Math.max(0, order.totalPrice - paidAmount)) : 0;
+  
+                  return (
+                    <tr key={order._id} className="transition-colors hover:bg-[#FAF8F5]/50">
+                      <td className="p-4">
+                        <div className="flex items-center gap-3 min-w-[200px]">
+                          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-[8px] bg-[#F8F3EF]">
+                            <img src={imageSrc} alt={firstItem.name || 'Product'} className="h-full w-full object-cover" />
                           </div>
-                        );
-
-                        if (hasReviewed) {
-                          // Already reviewed — static, non-clickable
-                          return (
-                            <div className="flex flex-col items-center gap-0.5" title="You have already reviewed this product">
-                              <StarDisplay rating={myRating} clickable={false} />
-                              <span className="text-[10px] font-bold text-emerald-600">Reviewed ✓</span>
+                          <div>
+                            <p className="font-bold text-[#141225] line-clamp-1">{firstItem.name || `Order #${order._id.slice(-8).toUpperCase()}`}</p>
+                            {order.isGiftOrder && (
+                              <span className="mt-1 mb-1 inline-flex w-max items-center gap-1 rounded bg-[#FDF0EB] px-2 py-0.5 text-[10px] font-bold text-[#D04E26] uppercase tracking-wider">
+                                <Gift size={10} />
+                                Gift & Card
+                              </span>
+                            )}
+                            {extraItemsCount > 0 && <p className="text-xs font-semibold text-[#9A6031]">+{extraItemsCount} more item(s)</p>}
+                            <p className="text-xs text-[#6D625C] mt-0.5">#{order._id.slice(-8).toUpperCase()}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4 whitespace-nowrap font-medium text-[#6D625C]">{formatDate(order.createdAt)}</td>
+                      <td className="p-4 whitespace-nowrap font-black text-[#141225]">Rs. {Number(order.totalPrice || 0).toLocaleString()}</td>
+                      <td className="p-4 whitespace-nowrap font-bold text-emerald-600">Rs. {Number(paidAmount).toLocaleString()}</td>
+                      <td className="p-4 whitespace-nowrap font-bold text-red-500">Rs. {Number(balanceAmount).toLocaleString()}</td>
+                      <td className="p-4 whitespace-nowrap text-center">
+                        <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' : order.status === 'Cancelled' ? 'bg-red-100 text-red-700' : 'bg-[#F2E3D1] text-[#8B5E3C]'}`}>
+                          {order.status || 'Pending'}
+                        </span>
+                      </td>
+                      <td className="p-4 whitespace-nowrap font-medium text-center text-[#6D625C]">{order.paymentMethod || 'Online'}</td>
+                      <td className="p-4 text-center">
+                        {order.status === 'Delivered' ? (() => {
+                          const productId = firstItem?.product;
+                          const reviewKey = firstItem?._id ? `${order._id}:${firstItem._id}` : '';
+                          const myRating = reviewKey ? userReviews[reviewKey] : undefined;
+                          const hasReviewed = myRating != null && myRating > 0;
+                          const avg = productRatings[productId] ?? 0;
+                          const displayRating = hasReviewed ? myRating : Math.round(avg * 2) / 2;
+  
+                          const StarDisplay = ({ rating, clickable }) => (
+                            <div className="flex items-center gap-0.5">
+                              {[1,2,3,4,5].map(i => {
+                                const filled = rating >= i;
+                                const half = !filled && rating >= i - 0.5;
+                                return (
+                                  <span key={i} className="relative inline-block h-4 w-4">
+                                    <Star className="absolute inset-0 h-4 w-4 text-gray-200 fill-gray-200" />
+                                    {(filled || half) && (
+                                      <span
+                                        className="absolute inset-0 overflow-hidden"
+                                        style={{ width: filled ? '100%' : '50%' }}
+                                      >
+                                        <Star className={`h-4 w-4 fill-amber-400 ${clickable ? 'text-amber-400 group-hover:text-amber-500 group-hover:fill-amber-500 transition-colors' : 'text-amber-400'}`} />
+                                      </span>
+                                    )}
+                                  </span>
+                                );
+                              })}
                             </div>
                           );
-                        }
-
-                        // Not reviewed yet — clickable
-                        return (
-                          <button
-                            onClick={() => setReviewModalProduct({
-                              productId,
-                              orderId: order._id,
-                              orderItemId: firstItem._id,
-                              reviewKey,
-                            })}
-                            className="flex flex-col items-center justify-center gap-0.5 group"
-                            title="Write a Review"
-                          >
-                            <StarDisplay rating={displayRating} clickable={true} />
-                            <span className="text-[10px] font-semibold text-[#9A6031]">Rate</span>
-                          </button>
-                        );
-                      })() : (
-                        <span className="text-[#C4B9B0]">—</span>
-                      )}
-                    </td>
-
-                    <td className="p-4 whitespace-nowrap text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        {!['Delivered', 'Cancelled'].includes(order.status) && (
-                          <button 
-                            type="button"
-                            className="rounded border border-red-200 px-2.5 py-1.5 text-xs font-bold text-red-600 transition hover:bg-red-50 disabled:opacity-50"
-                            onClick={async () => {
-                              try {
-                                setCancelOrderTarget(order);
-                                setIsCancelModalOpen(true);
-                                setCancelLoading(true);
-                                const preview = await orderService.getCancellationPreview(order._id);
-                                setCancellationPreviewData(preview);
-                              } catch (e) {
-                                toast.error('Failed to load cancellation details');
-                                setIsCancelModalOpen(false);
-                              } finally {
-                                setCancelLoading(false);
-                              }
-                            }}
-                          >
-                            Cancel
-                          </button>
+  
+                          if (hasReviewed) {
+                            return (
+                              <div className="flex flex-col items-center gap-0.5" title="You have already reviewed this product">
+                                <StarDisplay rating={myRating} clickable={false} />
+                                <span className="text-[10px] font-bold text-emerald-600">Reviewed ✓</span>
+                              </div>
+                            );
+                          }
+  
+                          return (
+                            <button
+                              onClick={() => setReviewModalProduct({
+                                productId,
+                                orderId: order._id,
+                                orderItemId: firstItem._id,
+                                reviewKey,
+                              })}
+                              className="flex flex-col items-center justify-center gap-0.5 group"
+                              title="Write a Review"
+                            >
+                              <StarDisplay rating={displayRating} clickable={true} />
+                              <span className="text-[10px] font-semibold text-[#9A6031]">Rate</span>
+                            </button>
+                          );
+                        })() : (
+                          <span className="text-[#C4B9B0]">—</span>
                         )}
-                        <button 
-                          type="button" 
-                          onClick={() => { setActiveOrder(order); setActiveModule('order-details'); navigate('/profile/order-history/details'); }}
-                          className="flex items-center gap-1 rounded bg-[#9A6031] px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-[#7E4B25]"
-                        >
-                          <Eye className="h-3.5 w-3.5" /> View
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      </td>
+  
+                      <td className="p-4 whitespace-nowrap text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          {!['Delivered', 'Cancelled'].includes(order.status) && (
+                            <button 
+                              type="button"
+                              className="rounded border border-red-200 px-2.5 py-1.5 text-xs font-bold text-red-600 transition hover:bg-red-50 disabled:opacity-50"
+                              onClick={async () => {
+                                try {
+                                  setCancelOrderTarget(order);
+                                  setIsCancelModalOpen(true);
+                                  setCancelLoading(true);
+                                  const preview = await orderService.getCancellationPreview(order._id);
+                                  setCancellationPreviewData(preview);
+                                } catch (e) {
+                                  toast.error('Failed to load cancellation details');
+                                  setIsCancelModalOpen(false);
+                                } finally {
+                                  setCancelLoading(false);
+                                }
+                              }}
+                            >
+                              Cancel
+                            </button>
+                          )}
+                          <button 
+                            type="button" 
+                            onClick={() => { setActiveOrder(order); setActiveModule('order-details'); navigate('/profile/order-history/details'); }}
+                            className="flex items-center gap-1 rounded bg-[#9A6031] px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-[#7E4B25]"
+                          >
+                            <Eye className="h-3.5 w-3.5" /> View
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Orders List */}
+          <div className="sm:hidden flex flex-col gap-4">
+            {paginatedOrders.map((order) => {
+              const firstItem = order.orderItems?.[0] || {};
+              const orderDate = new Date(order.createdAt);
+              const formattedDate = `${orderDate.getDate().toString().padStart(2, '0')}/${(orderDate.getMonth() + 1).toString().padStart(2, '0')}/${orderDate.getFullYear()}`;
+              const imageSrc = firstItem.image ? (firstItem.image.startsWith('http') || firstItem.image.startsWith('data:') ? firstItem.image : (firstItem.image.startsWith('/uploads') || firstItem.image.startsWith('uploads/')) ? `${API_ORIGIN}${firstItem.image.startsWith('/') ? '' : '/'}${firstItem.image}` : firstItem.image) : '';
+              
+              return (
+                <div key={order._id} className="bg-white rounded-[20px] shadow-sm border border-[#E9E9E9] overflow-hidden p-4">
+                  <div className="flex justify-between items-start mb-4 gap-2">
+                    <div className="flex gap-3 items-center flex-1">
+                       <div className="w-12 h-12 rounded-lg bg-[#F8F4EC] border border-gray-100 overflow-hidden shrink-0 flex items-center justify-center">
+                         {imageSrc ? <img src={imageSrc} alt={firstItem.name} className="w-full h-full object-cover" /> : <Package className="w-6 h-6 text-gray-400" />}
+                       </div>
+                       <h4 className="font-bold text-[#111] text-[15px] line-clamp-2 leading-snug">
+                         {firstItem.name || `Order #${order._id.slice(-8).toUpperCase()}`}
+                       </h4>
+                    </div>
+                    <span className="shrink-0 px-2.5 py-1 rounded-[6px] text-[10px] font-bold uppercase tracking-wider bg-[#FFF9E6] text-[#B8860B] border border-[#F5E6B3]">
+                      {order.status || 'PLACED'}
+                    </span>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-y-2 mb-5 text-[13px]">
+                     <div className="text-gray-500">Date: <span className="text-[#333] font-medium">{formattedDate}</span></div>
+                     <div className="text-gray-500 text-right">Pay: <span className="text-[#333] font-medium">{order.paymentMethod || 'Online'}</span></div>
+                     <div className="text-gray-500">Total: <span className="text-[#111] font-bold">₹{order.totalPrice.toLocaleString()}</span></div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button onClick={() => { setActiveOrder(order); setActiveModule('order-details'); navigate('/profile/order-history/details'); }} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[#8B5E3C] text-white text-[13px] font-bold transition-colors hover:bg-[#7a5234] active:bg-[#7a5234]">
+                      <Eye className="w-4 h-4" /> View
+                    </button>
+                    <button onClick={() => { if (firstItem.product) onNavigate(`/product/${firstItem.product}`); }} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[#8B5E3C] text-white text-[13px] font-bold transition-colors hover:bg-[#7a5234] active:bg-[#7a5234]">
+                      <RefreshCw className="w-4 h-4" /> Buy Again
+                    </button>
+                  </div>
+                  
+                  {!['Delivered', 'Cancelled'].includes(order.status) && (
+                    <button 
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          setCancelOrderTarget(order);
+                          setIsCancelModalOpen(true);
+                          setCancelLoading(true);
+                          const preview = await orderService.getCancellationPreview(order._id);
+                          setCancellationPreviewData(preview);
+                        } catch (e) {
+                          toast.error('Failed to load cancellation details');
+                          setIsCancelModalOpen(false);
+                        } finally {
+                          setCancelLoading(false);
+                        }
+                      }}
+                      className="mt-3 w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-red-50 border border-red-200 text-red-600 text-xs font-bold transition-colors hover:bg-red-100 disabled:opacity-50"
+                    >
+                      Cancel Order
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-6 flex justify-center items-center gap-2">
+              <button
+                onClick={() => setOrdersPage(p => Math.max(1, p - 1))}
+                disabled={ordersPage === 1}
+                className="px-3 py-1.5 text-sm font-semibold border rounded disabled:opacity-50"
+              >
+                Prev
+              </button>
+              <span className="text-sm font-semibold text-gray-700">
+                Page {ordersPage} of {totalPages}
+              </span>
+              <button
+                onClick={() => setOrdersPage(p => Math.min(totalPages, p + 1))}
+                disabled={ordersPage === totalPages}
+                className="px-3 py-1.5 text-sm font-semibold border rounded disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
+        </>
       )}
     </section>
-  );
+    );
+  };
 
   const renderCustomizeOrders = () => (
     <section className="px-5 py-7 lg:px-7">

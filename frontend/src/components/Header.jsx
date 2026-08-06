@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { ChevronDown, Heart, Search, ShoppingCart, User, X, Loader2, Menu, LogOut, Settings } from 'lucide-react';
+import { ChevronDown, Heart, Search, ShoppingCart, User, X, Loader2, Menu, LogOut, Settings, Home, Package } from 'lucide-react';
 import { catalogService } from '../api/catalogService';
 import { cmsService } from '../api/cmsService';
 import { productV2API, categoryV2API } from '../api/catalogV2Service';
@@ -83,6 +83,9 @@ export default function Header({
         if (res.success && res.data) {
           setNavbarConfig(res.data);
           setNavItems((res.data.items || []).filter((item) => item.status));
+          if (res.data.logo?.url) {
+            localStorage.setItem('cms_cached_logo', res.data.logo.url);
+          }
         }
       } catch (err) {
         console.error('Failed to load navbars from CMS', err);
@@ -462,12 +465,24 @@ export default function Header({
         </nav>
       </div>
 
-      {/* ── MOBILE: Logo + icons + hamburger ── */}
-      <div className="flex lg:hidden items-center justify-between gap-2 px-3 py-3 sm:px-6">
-        <button type="button" onClick={() => onNavigate(navbarConfig?.logoUrl || '/')} className="shrink-0">
-          <img src={navbarConfig?.logo?.url || "/brand-logo.jpeg"} alt="Marakathai Logo" className="h-14 w-auto object-contain" />
-        </button>
-        <div className="flex items-center gap-3 text-[#B1621D]">
+      {/* ── MOBILE: Hamburger + Logo + Icons ── */}
+      <div className="flex lg:hidden items-center justify-between px-3 py-3 sm:px-6 relative">
+        {/* Left: Hamburger */}
+        <div className="flex items-center w-1/4">
+          <button type="button" className="transition hover:opacity-80 text-[#B1621D]" aria-label="Open menu" onClick={() => setIsMobileMenuOpen(true)}>
+            <Menu className="h-[24px] w-[24px] sm:h-[26px] sm:w-[26px]" strokeWidth={1.5} />
+          </button>
+        </div>
+
+        {/* Center: Logo */}
+        <div className="flex justify-center w-2/4">
+          <button type="button" onClick={() => onNavigate(navbarConfig?.logoUrl || '/')} className="shrink-0">
+            <img src={navbarConfig?.logo?.url || "/brand-logo.jpeg"} alt="Marakathai Logo" className="h-12 w-auto object-contain" />
+          </button>
+        </div>
+
+        {/* Right: User + Cart */}
+        <div className="flex items-center justify-end gap-4 text-[#B1621D] w-1/4">
           <div className="relative">
             <button
               type="button"
@@ -491,7 +506,7 @@ export default function Header({
               })()}
             </button>
             {dropdownOpen && user && (
-              <div className="absolute left-1/2 -translate-x-1/2 top-full z-[60] mt-3 w-[220px] overflow-hidden rounded-xl border border-[#E9DED3] bg-white shadow-xl">
+              <div className="absolute right-0 top-full z-[60] mt-3 w-[220px] overflow-hidden rounded-xl border border-[#E9DED3] bg-white shadow-xl">
                 <div className="border-b border-[#EFE6DD] px-5 py-4">
                   <p className="text-xs text-[#7C7370]">Logged in as</p>
                   <p className="truncate text-base font-bold text-[#206945] mt-0.5">{user.name}</p>
@@ -519,17 +534,7 @@ export default function Header({
               </div>
             )}
           </div>
-          <button type="button" onClick={() => onOpenWishlist?.()} className="relative" aria-label="Wishlist">
-            <Heart className="h-[22px] w-[22px]" strokeWidth={1.5} />
-            {wishlistCount > 0 && <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#9C755A] px-1 text-[9px] font-bold text-white shadow-sm">{wishlistCount}</span>}
-          </button>
-          <button type="button" onClick={() => onOpenCart?.()} className="relative" aria-label="Cart">
-            <ShoppingCart className="h-[22px] w-[22px]" strokeWidth={1.5} />
-            {cartCount > 0 && <span className="absolute -right-2 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#A87C4F] px-1 text-[9px] font-bold text-white shadow-sm">{cartCount}</span>}
-          </button>
-          <button type="button" className="transition hover:opacity-80 ml-1 sm:ml-2" aria-label="Open menu" onClick={() => setIsMobileMenuOpen(true)}>
-            <Menu className="h-[24px] w-[24px] sm:h-[26px] sm:w-[26px]" strokeWidth={1.5} />
-          </button>
+
         </div>
       </div>
 
@@ -781,7 +786,7 @@ export default function Header({
           <button
             type="button"
             onClick={() => onOpenWishlist?.()}
-            className="relative transition hover:opacity-80"
+            className="relative transition hover:opacity-80 hidden lg:block"
             aria-label="Wishlist"
           >
             <Heart className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px]" strokeWidth={1.5} />
@@ -795,7 +800,7 @@ export default function Header({
           <button
             type="button"
             onClick={() => onOpenCart?.()}
-            className="relative transition hover:opacity-80"
+            className="relative transition hover:opacity-80 hidden lg:block"
             aria-label="Cart"
           >
             <ShoppingCart className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px]" strokeWidth={1.5} />
@@ -1029,6 +1034,29 @@ export default function Header({
           )}
         </div>
       </div>
+
+      {/* ── FIXED BOTTOM NAVBAR (MOBILE) ── */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around bg-white px-2 py-3 border-t border-[#E9DED3] lg:hidden pb-safe shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+        <button type="button" onClick={() => onNavigate('/')} className="flex flex-col items-center gap-1 text-[#b1621d] transition-colors">
+          <Home className="h-[22px] w-[22px]" strokeWidth={1.8} />
+          <span className="text-[10px] font-semibold tracking-wide">Home</span>
+        </button>
+        <button type="button" onClick={() => onNavigate('/profile/order-history')} className="flex flex-col items-center gap-1 text-[#b1621d] transition-colors">
+          <Package className="h-[22px] w-[22px]" strokeWidth={1.8} />
+          <span className="text-[10px] font-semibold tracking-wide">Orders</span>
+        </button>
+        <button type="button" onClick={() => onOpenWishlist?.()} className="flex flex-col items-center gap-1 text-[#b1621d] transition-colors relative">
+          <Heart className="h-[22px] w-[22px]" strokeWidth={1.8} />
+          <span className="text-[10px] font-semibold tracking-wide">Wishlist</span>
+          {wishlistCount > 0 && <span className="absolute -right-2 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#b1621d] px-1 text-[9px] font-bold text-white shadow-sm">{wishlistCount}</span>}
+        </button>
+        <button type="button" onClick={() => onOpenCart?.()} className="flex flex-col items-center gap-1 text-[#b1621d] transition-colors relative">
+          <ShoppingCart className="h-[22px] w-[22px]" strokeWidth={1.8} />
+          <span className="text-[10px] font-semibold tracking-wide">Cart</span>
+          {cartCount > 0 && <span className="absolute -right-2 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#b1621d] px-1 text-[9px] font-bold text-white shadow-sm">{cartCount}</span>}
+        </button>
+      </div>
+
 
       {dropdownOpen && <button type="button" aria-label="Close account menu" className="fixed inset-0 z-[40] cursor-default" onClick={() => setDropdownOpen(false)} />}
     </>

@@ -59,6 +59,7 @@ function DynamicGiftCardBanner({ bannerData, onNavigate }) {
               autoplay={{ delay: 3500, disableOnInteraction: false }}
               loop={(bannerData.leftImages?.length || 0) > 1}
               direction={swiperDirection}
+              allowTouchMove={false}
               className="w-full h-full"
             >
               {bannerData.leftImages.map((img, i) => (

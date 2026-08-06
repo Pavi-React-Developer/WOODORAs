@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { orderService } from '../api/orderService';
-import { ShoppingBag, Loader2, Package, Calendar, MapPin, ExternalLink, Download } from 'lucide-react';
+import { ShoppingBag, Loader2, Package, Calendar, MapPin, ExternalLink, Download, Eye, RotateCw, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { saveAs } from 'file-saver';
 import { API_ORIGIN } from '../api/apiClient';
@@ -10,6 +10,8 @@ import OrderPricingSummary from '../components/OrderPricingSummary';
 export default function OrderHistoryPage({ onNavigate, user }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     fetchOrders();
@@ -64,10 +66,14 @@ export default function OrderHistoryPage({ onNavigate, user }) {
     );
   }
 
+  const paginatedOrders = orders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const totalPages = Math.ceil(orders.length / itemsPerPage);
+
   return (
     <div className="min-h-screen bg-[#F8F4EC] py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
-        <div className="flex items-center gap-3 mb-8">
+        {/* Desktop Header */}
+        <div className="hidden sm:flex items-center gap-3 mb-8">
           <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-[#8B5E3C] shadow-sm">
             <ShoppingBag className="w-6 h-6" />
           </div>
@@ -75,6 +81,17 @@ export default function OrderHistoryPage({ onNavigate, user }) {
             <h1 className="text-3xl font-bold text-gray-900">Order History</h1>
             <p className="text-sm text-gray-500">Track and manage your previous orders</p>
           </div>
+        </div>
+
+        {/* Mobile Header */}
+        <div className="sm:hidden mb-6">
+          <div className="flex items-center justify-between mb-1">
+             <h1 className="text-2xl font-black text-[#111]">Order History</h1>
+             <button onClick={fetchOrders} className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 rounded-lg bg-white shadow-sm text-sm font-bold text-gray-700 active:bg-gray-50">
+               <RotateCw className="w-3.5 h-3.5" /> Refresh
+             </button>
+          </div>
+          <p className="text-[#666] text-sm">View and manage your recent orders.</p>
         </div>
 
         {orders.length === 0 ? (
@@ -91,8 +108,49 @@ export default function OrderHistoryPage({ onNavigate, user }) {
           </div>
         ) : (
           <div className="space-y-6">
-            {orders.map((order) => (
-              <div key={order._id} className="bg-white rounded-3xl shadow-sm border border-[#E6DFD4] overflow-hidden">
+            {paginatedOrders.map((order) => {
+              const firstItem = order.orderItems[0] || {};
+              const orderDate = new Date(order.createdAt);
+              const formattedDate = `${orderDate.getDate().toString().padStart(2, '0')}/${(orderDate.getMonth() + 1).toString().padStart(2, '0')}/${orderDate.getFullYear()}`;
+              const imageSrc = firstItem.image ? (firstItem.image.startsWith('http') || firstItem.image.startsWith('data:') ? firstItem.image : (firstItem.image.startsWith('/uploads') || firstItem.image.startsWith('uploads/')) ? `${API_ORIGIN}${firstItem.image.startsWith('/') ? '' : '/'}${firstItem.image}` : firstItem.image) : '';
+              
+              return (
+              <div key={order._id} className="bg-white rounded-[20px] shadow-sm border border-[#E9E9E9] overflow-hidden mb-4 sm:rounded-3xl sm:border-[#E6DFD4]">
+                
+                {/* Mobile View */}
+                <div className="block sm:hidden p-4">
+                  <div className="flex justify-between items-start mb-4 gap-2">
+                    <div className="flex gap-3 items-center flex-1">
+                       <div className="w-12 h-12 rounded-lg bg-[#F8F4EC] border border-gray-100 overflow-hidden shrink-0 flex items-center justify-center">
+                         {imageSrc ? <img src={imageSrc} alt={firstItem.name} className="w-full h-full object-cover" /> : <Package className="w-6 h-6 text-gray-400" />}
+                       </div>
+                       <h4 className="font-bold text-[#111] text-[15px] line-clamp-2 leading-snug">
+                         {firstItem.name || `Order #${order._id.slice(-8).toUpperCase()}`}
+                       </h4>
+                    </div>
+                    <span className="shrink-0 px-2.5 py-1 rounded-[6px] text-[10px] font-bold uppercase tracking-wider bg-[#FFF9E6] text-[#B8860B] border border-[#F5E6B3]">
+                      {order.status || 'PLACED'}
+                    </span>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-y-2 mb-5 text-[13px]">
+                     <div className="text-gray-500">Date: <span className="text-[#333] font-medium">{formattedDate}</span></div>
+                     <div className="text-gray-500 text-right">Pay: <span className="text-[#333] font-medium">{order.paymentMethod || 'Online'}</span></div>
+                     <div className="text-gray-500">Total: <span className="text-[#111] font-bold">₹{order.totalPrice.toLocaleString()}</span></div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button onClick={() => onNavigate('/profile/order-history/details', order)} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[#8B5E3C] text-white text-[13px] font-bold transition-colors hover:bg-[#7a5234] active:bg-[#7a5234]">
+                      <Eye className="w-4 h-4" /> View
+                    </button>
+                    <button onClick={() => { if (firstItem.product) onNavigate(`/product/${firstItem.product}`); }} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[#8B5E3C] text-white text-[13px] font-bold transition-colors hover:bg-[#7a5234] active:bg-[#7a5234]">
+                      <RefreshCw className="w-4 h-4" /> Buy Again
+                    </button>
+                  </div>
+                </div>
+
+                {/* Desktop View */}
+                <div className="hidden sm:block">
                 {/* Order Header */}
                 <div className="bg-gray-50/80 p-5 sm:px-8 border-b border-[#E6DFD4] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex flex-wrap items-center gap-6">
@@ -211,8 +269,31 @@ export default function OrderHistoryPage({ onNavigate, user }) {
                 <div className="px-5 sm:px-8 pb-5 border-t border-[#E6DFD4]/50 pt-4">
                   <OrderPricingSummary order={order} />
                 </div>
+                </div>
               </div>
-            ))}
+            );})}
+          </div>
+        )}
+        
+        {totalPages > 1 && orders.length > 0 && (
+          <div className="flex justify-center items-center gap-4 mt-8 pb-4">
+            <button 
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 border border-[#E6DFD4] rounded-lg text-sm font-bold text-[#4A3326] disabled:opacity-50 hover:bg-white bg-[#F8F4EC] transition-colors shadow-sm"
+            >
+              Previous
+            </button>
+            <span className="text-sm font-bold text-[#7C7370]">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button 
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 border border-[#E6DFD4] rounded-lg text-sm font-bold text-[#4A3326] disabled:opacity-50 hover:bg-white bg-[#F8F4EC] transition-colors shadow-sm"
+            >
+              Next
+            </button>
           </div>
         )}
       </div>
