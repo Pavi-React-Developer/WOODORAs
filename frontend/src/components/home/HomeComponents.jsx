@@ -136,7 +136,7 @@ export function HomeReviews({ context = {} }) {
 
   return (
     <section className="py-5 bg-[#FDF9F1]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
           <motion.div variants={fadeUp} className="relative flex flex-col md:flex-row items-center justify-center mb-5 min-h-[40px]">
             <div className="flex justify-center items-center gap-3 sm:gap-4">
@@ -522,29 +522,26 @@ function ThirdBannerItem({ bannerData, onNavigate }) {
 
   return (
     <section className="py-5 bg-[#FDF9F1]">
-      <style>{`
-        .dual-banner-pagination .swiper-pagination-bullet {
-          width: 10px; height: 10px; border-radius: 50%;
-          background: #D4C3A3; opacity: 1; cursor: pointer;
-          transition: all 0.25s; flex-shrink: 0;
-        }
-        .dual-banner-pagination .swiper-pagination-bullet-active {
-          background: #B0611C; width: 12px; height: 12px;
-          box-shadow: 0 0 0 2px #fff, 0 0 0 3px #B0611C;
-        }
-        /* Desktop: dots column, shown inside the center grid column */
-        @media (min-width: 768px) {
+        <style>{`
           .dual-banner-pagination {
             display: flex;
-            flex-direction: column;
-            gap: 10px;
+            gap: 12px;
             align-items: center;
             justify-content: center;
+            margin-top: 24px;
           }
-        }
-      `}</style>
+          .dual-banner-pagination .swiper-pagination-bullet {
+            width: 10px; height: 10px; border-radius: 50%;
+            background: #D4C3A3; opacity: 1; cursor: pointer;
+            transition: all 0.25s; flex-shrink: 0;
+          }
+          .dual-banner-pagination .swiper-pagination-bullet-active {
+            background: #B0611C; width: 12px; height: 12px;
+            box-shadow: 0 0 0 2px #fff, 0 0 0 3px #B0611C;
+          }
+        `}</style>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         {bannerData.title && (
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="relative flex flex-col md:flex-row items-center justify-center mb-10 min-h-[40px]">
             <div className="flex justify-center items-center gap-3 sm:gap-4">
@@ -555,11 +552,8 @@ function ThirdBannerItem({ bannerData, onNavigate }) {
           </motion.div>
         )}
 
-        {/*
-          3-column grid on desktop: [left banner | dots gap | right banner]
-          Mobile: single column (dot column hidden), gap-4 between stacked banners
-        */}
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_48px_1fr] gap-4 md:gap-0 max-w-5xl mx-auto">
+        {/* 2-column grid for banners */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 max-w-5xl mx-auto">
 
           {/* LEFT banner */}
           <div className="overflow-hidden rounded-2xl shadow-sm relative group h-[30vh] md:h-[50vh] min-h-[220px] md:min-h-[350px] max-h-[500px]">
@@ -574,7 +568,7 @@ function ThirdBannerItem({ bannerData, onNavigate }) {
                 loop={bannerData.leftImages.length > 1}
                 direction={swiperDirection}
                 pagination={slideCount > 1 ? { clickable: true, el: paginationRef.current } : false}
-                allowTouchMove={false}
+                allowTouchMove={true}
                 className="w-full h-full"
               >
                 {bannerData.leftImages.map((img, i) => (
@@ -594,13 +588,6 @@ function ThirdBannerItem({ bannerData, onNavigate }) {
             </div>
           </div>
 
-          {/* CENTER column: dots on desktop, hidden on mobile */}
-          <div className="hidden md:flex items-center justify-center z-30">
-            {slideCount > 1 && (
-              <div ref={setPaginationEl} className="dual-banner-pagination" />
-            )}
-          </div>
-
           {/* RIGHT banner */}
           <div className="overflow-hidden rounded-2xl shadow-sm relative group h-[30vh] md:h-[50vh] min-h-[220px] md:min-h-[350px] max-h-[500px]">
             <Swiper
@@ -611,7 +598,7 @@ function ThirdBannerItem({ bannerData, onNavigate }) {
               controller={{ control: firstSwiper }}
               loop={(bannerData.rightImages?.length || 0) > 1}
               direction={swiperDirection}
-              allowTouchMove={false}
+              allowTouchMove={true}
               className="w-full h-full"
             >
               {bannerData.rightImages?.map((img, i) => (
@@ -627,7 +614,13 @@ function ThirdBannerItem({ bannerData, onNavigate }) {
               </button>
             </div>
           </div>
+
         </div>
+        
+        {/* BOTTOM: dots below the banners */}
+        {slideCount > 1 && (
+          <div ref={setPaginationEl} className="dual-banner-pagination" />
+        )}
       </div>
     </section>
   );
@@ -658,7 +651,7 @@ function ProductGridBlock({ grid, onNavigate, onAddToCart, onAddToWishlist, user
 
   return (
     <section className="py-5">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
           <motion.div variants={fadeUp} className="relative flex flex-col md:flex-row items-center justify-center mb-5 min-h-[40px]">
             <div className="flex justify-center items-center gap-3 sm:gap-4">
@@ -924,7 +917,7 @@ function CategoriesGridBlock({ grid, onNavigate }) {
 
   return (
     <section className="py-4">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
           <motion.div variants={fadeUp} className="relative flex flex-col md:flex-row items-center justify-center mb-5 min-h-[40px]">
             <div className="flex justify-center items-center gap-3 sm:gap-4">
@@ -1000,6 +993,7 @@ function CategoriesGridBlock({ grid, onNavigate }) {
                 spaceBetween={16}
                 slidesPerView={mobileCount}
                 breakpoints={{ 768: { slidesPerView: desktopCount } }}
+                grabCursor={true}
                 className="w-full"
               >
                 {safeCategories.map((c, i) => {
@@ -1008,21 +1002,21 @@ function CategoriesGridBlock({ grid, onNavigate }) {
                     <SwiperSlide key={c._id || i} className="h-auto">
                       <motion.div
                         variants={fadeUp}
-                        className="flex flex-col items-center gap-3 cursor-pointer group py-2"
+                        className="flex flex-col items-center gap-2 cursor-pointer group py-2"
                         onClick={() => onNavigate(`/products?category=${c._id}`)}
                       >
-                        {/* Circle image */}
-                        <div className="relative w-28 h-28 md:w-36 md:h-36 rounded-full overflow-hidden ring-2 ring-[#E6DFD4] group-hover:ring-[#B0611C] transition-all duration-300 shadow-md group-hover:shadow-lg shrink-0">
+                        {/* Rounded rectangle card */}
+                        <div className="relative w-full aspect-[4/5] rounded-2xl overflow-hidden bg-[#FDF6EF] shadow-md group-hover:shadow-xl ring-1 ring-[#E6DFD4] group-hover:ring-[#B0611C] transition-all duration-300">
                           <img
                             src={imageSrc}
                             alt={c.name}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 group-hover:opacity-75"
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                             onError={e => e.target.src='/wood-placeholder.png'}
                           />
                           {/* Hover Overlay */}
-                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
-                            <span className="bg-white text-[#B0611C] text-[11px] md:text-xs font-bold px-3 py-1.5 rounded-full shadow-md transform translate-y-3 group-hover:translate-y-0 transition-all duration-300">
-                              Shop me
+                          <div className="absolute inset-0 bg-black/30 flex items-end justify-center pb-3 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                            <span className="bg-white text-[#B0611C] text-[11px] md:text-xs font-bold px-3 py-1.5 rounded-full shadow-md transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                              Shop Now
                             </span>
                           </div>
                         </div>

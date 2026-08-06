@@ -48,7 +48,7 @@ function CategoryPicker({ selected, onChange, categoriesList }) {
   );
 }
 
-const emptyForm = { title: '', categories: [], mobileCount: 2, desktopCount: 4, ctaText: '', ctaUrl: '', ctaPosition: 'right', showArrows: true, showDots: false, status: true, sortOrder: 0 };
+const emptyForm = { title: '', categories: [], mobileCount: '2', desktopCount: '4', ctaText: '', ctaUrl: '', ctaPosition: 'right', showArrows: true, showDots: false, status: true, sortOrder: '0' };
 
 export default function CategoriesGridAdmin() {
   const [items, setItems] = useState([]);
@@ -83,6 +83,9 @@ export default function CategoriesGridAdmin() {
     // We only want to send category IDs to the backend
     const payload = {
       ...form,
+      sortOrder: parseInt(form.sortOrder) || 0,
+      mobileCount: parseInt(form.mobileCount) || 2,
+      desktopCount: parseInt(form.desktopCount) || 4,
       categories: form.categories.map(c => c._id || c)
     };
 
@@ -94,25 +97,37 @@ export default function CategoriesGridAdmin() {
     finally { setSaving(false); }
   };
 
-  const handleEdit = (item) => {
+  const handleEdit = async (item) => {
+    // If categories haven't loaded yet, fetch them first
+    let cats = allCategories;
+    if (!cats.length) {
+      try {
+        const d = await categoryV2API.getAll({ limit: 500, isActive: 'true' });
+        cats = d.categories || d.data || [];
+        setAllCategories(cats);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
     // Map category IDs back to objects so the picker shows them correctly
     const populatedCategories = (item.categories || []).map(cId => {
       if (typeof cId === 'object' && cId._id) return cId; // Already populated
-      return allCategories.find(x => x._id === cId) || { _id: cId, name: 'Unknown Category' };
+      return cats.find(x => x._id === cId) || { _id: cId, name: 'Unknown Category' };
     });
 
     setForm({
       title: item.title,
       categories: populatedCategories,
-      mobileCount: item.mobileCount || 2,
-      desktopCount: item.desktopCount || 4,
+      mobileCount: String(item.mobileCount ?? 2),
+      desktopCount: String(item.desktopCount ?? 4),
       ctaText: item.ctaText || '',
       ctaUrl: item.ctaUrl || '',
       ctaPosition: item.ctaPosition || 'right',
       showArrows: item.showArrows !== false,
       showDots: item.showDots || false,
       status: item.status,
-      sortOrder: item.sortOrder || 0
+      sortOrder: String(item.sortOrder ?? 0)
     });
     setEditId(item._id);
     setShowForm(true);
@@ -156,20 +171,20 @@ export default function CategoriesGridAdmin() {
               </div>
               <div>
                 <label className="text-xs font-semibold text-brand-medium uppercase tracking-wider block mb-1">Sort Order</label>
-                <input type="text" inputMode="numeric" value={form.sortOrder} onChange={e => setForm(f => ({ ...f, sortOrder: +e.target.value }))}
-                  className="w-full border border-[#E6DFD4] rounded-lg px-3 py-2 text-sm" />
+                <input type="text" value={form.sortOrder} onChange={e => setForm(f => ({ ...f, sortOrder: e.target.value }))}
+                  className="w-full border border-[#E6DFD4] rounded-lg px-3 py-2 text-sm" placeholder="0" />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-xs font-semibold text-brand-medium uppercase tracking-wider block mb-1">Mobile View Category Count</label>
-                <input type="text" inputMode="numeric" min="1" value={form.mobileCount} onChange={e => setForm(f => ({ ...f, mobileCount: parseInt(e.target.value) || 2 }))}
+                <input type="text" value={form.mobileCount} onChange={e => setForm(f => ({ ...f, mobileCount: e.target.value }))}
                   className="w-full border border-[#E6DFD4] rounded-lg px-3 py-2 text-sm" placeholder="2" />
               </div>
               <div>
                 <label className="text-xs font-semibold text-brand-medium uppercase tracking-wider block mb-1">Desktop View Category Count</label>
-                <input type="text" inputMode="numeric" min="1" value={form.desktopCount} onChange={e => setForm(f => ({ ...f, desktopCount: parseInt(e.target.value) || 4 }))}
+                <input type="text" value={form.desktopCount} onChange={e => setForm(f => ({ ...f, desktopCount: e.target.value }))}
                   className="w-full border border-[#E6DFD4] rounded-lg px-3 py-2 text-sm" placeholder="4" />
               </div>
             </div>
@@ -240,8 +255,8 @@ export default function CategoriesGridAdmin() {
               <button type="button" onClick={() => setShowForm(false)}
                 className="px-4 py-2 text-sm border border-[#E6DFD4] rounded-lg text-brand-medium">Cancel</button>
               <button type="submit" disabled={saving}
-                className="p-1.5 text-[#6D625C] hover:text-[#9A6031] hover:bg-[#F2E3D1] rounded transition-colors">
-                {saving ? 'Saving...' : 'Save Grid'}
+                className="px-5 py-2 text-sm font-semibold bg-brand-dark text-white rounded-xl hover:bg-black transition-colors disabled:opacity-50">
+                {saving ? 'Saving...' : editId ? 'Update Grid' : 'Save Grid'}
               </button>
             </div>
           </form>

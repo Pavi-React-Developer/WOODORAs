@@ -303,8 +303,8 @@ export default function CategoryGridAdmin() {
 
             <div className="flex gap-3 justify-end pt-4 border-t border-[#E6DFD4]">
               <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-sm border border-[#E6DFD4] rounded-lg text-brand-medium">Cancel</button>
-              <button type="submit" disabled={saving} className="p-1.5 text-[#6D625C] hover:text-[#9A6031] hover:bg-[#F2E3D1] rounded transition-colors">
-                {saving ? 'Saving...' : 'Save Grid'}
+              <button type="submit" disabled={saving} className="px-5 py-2 text-sm font-semibold bg-brand-dark text-white rounded-xl hover:bg-black transition-colors disabled:opacity-50">
+                {saving ? 'Saving...' : editId ? 'Update Grid' : 'Save Grid'}
               </button>
             </div>
           </form>
