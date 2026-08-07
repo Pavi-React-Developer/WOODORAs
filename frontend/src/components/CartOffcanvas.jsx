@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Gift, Minus, Plus, Trash2 } from 'lucide-react';
+import { Gift, Minus, Plus, Trash2, X } from 'lucide-react';
 import { FiShoppingCart } from "react-icons/fi";
+import { BsBagHeartFill } from "react-icons/bs";
 import useCartStore from '../store/useCartStore';
 import useCartCalculation from '../hooks/useCartCalculation';
 import { useNavigate } from 'react-router-dom';
@@ -143,36 +144,36 @@ export default function CartOffcanvas({ isOpen, onClose }) {
       />
 
       {/* Offcanvas Panel */}
-      <div className="fixed inset-y-0 right-0 w-full max-w-sm bg-white shadow-2xl z-[70] flex flex-col transform transition-transform duration-300">
+      <div className="fixed inset-y-0 right-0 w-full max-w-[420px] bg-[#FAF6F0] shadow-2xl z-[70] flex flex-col transform transition-transform duration-300">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-brand-medium/20">
-          <div className="flex items-center gap-2">
-            <FiShoppingCart className="w-5 h-5 text-brand-dark" style={{ color: 'inherit' }} />
-            <h2 className="font-serif text-xl font-bold text-brand-dark">Your Cart</h2>
-            {cartItems.length > 0 && (
-              <span className="bg-brand-dark text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                {cartItems.length}
-              </span>
-            )}
-          </div>
+        <div className="relative px-8 pt-10 pb-6 flex flex-col">
           <button
             onClick={onClose}
-            className="p-2 -mr-2 text-brand-dark/60 hover:text-brand-dark hover:bg-brand-light/40 rounded-full transition-colors"
+            className="absolute top-6 right-6 p-2 text-[#7C6A5A] hover:text-[#3F2B1F] bg-white/50 hover:bg-white rounded-full transition-colors"
             aria-label="Close cart"
           >
-            ✕
+            <X className="w-5 h-5" />
           </button>
+
+          <h2 className="font-serif text-3xl font-extrabold text-[#3F2B1F] flex items-center gap-2 flex-wrap">
+            Your Cart
+            <BsBagHeartFill className="w-6 h-6 text-[#9F5D54]" />
+            {cartItems.length > 0 && (
+              <span className="text-[#9C755A] font-medium text-xl">({cartItems.length})</span>
+            )}
+          </h2>
+          <p className="text-xs font-semibold text-[#7C6A5A] mt-2">
+            Review your items and proceed to checkout.
+          </p>
         </div>
 
         {/* Cart Items */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {cartItems.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-brand-dark/50 space-y-4 py-16">
-              <div className="w-20 h-20 bg-brand-beige/60 rounded-full flex items-center justify-center">
-                <FiShoppingCart className="w-10 h-10 text-brand-dark/30" style={{ color: 'inherit' }} />
-              </div>
-              <p className="font-medium text-brand-dark/60">Your cart is empty.</p>
+            <div className="flex flex-col items-center justify-center h-full text-brand-dark/50 space-y-4">
+              <BsBagHeartFill className="w-20 h-20 text-[#E2C7C0] opacity-80" />
+              <p className="text-lg font-medium text-[#7C6A5A]">Your cart is empty.</p>
             </div>
           ) : (
             cartItems.map((item) => {
@@ -190,92 +191,100 @@ export default function CartOffcanvas({ isOpen, onClose }) {
               return (
                 <div
                   key={`${item.product}-${item.variant || 'base'}-${item._id || ''}`}
-                  className="flex gap-3 p-3 bg-brand-beige/30 rounded-2xl border border-brand-medium/10 transition-all"
+                  className="flex flex-col gap-3 p-4 bg-white rounded-[24px] shadow-sm border border-[#E9E2D8] relative transition-all"
                 >
-                  {/* Image */}
-                  <div className="w-20 h-20 bg-white rounded-xl overflow-hidden shrink-0 border border-brand-medium/10 flex items-center justify-center">
-                    <img
-                      src={imgSrc}
-                      alt={item.name}
-                      className="w-full h-full object-cover"
-                      onError={(e) => { e.target.src = '/wood-placeholder.png'; }}
-                    />
-                  </div>
+                  <div className="flex gap-4">
+                    {/* Image */}
+                    <div className="w-24 h-24 bg-[#F5EFE6] rounded-[16px] overflow-hidden shrink-0 flex items-center justify-center border border-[#E9E2D8]/50">
+                      <img
+                        src={imgSrc}
+                        alt={item.name}
+                        className="w-full h-full object-cover mix-blend-multiply"
+                        onError={(e) => { e.target.style.display = 'none'; }}
+                      />
+                    </div>
 
-                  {/* Details */}
-                  <div className="flex-1 flex flex-col justify-between min-w-0">
-                    <div>
-                      <h4 className="font-bold text-sm text-brand-dark line-clamp-2 leading-snug">{item.name}</h4>
-                      {item.variantOptions && (
-                        <p className="text-xs text-brand-dark/60 mt-0.5 line-clamp-1">{item.variantOptions}</p>
-                      )}
-                      
-                      {Boolean(item.weight) && Number(item.weight) > 0 && (
-                        <p className="text-[10px] text-brand-dark/50 mt-0.5">
-                          Weight: {item.weight} kg
-                        </p>
-                      )}
-
-                      {item.isGift && (
-                        <div className="mt-1">
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#FFF0E6] text-[#D95F24] text-[9px] font-bold tracking-wider">
-                            <Gift className="w-2.5 h-2.5" />
-                            GIFT
-                          </span>
-                        </div>
-                      )}
-
-                      {/* Quantity Controls */}
-                      <div className="flex items-center gap-2 mt-2">
-                        <button
-                          type="button"
-                          onClick={() => handleDecrease(item)}
-                          className="w-7 h-7 flex items-center justify-center bg-white border border-brand-medium/30 rounded-lg text-brand-dark font-bold hover:bg-red-50 hover:border-red-200 hover:text-red-500 transition-colors"
-                          aria-label="Decrease quantity"
-                          title={item.qty <= 1 ? 'Remove item' : 'Decrease quantity'}
-                        >
-                          <Minus className="w-3 h-3" />
-                        </button>
-
-                        <span className="text-sm font-bold text-brand-dark w-6 text-center tabular-nums select-none">
-                          {item.qty}
-                        </span>
-
-                        <button
-                          type="button"
-                          onClick={() => handleIncrease(item)}
-                          disabled={isAtMax}
-                          className={`w-7 h-7 flex items-center justify-center bg-white border border-brand-medium/30 rounded-lg text-brand-dark font-bold transition-colors
-                            ${isAtMax ? 'opacity-40 cursor-not-allowed' : 'hover:bg-brand-light/50'}`}
-                          aria-label="Increase quantity"
-                          title={isAtMax ? `Maximum stock (${maxStock}) reached` : 'Increase quantity'}
-                        >
-                          <Plus className="w-3 h-3" />
-                        </button>
-
-                        {isAtMax && (
-                          <span className="text-[9px] text-amber-600 font-medium">Max</span>
+                    {/* Details */}
+                    <div className="flex-1 flex flex-col justify-between min-w-0 pr-6">
+                      <div>
+                        <h4 className="font-extrabold text-[#3F2B1F] text-[15px] line-clamp-2 leading-snug">{item.name}</h4>
+                        {item.variantOptions && (
+                          <p className="text-[12px] font-medium text-[#7C6A5A] mt-0.5 line-clamp-1">{item.variantOptions}</p>
                         )}
+                        
+                        {Boolean(item.weight) && Number(item.weight) > 0 && (
+                          <p className="text-[11px] font-medium text-[#7C6A5A] mt-0.5">
+                            Weight: {item.weight} kg
+                          </p>
+                        )}
+
+                        {item.isGift && (
+                          <div className="mt-1">
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#FFF0E6] text-[#D95F24] text-[10px] font-bold tracking-wider">
+                              <Gift className="w-3 h-3" />
+                              GIFT &amp; CARD
+                            </span>
+                          </div>
+                        )}
+
+                        <div className="font-extrabold text-[15px] text-[#3B7340] mt-1.5">
+                          ₹{(item.price).toLocaleString('en-IN')}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between mt-3">
+                        <div className="flex items-center bg-white rounded-lg border border-[#E9E2D8] h-9 shadow-sm px-1">
+                          <button
+                            type="button"
+                            onClick={() => handleDecrease(item)}
+                            className="w-10 h-full flex items-center justify-center text-[#7C6A5A] hover:text-[#3F2B1F] transition-colors disabled:opacity-30"
+                            aria-label="Decrease quantity"
+                            title={item.qty <= 1 ? 'Remove item' : 'Decrease quantity'}
+                          >
+                            <Minus className="w-3.5 h-3.5" />
+                          </button>
+
+                          <span className="w-8 text-center text-xs font-bold text-[#3F2B1F]">
+                            {item.qty}
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={() => handleIncrease(item)}
+                            disabled={isAtMax}
+                            className="w-10 h-full flex items-center justify-center text-[#7C6A5A] hover:text-[#3F2B1F] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        
+                        <div className="text-right">
+                          <div className="font-extrabold text-[15px] text-[#3B7340]">
+                            ₹{(item.price * item.qty).toLocaleString('en-IN')}
+                          </div>
+                          {isAtMax && (
+                            <div className="text-[10px] text-amber-600 font-medium leading-tight mt-0.5">
+                              Max stock reached
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-
-                    {/* Price + Remove */}
-                    <div className="flex items-center justify-between mt-1.5">
-                      <span className="font-bold text-sm text-brand-dark">
-                        ₹{(Number(item.price || 0) * Number(item.qty || 1)).toLocaleString('en-IN')}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => removeFromCart(item.product, item.variant)}
-                        className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Remove item"
-                        aria-label="Remove item"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                    {isAtMax && <CartVariantSuggestion productId={item.product} currentVariantId={item.variant} cartItems={cartItems} />}
                   </div>
+
+                  {/* Delete (Top Right Absolute) */}
+                  <div className="absolute top-4 right-4">
+                    <button
+                      onClick={() => removeFromCart(item.product, item.variant)}
+                      className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                      aria-label="Remove item"
+                      title="Remove item"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                  
+                  {isAtMax && <CartVariantSuggestion productId={item.product} currentVariantId={item.variant} cartItems={cartItems} />}
                 </div>
               );
             })
@@ -283,27 +292,30 @@ export default function CartOffcanvas({ isOpen, onClose }) {
         </div>
 
         {/* Footer */}
-        <div className="border-t border-brand-medium/20 p-5 bg-brand-beige/10 space-y-3">
-          <div className="flex justify-between items-center">
-            <span className="text-sm font-semibold text-brand-dark/70 uppercase tracking-wider">Subtotal</span>
-            <span className="font-serif text-2xl font-bold text-brand-dark">₹{total.toLocaleString('en-IN')}</span>
+        <div className="border-t border-[#E6DFD4] p-6 bg-[#FCF8F2] space-y-4">
+          <div className="flex justify-between items-center text-lg font-bold text-gray-900 pb-2">
+            <span>Total</span>
+            <span>₹{total.toFixed(2)}</span>
           </div>
-          <p className="text-xs text-brand-dark/50 text-center">Shipping &amp; fees calculated at checkout</p>
-          <button
-            type="button"
-            disabled={cartItems.length === 0}
-            onClick={handleCheckout}
-            className="w-full py-3.5 bg-brand-dark hover:bg-brand-medium text-white font-bold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md text-sm tracking-wide"
-          >
-            Checkout Securely →
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-full py-2.5 bg-transparent border border-brand-medium/30 text-brand-dark/70 font-medium rounded-xl transition-colors hover:bg-brand-beige/50 text-sm"
-          >
-            Continue Shopping
-          </button>
+
+          <div className="flex gap-3 mt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-3.5 bg-transparent border border-[#E6DFD4] text-gray-700 font-bold rounded-xl transition-colors hover:bg-white text-xs flex justify-center items-center"
+            >
+              ← Continue
+            </button>
+
+            <button
+              type="button"
+              disabled={cartItems.length === 0}
+              onClick={handleCheckout}
+              className="flex-1 py-3.5 bg-[#3E2723] hover:bg-[#2A1A17] text-white font-bold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md text-xs flex justify-center items-center gap-1"
+            >
+              Checkout →
+            </button>
+          </div>
         </div>
       </div>
     </>

@@ -12,6 +12,8 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import { IoLeaf } from 'react-icons/io5';
 import { FaWhatsapp } from 'react-icons/fa';
+import { BsBagHeartFill } from "react-icons/bs";
+import { RiHeartAdd2Line } from "react-icons/ri";
 
 const finishOptions = ['Natural Maple', 'Oak Tint'];
 const featureBullets = [
@@ -773,7 +775,7 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
   return (
     <>
       <section className="py-6 px-4 sm:px-6 lg:px-8 bg-[#FDF9F1] min-h-screen font-sans">
-        <div className="mx-auto max-w-7xl">
+        <div className="mx-auto container">
           <div className="mb-8">
             <button
               onClick={() => onNavigate('/')}
@@ -849,9 +851,7 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                   aria-label="Add to Wishlist"
                   title="Add to Wishlist"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" fill={isWishlisted ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
+                  <RiHeartAdd2Line className="h-4 w-4 sm:h-5 sm:w-5" />
                 </button>
                 <button
                   type="button"
@@ -1003,11 +1003,19 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                 <div className="pt-2">
                   {(() => {
                     const productVariants = product?.variants || [];
-                    const maxAllowedQty = selectedVariant
+                    let maxAllowedQty = selectedVariant
                       ? Math.max(0, (selectedVariant.inventory || 0) - (selectedVariant.reserveStock || 0))
                       : productVariants.length > 0
                         ? productVariants.reduce((sum, v) => sum + Math.max(0, (v.inventory || 0) - (v.reserveStock || 0)), 0)
                         : (product?.inventory?.stockQuantity || product?.stock || 0);
+
+                    // If maxAllowedQty is 0, it means we don't have stock info, fallback to 999 to allow adding
+                    if (maxAllowedQty === 0 && !product?.inventory && !product?.stock) {
+                         maxAllowedQty = 999;
+                    }
+
+                    const dynamicMaxOrderQty = product?.maxOrderQty || 6;
+                    maxAllowedQty = Math.min(maxAllowedQty, dynamicMaxOrderQty);
 
                     const isOutOfStock = maxAllowedQty === 0;
                     const isVariantRequiredButNotSelected = productAttributes.length > 0 && !selectedVariant;
@@ -1030,7 +1038,13 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                               <span className="text-[15px] font-medium text-slate-900 w-6 text-center">{maxAllowedQty === 0 ? 0 : quantity}</span>
                               <button
                                 type="button"
-                                onClick={() => setQuantity((value) => Math.min(maxAllowedQty, value + 1))}
+                                onClick={() => {
+                                  if (quantity >= maxAllowedQty) {
+                                    toast.error(`Maximum allowed quantity is ${maxAllowedQty}`);
+                                  } else {
+                                    setQuantity((value) => Math.min(maxAllowedQty, value + 1));
+                                  }
+                                }}
                                 disabled={quantity >= maxAllowedQty || maxAllowedQty === 0}
                                 className="flex items-center justify-center w-10 h-full text-slate-500 hover:text-slate-900 disabled:opacity-50 disabled:cursor-not-allowed"
                               >
@@ -1051,9 +1065,7 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                               : 'bg-[#6D3D14] text-white hover:bg-[#522c0e]'
                               }`}
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
+                            <BsBagHeartFill className="h-5 w-5" />
                             {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
                           </button>
                         </div>
@@ -1212,7 +1224,7 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
 
       {recommendedProducts.length > 0 && (
         <div className="bg-[#FDF9F1] px-4 py-10 md:px-6 lg:px-8">
-          <div className="mx-auto max-w-7xl">
+          <div className="mx-auto container">
             <div className="relative flex flex-col md:flex-row items-center justify-center mb-8 min-h-[40px]">
               <div className="flex justify-center items-center gap-3 sm:gap-4">
                 <IoLeaf className="text-[#B0611C] w-6 h-6 sm:w-8 sm:h-8" />

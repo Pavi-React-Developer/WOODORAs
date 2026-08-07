@@ -6,6 +6,7 @@ import { catalogService } from '../api/catalogService';
 import { productV2API } from '../api/catalogV2Service';
 import { bulkOrderService } from '../api/bulkOrderService';
 import { cmsService } from '../api/cmsService';
+import { authService } from '../api/authService';
 import { API_ORIGIN } from '../api/apiClient';
 
 export default function BulkOrderPage() {
@@ -59,7 +60,46 @@ export default function BulkOrderPage() {
       }
     };
     fetchData();
+
+    // Auto-submit pending form after login
+    const pendingOrderStr = localStorage.getItem('pending_bulk_order');
+    if (pendingOrderStr && authService.getCurrentUser()) {
+      try {
+        const pendingOrder = JSON.parse(pendingOrderStr);
+        localStorage.removeItem('pending_bulk_order');
+        setFormData(pendingOrder);
+        // Automatically trigger submit logic.
+        // Wait briefly for states to settle
+        setTimeout(() => {
+          submitOrderData(pendingOrder);
+        }, 500);
+      } catch (e) {
+        console.error('Failed to parse pending bulk order', e);
+        localStorage.removeItem('pending_bulk_order');
+      }
+    }
   }, []);
+
+  const submitOrderData = async (dataToSubmit) => {
+    setIsSubmitting(true);
+    try {
+      const data = await bulkOrderService.createBulkOrder(dataToSubmit);
+      if (data.success) {
+        toast.success('Bulk order request submitted successfully!');
+        setFormData({ category: '', subCategory: '', product: '', customFields: [] });
+        setFilteredSubCategories([]);
+        setFilteredProducts([]);
+        setSelectedProductDetails(null);
+        setErrors({});
+      } else {
+        toast.error(data.message || 'Failed to submit request');
+      }
+    } catch (err) {
+      toast.error(err.message || 'An error occurred. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const validateField = (fieldDef, value) => {
     let errorMsg = '';
@@ -187,24 +227,15 @@ export default function BulkOrderPage() {
       return;
     }
 
-    setIsSubmitting(true);
-    try {
-      const data = await bulkOrderService.createBulkOrder(formData);
-      if (data.success) {
-        toast.success('Bulk order request submitted successfully!');
-        setFormData({ category: '', subCategory: '', product: '', customFields: [] });
-        setFilteredSubCategories([]);
-        setFilteredProducts([]);
-        setSelectedProductDetails(null);
-        setErrors({});
-      } else {
-        toast.error(data.message || 'Failed to submit request');
-      }
-    } catch (err) {
-      toast.error(err.message || 'An error occurred. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+    const user = authService.getCurrentUser();
+    if (!user) {
+      localStorage.setItem('pending_bulk_order', JSON.stringify(formData));
+      localStorage.setItem('checkout_redirect', '/bulk-orders');
+      navigate('/login');
+      return;
     }
+
+    submitOrderData(formData);
   };
 
   const getImageUrl = (prod) => {

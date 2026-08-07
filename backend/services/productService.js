@@ -270,6 +270,22 @@ const getProducts = async (query = {}) => {
     const result = [];
     for (const prod of products) {
         const variants = await ProductVariant.find({ product: prod._id });
+        const variantOptions = await ProductVariantOption.find({ variant: { $in: variants.map(v => v._id) } }).populate('attribute', 'name slug');
+        
+        const mappedVariants = variants.map(v => {
+            const vObj = v.toObject();
+            vObj.options = variantOptions
+                .filter(vo => vo.variant.toString() === v._id.toString())
+                .map(vo => {
+                    const voObj = vo.toObject();
+                    voObj.attributeName = typeof vo.attribute === 'object' && vo.attribute?.name 
+                        ? vo.attribute.name 
+                        : voObj.attribute?.name || voObj.attributeName;
+                    return voObj;
+                });
+            return vObj;
+        });
+
         const images = await ProductImage.find({ product: prod._id }).sort({ displayOrder: 1 });
         const inventory = await Inventory.findOne({ product: prod._id });
         const pricing = buildProductPricing(prod.toObject(), variants, images.map(img => img.toObject()), inventory);
@@ -284,7 +300,7 @@ const getProducts = async (query = {}) => {
         result.push({
             ...prod.toObject(),
             ...pricing,
-            variants: variants.map(v => v.toObject()),
+            variants: mappedVariants,
             variantsCount: variants.length,
             totalStock: pricing.totalStock,
             inventory: inventory ? { sku: inventory.sku, stockQuantity: inventory.stockQuantity } : null,

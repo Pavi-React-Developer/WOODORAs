@@ -147,7 +147,17 @@ export default function App() {
 
   // Navigation handler (backwards compatible)
   const handleNavigate = (path, payload = null, options = {}) => {
-    if (payload && typeof payload === 'object') {
+    if (path === 'home') {
+      const redirect = localStorage.getItem('checkout_redirect');
+      if (redirect) {
+        localStorage.removeItem('checkout_redirect');
+        navigate(redirect, { replace: true, ...options });
+      } else {
+        navigate('/', { replace: true, ...options });
+      }
+    } else if (path === 'admin') {
+      navigate('/admin/dashboard', { replace: true, ...options });
+    } else if (payload && typeof payload === 'object') {
       navigate(path, { state: { data: payload }, ...options });
     } else if (payload) {
       navigate(`${path}/${payload}`, options);

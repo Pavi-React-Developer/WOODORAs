@@ -27,7 +27,7 @@ export default function CategoriesPage({ onNavigate }) {
 
   return (
     <div className="bg-[#FDF9F1] min-h-screen pt-4 pb-16 font-sans text-[#141225]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container px-4 sm:px-6 lg:px-8">
         
         {/* Breadcrumbs with generous margin top */}
         <div className="text-xs text-gray-500 mt-4 mb-8 flex items-center gap-2">
@@ -71,18 +71,18 @@ export default function CategoriesPage({ onNavigate }) {
                     className="flex flex-col items-center gap-3 cursor-pointer group py-2"
                     onClick={() => onNavigate(`/products?category=${c._id}`)}
                   >
-                    {/* Circle image */}
-                    <div className="relative w-28 h-28 md:w-36 md:h-36 rounded-full overflow-hidden ring-2 ring-[#E6DFD4] group-hover:ring-[#B0611C] transition-all duration-300 shadow-md group-hover:shadow-lg shrink-0">
+                    {/* Rounded rectangle card */}
+                    <div className="relative w-full aspect-[4/5] rounded-2xl overflow-hidden bg-[#FDF6EF] shadow-md group-hover:shadow-xl ring-1 ring-[#E6DFD4] group-hover:ring-[#B0611C] transition-all duration-300">
                       <img
                         src={imageSrc}
                         alt={c.name}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 group-hover:opacity-75"
-                        onError={e => e.target.style.display = 'none'}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        onError={e => e.target.src='/wood-placeholder.png'}
                       />
                       {/* Hover Overlay */}
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
-                        <span className="bg-white text-[#B0611C] text-[11px] md:text-xs font-bold px-3 py-1.5 rounded-full shadow-md transform translate-y-3 group-hover:translate-y-0 transition-all duration-300">
-                          Shop me
+                      <div className="absolute inset-0 bg-black/30 flex items-end justify-center pb-3 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                        <span className="bg-white text-[#B0611C] text-[11px] md:text-xs font-bold px-3 py-1.5 rounded-full shadow-md transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                          Shop Now
                         </span>
                       </div>
                     </div>

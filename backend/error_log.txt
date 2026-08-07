@@ -1,0 +1,8 @@
+ReferenceError: mongoose is not defined
+    at mergeWishlist (D:\Marakathai\backend\controllers\userController.js:278:61)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+VersionError: No matching document found for id "6a698b8543f1d7f67b2ca2d5" version 323 modifiedPaths "wishlist, wishlist.0, wishlist.0.qty"
+    at generateVersionError (D:\Marakathai\backend\node_modules\mongoose\lib\model.js:596:10)
+    at model.save (D:\Marakathai\backend\node_modules\mongoose\lib\model.js:658:30)
+    at mergeWishlist (D:\Marakathai\backend\controllers\userController.js:309:20)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)

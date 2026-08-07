@@ -249,11 +249,18 @@ const useCartStore = create(
         const variantOptions = optParts.join(' | ') || null;
 
         // ── Max Stock ──────────────────────────────────────────────────────
-        const maxStock = selectedVariant
+        let calculatedMaxStock = selectedVariant
           ? calcVariantStock(selectedVariant)
           : (product.variants && product.variants.length > 0)
             ? 0
-            : Number(product.inventory?.stockQuantity ?? product.stock ?? 999);
+            : Number(product.inventory?.stockQuantity ?? product.stock ?? 0);
+
+        if (calculatedMaxStock === 0 && !product.inventory && !product.stock) {
+             calculatedMaxStock = 999;
+        }
+
+        const dynamicMaxOrderQty = product?.maxOrderQty || 6;
+        const maxStock = Math.min(calculatedMaxStock, dynamicMaxOrderQty);
 
         if (maxStock <= 0 && !selectedVariant) {
           toast.error('Product is out of stock.');

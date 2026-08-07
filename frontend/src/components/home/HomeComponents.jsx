@@ -136,7 +136,7 @@ export function HomeReviews({ context = {} }) {
 
   return (
     <section className="py-5 bg-[#FDF9F1]">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container px-4 sm:px-6 lg:px-8">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
           <motion.div variants={fadeUp} className="relative flex flex-col md:flex-row items-center justify-center mb-5 min-h-[40px]">
             <div className="flex justify-center items-center gap-3 sm:gap-4">
@@ -541,7 +541,7 @@ function ThirdBannerItem({ bannerData, onNavigate }) {
           }
         `}</style>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container px-4 sm:px-6 lg:px-8">
         {bannerData.title && (
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="relative flex flex-col md:flex-row items-center justify-center mb-10 min-h-[40px]">
             <div className="flex justify-center items-center gap-3 sm:gap-4">
@@ -553,7 +553,7 @@ function ThirdBannerItem({ bannerData, onNavigate }) {
         )}
 
         {/* 2-column grid for banners */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 container">
 
           {/* LEFT banner */}
           <div className="overflow-hidden rounded-2xl shadow-sm relative group h-[30vh] md:h-[50vh] min-h-[220px] md:min-h-[350px] max-h-[500px]">
@@ -651,7 +651,7 @@ function ProductGridBlock({ grid, onNavigate, onAddToCart, onAddToWishlist, user
 
   return (
     <section className="py-5">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+      <div className="container px-4 sm:px-6 lg:px-8 relative">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
           <motion.div variants={fadeUp} className="relative flex flex-col md:flex-row items-center justify-center mb-5 min-h-[40px]">
             <div className="flex justify-center items-center gap-3 sm:gap-4">
@@ -772,7 +772,7 @@ export function HomeCategoryGrid({ context = {}, specificData }) {
 
   return (
     <section className="py-5">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container px-4 sm:px-6 lg:px-8">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
 
           {/* Header */}
@@ -917,7 +917,7 @@ function CategoriesGridBlock({ grid, onNavigate }) {
 
   return (
     <section className="py-4">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+      <div className="container px-4 sm:px-6 lg:px-8 relative">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
           <motion.div variants={fadeUp} className="relative flex flex-col md:flex-row items-center justify-center mb-5 min-h-[40px]">
             <div className="flex justify-center items-center gap-3 sm:gap-4">

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { User, MapPin, Package, UploadCloud, Edit3, HelpCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { customizeService } from '../api/customizeService';
 import { cmsService } from '../api/cmsService';
+import { authService } from '../api/authService';
 import { ImageUploader } from '../components/admin/ImageUploader';
 
 // Extracted Components to prevent re-renders on every keystroke
@@ -59,6 +61,7 @@ export default function CustomizePage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [banner, setBanner] = useState(null);
   const activeStepRef = React.useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Fetch banner
@@ -133,6 +136,23 @@ export default function CustomizePage() {
         initialDetails[f.label] = f.type === 'checkbox' ? false : '';
       });
       setFormData(prev => ({ ...prev, productDetails: initialDetails }));
+
+      // Auto-submit pending custom order after login
+      const pendingCustomStr = localStorage.getItem('pending_custom_order');
+      if (pendingCustomStr && authService.getCurrentUser()) {
+        try {
+          const pendingOrder = JSON.parse(pendingCustomStr);
+          localStorage.removeItem('pending_custom_order');
+          setFormData(pendingOrder);
+          setTimeout(() => {
+            submitOrderData(pendingOrder);
+          }, 500);
+        } catch (e) {
+          console.error('Failed to parse pending custom order', e);
+          localStorage.removeItem('pending_custom_order');
+        }
+      }
+
     } catch (error) {
       toast.error('Failed to load customize fields');
     }
@@ -245,24 +265,36 @@ export default function CustomizePage() {
       toast.error("Please agree to the terms & conditions.");
       return;
     }
+
+    const user = authService.getCurrentUser();
+    if (!user) {
+      localStorage.setItem('pending_custom_order', JSON.stringify(formData));
+      localStorage.setItem('checkout_redirect', '/customize');
+      navigate('/login');
+      return;
+    }
     
+    submitOrderData(formData);
+  };
+
+  const submitOrderData = async (dataToSubmit) => {
     setLoading(true);
 
-    const formattedProductDetails = Object.entries(formData.productDetails).map(([label, value]) => ({
+    const formattedProductDetails = Object.entries(dataToSubmit.productDetails).map(([label, value]) => ({
       label,
       value
     }));
     
-    if (formData.notes) {
-        formattedProductDetails.push({ label: 'Additional Notes', value: formData.notes });
+    if (dataToSubmit.notes) {
+        formattedProductDetails.push({ label: 'Additional Notes', value: dataToSubmit.notes });
     }
 
     try {
       await customizeService.submitRequest({
-        customerInfo: formData.customerInfo,
-        shippingAddress: formData.shippingAddress,
+        customerInfo: dataToSubmit.customerInfo,
+        shippingAddress: dataToSubmit.shippingAddress,
         productDetails: formattedProductDetails,
-        images: formData.images
+        images: dataToSubmit.images
       });
       toast.success('Your customization request has been submitted successfully!');
       
@@ -280,6 +312,7 @@ export default function CustomizePage() {
         agreed: false
       });
       setErrors({});
+      setCurrentStep(1);
     } catch (error) {
       toast.error(error.message || 'Failed to submit request');
     } finally {
@@ -293,13 +326,13 @@ export default function CustomizePage() {
         {(banner?.image?.url || banner?.image) && (
           <img src={banner.image.url || banner.image} alt="Customize Banner" className="absolute inset-0 w-full h-full object-cover opacity-50" />
         )}
-        <div className="relative z-10 max-w-7xl mx-auto w-full">
+        <div className="relative z-10 container mx-auto w-full">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">{banner?.title || 'Request a Custom Order'}</h1>
           <p className="text-[#D3C7BD] text-lg max-w-xl">{banner?.description || "Design your own handcrafted wooden toy. Share your idea, and we'll create it just for you."}</p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex items-center justify-start md:justify-center gap-4 text-xs font-semibold text-[#7A4B3A] overflow-x-auto whitespace-nowrap hide-scrollbar pb-4 md:pb-8">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 flex items-center justify-start md:justify-center gap-4 text-xs font-semibold text-[#7A4B3A] overflow-x-auto whitespace-nowrap hide-scrollbar pb-4 md:pb-8">
         {['Customer Details', 'Shipping Address', 'Product Configuration', 'Upload & Notes', 'Submit Request'].map((step, idx) => {
           const stepNum = idx + 1;
           const isActive = currentStep === stepNum;

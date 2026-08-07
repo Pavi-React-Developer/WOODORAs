@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { RiHeartAdd2Line } from "react-icons/ri";
 import {
   Bell,
   CalendarDays,
@@ -84,7 +85,7 @@ const modules = [
   { id: 'reviews', label: 'Reviews & Ratings', icon: Star },
   { id: 'cart', label: 'Cart', icon: ShoppingBag },
   { id: 'wallet', label: 'Wallet', icon: CreditCard },
-  { id: 'wishlist', label: 'Wishlist', icon: Heart },
+  { id: 'wishlist', label: 'Wishlist', icon: RiHeartAdd2Line },
   { id: 'refunds', label: 'Refunds', icon: ExternalLink },
   { id: 'gift-card', label: 'Gift & Card', icon: Gift },
 ];
@@ -1548,21 +1549,26 @@ export default function CustomerProfilePage({
     const exactProgress = progressMap[order.status] ?? 0;
     
     let displayProgress = exactProgress;
-    // Visually push the line and truck past the Packed node so it travels between Packed and Shipped
-    if (order.status === 'Packed') {
-      displayProgress = 1.3;
+    // Visually push the line and truck past the node so it travels between nodes
+    if (order.status === 'Placed') {
+      displayProgress = 0.5;
+    } else if (order.status === 'Packed') {
+      displayProgress = 1.5;
     } else if (order.status === 'Shipping') {
-      displayProgress = 1.7;
+      displayProgress = 2.5;
+    } else if (order.status === 'Out for delivery') {
+      displayProgress = 3.5;
     }
     const progressPercent = (displayProgress / (steps.length - 1)) * 100;
 
     const orderDate = new Date(order.createdAt);
-    const deliveryDate = new Date(orderDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const minDeliveryDate = new Date(orderDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const maxDeliveryDate = new Date(orderDate.getTime() + 10 * 24 * 60 * 60 * 1000);
 
     const getStepDate = (idx) => {
       if (idx === 0) return formatDate(order.createdAt);
       if (idx === steps.length - 1 && order.deliveredAt) return formatDate(order.deliveredAt);
-      if (idx === steps.length - 1 && currentStatusIndex >= 1) return formatDate(deliveryDate);
+      if (idx === steps.length - 1 && currentStatusIndex >= 1) return formatDate(maxDeliveryDate);
       return '';
     };
 
@@ -1575,62 +1581,64 @@ export default function CustomerProfilePage({
           <div>
             <h3 className="text-xl font-bold text-[#141225]">Order {order.status === 'Delivered' ? 'Delivered' : 'Placed'}</h3>
             {order.status !== 'Delivered' && (
-              <p className="text-[#6D625C] text-sm mt-0.5">Estimated Delivery by {formatDate(deliveryDate)}</p>
+              <p className="text-[#6D625C] text-sm mt-0.5">Estimated Delivery between {formatDate(minDeliveryDate)} and {formatDate(maxDeliveryDate)}</p>
             )}
           </div>
         </div>
 
-        <div className="relative flex items-start justify-between w-full mx-auto px-4 sm:px-8">
-          {/* Progress bar track */}
-          <div className="absolute top-4 left-10 right-10 h-1 bg-gray-200 rounded-full">
-            {/* Active progress bar */}
-            <div 
-              className="absolute top-0 left-0 h-full bg-emerald-500 rounded-full transition-all duration-500"
-              style={{ width: `${progressPercent}%` }}
-            />
-            {/* Current status icon / tooltip on the track */}
-            {(order.status === 'Packed' || order.status === 'Shipping') && (
+        <div className="w-full pb-4">
+          <div className="relative flex items-start justify-between w-full mx-auto px-2 sm:px-8">
+            {/* Progress bar track */}
+            <div className="absolute top-4 left-6 right-6 sm:left-12 sm:right-12 h-1 bg-gray-200 rounded-full">
+              {/* Active progress bar */}
               <div 
-                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-20 transition-all duration-500"
-                style={{ left: `${progressPercent}%` }}
-              >
-                <div className="relative flex justify-center items-center">
-                  <div className="bg-white rounded-full p-1 shadow-sm border border-[rgb(176,97,28)]/20 flex items-center justify-center">
-                    <Truck className="w-6 h-6 text-[rgb(176,97,28)] fill-current" />
-                  </div>
-                  <div className="absolute -top-11 bg-gray-800 text-white text-[10px] sm:text-xs font-bold px-2 py-1 rounded-lg shadow-lg flex items-center gap-1.5 whitespace-nowrap">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    Shipping Soon!
-                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45" />
+                className="absolute top-0 left-0 h-full bg-emerald-500 rounded-full transition-all duration-500"
+                style={{ width: `${progressPercent}%` }}
+              />
+              {/* Current status icon / tooltip on the track */}
+              {order.status !== 'Delivered' && (
+                <div 
+                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-20 transition-all duration-500"
+                  style={{ left: `${progressPercent}%` }}
+                >
+                  <div className="relative flex justify-center items-center">
+                    <div className="bg-white rounded-full p-1 shadow-sm border border-[rgb(176,97,28)]/20 flex items-center justify-center">
+                      <Truck className="w-5 h-5 sm:w-6 sm:h-6 text-[rgb(176,97,28)] fill-current" />
+                    </div>
+                    <div className="absolute -top-10 sm:-top-11 bg-gray-800 text-white text-[9px] sm:text-xs font-bold px-2 py-1 rounded-lg shadow-lg flex items-center gap-1.5 whitespace-nowrap">
+                      <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      In Progress!
+                      <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45" />
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+
+            {steps.map((step, idx) => {
+              const isCompleted = exactProgress >= idx;
+              const isCurrent = currentStatusIndex === idx;
+              
+              return (
+                <div key={step.id} className="relative z-10 flex flex-col items-center gap-1.5 sm:gap-2">
+                  <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center border-2 shadow-sm transition-colors duration-300 ${isCompleted ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-gray-300 text-transparent'}`}>
+                    {isCompleted ? <Check className="w-3 h-3 sm:w-4 sm:h-4" /> : <div className="w-1.5 h-1.5 sm:w-2.5 sm:h-2.5 rounded-full bg-gray-200" />}
+                  </div>
+
+                  {isCurrent && (idx === 2 || idx === 3) && (
+                    <div className="absolute top-0 -right-3 sm:-right-6 text-[rgb(176,97,28)] bg-white p-0.5 rounded-full z-20 shadow-sm border border-[rgb(176,97,28)]/20">
+                      <Truck className="w-3 h-3 sm:w-5 sm:h-5 fill-current" />
+                    </div>
+                  )}
+
+                  <div className="text-center mt-1 sm:mt-2 w-[52px] sm:w-20">
+                    <p className={`text-[8.5px] sm:text-xs font-bold leading-tight ${isCompleted ? 'text-[#141225]' : 'text-gray-400'}`}>{step.label}</p>
+                    <p className={`text-[7.5px] sm:text-[10px] mt-0.5 leading-tight ${isCompleted ? 'text-[#6D625C]' : 'text-transparent'}`}>{getStepDate(idx)}</p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-
-          {steps.map((step, idx) => {
-            const isCompleted = exactProgress >= idx;
-            const isCurrent = currentStatusIndex === idx;
-            
-            return (
-              <div key={step.id} className="relative z-10 flex flex-col items-center gap-2">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 shadow-sm transition-colors duration-300 ${isCompleted ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-gray-300 text-transparent'}`}>
-                  {isCompleted ? <Check className="w-4 h-4" /> : <div className="w-2.5 h-2.5 rounded-full bg-gray-200" />}
-                </div>
-
-                {isCurrent && (idx === 2 || idx === 3) && (
-                  <div className="absolute top-1 -right-4 sm:-right-6 text-[rgb(176,97,28)] bg-white p-0.5 rounded-full z-20 shadow-sm border border-[rgb(176,97,28)]/20">
-                    <Truck className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
-                  </div>
-                )}
-
-                <div className="text-center mt-2 w-16 sm:w-20">
-                  <p className={`text-[10px] sm:text-xs font-bold ${isCompleted ? 'text-[#141225]' : 'text-gray-400'}`}>{step.label}</p>
-                  <p className={`text-[9px] sm:text-[10px] mt-0.5 ${isCompleted ? 'text-[#6D625C]' : 'text-transparent'}`}>{getStepDate(idx)}</p>
-                </div>
-              </div>
-            );
-          })}
         </div>
       </div>
     );
@@ -1957,7 +1965,7 @@ export default function CustomerProfilePage({
         </div>
 
         {wishlistItems.length === 0 ? (
-          <EmptyState icon={Heart} title="Your wishlist is empty" text="Start adding toys you love." action="Explore Toys" onAction={() => onNavigate('/')} />
+          <EmptyState icon={RiHeartAdd2Line} title="Your wishlist is empty" text="Start adding toys you love." action="Explore Toys" onAction={() => onNavigate('/')} />
         ) : (
           <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {wishlistItems.map((item, index) => {

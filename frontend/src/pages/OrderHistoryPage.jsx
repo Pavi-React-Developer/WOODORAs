@@ -147,6 +147,28 @@ export default function OrderHistoryPage({ onNavigate, user }) {
                       <RefreshCw className="w-4 h-4" /> Buy Again
                     </button>
                   </div>
+                  
+                  {!['Delivered', 'Cancelled'].includes(order.status) && (
+                    <button 
+                      type="button"
+                      onClick={async () => {
+                        if (window.confirm('Are you sure you want to cancel this order?')) {
+                          try {
+                            setLoading(true);
+                            await orderService.cancelOrder(order._id);
+                            toast.success('Order cancelled successfully');
+                            fetchOrders();
+                          } catch (error) {
+                            toast.error(error.message || 'Failed to cancel order');
+                            setLoading(false);
+                          }
+                        }
+                      }}
+                      className="mt-3 w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-red-50 border border-red-200 text-red-600 text-xs font-bold transition-colors hover:bg-red-100 disabled:opacity-50"
+                    >
+                      Cancel Order
+                    </button>
+                  )}
                 </div>
 
                 {/* Desktop View */}
@@ -178,6 +200,27 @@ export default function OrderHistoryPage({ onNavigate, user }) {
                         {order.status}
                       </span>
                       <div className="flex gap-4 items-center">
+                        {!['Delivered', 'Cancelled'].includes(order.status) && (
+                          <button 
+                            type="button"
+                            onClick={async () => {
+                              if (window.confirm('Are you sure you want to cancel this order?')) {
+                                try {
+                                  setLoading(true);
+                                  await orderService.cancelOrder(order._id);
+                                  toast.success('Order cancelled successfully');
+                                  fetchOrders();
+                                } catch (error) {
+                                  toast.error(error.message || 'Failed to cancel order');
+                                  setLoading(false);
+                                }
+                              }
+                            }}
+                            className="text-sm font-bold text-red-500 hover:text-red-700 disabled:opacity-50"
+                          >
+                            Cancel
+                          </button>
+                        )}
                         {order.isPaid && (
                           <button 
                             onClick={() => handleDownloadInvoice(order._id)}

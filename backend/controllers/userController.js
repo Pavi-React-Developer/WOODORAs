@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const Staff = require('../models/Staff');
 const ProductImage = require('../models/catalog/ProductImage');
+const mongoose = require('mongoose');
 
 // @desc    Get all addresses for logged-in user
 // @route   GET /api/user/addresses
@@ -224,6 +225,7 @@ const toggleWishlist = async (req, res) => {
         const variantIdStr = variant && variant._id ? variant._id.toString() : (variant ? variant.toString() : null);
         const index = user.wishlist.findIndex(item => {
             const pId = item.product?._id || item.product || item;
+            if (!pId) return false;
             if (pId.toString() !== productId.toString()) return false;
             
             const vId = item.variant && item.variant._id ? item.variant._id.toString() : (item.variant ? item.variant.toString() : null);
@@ -288,18 +290,22 @@ const mergeWishlist = async (req, res) => {
             const variantIdStr = variant && variant._id ? variant._id.toString() : (variant ? variant.toString() : null);
             
             // Check if exists
-            const exists = user.wishlist.some(w => {
+            const existingItem = user.wishlist.find(w => {
                 const wPid = w.product?._id || w.product || w;
+                if (!wPid) return false;
                 if (wPid.toString() !== pid.toString()) return false;
                 
                 const wVid = w.variant && w.variant._id ? w.variant._id.toString() : (w.variant ? w.variant.toString() : null);
                 return wVid === variantIdStr;
             });
 
-            if (!exists) {
+            if (existingItem) {
+                existingItem.qty = qty;
+            } else {
                 user.wishlist.push({ product: pid, variant, qty });
             }
         }
+        user.markModified('wishlist');
         await user.save();
 
         await user.populate({
@@ -316,6 +322,8 @@ const mergeWishlist = async (req, res) => {
         const finalWishlist = await injectWishlistImages(user.wishlist || []);
         res.json({ success: true, wishlist: finalWishlist });
     } catch (error) {
+        console.error('Merge Wishlist Error:', error);
+        require('fs').appendFileSync('error_log.txt', error.stack + '\n');
         res.status(500).json({ message: error.message });
     }
 };

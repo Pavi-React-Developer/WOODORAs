@@ -263,7 +263,24 @@ exports.getProductGrids = asyncHandler(async (req, res) => {
         .filter(img => (typeof img === 'string' && img.trim().length > 0) || (typeof img === 'object' && img.url))
         .map(img => ({ url: typeof img === 'string' ? img : img.url, isThumbnail: false, displayOrder: 1 }));
 
-      const variants = await ProductVariant.find({ product: prod._id }).limit(3);
+      const variants = await ProductVariant.find({ product: prod._id });
+      const ProductVariantOption = require('../models/ProductVariantOption');
+      const variantOptions = await ProductVariantOption.find({ variant: { $in: variants.map(v => v._id) } }).populate('attribute', 'name slug');
+        
+      const mappedVariants = variants.map(v => {
+          const vObj = v.toObject();
+          vObj.options = variantOptions
+              .filter(vo => vo.variant.toString() === v._id.toString())
+              .map(vo => {
+                  const voObj = vo.toObject();
+                  voObj.attributeName = typeof vo.attribute === 'object' && vo.attribute?.name 
+                      ? vo.attribute.name 
+                      : voObj.attribute?.name || voObj.attributeName;
+                  return voObj;
+              });
+          return vObj;
+      });
+
       const pricing = productService.buildProductPricing(prod, variants, productImages.length > 0 ? productImages : fallbackImages);
 
       const Review = require('../models/Review');
@@ -277,6 +294,7 @@ exports.getProductGrids = asyncHandler(async (req, res) => {
       return {
         ...prod,
         ...pricing,
+        variants: mappedVariants,
         images: productImages.length > 0 ? productImages : fallbackImages,
         averageRating,
         reviewCount,
@@ -329,7 +347,24 @@ exports.getCategoryGrids = asyncHandler(async (req, res) => {
         .filter(img => (typeof img === 'string' && img.trim().length > 0) || (typeof img === 'object' && img.url))
         .map(img => ({ url: typeof img === 'string' ? img : img.url, isThumbnail: false, displayOrder: 1 }));
 
-      const variants = await ProductVariant.find({ product: prod._id }).limit(3);
+      const variants = await ProductVariant.find({ product: prod._id });
+      const ProductVariantOption = require('../models/ProductVariantOption');
+      const variantOptions = await ProductVariantOption.find({ variant: { $in: variants.map(v => v._id) } }).populate('attribute', 'name slug');
+        
+      const mappedVariants = variants.map(v => {
+          const vObj = v.toObject();
+          vObj.options = variantOptions
+              .filter(vo => vo.variant.toString() === v._id.toString())
+              .map(vo => {
+                  const voObj = vo.toObject();
+                  voObj.attributeName = typeof vo.attribute === 'object' && vo.attribute?.name 
+                      ? vo.attribute.name 
+                      : voObj.attribute?.name || voObj.attributeName;
+                  return voObj;
+              });
+          return vObj;
+      });
+
       const pricing = productService.buildProductPricing(prod, variants, productImages.length > 0 ? productImages : fallbackImages);
 
       const Review = require('../models/Review');
@@ -343,6 +378,7 @@ exports.getCategoryGrids = asyncHandler(async (req, res) => {
       return {
         ...prod,
         ...pricing,
+        variants: mappedVariants,
         images: productImages.length > 0 ? productImages : fallbackImages,
         averageRating,
         reviewCount,

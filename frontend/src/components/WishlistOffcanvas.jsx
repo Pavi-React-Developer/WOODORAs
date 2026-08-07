@@ -1,6 +1,6 @@
-import React from 'react';
-import { getImageSrc, normalizeImageValue } from '../utils/imageUtils';
-import { Minus, Plus } from 'lucide-react';
+import React, { useState } from 'react';
+import { Minus, Plus, ShoppingCart, Trash2, Gift, X } from 'lucide-react';
+import { RiHeartAdd2Line } from "react-icons/ri";
 import useWishlistStore from '../store/useWishlistStore';
 
 export default function WishlistOffcanvas({ isOpen, onClose, wishlistItems, onRemove, onMoveToCart }) {
@@ -22,13 +22,13 @@ export default function WishlistOffcanvas({ isOpen, onClose, wishlistItems, onRe
   const getEffectiveImage = (item) => {
     const variant = item.variant || item.selectedVariant;
     const prod = item.product || item;
-    
+
     let imgSrc = variant?.images?.find(img => img.isThumbnail)?.url || variant?.images?.[0]?.url || (typeof variant?.images?.[0] === 'string' ? variant.images[0] : null);
-    
+
     if (!imgSrc) {
-       imgSrc = prod?.images?.find(img => img.isThumbnail)?.url || prod?.images?.[0]?.url || (typeof prod?.images?.[0] === 'string' ? prod.images[0] : null) || (typeof prod?.image === 'object' ? prod.image?.url : prod?.image) || null;
+      imgSrc = prod?.images?.find(img => img.isThumbnail)?.url || prod?.images?.[0]?.url || (typeof prod?.images?.[0] === 'string' ? prod.images[0] : null) || (typeof prod?.image === 'object' ? prod.image?.url : prod?.image) || null;
     }
-    
+
     return imgSrc || '';
   };
 
@@ -36,15 +36,14 @@ export default function WishlistOffcanvas({ isOpen, onClose, wishlistItems, onRe
   const getVariantText = (item) => {
     let variant = item.variant || item.selectedVariant;
     const prod = item.product || item;
-    
-    // If variant is just an ID string/ObjectId, try to resolve it from product.variants
+
     if (variant && typeof variant === 'string' && prod.variants && Array.isArray(prod.variants)) {
-       variant = prod.variants.find(v => String(v._id || v.id) === String(variant)) || variant;
+      variant = prod.variants.find(v => String(v._id || v.id) === String(variant)) || variant;
     }
 
     const cap = (s) => (typeof s === 'string' ? s.charAt(0).toUpperCase() + s.slice(1) : s);
     const optParts = [];
-    
+
     if (variant && typeof variant === 'object' && ((Array.isArray(variant.options) && variant.options.length > 0) || variant.variantCombination || variant.color || variant.size || variant.weight)) {
       if (Array.isArray(variant.options) && variant.options.length > 0) {
         variant.options.forEach((opt) =>
@@ -62,37 +61,43 @@ export default function WishlistOffcanvas({ isOpen, onClose, wishlistItems, onRe
         optParts.push(`${cap(k)}: ${cap(v)}`);
       });
     }
-    return optParts.join(' | ') || null;
+    return optParts.length > 0 ? optParts.join(' | ') : '';
   };
 
   return (
     <>
       {/* Backdrop */}
-      <div 
+      <div
         className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] transition-opacity"
         onClick={onClose}
       />
-      
+
       {/* Offcanvas Panel */}
-      <div className="fixed inset-y-0 right-0 w-full max-w-sm bg-white shadow-2xl z-[60] flex flex-col transform transition-transform duration-300">
-        
+      <div className="fixed inset-y-0 right-0 w-full max-w-[420px] bg-[#FAF6F0] shadow-2xl z-[60] flex flex-col transform transition-transform duration-300">
+
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-brand-medium/20">
-          <h2 className="font-serif text-2xl font-bold text-brand-dark">Wishlist</h2>
-          <button 
+        <div className="relative px-8 pt-10 pb-6 flex flex-col">
+          <button
             onClick={onClose}
-            className="p-2 -mr-2 text-brand-dark/60 hover:text-brand-dark hover:bg-brand-light/40 rounded-full transition-colors"
+            className="absolute top-6 right-6 p-2 text-[#7C6A5A] hover:text-[#3F2B1F] bg-white/50 hover:bg-white rounded-full transition-colors"
           >
-            ✕
+            <X className="w-5 h-5" />
           </button>
+
+          <h2 className="font-serif text-3xl font-extrabold text-[#3F2B1F] flex items-center gap-2">
+            Wishlist<span className="text-2xl">🤎</span>
+          </h2>
+          <p className="text-xs font-semibold text-[#7C6A5A] mt-2">
+            Save your favorite toys and buy them later.
+          </p>
         </div>
 
         {/* Wishlist Items */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-4">
           {wishlistItems.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-brand-dark/50 space-y-3">
-              <span className="text-4xl">❤️</span>
-              <p>Your wishlist is empty.</p>
+            <div className="flex flex-col items-center justify-center h-full text-brand-dark/50 space-y-4">
+              <span className="text-6xl opacity-80">🤎</span>
+              <p className="text-lg font-medium text-[#7C6A5A]">Your wishlist is empty.</p>
             </div>
           ) : (
             wishlistItems
@@ -101,75 +106,126 @@ export default function WishlistOffcanvas({ isOpen, onClose, wishlistItems, onRe
                 return prod && prod._id && prod.name;
               })
               .map((item, index) => {
-              const prod = item.product || item;
-              const qty = item.qty || 1;
-              const effectivePrice = getEffectivePrice(item);
-              const firstImage = getEffectiveImage(item);
-              const variantText = getVariantText(item);
-              
-              return (
-                <div key={index} className="flex gap-4 p-3 bg-brand-beige/30 rounded-2xl border border-brand-medium/10">
-                  <div className="w-20 h-20 bg-white rounded-xl overflow-hidden shrink-0 border border-brand-medium/10 flex items-center justify-center">
-                    <img 
-                      src={firstImage || ''} 
-                      alt={prod.name} 
-                      className="w-full h-full object-cover"
-                      onError={(e) => { e.target.style.display = 'none'; }}
-                    />
-                  </div>
-                  <div className="flex-1 flex flex-col justify-between">
-                    <div>
-                      <h4 className="font-bold text-sm text-brand-dark line-clamp-2">{prod.name}</h4>
-                      {variantText && (
-                        <p className="text-xs text-brand-dark/60 mt-1 line-clamp-1">{variantText}</p>
-                      )}
+                const prod = item.product || item;
+                const qty = item.qty || 1;
+                const effectivePrice = getEffectivePrice(item);
+                const firstImage = getEffectiveImage(item);
+                const variantText = getVariantText(item);
+
+                const productVariants = prod?.variants || [];
+                let selectedVariantData = null;
+                if (item.variant && typeof item.variant === 'string' && Array.isArray(productVariants)) {
+                  selectedVariantData = productVariants.find(v => String(v._id || v.id) === String(item.variant));
+                } else if (item.variant && typeof item.variant === 'object') {
+                  selectedVariantData = item.variant;
+                }
+
+                let maxAllowedQty = selectedVariantData
+                  ? Math.max(0, (selectedVariantData.inventory || 0) - (selectedVariantData.reserveStock || 0))
+                  : productVariants.length > 0
+                    ? 0
+                    : (prod?.inventory?.stockQuantity || prod?.stock || 0);
+
+                if (maxAllowedQty === 0 && !prod?.inventory && !prod?.stock) {
+                  maxAllowedQty = 999;
+                }
+
+                const dynamicMaxOrderQty = prod?.maxOrderQty || 6;
+                maxAllowedQty = Math.min(maxAllowedQty, dynamicMaxOrderQty);
+
+                return (
+                  <div key={index} className="relative flex gap-4 p-4 bg-white rounded-[24px] shadow-sm border border-[#E9E2D8]">
+                    {/* Heart Icon (Remove) top right */}
+                    <div className="absolute top-4 right-4">
+                      <button
+                        onClick={() => onRemove(index)}
+                        className="w-8 h-8 rounded-full border border-red-100 flex items-center justify-center bg-white shadow-sm hover:bg-red-50 transition-colors"
+                      >
+                        <RiHeartAdd2Line className="w-4 h-4 text-[#E24A4A]" />
+                      </button>
                     </div>
-                    <div className="flex flex-col gap-2 mt-2">
-                      <span className="font-serif font-bold text-brand-dark">
-                        ₹{(effectivePrice * qty).toFixed(2)}
-                      </span>
-                      
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center bg-white rounded-lg border border-brand-medium/20 h-8">
-                          <button 
+
+                    {/* Image */}
+                    <div className="w-24 h-24 bg-[#F5EFE6] rounded-[16px] overflow-hidden shrink-0 flex items-center justify-center border border-[#E9E2D8]/50">
+                      <img
+                        src={firstImage || ''}
+                        alt={prod.name}
+                        className="w-full h-full object-cover mix-blend-multiply"
+                        onError={(e) => { e.target.style.display = 'none'; }}
+                      />
+                    </div>
+
+                    {/* Details */}
+                    <div className="flex-1 flex flex-col justify-between py-0.5">
+                      <div className="pr-10">
+                        <h4 className="font-extrabold text-[#3F2B1F] text-[14px] leading-tight line-clamp-2">{prod.name}</h4>
+                        <p className="text-[11px] font-semibold text-[#7C6A5A] mt-1 line-clamp-1">{variantText}</p>
+                        <span className="font-extrabold text-[#3B7340] text-[15px] mt-1.5 block">
+                          ₹{(effectivePrice * qty).toFixed(2)}
+                        </span>
+                      </div>
+
+                      <div className="flex items-start justify-between mt-3">
+                        {/* Qty Selector */}
+                        <div className="flex items-center bg-white rounded-lg border border-[#E9E2D8] h-9 shadow-sm px-1">
+                          <button
                             onClick={() => qty > 1 && updateQuantity(index, qty - 1)}
-                            className="w-8 h-full flex items-center justify-center text-brand-dark/60 hover:text-brand-dark transition-colors disabled:opacity-30"
+                            className="w-10 h-full flex items-center justify-center text-[#7C6A5A] hover:text-[#3F2B1F] transition-colors disabled:opacity-30"
                             disabled={qty <= 1}
                           >
-                            <Minus className="w-3 h-3" />
+                            <Minus className="w-3.5 h-3.5" />
                           </button>
-                          <span className="w-8 text-center text-sm font-semibold text-brand-dark">{qty}</span>
-                          <button 
-                            onClick={() => updateQuantity(index, qty + 1)}
-                            className="w-8 h-full flex items-center justify-center text-brand-dark/60 hover:text-brand-dark transition-colors"
+                          <span className="w-8 text-center text-xs font-bold text-[#3F2B1F]">{qty}</span>
+                          <button
+                            onClick={() => {
+                              if (qty >= maxAllowedQty) {
+                                toast.error(`Maximum allowed quantity is ${maxAllowedQty}`);
+                              } else {
+                                updateQuantity(index, qty + 1);
+                              }
+                            }}
+                            disabled={qty >= maxAllowedQty || maxAllowedQty === 0}
+                            className="w-10 h-full flex items-center justify-center text-[#7C6A5A] hover:text-[#3F2B1F] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                           >
-                            <Plus className="w-3 h-3" />
+                            <Plus className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+
+                        {/* Action buttons */}
+                        <div className="flex flex-col items-end gap-2">
+                          <button
+                            onClick={() => onMoveToCart(item, index)}
+                            className="flex items-center gap-1.5 bg-[#b1621d] hover:bg-[#8f4e17] text-white px-4 py-2 rounded-lg transition-colors shadow-sm"
+                          >
+                            <ShoppingCart className="w-4 h-4" />
+                            <span className="text-xs font-bold tracking-wide">Move to Cart</span>
                           </button>
                         </div>
                       </div>
-
-                      <div className="flex justify-between items-center mt-1">
-                        <button 
-                          onClick={() => onMoveToCart(item, index)}
-                          className="text-[10px] bg-brand-dark text-white px-2 py-1 rounded hover:bg-brand-medium transition-colors uppercase tracking-wide font-bold"
-                        >
-                          Move to Cart
-                        </button>
-                        <button 
-                          onClick={() => onRemove(index)}
-                          className="text-[10px] text-red-500 hover:text-red-700 font-bold uppercase tracking-wide"
-                        >
-                          Remove
-                        </button>
-                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })
+                );
+              })
+          )}
+
+          {wishlistItems.length > 0 && (
+            <div className="mt-8 bg-[#F3EADD] rounded-2xl p-4 flex items-center gap-4 relative overflow-hidden">
+              <div className="w-10 h-10 bg-[#E2D2B8] rounded-xl flex items-center justify-center shrink-0 shadow-inner">
+                <Gift className="w-5 h-5 text-[#886749]" />
+              </div>
+              <div className="z-10 relative">
+                <h4 className="font-extrabold text-sm text-[#4A2D1C]">Good choice!</h4>
+                <p className="text-[11px] font-semibold text-[#7C6A5A] mt-0.5">Add more toys to make playtime more joyful.</p>
+              </div>
+              {/* Decorative background element */}
+              <div className="absolute right-[-15px] bottom-[-20px] opacity-[0.08] transform rotate-12">
+                <RiHeartAdd2Line className="w-24 h-24 text-[#886749]" />
+              </div>
+            </div>
           )}
         </div>
       </div>
     </>
   );
 }
+

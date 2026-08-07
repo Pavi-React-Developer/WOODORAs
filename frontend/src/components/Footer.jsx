@@ -48,7 +48,7 @@ export default function Footer() {
 
   return (
     <footer className="bg-[#5C2E0E] border-t border-[#7A3F1A] pt-8 pb-6">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container px-4 sm:px-6 lg:px-8">
         
         {/* Columns with dynamic dividers */}
         <div className="flex flex-col md:flex-row gap-0 mb-8">
@@ -57,7 +57,7 @@ export default function Footer() {
           <div className="flex-1 space-y-4 px-6 md:pl-0 md:pr-10 py-4 md:py-0">
             <h3 className="font-serif text-xl font-bold text-white">
               {footerData?.logo && (
-                <img src={getImageSrc(footerData.logo)} alt="Logo" className="h-8 object-contain brightness-0 invert" />
+                <img src={getImageSrc(footerData.logo)} alt="Logo" className="fluid-logo object-contain h-auto max-h-12 brightness-0 invert" />
               )}
             </h3>
             <p className="text-xs text-white/60 leading-relaxed max-w-xs">

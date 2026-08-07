@@ -3,7 +3,8 @@ import SectionRenderer from '../components/home/SectionRenderer';
 import useCMSStore from '../store/useCMSStore';
 
 import { Loader2 } from 'lucide-react';
-import { FaStar, FaHeart, FaCircle } from "react-icons/fa";
+import { FaStar, FaCircle, FaHeart } from "react-icons/fa";
+import { RiHeartAdd2Line } from "react-icons/ri";
 import { TbTriangleFilled } from "react-icons/tb";
 import { BsFillPuzzleFill } from "react-icons/bs";
 import { MdAddBox } from "react-icons/md";
@@ -103,7 +104,7 @@ export default function Home({ user, cartItems, wishlistItems, onOpenCart, onOpe
             <img 
               src={cachedLogoUrl} 
               alt="Marakathai" 
-              className="relative z-10 h-16 md:h-20 w-auto object-contain animate-logo-pulse" 
+              className="relative z-10 h-24 md:h-32 w-auto object-contain animate-logo-pulse" 
               onError={() => setLogoError(true)}
             />
           ) : (

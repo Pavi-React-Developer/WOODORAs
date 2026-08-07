@@ -6,6 +6,8 @@ import { productV2API, categoryV2API } from '../api/catalogV2Service';
 import { API_ORIGIN } from '../api/apiClient';
 import { Link } from 'react-router-dom';
 import { getImageSrc } from '../utils/imageUtils';
+import { BsBagHeartFill } from "react-icons/bs";
+import { RiHeartAdd2Line } from "react-icons/ri";
 
 // Resolve any profile image format to a full URL
 const resolveProfileImage = (img) => {
@@ -106,6 +108,19 @@ export default function Header({
   useEffect(() => {
     if (navbarConfig?.logo) {
       setLogoError(false);
+
+      // Dynamically update browser tab favicon from CMS logo
+      const logoSrc = getImageSrc(navbarConfig.logo);
+      if (logoSrc) {
+        let link = document.querySelector("link[rel~='icon']");
+        if (!link) {
+          link = document.createElement('link');
+          link.rel = 'icon';
+          document.head.appendChild(link);
+        }
+        link.href = logoSrc;
+        link.type = 'image/png';
+      }
     }
   }, [navbarConfig]);
 
@@ -260,7 +275,7 @@ export default function Header({
         }}
       >
         {/* ── DESKTOP ROW 1: Logo | Wide Search Bar | Icon + Label Buttons ── */}
-        <div className="hidden lg:flex mx-auto max-w-[1500px] items-center justify-between gap-6 px-10 py-2">
+        <div className="hidden lg:flex container flex-row items-center justify-between gap-6 py-2">
 
           {/* Logo */}
           <button
@@ -272,7 +287,7 @@ export default function Header({
               <img
                 src={getImageSrc(navbarConfig?.logo)}
                 alt="Marakathai Logo"
-                className="h-10 w-[160px] object-contain scale-125 origin-left"
+                className="fluid-logo object-contain origin-left h-auto max-h-16"
                 onError={() => setLogoError(true)}
               />
             ) : !navbarLoading ? (
@@ -336,7 +351,7 @@ export default function Header({
                         ))}
                       </div>
                     )}
-                    <button onClick={() => { onNavigate(`/search?q=${searchQuery}`); setSearchQuery(''); }} className="w-full p-4 text-sm font-bold text-[#9C755A] hover:bg-[#FAF4EF] transition border-t border-[#E9DED3] mt-2">View All Results</button>
+                    <button onClick={() => { onNavigate(`/products?search=${searchQuery}`); setSearchQuery(''); }} className="w-full p-4 text-sm font-bold text-[#9C755A] hover:bg-[#FAF4EF] transition border-t border-[#E9DED3] mt-2">View All Results</button>
                   </div>
                 ) : !isSearching ? (
                   <div className="p-8 text-center text-[#7C7370]">No results found for "{searchQuery}"</div>
@@ -406,13 +421,15 @@ export default function Header({
             <button
               type="button"
               onClick={() => onOpenWishlist?.()}
-              className="relative flex flex-col items-center gap-1 hover:text-[#B1621D] transition-colors"
+              className="flex flex-col items-center gap-1 hover:text-[#B1621D] transition-colors"
               aria-label="Wishlist"
             >
-              <Heart className="h-[22px] w-[22px]" strokeWidth={1.5} />
-              {wishlistCount > 0 && (
-                <span className="absolute -right-1.5 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#9C755A] px-1 text-[9px] font-bold text-white shadow-sm">{wishlistCount}</span>
-              )}
+              <div className="relative">
+                <RiHeartAdd2Line className="h-[22px] w-[22px]" />
+                {wishlistCount > 0 && (
+                  <span className="absolute -right-1.5 -top-1.5 flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[#9C755A] px-1 text-[9px] font-bold text-white shadow-sm leading-none pt-[1px]">{wishlistCount}</span>
+                )}
+              </div>
               <span className="text-[11px] font-medium leading-none">Wishlist</span>
             </button>
 
@@ -420,13 +437,15 @@ export default function Header({
             <button
               type="button"
               onClick={() => onOpenCart?.()}
-              className="relative flex flex-col items-center gap-1 hover:text-[#B1621D] transition-colors"
+              className="flex flex-col items-center gap-1 hover:text-[#B1621D] transition-colors"
               aria-label="Cart"
             >
-              <ShoppingCart className="h-[22px] w-[22px]" strokeWidth={1.5} />
-              {cartCount > 0 && (
-                <span className="absolute -right-2 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#A87C4F] px-1 text-[9px] font-bold text-white shadow-sm">{cartCount}</span>
-              )}
+              <div className="relative">
+                <BsBagHeartFill className="h-[22px] w-[22px]" />
+                {cartCount > 0 && (
+                  <span className="absolute -right-1.5 -top-1.5 flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[#9C755A] px-1 text-[9px] font-bold text-white shadow-sm leading-none pt-[1px]">{cartCount}</span>
+                )}
+              </div>
               <span className="text-[11px] font-medium leading-none">Cart</span>
             </button>
           </div>
@@ -502,7 +521,7 @@ export default function Header({
                 <img
                   src={getImageSrc(navbarConfig?.logo)}
                   alt="Marakathai Logo"
-                  className="h-12 w-auto object-contain"
+                  className="fluid-logo object-contain h-auto max-h-12"
                   onError={() => setLogoError(true)}
                 />
               ) : !navbarLoading ? (
@@ -586,7 +605,7 @@ export default function Header({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && searchQuery.trim()) {
-                    onNavigate(`/search?q=${searchQuery}`);
+                    onNavigate(`/products?search=${searchQuery}`);
                     setSearchQuery('');
                     setIsSearchOpen(false);
                   }
@@ -636,7 +655,7 @@ export default function Header({
                         ))}
                       </div>
                     )}
-                    <button onClick={() => { onNavigate(`/search?q=${searchQuery}`); setSearchQuery(''); }} className="w-full p-4 text-sm font-bold text-[#9C755A] hover:bg-[#FAF4EF] transition border-t border-[#E9DED3] mt-2">View All Results</button>
+                    <button onClick={() => { onNavigate(`/products?search=${searchQuery}`); setSearchQuery(''); }} className="w-full p-4 text-sm font-bold text-[#9C755A] hover:bg-[#FAF4EF] transition border-t border-[#E9DED3] mt-2">View All Results</button>
                   </div>
                 ) : !isSearching ? (
                   <div className="p-8 text-center text-[#7C7370]">No results found for "{searchQuery}"</div>
@@ -736,7 +755,7 @@ export default function Header({
 
                   <button
                     onClick={() => {
-                      onNavigate(`/search?q=${searchQuery}`);
+                      onNavigate(`/products?search=${searchQuery}`);
                       setIsSearchOpen(false);
                     }}
                     className="w-full p-4 text-sm font-bold text-[#9C755A] hover:bg-[#FAF4EF] transition border-t border-[#E9DED3] mt-2"
@@ -822,7 +841,7 @@ export default function Header({
             className="relative transition hover:opacity-80 hidden lg:block"
             aria-label="Wishlist"
           >
-            <Heart className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px]" strokeWidth={1.5} />
+            <RiHeartAdd2Line className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px]" />
             {wishlistCount > 0 && (
               <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#9C755A] px-1 text-[9px] font-bold text-white shadow-sm">
                 {wishlistCount}
@@ -836,7 +855,7 @@ export default function Header({
             className="relative transition hover:opacity-80 hidden lg:block"
             aria-label="Cart"
           >
-            <ShoppingCart className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px]" strokeWidth={1.5} />
+            <BsBagHeartFill className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px]" />
             {cartCount > 0 && (
               <span className="absolute -right-2 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#A87C4F] px-1 text-[9px] font-bold text-white shadow-sm">
                 {cartCount}
@@ -1076,15 +1095,19 @@ export default function Header({
           <Package className="h-[22px] w-[22px]" strokeWidth={1.8} />
           <span className="text-[10px] font-semibold tracking-wide">Orders</span>
         </button>
-        <button type="button" onClick={() => onOpenWishlist?.()} className="flex flex-col items-center gap-1 text-[#b1621d] transition-colors relative">
-          <Heart className="h-[22px] w-[22px]" strokeWidth={1.8} />
+        <button type="button" onClick={() => onOpenWishlist?.()} className="flex flex-col items-center gap-1 text-[#b1621d] transition-colors">
+          <div className="relative">
+            <RiHeartAdd2Line className="h-[22px] w-[22px]" />
+            {wishlistCount > 0 && <span className="absolute -right-1.5 -top-1.5 flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[#9C755A] px-1 text-[9px] font-bold text-white shadow-sm leading-none pt-[1px]">{wishlistCount}</span>}
+          </div>
           <span className="text-[10px] font-semibold tracking-wide">Wishlist</span>
-          {wishlistCount > 0 && <span className="absolute -right-2 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#b1621d] px-1 text-[9px] font-bold text-white shadow-sm">{wishlistCount}</span>}
         </button>
-        <button type="button" onClick={() => onOpenCart?.()} className="flex flex-col items-center gap-1 text-[#b1621d] transition-colors relative">
-          <ShoppingCart className="h-[22px] w-[22px]" strokeWidth={1.8} />
+        <button type="button" onClick={() => onOpenCart?.()} className="flex flex-col items-center gap-1 text-[#b1621d] transition-colors">
+          <div className="relative">
+            <BsBagHeartFill className="h-[22px] w-[22px]" />
+            {cartCount > 0 && <span className="absolute -right-1.5 -top-1.5 flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[#9C755A] px-1 text-[9px] font-bold text-white shadow-sm leading-none pt-[1px]">{cartCount}</span>}
+          </div>
           <span className="text-[10px] font-semibold tracking-wide">Cart</span>
-          {cartCount > 0 && <span className="absolute -right-2 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#b1621d] px-1 text-[9px] font-bold text-white shadow-sm">{cartCount}</span>}
         </button>
       </div>
 

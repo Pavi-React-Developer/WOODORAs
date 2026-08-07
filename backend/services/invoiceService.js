@@ -31,312 +31,329 @@ const generateInvoice = async (order) => {
       doc.on('end', () => resolve(Buffer.concat(buffers)));
       doc.on('error', reject);
 
-      const greenColor = '#4a5d3f'; // Match screenshot green
-      const lightGreen = '#f0f3eb';
-      const grayText = '#6D625C';
-      
-      // Top Left Corner Arc/Shape
+      const colors = {
+        bg: '#FAF6F3',
+        textDark: '#4A3B32',
+        textLight: '#8A7B72',
+        boxBg: '#FCECE6',
+        line: '#EADCD2',
+        primary: '#765241',
+        secondary: '#A68270'
+      };
+
+      // Background color for the whole page
       doc.save()
-         .fillColor(greenColor)
-         .roundedRect(0, 0, 300, 30, 15)
-         .fill()
-         .restore();
-      
-      // Clear top left corner properly by just drawing a rectangle over the corner
-      doc.save()
-         .fillColor('#ffffff')
-         .rect(0, 0, 40, 40)
+         .fillColor(colors.bg)
+         .rect(0, 0, doc.page.width, doc.page.height)
          .fill()
          .restore();
          
+      // Border around the whole page
       doc.save()
-         .fillColor(greenColor)
-         .roundedRect(-20, -20, 200, 50, 25)
-         .fill()
+         .strokeColor(colors.line)
+         .lineWidth(1)
+         .roundedRect(15, 15, doc.page.width - 30, doc.page.height - 30, 10)
+         .stroke()
          .restore();
 
       // --- LOGO ---
-      const logoPath = path.join(__dirname, '../assets/brand-logo.jpeg');
-      if (fs.existsSync(logoPath)) {
-        doc.image(logoPath, 40, 50, { width: 140 });
-      } else {
-        doc.fontSize(24).fillColor(greenColor).text('Marakathai', 40, 60);
+      let logoDrawn = false;
+      try {
+        const CmsNavbar = require('../models/CmsNavbar');
+        const navbar = await CmsNavbar.findOne();
+        let logoUrlToFetch = null;
+        
+        if (navbar && navbar.logoUrl && navbar.logoUrl !== '/') {
+            logoUrlToFetch = navbar.logoUrl;
+        } else if (navbar && navbar.logo && navbar.logo.url) {
+            logoUrlToFetch = navbar.logo.url;
+        }
+        
+        if (logoUrlToFetch) {
+            if (logoUrlToFetch.startsWith('/uploads')) {
+               logoUrlToFetch = `http://localhost:5000${logoUrlToFetch}`;
+            }
+            const logoBuffer = await fetchImageBuffer(logoUrlToFetch);
+            doc.image(logoBuffer, 40, 40, { fit: [80, 80], align: 'center', valign: 'center' });
+            logoDrawn = true;
+        }
+      } catch (e) {
+          console.error('Failed to load dynamic CMS logo', e);
       }
 
-      // --- INVOICE HEADER (Right Side) ---
+      if (!logoDrawn) {
+        const logoPath = path.join(__dirname, '../assets/brand-logo.jpeg');
+        if (fs.existsSync(logoPath)) {
+          doc.image(logoPath, 40, 40, { width: 80 });
+          logoDrawn = true;
+        }
+      }
+      
       doc.font('Helvetica-Bold')
-         .fontSize(32)
-         .fillColor(greenColor)
-         .text('INVOICE', 350, 50, { align: 'right' });
+         .fontSize(24)
+         .fillColor(colors.textDark)
+         .text('MARAKATHAI', 130, 50);
+         
+      doc.font('Helvetica')
+         .fontSize(12)
+         .fillColor(colors.textLight)
+         .text('Every wood tells a story', 130, 75);
+
+      // --- INVOICE HEADER (Right Side) ---
+      doc.save()
+         .fillColor(colors.boxBg)
+         .roundedRect(400, 40, 160, 70, 8)
+         .fill()
+         .restore();
+
+      doc.font('Helvetica-Bold')
+         .fontSize(18)
+         .fillColor(colors.textDark)
+         .text('INVOICE', 400, 50, { width: 160, align: 'center' });
 
       doc.font('Helvetica')
          .fontSize(10)
-         .fillColor('#333333');
-      
-      // Detail lines
-      const detailStartX = 380;
-      let y = 100;
-      doc.text('Invoice Number', detailStartX, y);
-      doc.text(':', detailStartX + 70, y);
-      doc.text(`${order._id}`, detailStartX + 80, y);
-      y += 20;
+         .fillColor(colors.textLight)
+         .text(`#INV-${order._id.toString().slice(-8).toUpperCase()}`, 400, 75, { width: 160, align: 'center' });
+         
+      doc.text(`${new Date(order.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`, 400, 90, { width: 160, align: 'center' });
 
-      doc.text('Date', detailStartX, y);
-      doc.text(':', detailStartX + 70, y);
-      doc.text(`${new Date(order.createdAt).toLocaleDateString('en-IN')}`, detailStartX + 80, y);
-      y += 20;
-
-      doc.text('Status', detailStartX, y);
-      doc.text(':', detailStartX + 70, y);
+      // --- BILL TO / ORDER DETAILS ---
+      let y = 150;
       
-      // Status Badge
-      doc.save()
-         .fillColor('#FDE68A') // yellow badge
-         .roundedRect(detailStartX + 75, y - 4, 70, 18, 9)
-         .fill()
-         .restore();
+      // Headers
+      doc.font('Helvetica-Bold')
+         .fontSize(10)
+         .fillColor(colors.textDark)
+         .text('BILL TO', 40, y);
+         
+      doc.text('ORDER DETAILS', 320, y);
       
-      doc.fillColor('#92400E')
-         .font('Helvetica-Bold')
-         .text(`${order.status}`, detailStartX + 80, y, { width: 60, align: 'center' });
-      doc.fillColor('#333333').font('Helvetica');
-
-      // --- BILL TO / SHIP TO ---
-      y = 200;
-      
-      // Location Icon placeholder (circle)
-      doc.save()
-         .fillColor(greenColor)
-         .circle(60, y + 10, 15)
-         .fill()
-         .restore();
-      
-      doc.fillColor('#ffffff').fontSize(14).text('O', 55, y + 4);
-
-      doc.fillColor(greenColor)
-         .font('Helvetica-Bold')
-         .fontSize(11)
-         .text('BILL TO / SHIP TO', 90, y);
-      
-      doc.fillColor('#333333')
-         .fontSize(12);
-      
-      const addr = order.shippingAddress;
-      y += 20;
-      if (addr) {
-        doc.font('Helvetica-Bold').text(addr.fullName || 'Customer', 90, y);
-        doc.font('Helvetica').fontSize(10);
-        y += 18;
-        doc.text(addr.city || '', 90, y);
-        y += 15;
-        doc.text(`${addr.state || ''}, ${addr.country || 'India'}`, 90, y);
-      }
-
-      // Separator line
-      y += 30;
-      doc.strokeColor('#E6DFD4')
+      y += 15;
+      doc.strokeColor(colors.line)
          .lineWidth(1)
          .moveTo(40, y)
          .lineTo(250, y)
-         .dash(2, { space: 2 })
-         .stroke()
-         .undash();
-
-      // Phone
+         .stroke();
+         
+      doc.moveTo(320, y)
+         .lineTo(560, y)
+         .stroke();
+         
       y += 15;
+      
+      // Bill To Data
+      const addr = order.shippingAddress || {};
+      doc.font('Helvetica-Bold')
+         .fontSize(10)
+         .fillColor(colors.textDark)
+         .text(addr.fullName || 'Customer', 40, y);
+         
+      doc.font('Helvetica')
+         .fontSize(9)
+         .fillColor(colors.textLight);
+         
+      let billY = y + 15;
+      if (addr.street) { doc.text(addr.street, 40, billY); billY += 15; }
+      if (addr.city) { doc.text(`${addr.city}, ${addr.state || ''}`, 40, billY); billY += 15; }
+      if (addr.country) { doc.text(`${addr.state || ''}, ${addr.zipCode || ''}`, 40, billY); billY += 15; }
+      
+      doc.text(addr.email || order.userEmail || '', 40, billY); billY += 15;
+      doc.text(addr.phone || '', 40, billY);
+      
+      // Order Details Data
+      doc.font('Helvetica')
+         .fontSize(9)
+         .fillColor(colors.textLight);
+         
+      let orderY = y;
+      
+      const drawOrderRow = (label, value) => {
+        doc.fillColor(colors.textLight).text(label, 320, orderY);
+        doc.fillColor(colors.textDark).text(':', 400, orderY);
+        doc.fillColor(colors.textLight).text(value, 415, orderY);
+        orderY += 15;
+      };
+      
+      drawOrderRow('Order ID', `ORD-${order._id.toString().slice(-8).toUpperCase()}`);
+      drawOrderRow('Order Date', new Date(order.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }));
+      drawOrderRow('Payment Method', order.paymentMethod || 'Online');
+      drawOrderRow('Shipping Method', 'Standard Delivery');
+      
+      const estDate = new Date(order.createdAt);
+      estDate.setDate(estDate.getDate() + 7);
+      drawOrderRow('Delivery Date', estDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }));
+
+      // --- TABLE HEADER ---
+      y = Math.max(billY, orderY) + 30;
       doc.save()
-         .fillColor(greenColor)
-         .circle(60, y + 5, 15)
+         .fillColor(colors.boxBg)
+         .rect(40, y, 520, 30) // Full width header
          .fill()
          .restore();
-      doc.fillColor('#ffffff').fontSize(14).text('P', 55, y - 1);
-      
-      doc.fillColor('#333333')
-         .font('Helvetica')
-         .fontSize(10)
-         .text(`Phone: ${addr?.phone || 'N/A'}`, 90, y + 1);
+         
+      // Top and bottom borders for table header
+      doc.strokeColor(colors.line)
+         .lineWidth(1)
+         .moveTo(40, y).lineTo(560, y).stroke()
+         .moveTo(40, y + 30).lineTo(560, y + 30).stroke();
 
-      // --- DYNAMIC PRODUCT IMAGE (Right Side) ---
-      // Fetch the first product's image if available
-      try {
-        if (order.orderItems && order.orderItems.length > 0) {
-          const firstItem = order.orderItems[0];
-          let imgUrl = firstItem.image;
-          if (imgUrl) {
+      doc.fillColor(colors.textDark)
+         .font('Helvetica-Bold')
+         .fontSize(9);
+      
+      doc.text('PRODUCT', 50, y + 10);
+      doc.text('DESCRIPTION', 160, y + 10);
+      doc.text('QTY', 340, y + 10, { width: 30, align: 'center' });
+      doc.text('UNIT PRICE', 390, y + 10, { width: 80, align: 'center' });
+      doc.text('TOTAL', 480, y + 10, { width: 70, align: 'center' });
+
+      // --- TABLE ROWS ---
+      y += 30;
+      
+      const items = order.orderItems || [];
+      for (const item of items) {
+        const rowHeight = 70;
+        if (y + rowHeight > 620) {
+          doc.addPage();
+          // redraw background
+          doc.save().fillColor(colors.bg).rect(0, 0, doc.page.width, doc.page.height).fill().restore();
+          doc.save().strokeColor(colors.line).lineWidth(1).roundedRect(15, 15, doc.page.width - 30, doc.page.height - 30, 10).stroke().restore();
+          y = 50;
+        }
+
+        // Product Image Background
+        doc.save()
+           .fillColor('#FFFFFF')
+           .roundedRect(50, y + 10, 50, 50, 4)
+           .fill()
+           .restore();
+           
+        doc.save()
+           .strokeColor(colors.line)
+           .roundedRect(50, y + 10, 50, 50, 4)
+           .stroke()
+           .restore();
+
+        // Fetch Product Image
+        let imgUrl = item.image;
+        if (imgUrl) {
+          try {
             if (imgUrl.startsWith('/uploads')) {
                imgUrl = `http://localhost:5000${imgUrl}`;
             }
             const imgBuffer = await fetchImageBuffer(imgUrl);
-            doc.image(imgBuffer, 320, 170, { fit: [200, 150], align: 'center', valign: 'center' });
+            doc.image(imgBuffer, 52, y + 12, { fit: [46, 46], align: 'center', valign: 'center' });
+          } catch (err) {
+            console.error('Failed to load image for invoice', imgUrl);
           }
         }
-      } catch (err) {
-        console.error('Failed to load dynamic product image for PDF', err);
-      }
 
-      // --- TABLE HEADER ---
-      y = 350;
-      doc.save()
-         .fillColor(greenColor)
-         .roundedRect(40, y, 515, 30, 8) // Full width header
-         .fill()
-         .restore();
-
-      doc.fillColor('#ffffff')
-         .font('Helvetica-Bold')
-         .fontSize(10);
-      
-      doc.text('ITEM', 60, y + 10);
-      doc.text('DESCRIPTION', 180, y + 10);
-      doc.text('QTY', 330, y + 10, { width: 40, align: 'center' });
-      doc.text('UNIT PRICE', 390, y + 10, { width: 80, align: 'center' });
-      doc.text('TOTAL', 480, y + 10, { width: 60, align: 'center' });
-
-      // --- TABLE ROWS ---
-      y += 30;
-      doc.fillColor('#333333').font('Helvetica').fontSize(10);
-      
-      const items = order.orderItems || [];
-      items.forEach((item, idx) => {
-        const rowHeight = 70;
-        if (y + rowHeight > 600) {
-          doc.addPage();
-          y = 50;
-        }
-
-        // Left vertical border
-        doc.strokeColor('#E6DFD4').lineWidth(1);
-        doc.moveTo(40, y).lineTo(40, y + rowHeight).stroke();
-        // Right vertical border
-        doc.moveTo(555, y).lineTo(555, y + rowHeight).stroke();
-        // Inner vertical dividers
-        doc.moveTo(170, y).lineTo(170, y + rowHeight).stroke();
-        doc.moveTo(330, y).lineTo(330, y + rowHeight).stroke();
-        doc.moveTo(390, y).lineTo(390, y + rowHeight).stroke();
-        doc.moveTo(480, y).lineTo(480, y + rowHeight).stroke();
-        
-        // Item Image Box
-        doc.save()
-           .strokeColor('#E6DFD4')
-           .roundedRect(50, y + 10, 50, 50, 5)
-           .stroke()
-           .restore();
-
-        doc.font('Helvetica-Bold').text(item.name, 180, y + 25, { width: 140 });
+        // Product Details
+        doc.font('Helvetica-Bold').fontSize(10).fillColor(colors.textDark).text(item.name, 160, y + 15, { width: 170 });
         if (item.variant && item.variant.size) {
-            doc.font('Helvetica').fillColor(grayText).text(`(Size: ${item.variant.size})`, 180, y + 40, { width: 140 });
+            doc.font('Helvetica').fontSize(9).fillColor(colors.textLight).text(`Size: ${item.variant.size}`, 160, y + 30, { width: 170 });
+        } else {
+            doc.font('Helvetica').fontSize(9).fillColor(colors.textLight).text(`Handcrafted wooden toy`, 160, y + 30, { width: 170 });
         }
         
-        doc.fillColor('#333333').font('Helvetica');
-        doc.text(item.qty.toString(), 330, y + 30, { width: 40, align: 'center' });
-        doc.text(`Rs ${item.price.toLocaleString('en-IN')}`, 390, y + 30, { width: 80, align: 'center' });
-        doc.text(`Rs ${(item.price * item.qty).toLocaleString('en-IN')}`, 480, y + 30, { width: 60, align: 'center' });
+        doc.fillColor(colors.textDark).font('Helvetica').fontSize(10);
+        doc.text(item.qty.toString(), 340, y + 30, { width: 30, align: 'center' });
+        doc.text(`₹${item.price.toLocaleString('en-IN')}`, 390, y + 30, { width: 80, align: 'center' });
+        doc.text(`₹${(item.price * item.qty).toLocaleString('en-IN')}`, 480, y + 30, { width: 70, align: 'center' });
 
         y += rowHeight;
         
         // Bottom horizontal line for row
-        doc.strokeColor('#E6DFD4')
+        doc.strokeColor(colors.line)
            .moveTo(40, y)
-           .lineTo(555, y)
+           .lineTo(560, y)
            .stroke();
-      });
+      }
 
-      // --- TOTALS BOX ---
+      // --- BOTTOM SECTION ---
       y += 20;
+      
+      // NOTES
+      doc.font('Helvetica-Bold').fontSize(10).fillColor(colors.textDark).text('NOTES', 40, y);
+      
       doc.save()
-         .fillColor('#F8F8F8')
-         .roundedRect(300, y, 255, 120, 8)
-         .fill()
+         .strokeColor(colors.line)
+         .roundedRect(40, y + 15, 230, 80, 8)
+         .stroke()
          .restore();
+         
+      doc.font('Helvetica').fontSize(9).fillColor(colors.textLight)
+         .text('Thank you for shopping with Marakathai.', 50, y + 30, { width: 210 })
+         .text('We hope you and your little ones enjoy our wooden toys!', 50, y + 60, { width: 210 });
+         
+      // Heart Icon Text
+      doc.font('Helvetica').fontSize(10).fillColor(colors.textLight).text('♥', 40, y + 110);
+      doc.fillColor(colors.textDark).text('Every wood tells a story.', 55, y + 110);
+
+      // TOTALS
+      doc.save()
+         .strokeColor(colors.line)
+         .roundedRect(300, y - 10, 260, 140, 8)
+         .stroke()
+         .restore();
+         
+      let totalY = y + 5;
       
-      doc.strokeColor('#E6DFD4')
-         .roundedRect(300, y, 255, 120, 8)
-         .stroke();
-      
-      let totalY = y + 15;
-      doc.font('Helvetica').fontSize(10);
-      
-      const drawTotalRow = (label, value) => {
-        doc.fillColor('#333333').text(label, 320, totalY);
-        doc.fillColor('#333333').text(value, 450, totalY, { width: 85, align: 'right' });
+      const drawTotalRowDynamic = (label, value) => {
+        doc.font('Helvetica').fontSize(10).fillColor(colors.textLight).text(label, 320, totalY);
+        doc.fillColor(colors.textDark).text(`₹${value.toLocaleString('en-IN')}`, 460, totalY, { width: 80, align: 'right' });
         totalY += 20;
       };
 
-      drawTotalRow('Subtotal', `Rs ${order.subtotal ? order.subtotal.toLocaleString('en-IN') : 0}`);
+      if (order.subtotal) drawTotalRowDynamic('Subtotal', order.subtotal);
+      if (order.shipping_fee > 0) drawTotalRowDynamic('Shipping Charges', order.shipping_fee);
+      if (order.gift_fee > 0) drawTotalRowDynamic('Gift Fee', order.gift_fee);
       
-      if (order.shipping_fee > 0) {
-        drawTotalRow('Shipping Fee', `Rs ${order.shipping_fee.toLocaleString('en-IN')}`);
-      }
-      if (order.coupon_discount > 0) {
-        doc.fillColor(greenColor).text('Discount', 320, totalY);
-        doc.fillColor('#D97706').text(`- Rs ${order.coupon_discount.toLocaleString('en-IN')}`, 450, totalY, { width: 85, align: 'right' });
-        totalY += 20;
-      }
-      if (order.gift_fee > 0) {
-        drawTotalRow('Gift Fee', `Rs ${order.gift_fee.toLocaleString('en-IN')}`);
-      }
+      // As requested by user: Don't write static default tax, only show dynamic fees
+      if (order.tax && order.tax > 0) drawTotalRowDynamic(`Tax`, order.tax);
       
       totalY += 5;
-      // Divider
-      doc.strokeColor('#E6DFD4')
-         .moveTo(300, totalY)
-         .lineTo(555, totalY)
-         .stroke();
       
+      // TOTAL Line
+      doc.strokeColor(colors.line)
+         .moveTo(300, totalY)
+         .lineTo(560, totalY)
+         .stroke();
+         
       totalY += 15;
       
-      doc.fillColor(greenColor)
-         .font('Helvetica-Bold')
-         .fontSize(14)
-         .text('TOTAL', 320, totalY);
-         
-      doc.fillColor(greenColor)
-         .text(`Rs ${order.totalPrice ? order.totalPrice.toLocaleString('en-IN') : 0}`, 450, totalY, { width: 85, align: 'right' });
-
-      // --- THANK YOU BOX ---
-      const thankYouY = 650;
-      doc.save()
-         .fillColor(lightGreen)
-         .roundedRect(40, thankYouY, 515, 80, 8)
-         .fill()
-         .restore();
-
-      // Heart Icon Circle
-      doc.save()
-         .fillColor(greenColor)
-         .circle(90, thankYouY + 40, 25)
-         .fill()
-         .restore();
+      doc.font('Helvetica-Bold').fontSize(12).fillColor(colors.textDark).text('TOTAL', 320, totalY);
+      doc.text(`₹${(order.totalPrice || 0).toLocaleString('en-IN')}`, 460, totalY, { width: 80, align: 'right' });
       
-      doc.fillColor('#ffffff').fontSize(20).text('H', 81, thankYouY + 28);
+      totalY += 20;
 
-      doc.fillColor(greenColor)
-         .font('Helvetica-Bold')
-         .fontSize(16)
-         .text('Thank you!', 140, thankYouY + 20);
-         
-      doc.fillColor('#333333')
-         .font('Helvetica-Bold')
-         .fontSize(9)
-         .text('Thank you for shopping with Marakathai.', 140, thankYouY + 40);
+      // You Saved (if discount exists)
+      if (order.coupon_discount > 0) {
+        doc.save()
+           .fillColor(colors.boxBg)
+           .rect(300, totalY, 260, 35)
+           .fill()
+           .restore();
+           
+        doc.font('Helvetica-Bold').fontSize(10).fillColor(colors.textDark).text('You Saved', 320, totalY + 12);
+        doc.text(`₹${order.coupon_discount.toLocaleString('en-IN')}`, 460, totalY + 12, { width: 80, align: 'right' });
+      }
+
+      // --- FOOTER ---
+      const footerY = 750;
       
-      doc.font('Helvetica')
-         .text('We hope you enjoy your premium wooden toys!', 140, thankYouY + 52);
-
-      // --- BOTTOM FOOTER ---
-      doc.save()
-         .fillColor(greenColor)
-         .roundedRect(40, 750, 515, 30, 8)
-         .fill()
-         .restore();
-         
-      doc.fillColor('#ffffff')
-         .font('Helvetica')
-         .fontSize(9);
-         
-      doc.text('www.marakathai.com', 60, 760);
-      doc.text('support@marakathai.com', 220, 760);
-      doc.text('+91 97899 66044', 380, 760);
+      doc.font('Helvetica').fontSize(9).fillColor(colors.textLight);
+      
+      // Emulating a clean footer layout
+      doc.text('www.marakathai.com', 40, footerY, { width: 140, align: 'center' });
+      doc.strokeColor(colors.line).moveTo(190, footerY).lineTo(190, footerY + 10).stroke();
+      doc.text('marakathai3@gmail.com', 200, footerY, { width: 160, align: 'center' });
+      doc.strokeColor(colors.line).moveTo(370, footerY).lineTo(370, footerY + 10).stroke();
+      doc.text('+91 9876543210', 380, footerY, { width: 140, align: 'center' });
+      
+      doc.text('Thank you for choosing Marakathai!', 40, footerY + 30, { width: 520, align: 'center' });
+      doc.text('Crafted with love ♥', 40, footerY + 45, { width: 520, align: 'center' });
 
       doc.end();
     } catch (error) {

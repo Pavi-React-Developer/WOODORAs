@@ -87,9 +87,11 @@ export default function ShopPage({ onNavigate, onAddToCart, onAddToWishlist, use
     const searchParams = new URLSearchParams(location.search);
     const category = searchParams.get('category');
     const sort = searchParams.get('sort');
+    const search = searchParams.get('search');
 
     const fetchParams = { isActive: 'true' };
     if (category && !selectedCategory) fetchParams.category = category;
+    if (search) fetchParams.search = search;
 
     setLoading(true);
     productV2API.getAll(fetchParams)
@@ -174,7 +176,7 @@ export default function ShopPage({ onNavigate, onAddToCart, onAddToWishlist, use
   });
 
   const getProductPrice = (p) => {
-    if (p.hasVariants && p.variants && p.variants.length > 0) {
+    if (p.variants && p.variants.length > 0) {
       return Math.min(...p.variants.map((v) => v.discountPrice || v.salePrice || v.basePrice || v.price || 0));
     }
     return p.discountPrice || p.salePrice || p.basePrice || p.price || 0;
@@ -434,7 +436,7 @@ export default function ShopPage({ onNavigate, onAddToCart, onAddToWishlist, use
         }
       `}</style>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container px-4 sm:px-6 lg:px-8">
 
         {/* Breadcrumbs with mt-4/mt-6 margin top */}
         <div className="text-xs text-gray-500 mt-4 mb-6 flex items-center gap-2">
@@ -550,25 +552,21 @@ export default function ShopPage({ onNavigate, onAddToCart, onAddToWishlist, use
 
         {/* Product Grid */}
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
             {[1, 2, 3, 4, 5, 6, 7, 8].map(n => (
               <div key={n} className="animate-pulse bg-white rounded-2xl h-80 border border-gray-100 shadow-sm" />
             ))}
           </div>
         ) : paginatedProducts.length > 0 ? (
-          <div className={viewMode === 'grid' ? "grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6 mb-12" : "flex flex-col gap-4 sm:gap-6 mb-12"}>
+          <div className={viewMode === 'grid' ? "grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 mb-12" : "flex flex-col gap-4 sm:gap-6 mb-12"}>
             {paginatedProducts.map(product => (
               <ProductCard
                 key={product._id}
                 product={product}
                 viewMode={viewMode}
                 onNavigate={onNavigate}
-                onAddToCart={(p) => {
-                  onAddToCart?.(p);
-                }}
-                onAddToWishlist={(p) => {
-                  onAddToWishlist?.(p);
-                }}
+                onAddToCart={onAddToCart}
+                onAddToWishlist={onAddToWishlist}
                 user={user}
               />
             ))}

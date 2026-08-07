@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { BsBagHeartFill } from "react-icons/bs";
+import { RiHeartAdd2Line } from "react-icons/ri";
 import { API_ORIGIN } from '../api/apiClient';
 import useWishlistStore from '../store/useWishlistStore';
 
@@ -25,7 +27,7 @@ export default function ProductCard({ product, viewMode = 'grid', onNavigate, on
 
   const getPricingInfo = (p) => {
     let listPrice = 0, salePrice = 0;
-    if (p.hasVariants && p.variants && p.variants.length > 0) {
+    if (p.variants && p.variants.length > 0) {
       listPrice = Math.min(...p.variants.map((v) => v.basePrice || v.price || 0));
       salePrice = Math.min(...p.variants.map((v) => v.discountPrice || v.salePrice || v.basePrice || v.price || 0));
     } else {
@@ -44,7 +46,7 @@ export default function ProductCard({ product, viewMode = 'grid', onNavigate, on
       setIsAdding(true);
       try {
         let defaultVariant = null;
-        if (p.hasVariants && p.variants && p.variants.length > 0) {
+        if (p.variants && p.variants.length > 0) {
             defaultVariant = p.variants[0];
         }
         await onAddToCart?.(p, 1, defaultVariant);
@@ -56,7 +58,7 @@ export default function ProductCard({ product, viewMode = 'grid', onNavigate, on
       setLocalWishlist(!isCurrentlyWishlisted);
       
       let defaultVariant = null;
-      if (p.hasVariants && p.variants && p.variants.length > 0) {
+      if (p.variants && p.variants.length > 0) {
           defaultVariant = p.variants[0];
       }
       
@@ -90,7 +92,7 @@ export default function ProductCard({ product, viewMode = 'grid', onNavigate, on
       whileHover="hover"
       animate="rest"
       onClick={() => onNavigate(`/product/${product._id}`)}
-      className={`group cursor-pointer bg-white rounded-2xl overflow-hidden border border-[#E6DFD4] shadow-sm hover:shadow-md transition-shadow flex ${viewMode === 'list' ? 'flex-row h-auto' : 'flex-col h-auto'}`}
+      className={`group cursor-pointer bg-white rounded-2xl overflow-hidden border border-[#E6DFD4] shadow-sm hover:shadow-md transition-shadow flex ${viewMode === 'list' ? 'flex-row h-auto' : 'flex-col h-auto w-full max-w-[420px] mx-auto'}`}
     >
       <div className={`relative overflow-hidden shrink-0 ${viewMode === 'list' ? 'w-[140px] sm:w-[320px] aspect-square sm:aspect-[4/3]' : 'aspect-[4/5] md:aspect-[4/3]'}`}>
         {imgSrc ? (
@@ -112,30 +114,26 @@ export default function ProductCard({ product, viewMode = 'grid', onNavigate, on
             </svg>
           </div>
         )}
-        <div className={`absolute flex flex-col gap-2 z-10 ${viewMode === 'list' ? 'top-2 right-2 sm:top-3 sm:right-3' : 'top-2 right-2'}`}>
+        <div className={`absolute flex flex-col gap-2 z-10 ${viewMode === 'list' ? 'top-2 right-2 sm:top-3 sm:right-3' : 'top-2 right-2 sm:top-[1vw] sm:right-[1vw]'}`}>
           <motion.button
             whileTap={{ scale: 0.7 }}
             transition={{ type: "spring", stiffness: 400, damping: 10 }}
             onClick={(e) => { e.stopPropagation(); handleAction('Wishlist', product, e); }}
-            className={`bg-white rounded-full flex items-center justify-center hover:shadow-md transition-all shadow-sm ${viewMode === 'list' ? 'w-6 h-6 sm:w-10 sm:h-10' : 'w-7 h-7 sm:w-8 sm:h-8'}`}
+            className={`bg-white rounded-full flex items-center justify-center hover:shadow-md transition-all shadow-sm ${viewMode === 'list' ? 'w-6 h-6 sm:w-10 sm:h-10' : 'w-[clamp(28px,2.5vw,36px)] h-[clamp(28px,2.5vw,36px)]'}`}
           >
-            <svg className={`transition-colors duration-300 ${localWishlist ? 'text-red-500 fill-red-500 scale-110' : 'text-[#999999] hover:text-[#B1621F] fill-none'} ${viewMode === 'list' ? 'w-3 h-3 sm:w-5 sm:h-5' : 'w-3.5 h-3.5 sm:w-4 sm:h-4'}`} stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
+            <RiHeartAdd2Line className={`transition-colors duration-300 ${localWishlist ? 'text-red-500 fill-red-500 scale-110' : 'text-[#999999] hover:text-red-500'} ${viewMode === 'list' ? 'w-3 h-3 sm:w-5 sm:h-5' : 'w-[clamp(14px,1.2vw,18px)] h-[clamp(14px,1.2vw,18px)]'}`} />
           </motion.button>
           
           <motion.button
             whileTap={{ scale: 0.7 }}
             transition={{ type: "spring", stiffness: 400, damping: 10 }}
             onClick={(e) => { e.stopPropagation(); handleAction('Cart', product, e); }}
-            className={`bg-white rounded-full flex items-center justify-center hover:shadow-md transition-all shadow-sm text-[#999999] hover:text-[#B1621F] ${viewMode === 'list' ? 'w-6 h-6 sm:w-10 sm:h-10' : 'w-7 h-7 sm:w-8 sm:h-8'}`}
+            className={`bg-white rounded-full flex items-center justify-center hover:shadow-md transition-all shadow-sm text-[#999999] hover:text-[#B1621F] ${viewMode === 'list' ? 'w-6 h-6 sm:w-10 sm:h-10' : 'w-[clamp(28px,2.5vw,36px)] h-[clamp(28px,2.5vw,36px)]'}`}
           >
             {isAdding ? (
-               <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-[#B1621F] border-t-transparent rounded-full animate-spin" />
+               <div className={`border-2 border-[#B1621F] border-t-transparent rounded-full animate-spin ${viewMode === 'list' ? 'w-3 h-3 sm:w-4 sm:h-4' : 'w-[clamp(12px,1vw,16px)] h-[clamp(12px,1vw,16px)]'}`} />
             ) : (
-               <svg className={`${viewMode === 'list' ? 'w-3 h-3 sm:w-5 sm:h-5' : 'w-3.5 h-3.5 sm:w-4 sm:h-4'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-               </svg>
+               <BsBagHeartFill className={`${viewMode === 'list' ? 'w-3 h-3 sm:w-5 sm:h-5' : 'w-[clamp(14px,1.2vw,18px)] h-[clamp(14px,1.2vw,18px)]'}`} />
             )}
           </motion.button>
         </div>

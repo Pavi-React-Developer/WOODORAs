@@ -281,7 +281,7 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
 
   return (
     <div className="bg-[#FAF4EF] min-h-screen py-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+      <div className="container px-4 sm:px-6 lg:px-8 space-y-12">
         
         {/* Top Hero Section */}
         {dynamicBanner ? (

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Heart, ShoppingBag, ArrowLeft } from 'lucide-react';
+import { ShoppingBag, ArrowLeft } from 'lucide-react';
+import { RiHeartAdd2Line } from "react-icons/ri";
 import { getImageSrc, normalizeImageValue } from '../utils/imageUtils';
 
 export default function WishlistPage({ wishlistItems, onRemove, onMoveToCart, onNavigate }) {
@@ -35,7 +36,7 @@ export default function WishlistPage({ wishlistItems, onRemove, onMoveToCart, on
       <div className="min-h-screen bg-[#F8F4EC] flex flex-col items-center justify-center p-4">
         <div className="bg-white p-8 rounded-3xl shadow-sm border border-[#E6DFD4] text-center max-w-md w-full">
           <div className="w-20 h-20 bg-[#F8F4EC] rounded-full flex items-center justify-center mx-auto mb-6">
-            <Heart className="w-10 h-10 text-rose-500 fill-rose-100" />
+            <RiHeartAdd2Line className="w-10 h-10 text-[#AA7327]" />
           </div>
           <h2 className="text-2xl font-bold text-gray-800 mb-3">Your Wishlist is Empty</h2>
           <p className="text-gray-500 mb-8">Save items you love here to easily find and purchase them later.</p>
