@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Tag, ChevronDown, Check, X, Download, RefreshCw , SquarePen , Trash } from 'lucide-react';
+import { Download, Plus, SquarePen, Trash, RefreshCw, X, PlusCircle, Settings2 } from 'lucide-react';
+import Pagination from '../../../components/common/Pagination';
 import { attributeV2API, categoryV2API, subCategoryV2API } from '../../../api/catalogV2Service';
 import { downloadExcelFile } from '../../../utils/exportUtils';
 import { SearchBar, Button, Badge, Card } from '../../../components/admin/CommonComponents';
@@ -7,6 +8,15 @@ import ConfirmDialog from '../../../components/admin/ConfirmDialog';
 
 export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = true }) => {
     const [attributes, setAttributes] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
+
+  const toggleSelectAll = (checked) => {
+    setSelectedIds(checked ? attributes.map(item => item._id) : []);
+  };
+
+  const toggleSelectOne = (id, checked) => {
+    setSelectedIds(prev => checked ? [...prev, id] : prev.filter(i => i !== id));
+  };
     const [categories, setCategories] = useState([]);
     const [subCategories, setSubCategories] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -141,7 +151,7 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
         }
         setNewValue('');
         setErrorMsg('');
-        setIsFormOpen(true);
+        window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + (editId || arguments[0] ? '/edit' : '/add')); setIsFormOpen(true);
     };
 
     const handleSave = async (e) => {
@@ -155,7 +165,7 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
             } else {
                 await attributeV2API.create(formData);
             }
-            setIsFormOpen(false);
+            (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setIsFormOpen(false));
             fetchAttributes();
         } catch (err) {
             setErrorMsg(err.message || 'Failed to save attribute');
@@ -291,10 +301,9 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                         <Download size={16} /> Export Excel
                     </button>
                     {canCreate && (
-                    <Button onClick={() => handleOpenForm()} className="shadow-lg hover:shadow-xl transition-all">
-                        <Plus size={20} />
-                        Add Attribute
-                    </Button>
+                    <button onClick={() => handleOpenForm()} className="admin-btn">
+                        <Plus size={16} /> Add Attribute
+                    </button>
                     )}
                 </div>
             </div>
@@ -337,55 +346,86 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                 </select>
             </Card>
 
-            {/* Table */}
-            <Card className="overflow-hidden">
+            {/* Bulk Actions */}
+      {selectedIds.length > 0 && (
+        <div className="bg-[#F8F4EC] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3">
+          <span className="text-sm font-semibold text-[#8B5E3C]">{selectedIds.length} selected</span>
+          <div className="flex gap-2 ml-auto">
+             {typeof handleBulkDelete !== 'undefined' && (
+                <button onClick={handleBulkDelete} className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">Delete Selected</button>
+             )}
+            <button onClick={() => setSelectedIds([])} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-white transition-colors text-gray-500">Clear</button>
+          </div>
+        </div>
+      )}
+
+      {/* Table */}
+            <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                <th className="px-6 py-4">Attribute Name</th>
-                                <th className="px-6 py-4">Mapping</th>
-                                <th className="px-6 py-4">System Code</th>
-                                <th className="px-6 py-4">Type</th>
-                                <th className="px-6 py-4">Options/Values</th>
-                                <th className="px-6 py-4">Validation</th>
-                                <th className="px-6 py-4 text-right">Actions</th>
+                    <table className="w-full text-sm">
+                        <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
+                            <tr>
+                                <th className="px-4 py-3.5 w-10">
+                                    <input
+                                        type="checkbox"
+                                        checked={attributes.length > 0 && selectedIds.length === attributes.length}
+                                        onChange={e => toggleSelectAll(e.target.checked)}
+                                        className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                                    />
+                                </th>
+                                {['Attribute Name', 'Mapping', 'System Code', 'Type', 'Options/Values', 'Validation', 'Actions'].map(h => (
+                                    <th key={h} className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">{h}</th>
+                                ))}
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100 text-sm text-gray-700">
+                        <tbody>
                             {loading ? (
-                                <tr>
-                                    <td colSpan="7" className="text-center py-8 text-gray-400">
-                                        <div className="w-8 h-8 border-4 border-amber-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                                <tr><td colSpan={8} className="text-center py-16 text-gray-400">
+                                    <div className="flex items-center justify-center gap-2">
+                                        <div className="w-4 h-4 border-2 border-[#8B5E3C] border-t-transparent rounded-full animate-spin" />
                                         Loading attributes...
-                                    </td>
-                                </tr>
+                                    </div>
+                                </td></tr>
                             ) : attributes.length === 0 ? (
-                                <tr>
-                                    <td colSpan="7" className="text-center py-8 text-gray-400">
-                                        No attributes configured yet.
-                                    </td>
-                                </tr>
+                                <tr><td colSpan={8} className="text-center py-16 text-gray-400">
+                                    <div className="flex flex-col items-center gap-3">
+                                        <div className="w-12 h-12 bg-[#F8F4EC] rounded-full flex items-center justify-center text-2xl">🏷️</div>
+                                        <p className="font-medium">No attributes configured yet.</p>
+                                    </div>
+                                </td></tr>
                             ) : (
-                                attributes.map((attr) => (
-                                    <tr key={attr._id} className="hover:bg-gray-50/50 transition-colors">
-                                        <td className="px-6 py-4">
-                                            <p className="font-semibold text-gray-900">{attr.name}</p>
+                                attributes.map((attr, idx) => (
+                                    <tr
+                                        key={attr._id}
+                                        className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}
+                                    >
+                                        <td className="px-4 py-3.5">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedIds.includes(attr._id)}
+                                                onChange={e => toggleSelectOne(attr._id, e.target.checked)}
+                                                className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                                            />
+                                        </td>
+                                        <td className="px-4 py-3.5">
+                                            <p className="font-semibold text-gray-800">{attr.name}</p>
                                             {attr.description && <p className="text-xs text-gray-400 mt-0.5">{attr.description}</p>}
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <p className="text-xs font-semibold text-gray-900">{attr.category?.name || 'Unmapped'}</p>
+                                        <td className="px-4 py-3.5">
+                                            <p className="text-xs font-semibold text-[#8B5E3C]">{attr.category?.name || 'Unmapped'}</p>
                                             <p className="text-xs text-gray-500">{attr.subCategory?.name || '-'}</p>
                                         </td>
-                                        <td className="px-6 py-4 text-gray-500 font-mono text-xs">{attr.code || '-'}</td>
-                                        <td className="px-6 py-4">
-                                            <Badge variant="amber">{attr.type}</Badge>
+                                        <td className="px-4 py-3.5">
+                                            <code className="text-xs bg-[#F8F4EC] text-[#8B5E3C] px-2 py-1 rounded-md font-mono">{attr.code || '-'}</code>
                                         </td>
-                                        <td className="px-6 py-4 max-w-xs">
+                                        <td className="px-4 py-3.5">
+                                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">{attr.type}</span>
+                                        </td>
+                                        <td className="px-4 py-3.5 max-w-xs">
                                             {attr.values && attr.values.length > 0 ? (
                                                 <div className="flex flex-wrap gap-1">
                                                     {attr.values.slice(0, 4).map((v, i) => (
-                                                        <span key={i} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                                                        <span key={i} className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-[#F8F4EC] border border-[#E6DFD4] text-gray-700">
                                                             {attr.type === 'ColorPicker' && (
                                                                 <span className="w-2.5 h-2.5 rounded-full mr-1.5 border border-black/10" style={{ backgroundColor: v.colorCode }} />
                                                             )}
@@ -393,41 +433,43 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                                                         </span>
                                                     ))}
                                                     {attr.values.length > 4 && (
-                                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-500">
+                                                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-500">
                                                             +{attr.values.length - 4} more
                                                         </span>
                                                     )}
                                                 </div>
                                             ) : (
-                                                <span className="text-gray-400 text-xs italic">No values defined</span>
+                                                <span className="text-[#8B5E3C] text-xs italic opacity-70">No values defined</span>
                                             )}
                                         </td>
-                                        <td className="px-6 py-4">
+                                        <td className="px-4 py-3.5">
                                             <div className="flex flex-wrap gap-1">
-                                                {attr.isRequired && <Badge size="sm" variant="red">Required</Badge>}
-                                                {attr.isSearchable && <Badge size="sm" variant="green">Searchable</Badge>}
-                                                {attr.isFilterable && <Badge size="sm" variant="amber">Filterable</Badge>}
+                                                {attr.isRequired && <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">Required</span>}
+                                                {attr.isSearchable && <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">Searchable</span>}
+                                                {attr.isFilterable && <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">Filterable</span>}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-right flex justify-end gap-2">
-                                            {canEdit && (
-                                            <button
-                                                onClick={() => handleOpenForm(attr)}
-                                                className="text-blue-600 hover:text-blue-700 transition-colors"
-                                                title="Edit"
-                                            >
-                                                <SquarePen size={16} />
-                                            </button>
-                                            )}
-                                            {canDelete && (
-                                            <button
-                                                onClick={() => handleDeleteClick(attr._id)}
-                                                className="text-red-500 hover:text-red-600 transition-colors"
-                                                title="Delete"
-                                            >
-                                                <Trash size={16} />
-                                            </button>
-                                            )}
+                                        <td className="px-4 py-3.5">
+                                            <div className="flex gap-2 justify-end">
+                                                {canEdit && (
+                                                    <button
+                                                        onClick={() => handleOpenForm(attr)}
+                                                        className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
+                                                        title="Edit"
+                                                    >
+                                                        <SquarePen size={16} />
+                                                    </button>
+                                                )}
+                                                {canDelete && (
+                                                    <button
+                                                        onClick={() => handleDeleteClick(attr._id)}
+                                                        className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
+                                                        title="Delete"
+                                                    >
+                                                        <Trash size={16} />
+                                                    </button>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
@@ -437,30 +479,16 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                 </div>
 
                 {/* Pagination */}
-                {totalPages > 1 && (
-                    <div className="flex justify-between items-center px-6 py-4 border-t border-gray-100 bg-gray-50">
-                        <span className="text-xs text-gray-500">Page {page} of {totalPages}</span>
-                        <div className="flex gap-2">
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                disabled={page === 1}
-                                onClick={() => setPage(p => p - 1)}
-                            >
-                                Previous
-                            </Button>
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                disabled={page === totalPages}
-                                onClick={() => setPage(p => p + 1)}
-                            >
-                                Next
-                            </Button>
-                        </div>
-                    </div>
-                )}
-            </Card>
+                <div className="px-5 py-3 border-t border-[#E6DFD4] flex flex-col sm:flex-row justify-center items-center bg-[#FAFAFA] gap-4">
+                    <Pagination
+                        currentPage={page}
+                        totalPages={totalPages}
+                        onPageChange={setPage}
+                        className="flex items-center justify-center gap-2 flex-wrap"
+                    />
+                </div>
+            </div>
+
 
             {/* Create/Edit Attribute Form Drawer */}
             {isFormOpen && (
@@ -471,7 +499,7 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                                 {editId ? 'Edit Attribute' : 'Create Attribute'}
                             </h2>
                             <button
-                                onClick={() => setIsFormOpen(false)}
+                                onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setIsFormOpen(false))}
                                 className="text-gray-400 hover:text-gray-600 p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
                             >
                                 ✕
@@ -705,7 +733,7 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                             </div>
 
                             <div className="flex justify-end gap-3 pt-6 border-t border-gray-100">
-                                <Button variant="secondary" type="button" onClick={() => setIsFormOpen(false)}>
+                                <Button variant="secondary" type="button" onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setIsFormOpen(false))}>
                                     Cancel
                                 </Button>
                                 <Button variant="primary" type="submit" loading={formLoading}>

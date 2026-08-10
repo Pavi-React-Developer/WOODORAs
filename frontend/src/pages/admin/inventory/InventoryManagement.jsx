@@ -112,7 +112,7 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
         });
         toast.success('Variant stock updated successfully');
       }
-      setEditModalOpen(false);
+      (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setEditModalOpen(false));
       setSelectedVariantId('');
       fetchInventoryData();
     } catch (error) {
@@ -222,7 +222,7 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
       setEditCurrentStock(item.currentStock || 0);
       setEditReserveStock(item.reserveStock || 0);
     }
-    setEditModalOpen(true);
+    window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setEditModalOpen(true);
   };
 
 
@@ -549,7 +549,7 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
           <div className="modal-content" style={{maxWidth: '400px'}}>
             <div className="modal-header flex justify-between items-center pb-3 border-b border-[#E6DFD4]">
               <h3 className="modal-title font-bold">Edit Stock</h3>
-              <button className="text-red-500 hover:text-red-600 transition-colors" onClick={() => setEditModalOpen(false)}>
+              <button className="text-red-500 hover:text-red-600 transition-colors" onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setEditModalOpen(false))}>
                 <X size={20} />
               </button>
             </div>
@@ -630,7 +630,7 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
                   )}
                 </div>
                 <div className="mt-6 flex justify-end gap-3">
-                  <button onClick={() => setEditModalOpen(false)} className="px-4 py-2.5 text-xs uppercase font-bold tracking-wider text-brand-dark bg-white border border-[#E6DFD4] hover:bg-gray-50 rounded-xl">Cancel</button>
+                  <button onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setEditModalOpen(false))} className="px-4 py-2.5 text-xs uppercase font-bold tracking-wider text-brand-dark bg-white border border-[#E6DFD4] hover:bg-gray-50 rounded-xl">Cancel</button>
                   <button onClick={handleUpdateStock} className="px-5 py-2.5 text-xs uppercase font-bold tracking-wider bg-brand-dark text-white rounded-xl hover:bg-black transition-colors shadow-sm">Save Changes</button>
                 </div>
               </div>

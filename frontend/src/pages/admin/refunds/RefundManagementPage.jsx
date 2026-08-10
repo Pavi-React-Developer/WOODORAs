@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Download, Search, ChevronDown, ChevronLeft, ChevronRight, Eye, X, CheckCircle2, RefreshCw } from 'lucide-react';
+import Pagination from '../../../components/common/Pagination';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import toast from 'react-hot-toast';
 import { adminService } from '../../../api/adminService';
@@ -8,6 +9,15 @@ import { useConfigStore } from '../../../store/useConfigStore';
 
 export default function RefundManagementPage({ canEdit = true, canDelete = true }) {
   const [refunds, setRefunds] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
+
+  const toggleSelectAll = (checked) => {
+    setSelectedIds(checked ? refunds.map(item => item._id) : []);
+  };
+
+  const toggleSelectOne = (id, checked) => {
+    setSelectedIds(prev => checked ? [...prev, id] : prev.filter(i => i !== id));
+  };
   const [loading, setLoading] = useState(true);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [activeViewRefund, setActiveViewRefund] = useState(null);
@@ -402,19 +412,27 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
         </div>
 
         {/* Data Table */}
-        <div className="bg-white border border-[#E9DED3] rounded-[14px] shadow-sm overflow-hidden mb-6">
+        <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[800px]">
-              <thead>
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
                 <tr className="bg-[#FAF8F5] border-b border-[#E9DED3]">
-                  <th className="px-6 py-4 text-[10px] font-bold text-[#6D625C] uppercase tracking-wider">Order ID</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-[#6D625C] uppercase tracking-wider">Customer</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-[#6D625C] uppercase tracking-wider">Amount</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-[#6D625C] uppercase tracking-wider text-center">Payment Type</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-[#6D625C] uppercase tracking-wider text-center">SLA Timeline</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-[#6D625C] uppercase tracking-wider text-center">Status</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-[#6D625C] uppercase tracking-wider text-center">Refund</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-[#6D625C] uppercase tracking-wider text-center">Action</th>
+                                <th className="px-4 py-3.5 w-10">
+                                    <input
+                                        type="checkbox"
+                                        checked={refunds.length > 0 && selectedIds.length === refunds.length}
+                                        onChange={e => toggleSelectAll(e.target.checked)}
+                                        className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                                    />
+                                </th>
+                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Order ID</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Customer</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Amount</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Payment Type</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">SLA Timeline</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Status</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Refund</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E9DED3]">
@@ -426,26 +444,26 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
                     </td>
                   </tr>
                 ) : currentRefunds.map((refund, idx) => (
-                  <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="px-6 py-4 text-xs font-bold text-[#141225]">{refund.orderId}</td>
-                    <td className="px-6 py-4 text-xs text-[#141225]">{refund.customerName}</td>
-                    <td className="px-6 py-4 text-xs font-bold text-[#141225]">₹{refund.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                    <td className="px-6 py-4 text-center">
+                  <tr key={idx} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${typeof idx !== "undefined" ? (idx % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : typeof index !== "undefined" ? (index % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : "bg-white"}`}>
+                    <td className="px-4 py-3.5 text-xs font-bold text-[#141225]">{refund.orderId}</td>
+                    <td className="px-4 py-3.5 text-xs text-[#141225]">{refund.customerName}</td>
+                    <td className="px-4 py-3.5 text-xs font-bold text-[#141225]">₹{refund.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-4 py-3.5 text-center">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tracking-wide ${refund.paymentType === 'Cashfree' ? 'text-blue-500 bg-blue-50' : 'text-purple-500 bg-purple-50'}`}>
                         {refund.paymentType}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-center">
+                    <td className="px-4 py-3.5 text-center">
                       <span className={`text-[10px] font-bold ${refund.slaTimeline !== '-' ? 'text-orange-400' : 'text-gray-400'}`}>
                         {refund.slaTimeline}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-center">
+                    <td className="px-4 py-3.5 text-center">
                       <span className={`inline-block px-3 py-1 rounded text-[10px] font-bold ${getStatusStyle(refund.status)}`}>
                         {refund.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-center">
+                    <td className="px-4 py-3.5 text-center">
                       {/* Step 2: Approve button (only for Approval Pending) */}
                       {(refund.status === 'Approval Pending' || refund.status === 'Pending') && canEdit && (
                         <button
@@ -471,7 +489,7 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-center">
+                    <td className="px-4 py-3.5 text-center">
                       <button onClick={() => openViewModal(refund)} className="text-green-600 hover:text-green-700 transition-colors">
                         <Eye size={16} />
                       </button>
@@ -490,47 +508,16 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
           </div>
 
           {/* Pagination */}
-          <div className="px-6 py-4 border-t border-[#E9DED3] flex items-center justify-between">
-            <span className="text-xs text-[#8A817C] font-medium">
+          <div className="px-4 py-3.5 border-t border-[#E9DED3] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <span className="text-xs text-[#8A817C] font-medium text-center sm:text-left">
               Showing {filteredRefunds.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredRefunds.length)} of {filteredRefunds.length} results
             </span>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-                className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 text-gray-500 transition-colors disabled:opacity-50"
-              >
-                <ChevronLeft size={16} />
-              </button>
-
-              {Array.from({ length: totalPages }).map((_, idx) => {
-                const pageNum = idx + 1;
-                if (totalPages > 5 && (pageNum < currentPage - 1 || pageNum > currentPage + 1) && pageNum !== 1 && pageNum !== totalPages) {
-                  if (pageNum === currentPage - 2 || pageNum === currentPage + 2) return <span key={idx} className="px-1 text-gray-400">...</span>;
-                  return null;
-                }
-                return (
-                  <button
-                    key={pageNum}
-                    onClick={() => setCurrentPage(pageNum)}
-                    className={`w-8 h-8 flex items-center justify-center rounded font-bold text-xs shadow-sm transition-colors ${currentPage === pageNum
-                        ? 'bg-[#8B5E3C] text-white'
-                        : 'hover:bg-gray-100 text-[#4A403B]'
-                      }`}
-                  >
-                    {pageNum}
-                  </button>
-                );
-              })}
-
-              <button
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                disabled={currentPage === totalPages}
-                className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 text-gray-500 transition-colors disabled:opacity-50"
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
+            <Pagination 
+              currentPage={currentPage} 
+              totalPages={totalPages} 
+              onPageChange={setCurrentPage} 
+              className="flex items-center justify-center gap-2 flex-wrap"
+            />
           </div>
         </div>
 

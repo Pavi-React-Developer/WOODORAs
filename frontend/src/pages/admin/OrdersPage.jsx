@@ -7,6 +7,9 @@ import OrderPricingSummary from '../../components/OrderPricingSummary';
 
 export default function OrdersPage({ canView = true, canEdit = true, canDelete = true }) {
   const [orders, setOrders] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showViewModal, setShowViewModal] = useState(false);
@@ -235,6 +238,30 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
     return matchId || matchUser || matchShipping;
   });
 
+  const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE);
+  const paginatedOrders = filteredOrders.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  // Reset to page 1 when search changes
+  React.useEffect(() => { setCurrentPage(1); }, [searchTerm]);
+
+  const getPaginationPages = (current, total) => {
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    if (current <= 4) return [1, 2, 3, 4, 5, '...', total];
+    if (current >= total - 3) return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+    return [1, '...', current - 1, current, current + 1, '...', total];
+  };
+
+  const toggleSelectAll = (checked) => {
+    setSelectedIds(checked ? filteredOrders.map(item => item._id) : []);
+  };
+
+  const toggleSelectOne = (id, checked) => {
+    setSelectedIds(prev => checked ? [...prev, id] : prev.filter(i => i !== id));
+  };
+
   const normalizeOrderStatus = (status) => {
     if (!status) return 'Pending';
     const canonical = String(status).trim();
@@ -338,28 +365,44 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
 
       <div className="bg-white rounded-3xl shadow-sm border border-[#E6DFD4] overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-gray-50 border-b border-[#E6DFD4] text-xs uppercase tracking-wider text-gray-500 font-semibold">
-                <th className="px-6 py-4">Order ID & Date</th>
-                <th className="px-6 py-4">Customer</th>
-                <th className="px-6 py-4">Total</th>
-                <th className="px-6 py-4">Payment</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4 text-right">Actions</th>
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
+              <tr>
+                <th className="px-4 py-3.5 w-10">
+                  <input
+                    type="checkbox"
+                    checked={filteredOrders.length > 0 && selectedIds.length === filteredOrders.length}
+                    onChange={e => toggleSelectAll(e.target.checked)}
+                    className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                  />
+                </th>
+                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Order ID & Date</th>
+                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Customer</th>
+                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Total</th>
+                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Payment</th>
+                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Status</th>
+                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E6DFD4]">
-              {filteredOrders.length === 0 ? (
+              {paginatedOrders.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="px-6 py-12 text-center">
+                  <td colSpan="7" className="px-6 py-12 text-center">
                     <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                     <p className="text-gray-500 font-medium">No orders found</p>
                   </td>
                 </tr>
-              ) : filteredOrders.map(order => (
-                <tr key={order._id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="px-6 py-4">
+              ) : paginatedOrders.map((order, idx) => (
+                <tr key={order._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
+                  <td className="px-4 py-3.5">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(order._id)}
+                      onChange={e => toggleSelectOne(order._id, e.target.checked)}
+                      className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                    />
+                  </td>
+                  <td className="px-4 py-3.5">
                     <div className="font-mono text-sm font-bold text-gray-900 mb-1">{(order.orderId || 'DEBUG_' + (order._id||'').substring(order._id.length - 8))}</div>
                     {order.isGiftOrder && (() => {
                       const giftItems = (order.orderItems || []).filter(item => item.isGift);
@@ -377,18 +420,18 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                       {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-3.5">
                     <div className="font-semibold text-gray-900">{order.user?.name || order.shippingAddress?.fullName}</div>
                     <div className="text-xs text-gray-500 flex items-center gap-1 mt-1">
                       <MapPin className="w-3 h-3" />
                       {order.shippingAddress?.city}, {order.shippingAddress?.state}
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-3.5">
                     <div className="font-bold text-gray-900">₹{(order.totalPrice || 0).toLocaleString()}</div>
                     <div className="text-xs text-gray-500">{(order.orderItems || []).reduce((acc, item) => acc + (item.qty || 0), 0)} items</div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-3.5">
                     {order.paymentMethod === 'COD' ? (
                       <div className="space-y-2">
                         <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${order.codAdvance > 0 ? 'bg-yellow-100 text-yellow-700' : order.isPaid ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
@@ -407,7 +450,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                       </span>
                     )}
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-3.5">
                     <div className="inline-flex items-center rounded-full border border-[#E6DFD4] bg-white shadow-sm">
                       <select
                         className={`appearance-none bg-transparent px-4 py-2 text-sm font-semibold text-gray-900 rounded-full focus:outline-none ${!canEdit || normalizeOrderStatus(order.status) === 'Delivered' ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
@@ -434,11 +477,12 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                       </div>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-right flex justify-end gap-2">
+                  <td className="px-4 py-3.5">
+                    <div className="flex gap-2 justify-end mt-2">
                     {canView && (
                       <button
                         onClick={() => handleViewOrder(order)}
-                        className="text-green-600 hover:text-green-700 transition-colors"
+                        className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors"
                         title="View"
                       >
                         <Eye className="w-4 h-4" />
@@ -447,7 +491,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                     {canEdit && (
                       <button
                         onClick={() => handleEditOrder(order)}
-                        className="text-blue-600 hover:text-blue-700 transition-colors"
+                        className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
                         title="Edit"
                       >
                         <SquarePen className="w-4 h-4" />
@@ -456,18 +500,74 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                     {canDelete && (
                       <button
                         onClick={() => handleDeleteOrder(order._id)}
-                        className="text-red-500 hover:text-red-600 transition-colors"
+                        className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
                         title="Delete"
                       >
                         <Trash className="w-4 h-4" />
                       </button>
                     )}
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-4 py-4 border-t border-[#E6DFD4]">
+            <p className="text-sm text-gray-500">
+              Showing <span className="font-semibold text-gray-700">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span>–<span className="font-semibold text-gray-700">{Math.min(currentPage * ITEMS_PER_PAGE, filteredOrders.length)}</span> of <span className="font-semibold text-gray-700">{filteredOrders.length}</span> orders
+            </p>
+            <div className="flex items-center gap-1">
+              {/* First page */}
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#E6DFD4] text-gray-500 hover:bg-[#F8F4EC] disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm"
+                title="First page"
+              >«</button>
+              {/* Prev */}
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#E6DFD4] text-gray-500 hover:bg-[#F8F4EC] disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm"
+                title="Previous page"
+              >‹</button>
+              {/* Page numbers */}
+              {getPaginationPages(currentPage, totalPages).map((page, i) =>
+                page === '...' ? (
+                  <span key={`dots-${i}`} className="w-8 h-8 flex items-center justify-center text-gray-400 text-sm">…</span>
+                ) : (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`w-8 h-8 flex items-center justify-center rounded-lg border text-sm font-semibold transition-colors ${
+                      currentPage === page
+                        ? 'bg-[#8B5E3C] text-white border-[#8B5E3C]'
+                        : 'border-[#E6DFD4] text-gray-700 hover:bg-[#F8F4EC]'
+                    }`}
+                  >{page}</button>
+                )
+              )}
+              {/* Next */}
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#E6DFD4] text-gray-500 hover:bg-[#F8F4EC] disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm"
+                title="Next page"
+              >›</button>
+              {/* Last page */}
+              <button
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+                className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#E6DFD4] text-gray-500 hover:bg-[#F8F4EC] disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm"
+                title="Last page"
+              >»</button>
+            </div>
+          </div>
+        )}
       </div>
       </>
       )}
@@ -477,10 +577,10 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
         <div>
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Order Details</h1>
-              <p className="text-sm text-gray-500">View information for order #{selectedOrder.orderId || (selectedOrder._id || '').substring((selectedOrder._id || '').length - 8)}</p>
+              <h1 className="text-3xl font-serif font-bold text-[#1C1F2A]">Order Details</h1>
+              <p className="text-sm text-gray-500 mt-1">View information for order #{selectedOrder.orderId || (selectedOrder._id || '').substring((selectedOrder._id || '').length - 8)}</p>
             </div>
-            <button onClick={closeViewModal} className="flex items-center gap-2 px-3 py-1.5 text-[#6D625C] hover:text-[#9A6031] hover:bg-[#F2E3D1] rounded-lg transition-colors font-medium">
+            <button onClick={closeViewModal} className="flex items-center gap-2 text-[#6D625C] hover:text-gray-900 transition-colors text-sm font-medium">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
               Back to Orders
             </button>
@@ -658,10 +758,10 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
         <div className="flex flex-col min-h-[calc(100vh-8rem)]">
           <div className="flex items-center justify-between mb-6 shrink-0">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Edit Order Details</h1>
-              <p className="text-sm text-gray-500">Update information for order #{selectedOrder.orderId || (selectedOrder._id || '').substring((selectedOrder._id || '').length - 8)}</p>
+              <h1 className="text-3xl font-serif font-bold text-[#1C1F2A]">Edit Order Details</h1>
+              <p className="text-sm text-gray-500 mt-1">Update information for order #{selectedOrder.orderId || (selectedOrder._id || '').substring((selectedOrder._id || '').length - 8)}</p>
             </div>
-            <button onClick={closeEditModal} className="flex items-center gap-2 px-4 py-2 rounded-xl text-gray-700 bg-white border border-[#E6DFD4] hover:bg-gray-50 transition-colors font-semibold text-sm">
+            <button onClick={closeEditModal} className="flex items-center gap-2 text-[#6D625C] hover:text-gray-900 transition-colors text-sm font-medium">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
               Back to Orders
             </button>
@@ -899,7 +999,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
       {showShippingModal && shippingModalOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[#E6DFD4]">
+            <div className="flex items-center justify-between px-4 py-3.5 border-b border-[#E6DFD4]">
               <h2 className="text-lg font-bold text-gray-900">Enter Shipping Details</h2>
               <button onClick={() => setShowShippingModal(false)} className="text-red-500 hover:text-red-600 transition-colors">
                 <X className="w-5 h-5" />

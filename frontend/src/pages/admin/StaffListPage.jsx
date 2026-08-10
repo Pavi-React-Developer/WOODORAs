@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { staffAPI } from '../../api/staffService';
+import { authService } from '../../api/authService';
+import Pagination from '../../components/common/Pagination';
 import { roleAPI } from '../../api/roleService';
 import { Download, RefreshCw, Plus } from 'lucide-react';
 import { downloadExcelFile } from '../../utils/exportUtils';
@@ -15,6 +17,15 @@ const Badge = ({ status }) => (
 
 export default function StaffListPage({ onAddStaff, onEditStaff, onRoleAssign, canCreate = true, canEdit = true, canDelete = true }) {
   const [staffList, setStaffList] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
+
+  const toggleSelectAll = (checked) => {
+    setSelectedIds(checked ? staffList.map(item => item._id) : []);
+  };
+
+  const toggleSelectOne = (id, checked) => {
+    setSelectedIds(prev => checked ? [...prev, id] : prev.filter(i => i !== id));
+  };
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
@@ -136,12 +147,33 @@ export default function StaffListPage({ onAddStaff, onEditStaff, onRoleAssign, c
         </button>
       </div>
 
+      {/* Bulk Actions */}
+      {selectedIds.length > 0 && (
+        <div className="bg-[#F8F4EC] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3">
+          <span className="text-sm font-semibold text-[#8B5E3C]">{selectedIds.length} selected</span>
+          <div className="flex gap-2 ml-auto">
+             {typeof handleBulkDelete !== 'undefined' && (
+                <button onClick={handleBulkDelete} className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">Delete Selected</button>
+             )}
+            <button onClick={() => setSelectedIds([])} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-white transition-colors text-gray-500">Clear</button>
+          </div>
+        </div>
+      )}
+
       {/* Table */}
       <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
               <tr>
+                <th className="px-4 py-3.5 w-10">
+                  <input
+                    type="checkbox"
+                    checked={staffList.length > 0 && selectedIds.length === staffList.length}
+                    onChange={e => toggleSelectAll(e.target.checked)}
+                    className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                  />
+                </th>
                 {['Profile', 'Full Name', 'Email', 'Mobile', 'Role', 'Status', 'Created Date', 'Actions'].map(h => (
                   <th key={h} className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">{h}</th>
                 ))}
@@ -149,14 +181,14 @@ export default function StaffListPage({ onAddStaff, onEditStaff, onRoleAssign, c
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={8} className="text-center py-16 text-gray-400">
+                <tr><td colSpan={9} className="text-center py-16 text-gray-400">
                   <div className="flex items-center justify-center gap-2">
                     <div className="w-4 h-4 border-2 border-[#8B5E3C] border-t-transparent rounded-full animate-spin" />
                     Loading staff...
                   </div>
                 </td></tr>
               ) : error ? (
-                <tr><td colSpan={8} className="text-center py-16">
+                <tr><td colSpan={9} className="text-center py-16">
                   <div className="flex flex-col items-center gap-3">
                     <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
                       <svg className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
@@ -166,10 +198,18 @@ export default function StaffListPage({ onAddStaff, onEditStaff, onRoleAssign, c
                   </div>
                 </td></tr>
               ) : staffList.length === 0 ? (
-                <tr><td colSpan={8} className="text-center py-16 text-gray-400">No staff members found.</td></tr>
+                <tr><td colSpan={9} className="text-center py-16 text-gray-400">No staff members found.</td></tr>
               ) : (
                 staffList.map((member, idx) => (
-                  <tr key={member._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
+                  <tr key={member._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${typeof idx !== "undefined" ? (idx % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : typeof index !== "undefined" ? (index % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : "bg-white"}`}>
+                    <td className="px-4 py-3.5">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(member._id)}
+                        onChange={e => toggleSelectOne(member._id, e.target.checked)}
+                        className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                      />
+                    </td>
                     <td className="px-4 py-3.5">
                       <div className="w-9 h-9 rounded-full bg-[#8B5E3C] text-white flex items-center justify-center text-sm font-bold">
                         {member.fullName?.charAt(0).toUpperCase()}
@@ -218,18 +258,12 @@ export default function StaffListPage({ onAddStaff, onEditStaff, onRoleAssign, c
         </div>
 
         {/* Pagination */}
-        {pagination.pages > 1 && (
-          <div className="px-4 py-3 border-t border-[#E6DFD4] flex items-center justify-between">
-            <p className="text-xs text-gray-500">Showing {staffList.length} of {pagination.total} results</p>
-            <div className="flex gap-2">
-              <button disabled={page === 1} onClick={() => setPage(p => p - 1)} className="px-3 py-1.5 text-xs border border-[#E6DFD4] rounded-lg disabled:opacity-40 hover:bg-[#F8F4EC]">Prev</button>
-              {Array.from({ length: pagination.pages }, (_, i) => i + 1).map(p => (
-                <button key={p} onClick={() => setPage(p)} className={`px-3 py-1.5 text-xs border rounded-lg ${p === page ? 'bg-[#8B5E3C] text-white border-[#8B5E3C]' : 'border-[#E6DFD4] hover:bg-[#F8F4EC]'}`}>{p}</button>
-              ))}
-              <button disabled={page === pagination.pages} onClick={() => setPage(p => p + 1)} className="px-3 py-1.5 text-xs border border-[#E6DFD4] rounded-lg disabled:opacity-40 hover:bg-[#F8F4EC]">Next</button>
-            </div>
-          </div>
-        )}
+        <Pagination 
+          currentPage={page} 
+          totalPages={pagination.pages} 
+          onPageChange={setPage} 
+          className="px-4 py-4 border-t border-[#E6DFD4] flex items-center justify-center gap-2"
+        />
       </div>
 
       {/* Delete Confirm Modal */}

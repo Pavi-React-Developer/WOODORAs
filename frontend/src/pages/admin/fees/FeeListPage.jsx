@@ -1,11 +1,21 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Edit3, Trash2, Download, Plus, RefreshCw, Package , SquarePen , Trash } from 'lucide-react';
 import { feeAPI } from '../../../api/feeService';
+import Pagination from '../../../components/common/Pagination';
 import { downloadExcelFile } from '../../../utils/exportUtils';
 import ProductFeeRulesPage from './ProductFeeRulesPage';
 
 export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, canEdit = true, canDelete = true }) {
   const [fees, setFees] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
+
+  const toggleSelectAll = (checked) => {
+    setSelectedIds(checked ? fees.map(item => item._id) : []);
+  };
+
+  const toggleSelectOne = (id, checked) => {
+    setSelectedIds(prev => checked ? [...prev, id] : prev.filter(i => i !== id));
+  };
   const [categories, setCategories] = useState([]);
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [showGlobalFees, setShowGlobalFees] = useState(false);
@@ -186,20 +196,41 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
           </select>
         </div>
 
-        {/* Table */}
+        {/* Bulk Actions */}
+      {selectedIds.length > 0 && (
+        <div className="bg-[#F8F4EC] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3">
+          <span className="text-sm font-semibold text-[#8B5E3C]">{selectedIds.length} selected</span>
+          <div className="flex gap-2 ml-auto">
+             {typeof handleBulkDelete !== 'undefined' && (
+                <button onClick={handleBulkDelete} className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">Delete Selected</button>
+             )}
+            <button onClick={() => setSelectedIds([])} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-white transition-colors text-gray-500">Clear</button>
+          </div>
+        </div>
+      )}
+
+      {/* Table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
               <tr className="bg-brand-light/50 border-b border-[#E6DFD4] text-brand-medium text-[10px] font-bold tracking-widest uppercase">
-                <th className="py-4 px-4">S.No</th>
-                <th className="py-4 px-4">Fee Name</th>
-                <th className="py-4 px-4">Category</th>
-                <th className="py-4 px-4">Fee Type</th>
-                <th className="py-4 px-4">Payment Method</th>
-                <th className="py-4 px-4">State</th>
-                <th className="py-4 px-4">Weight Limits / Amount</th>
-                <th className="py-4 px-4">Status</th>
-                <th className="py-4 px-4 text-right">Actions</th>
+                                <th className="px-4 py-3.5 w-10">
+                                    <input
+                                        type="checkbox"
+                                        checked={fees.length > 0 && selectedIds.length === fees.length}
+                                        onChange={e => toggleSelectAll(e.target.checked)}
+                                        className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                                    />
+                                </th>
+                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">S.No</th>
+                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Fee Name</th>
+                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Category</th>
+                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Fee Type</th>
+                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Payment Method</th>
+                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">State</th>
+                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Weight Limits / Amount</th>
+                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Status</th>
+                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E6DFD4]/55 text-sm text-brand-dark">
@@ -211,7 +242,7 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
                 </tr>
               ) : (
                 paginatedFees.map((fee, idx) => (
-                  <tr key={fee._id} className="hover:bg-brand-light/25 transition-colors">
+                  <tr key={fee._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${typeof idx !== "undefined" ? (idx % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : typeof index !== "undefined" ? (index % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : "bg-white"}`}>
                     <td className="py-4 px-4 font-medium">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
                     <td className="py-4 px-4 font-bold">{fee.feeName}</td>
                     <td className="py-4 px-4">{fee.feeCategory?.name}</td>
@@ -268,27 +299,15 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
         </div>
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="mt-6 flex justify-between items-center text-sm">
-            <span className="text-brand-medium">Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredFees.length)} of {filteredFees.length} entries</span>
-            <div className="flex gap-2">
-              <button
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                className="px-3 py-1 border border-[#E6DFD4] rounded-lg disabled:opacity-50 hover:bg-brand-light transition-colors"
-              >
-                Previous
-              </button>
-              <button
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                className="px-3 py-1 border border-[#E6DFD4] rounded-lg disabled:opacity-50 hover:bg-brand-light transition-colors"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        )}
+        <div className="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm">
+          <span className="text-brand-medium">Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredFees.length)} of {filteredFees.length} entries</span>
+          <Pagination 
+            currentPage={currentPage} 
+            totalPages={totalPages} 
+            onPageChange={setCurrentPage} 
+            className="flex items-center justify-center gap-2 flex-wrap"
+          />
+        </div>
       </div>
     </div>
   );

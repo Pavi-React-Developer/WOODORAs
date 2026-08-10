@@ -88,7 +88,7 @@ export default function GiftCardBannerAdmin() {
       rightEndDate: item.rightEndDate ? item.rightEndDate.split('T')[0] : '',
     });
     setEditingId(item._id);
-    setShowForm(true);
+    window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowForm(true);
   };
 
   const handleSubmit = async (e) => {
@@ -99,7 +99,7 @@ export default function GiftCardBannerAdmin() {
       if (editingId) await cmsService.updateGiftCardBanner(editingId, form);
       else await cmsService.createGiftCardBanner(form);
       toast.success(editingId ? 'Banner updated' : 'Banner created');
-      setShowForm(false); setEditingId(null); fetchBanners();
+      (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setShowForm(false)); setEditingId(null); fetchBanners();
     } catch (err) { toast.error(err.message || 'Error saving banner'); }
     finally { setSaving(false); }
   };
@@ -126,7 +126,7 @@ export default function GiftCardBannerAdmin() {
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-sm font-bold text-brand-dark uppercase tracking-widest">Gift & Card Banner (Dual Slider)</h3>
         {!showForm && (
-          <button onClick={() => { setForm(initialForm); setEditingId(null); setShowForm(true); }}
+          <button onClick={() => { setForm(initialForm); setEditingId(null); window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowForm(true); }}
             className="flex items-center gap-1 bg-[#4A403B] hover:bg-[#342D2A] text-white px-4 py-2 rounded-xl text-sm font-semibold transition">
             <Plus className="w-4 h-4" /> Add Gift & Card Banner
           </button>
@@ -245,7 +245,7 @@ export default function GiftCardBannerAdmin() {
               <label htmlFor="giftcard-status" className="text-sm text-brand-dark">Active</label>
             </div>
             <div className="flex gap-3 justify-end pt-2 border-t border-[#E6DFD4]">
-              <button type="button" onClick={() => setShowForm(false)}
+              <button type="button" onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setShowForm(false))}
                 className="px-4 py-2 text-sm border border-[#E6DFD4] rounded-lg text-brand-medium hover:bg-gray-50">Cancel</button>
               <button type="submit" disabled={saving}
                 className="p-1.5 text-[#6D625C] hover:text-[#9A6031] hover:bg-[#F2E3D1] rounded transition-colors">

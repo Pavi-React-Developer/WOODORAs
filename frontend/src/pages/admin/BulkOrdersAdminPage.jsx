@@ -161,20 +161,20 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                 <p className="text-[#6D625C] text-sm mt-1">There are no bulk order requests matching your criteria.</p>
               </div>
             ) : (
-              <table className="w-full text-left text-sm whitespace-nowrap">
-                <thead className="bg-[#FAF8F5] text-xs font-bold uppercase tracking-wider text-[#6D625C] border-b border-[#E9DED3]">
+              <table className="w-full text-sm">
+                <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
                   <tr>
-                    <th className="px-6 py-4">Date &amp; ID</th>
-                    <th className="px-6 py-4">Selected Product</th>
-                    <th className="px-6 py-4">Custom Fields Preview</th>
-                    <th className="px-6 py-4 text-center">Status</th>
-                    <th className="px-6 py-4 text-center">Actions</th>
+                    <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Date &amp; ID</th>
+                    <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Selected Product</th>
+                    <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Custom Fields Preview</th>
+                    <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Status</th>
+                    <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E9DED3]">
-                  {filteredOrders.map(order => (
-                    <tr key={order._id} className="hover:bg-[#FAF8F5]/50 transition-colors">
-                      <td className="px-6 py-4">
+                  {filteredOrders.map((order, index) => (
+                    <tr key={order._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${index % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
+                      <td className="px-4 py-3.5">
                         <p className="font-bold text-[#141225]">
                           Order #{order._id.substring(order._id.length - 6).toUpperCase()}
                         </p>
@@ -182,7 +182,7 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                           {new Date(order.createdAt).toLocaleDateString()}
                         </p>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3.5">
                         {order.product ? (
                           <>
                             <p className="font-bold text-[#4A3326] max-w-[150px] truncate" title={order.product?.name}>
@@ -194,7 +194,7 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                           <span className="text-xs text-[#8A817C]">Not Specified</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-normal min-w-[200px]">
+                      <td className="px-4 py-3.5 whitespace-normal min-w-[200px]">
                         <div className="space-y-1">
                           {order.customFields &&
                             order.customFields.slice(0, 2).map((cf, idx) => (
@@ -210,7 +210,7 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-center">
+                      <td className="px-4 py-3.5 text-center">
                         <span
                           className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                             order.status === 'Approved'
@@ -231,7 +231,7 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                           </p>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-center">
+                      <td className="px-4 py-3.5 text-center">
                         <div className="flex items-center justify-center gap-2">
                           <button
                             onClick={() => handleViewClick(order)}

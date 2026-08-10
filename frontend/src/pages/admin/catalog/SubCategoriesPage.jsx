@@ -5,6 +5,7 @@ import { downloadExcelFile } from '../../../utils/exportUtils';
 import { SearchBar, Button, Badge, Card } from '../../../components/admin/CommonComponents';
 import ConfirmDialog from '../../../components/admin/ConfirmDialog';
 import BulkActions from '../../../components/admin/BulkActions';
+import Pagination from '../../../components/common/Pagination';
 
 export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete = true }) => {
     // Lists
@@ -306,10 +307,9 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                         <Download size={16} /> Export Excel
                     </button>
                     {canCreate && (
-                    <Button onClick={() => handleOpenForm()} className="shadow-lg hover:shadow-xl transition-all">
-                        <Plus size={20} />
-                        Add Sub-Category
-                    </Button>
+                    <button onClick={() => handleOpenForm()} className="admin-btn">
+                        <Plus size={16} /> Add Sub-Category
+                    </button>
                     )}
                 </div>
             </div>
@@ -343,102 +343,108 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
             )}
 
             {/* Table */}
-            <Card className="overflow-hidden">
+            <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                <th className="px-6 py-4 w-12">
+                    <table className="w-full text-sm">
+                        <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
+                            <tr>
+                                <th className="px-4 py-3.5 w-10">
                                     <input
                                         type="checkbox"
-                                        checked={selectedIds.length > 0 && selectedIds.length === subCategories.length}
+                                        checked={subCategories.length > 0 && selectedIds.length === subCategories.length}
                                         onChange={(e) => handleSelectAll(e.target.checked)}
-                                        className="rounded text-amber-600 focus:ring-amber-500 cursor-pointer"
+                                        className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
                                     />
                                 </th>
-                                <th className="px-6 py-4">Sub-Category Name</th>
-                                <th className="px-6 py-4">Parent Category</th>
-                                <th className="px-6 py-4">Slug</th>
-                                <th className="px-6 py-4">Status</th>
-                                <th className="px-6 py-4 text-right">Actions</th>
+                                {['Sub-Category Name', 'Parent Category', 'Slug', 'Status', 'Actions'].map(h => (
+                                    <th key={h} className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">{h}</th>
+                                ))}
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100 text-sm text-gray-700">
+                        <tbody>
                             {loading ? (
-                                <tr>
-                                    <td colSpan="6" className="text-center py-8 text-gray-400">
-                                        <div className="w-8 h-8 border-4 border-amber-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                                <tr><td colSpan={6} className="text-center py-16 text-gray-400">
+                                    <div className="flex items-center justify-center gap-2">
+                                        <div className="w-4 h-4 border-2 border-[#8B5E3C] border-t-transparent rounded-full animate-spin" />
                                         Loading subcategories...
-                                    </td>
-                                </tr>
+                                    </div>
+                                </td></tr>
                             ) : subCategories.length === 0 ? (
-                                <tr>
-                                    <td colSpan="6" className="text-center py-8 text-gray-400">
-                                        No subcategories found.
-                                    </td>
-                                </tr>
+                                <tr><td colSpan={6} className="text-center py-16 text-gray-400">
+                                    <div className="flex flex-col items-center gap-3">
+                                        <div className="w-12 h-12 bg-[#F8F4EC] rounded-full flex items-center justify-center text-2xl">🗂️</div>
+                                        <p className="font-medium">No subcategories found.</p>
+                                    </div>
+                                </td></tr>
                             ) : (
-                                subCategories.map((sub) => (
-                                    <tr key={sub._id} className="hover:bg-gray-50/50 transition-colors">
-                                        <td className="px-6 py-4">
+                                subCategories.map((sub, idx) => (
+                                    <tr
+                                        key={sub._id}
+                                        className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}
+                                    >
+                                        <td className="px-4 py-3.5">
                                             <input
                                                 type="checkbox"
                                                 checked={selectedIds.includes(sub._id)}
                                                 onChange={(e) => handleSelectRow(sub._id, e.target.checked)}
-                                                className="rounded text-amber-600 focus:ring-amber-500 cursor-pointer"
+                                                className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
                                             />
                                         </td>
-                                        <td className="px-6 py-4 font-medium text-gray-900">{sub.name}</td>
-                                        <td className="px-6 py-4 text-amber-800 font-semibold">{sub.category?.name || 'Unknown'}</td>
-                                        <td className="px-6 py-4 text-gray-500 font-mono text-xs">{sub.slug}</td>
-                                        <td className="px-6 py-4">
+                                        <td className="px-4 py-3.5">
+                                            <div className="flex items-center gap-2.5">
+                                                <div className="w-8 h-8 rounded-lg bg-[#F8F4EC] border border-[#E6DFD4] flex items-center justify-center text-base">🗂️</div>
+                                                <span className="font-semibold text-gray-800">{sub.name}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-3.5 font-semibold text-[#8B5E3C]">{sub.category?.name || 'Unknown'}</td>
+                                        <td className="px-4 py-3.5">
+                                            <code className="text-xs bg-[#F8F4EC] text-[#8B5E3C] px-2 py-1 rounded-md font-mono">{sub.slug}</code>
+                                        </td>
+                                        <td className="px-4 py-3.5">
                                             {canEdit ? (
-                                                <button
-                                                    onClick={() => handleToggleStatus(sub)}
-                                                    className="focus:outline-none hover:opacity-80 transition-opacity"
-                                                >
-                                                    {sub.isActive ? (
-                                                        <Badge variant="green">Active</Badge>
-                                                    ) : (
-                                                        <Badge variant="gray">Inactive</Badge>
-                                                    )}
+                                                <button onClick={() => handleToggleStatus(sub)} title="Click to toggle">
+                                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${sub.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${sub.isActive ? 'bg-green-500' : 'bg-gray-400'}`} />
+                                                        {sub.isActive ? 'Active' : 'Inactive'}
+                                                    </span>
                                                 </button>
                                             ) : (
-                                                sub.isActive ? (
-                                                    <Badge variant="green">Active</Badge>
-                                                ) : (
-                                                    <Badge variant="gray">Inactive</Badge>
-                                                )
+                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${sub.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                                                    <span className={`w-1.5 h-1.5 rounded-full ${sub.isActive ? 'bg-green-500' : 'bg-gray-400'}`} />
+                                                    {sub.isActive ? 'Active' : 'Inactive'}
+                                                </span>
                                             )}
                                         </td>
-                                        <td className="px-6 py-4 text-right flex justify-end gap-2">
-                                            {canEdit && (
-                                            <button
-                                                onClick={() => handleOpenMapping(sub)}
-                                                className="p-1.5 hover:bg-amber-50 rounded-lg text-amber-700 hover:text-amber-800 transition-colors"
-                                                title="Map Fields/Attributes"
-                                            >
-                                                <Settings size={16} />
-                                            </button>
-                                            )}
-                                            {canEdit && (
-                                            <button
-                                                onClick={() => handleOpenForm(sub)}
-                                                className="text-blue-600 hover:text-blue-700 transition-colors"
-                                                title="Edit"
-                                            >
-                                                <SquarePen size={16} />
-                                            </button>
-                                            )}
-                                            {canDelete && (
-                                            <button
-                                                onClick={() => handleDeleteClick(sub._id)}
-                                                className="text-red-500 hover:text-red-600 transition-colors"
-                                                title="Delete"
-                                            >
-                                                <Trash size={16} />
-                                            </button>
-                                            )}
+                                        <td className="px-4 py-3.5">
+                                            <div className="flex gap-2 justify-end">
+                                                {canEdit && (
+                                                    <button
+                                                        onClick={() => handleOpenMapping(sub)}
+                                                        className="p-1.5 rounded-lg text-amber-700 hover:bg-amber-50 transition-colors"
+                                                        title="Map Fields/Attributes"
+                                                    >
+                                                        <Settings size={16} />
+                                                    </button>
+                                                )}
+                                                {canEdit && (
+                                                    <button
+                                                        onClick={() => handleOpenForm(sub)}
+                                                        className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
+                                                        title="Edit"
+                                                    >
+                                                        <SquarePen size={16} />
+                                                    </button>
+                                                )}
+                                                {canDelete && (
+                                                    <button
+                                                        onClick={() => handleDeleteClick(sub._id)}
+                                                        className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
+                                                        title="Delete"
+                                                    >
+                                                        <Trash size={16} />
+                                                    </button>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
@@ -448,30 +454,16 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                 </div>
 
                 {/* Pagination */}
-                {totalPages > 1 && (
-                    <div className="flex justify-between items-center px-6 py-4 border-t border-gray-100 bg-gray-50">
-                        <span className="text-xs text-gray-500">Page {page} of {totalPages}</span>
-                        <div className="flex gap-2">
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                disabled={page === 1}
-                                onClick={() => setPage(p => p - 1)}
-                            >
-                                Previous
-                            </Button>
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                disabled={page === totalPages}
-                                onClick={() => setPage(p => p + 1)}
-                            >
-                                Next
-                            </Button>
-                        </div>
-                    </div>
-                )}
-            </Card>
+                <div className="px-5 py-3 border-t border-[#E6DFD4] flex flex-col sm:flex-row justify-center items-center bg-[#FAFAFA] gap-4">
+                    <Pagination 
+                        currentPage={page} 
+                        totalPages={totalPages} 
+                        onPageChange={setPage} 
+                        className="flex items-center justify-center gap-2 flex-wrap"
+                    />
+                </div>
+            </div>
+
 
             {/* Create/Edit Drawer */}
             {isFormOpen && (

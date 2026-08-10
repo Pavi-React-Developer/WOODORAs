@@ -12,7 +12,6 @@ const formatDate = formatDeliveryDate;
 
 export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate = true, canEdit = true, canDelete = true }) {
   const [activeTab, setActiveTab] = useState(activeSubTab);
-
   useEffect(() => {
     setActiveTab(activeSubTab);
   }, [activeSubTab]);
@@ -227,20 +226,28 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
           </div>
           )}
 
-          <table className="min-w-full divide-y divide-gray-200 border rounded overflow-hidden">
-            <thead className="bg-gray-50">
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Min Vol (cm³)</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Max Vol (cm³)</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Box Size</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fee (₹)</th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Action</th>
+                <th className="px-4 py-3.5 w-10">
+                  <input
+                    type="checkbox"
+                    checked={orders.length > 0 && selectedIds.length === orders.length}
+                    onChange={e => toggleSelectAll(e.target.checked)}
+                    className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                  />
+                </th>
+                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Min Vol (cm³)</th>
+                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Max Vol (cm³)</th>
+                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Box Size</th>
+                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Fee (₹)</th>
+                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Status</th>
+                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Action</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {giftBoxRules.map((rule, idx) => (
-                <tr key={idx} className="hover:bg-gray-50">
+                <tr key={idx} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${typeof idx !== "undefined" ? (idx % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : typeof index !== "undefined" ? (index % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : "bg-white"}`}>
                   <td className="px-4 py-3 text-sm text-gray-900">{rule.minVolume}</td>
                   <td className="px-4 py-3 text-sm text-gray-900">{rule.maxVolume}</td>
                   <td className="px-4 py-3 text-sm text-gray-900">{rule.boxSize}</td>
@@ -298,7 +305,7 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
               ))}
               {giftBoxRules.length === 0 && !loading && (
                 <tr>
-                  <td colSpan="6" className="px-4 py-8 text-center text-gray-500">No box rules configured.</td>
+                  <td colSpan="5" className="px-4 py-8 text-center text-gray-500">No box rules configured.</td>
                 </tr>
               )}
             </tbody>
@@ -310,25 +317,25 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
 
       {activeTab === 'messages' && (
         <div className="bg-white shadow rounded-md overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Message</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Style</th>
+                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Order ID</th>
+                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Customer</th>
+                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Message</th>
+                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Style</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {messages.length === 0 ? (
-                <tr><td colSpan="4" className="px-6 py-4 text-center text-sm text-gray-500">No messages found.</td></tr>
+                <tr><td colSpan="3" className="px-4 py-3.5 text-center text-sm text-gray-500">No messages found.</td></tr>
               ) : (
                 messages.map(msg => (
-                  <tr key={msg._id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{msg._id.substring(0, 8)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{msg.user?.name || msg.user?.fullName || 'N/A'}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900 italic max-w-xs truncate">{msg.message}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{msg.style || 'Classic'}</td>
+                  <tr key={msg._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${typeof idx !== "undefined" ? (idx % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : typeof index !== "undefined" ? (index % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : "bg-white"}`}>
+                    <td className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-900">{msg._id.substring(0, 8)}</td>
+                    <td className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-900">{msg.user?.name || msg.user?.fullName || 'N/A'}</td>
+                    <td className="px-4 py-3.5 text-sm text-gray-900 italic max-w-xs truncate">{msg.message}</td>
+                    <td className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-900">{msg.style || 'Classic'}</td>
                   </tr>
                 ))
               )}
@@ -339,27 +346,35 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
 
       {activeTab === 'orders' && (
         <div className="bg-white shadow rounded-md overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Delivery Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
+                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Order ID</th>
+                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Customer</th>
+                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Order Date</th>
+                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Delivery Date</th>
+                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Status</th>
+                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Action</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {orders.length === 0 ? (
-                <tr><td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">No gift orders found.</td></tr>
+                <tr><td colSpan="5" className="px-4 py-3.5 text-center text-sm text-gray-500">No gift orders found.</td></tr>
               ) : (
                 orders.map(order => (
-                  <tr key={order._id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <tr key={order._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${typeof idx !== "undefined" ? (idx % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : typeof index !== "undefined" ? (index % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : "bg-white"}`}>
+                    <td className="px-4 py-3.5">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(order._id)}
+                        onChange={e => toggleSelectOne(order._id, e.target.checked)}
+                        className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                      />
+                    </td>
+                    <td className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-900">
                       {order._id.substring(0, 8)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-3.5 whitespace-nowrap">
                       {order.user ? (
                         <div className="flex flex-col">
                           <span className="text-sm font-medium text-gray-900">
@@ -379,14 +394,14 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
                         <span className="text-sm text-gray-500 italic">N/A</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-500">
                       {formatDate(order.createdAt)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#B0611C]">
+                    <td className="px-4 py-3.5 whitespace-nowrap text-sm font-medium text-[#B0611C]">
                       {formatDeliveryDate(getDeliveryDate(order))}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order.status}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-900">{order.status}</td>
+                    <td className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-900">
                       <button onClick={() => setSelectedOrder(order)} className="text-green-600 hover:text-green-700 transition-colors">
                         <Eye size={18} />
                       </button>

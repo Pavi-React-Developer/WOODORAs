@@ -57,6 +57,7 @@ import {
 } from 'lucide-react';
 import { saveAs } from 'file-saver';
 import { authService } from '../api/authService';
+import Pagination from '../components/common/Pagination';
 import { orderService } from '../api/orderService';
 import { uploadAPI } from '../api/catalogAdminService';
 import { reviewService } from '../api/reviewService';
@@ -219,8 +220,11 @@ export default function CustomerProfilePage({
   });
   const [orders, setOrders] = useState([]);
   const [ordersPage, setOrdersPage] = useState(1);
+  const [ordersSearchTerm, setOrdersSearchTerm] = useState('');
+  const [ordersFilterStatus, setOrdersFilterStatus] = useState('All');
   const [giftOrdersPage, setGiftOrdersPage] = useState(1);
   const [giftSearchTerm, setGiftSearchTerm] = useState('');
+  const [giftFilterStatus, setGiftFilterStatus] = useState('All');
   const [bulkOrdersPage, setBulkOrdersPage] = useState(1);
   const [bulkSearchTerm, setBulkSearchTerm] = useState('');
   const [bulkFilterStatus, setBulkFilterStatus] = useState('All');
@@ -263,55 +267,7 @@ export default function CustomerProfilePage({
     }
   };
 
-  const renderPagination = (currentPage, totalPages, onPageChange, className = "mt-8 flex items-center justify-center gap-2 flex-wrap") => {
-    if (totalPages <= 1) return null;
 
-    let startPage = Math.max(1, currentPage - 2);
-    let endPage = Math.min(totalPages, startPage + 4);
-
-    if (endPage - startPage < 4) {
-      startPage = Math.max(1, endPage - 4);
-    }
-
-    const pages = [];
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
-    }
-
-    return (
-      <div className={className}>
-        <button 
-          onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-          disabled={currentPage === 1}
-          className="flex h-8 w-8 items-center justify-center rounded-md border border-[#E9DED3] text-[#8B5E3C] bg-white hover:bg-[#FAF8F5] disabled:opacity-50 transition shadow-sm shrink-0"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
-        
-        {pages.map(page => (
-          <button
-            key={page}
-            onClick={() => onPageChange(page)}
-            className={`flex h-8 w-8 items-center justify-center rounded-md text-sm font-bold transition shadow-sm shrink-0 ${
-              currentPage === page
-                ? 'bg-[#A7632E] text-white border-transparent'
-                : 'bg-white border border-[#E9DED3] text-[#6D625C] hover:bg-[#FAF8F5]'
-            }`}
-          >
-            {page}
-          </button>
-        ))}
-
-        <button 
-          onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-          disabled={currentPage === totalPages}
-          className="flex h-8 w-8 items-center justify-center rounded-md border border-[#E9DED3] text-[#8B5E3C] bg-white hover:bg-[#FAF8F5] disabled:opacity-50 transition shadow-sm shrink-0"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </button>
-      </div>
-    );
-  };
 
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [cancelOrderTarget, setCancelOrderTarget] = useState(null);
@@ -774,7 +730,7 @@ export default function CustomerProfilePage({
                   );
                 })}
                 
-                {renderPagination(refundsPage, totalPages, setRefundsPage)}
+                <Pagination currentPage={refundsPage} totalPages={totalPages} onPageChange={setRefundsPage} />
               </>
             );
           })()}
@@ -1153,7 +1109,7 @@ export default function CustomerProfilePage({
                   );
                 })}
                 
-                {renderPagination(reviewsPage, totalPages, setReviewsPage)}
+                <Pagination currentPage={reviewsPage} totalPages={totalPages} onPageChange={setReviewsPage} />
               </>
             );
           })()}
@@ -1163,20 +1119,29 @@ export default function CustomerProfilePage({
   );
 
   const renderOrders = () => {
+    let filteredOrders = orders;
+
+    // Apply search
+    if (ordersSearchTerm) {
+      const term = ordersSearchTerm.toLowerCase();
+      filteredOrders = filteredOrders.filter(order => {
+        const firstItemName = (order.orderItems?.[0]?.name || '').toLowerCase();
+        const orderId = (order.orderId || order._id || '').toLowerCase();
+        return firstItemName.includes(term) || orderId.includes(term);
+      });
+    }
+
+    // Apply filter
+    if (ordersFilterStatus !== 'All') {
+      filteredOrders = filteredOrders.filter(order => order.status === ordersFilterStatus);
+    }
+
     const itemsPerPage = isMobile ? 5 : 10;
-    const totalPages = Math.ceil(orders.length / itemsPerPage);
-    const paginatedOrders = orders.slice((ordersPage - 1) * itemsPerPage, ordersPage * itemsPerPage);
+    const totalPages = Math.ceil(filteredOrders.length / itemsPerPage) || 1;
+    const paginatedOrders = filteredOrders.slice((ordersPage - 1) * itemsPerPage, ordersPage * itemsPerPage);
 
     return (
     <section className="px-5 py-7 lg:px-7">
-      {/* Desktop Header */}
-      <div className="hidden sm:flex items-center justify-between gap-4">
-        <div>
-          <h2 className="text-lg font-bold text-[#141225]">Order History</h2>
-        </div>
-        <button type="button" onClick={() => onNavigate('/order-history')} className="rounded-[8px] bg-[#9A6031] px-4 py-2 text-sm font-bold text-white">Open Full Page</button>
-      </div>
-
       {/* Mobile Header */}
       <div className="sm:hidden mb-6">
         <div className="flex items-center justify-between mb-1">
@@ -1188,10 +1153,47 @@ export default function CustomerProfilePage({
         <p className="text-[#666] text-sm">View and manage your recent orders.</p>
       </div>
 
+      <div className="flex flex-col sm:flex-row justify-end items-center gap-3 mb-6 w-full">
+        <div className="relative w-full sm:w-64">
+          <input 
+            type="text" 
+            placeholder="Search by Company or Name..." 
+            value={ordersSearchTerm}
+            onChange={(e) => {
+              setOrdersSearchTerm(e.target.value);
+              setOrdersPage(1);
+            }}
+            className="w-full pl-4 pr-10 py-2 rounded-md border border-[#E9DED3] bg-white text-sm focus:outline-none focus:border-[#8B5E3C] shadow-sm"
+          />
+          <Search className="w-4 h-4 text-gray-400 absolute right-3 top-2.5" />
+        </div>
+        <div className="relative w-full sm:w-auto">
+          <select
+            value={ordersFilterStatus}
+            onChange={(e) => {
+              setOrdersFilterStatus(e.target.value);
+              setOrdersPage(1);
+            }}
+            className="appearance-none flex w-full sm:w-auto items-center gap-2 pl-9 pr-8 py-2 rounded-md bg-[#FAF8F5] border border-[#E9DED3] text-[#141225] text-sm font-semibold hover:bg-[#F0EAE1] transition shadow-sm outline-none cursor-pointer"
+          >
+            <option value="All">All Status</option>
+            <option value="Pending">Pending</option>
+            <option value="Processing">Processing</option>
+            <option value="Shipped">Shipped</option>
+            <option value="Delivered">Delivered</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+          <Filter className="w-4 h-4 text-[#141225] absolute left-3 top-2.5 pointer-events-none" />
+          <ChevronDown className="w-4 h-4 text-[#141225] absolute right-2.5 top-2.5 pointer-events-none" />
+        </div>
+      </div>
+
       {ordersLoading ? (
         <p className="mt-8 text-sm text-[#6D625C]">Loading orders...</p>
       ) : orders.length === 0 ? (
         <EmptyState icon={Package} title="No orders yet" text="Your placed orders will appear here after checkout." action="Start Shopping" onAction={() => onNavigate('/')} />
+      ) : filteredOrders.length === 0 ? (
+        <div className="py-12 text-center text-sm text-gray-500">No matching orders found.</div>
       ) : (
         <>
         <div className="mt-6">
@@ -1417,27 +1419,12 @@ export default function CustomerProfilePage({
           </div>
           
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="mt-6 flex justify-center items-center gap-2">
-              <button
-                onClick={() => setOrdersPage(p => Math.max(1, p - 1))}
-                disabled={ordersPage === 1}
-                className="px-3 py-1.5 text-sm font-semibold border rounded disabled:opacity-50"
-              >
-                Prev
-              </button>
-              <span className="text-sm font-semibold text-gray-700">
-                Page {ordersPage} of {totalPages}
-              </span>
-              <button
-                onClick={() => setOrdersPage(p => Math.min(totalPages, p + 1))}
-                disabled={ordersPage === totalPages}
-                className="px-3 py-1.5 text-sm font-semibold border rounded disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>
-          )}
+          <Pagination 
+            currentPage={ordersPage} 
+            totalPages={totalPages} 
+            onPageChange={setOrdersPage} 
+            className="mt-6 flex items-center justify-center gap-2 flex-wrap"
+          />
         </div>
         </>
       )}
@@ -1494,9 +1481,25 @@ export default function CustomerProfilePage({
               />
               <Search className="w-4 h-4 text-gray-400 absolute right-3 top-2.5" />
             </div>
-            <button className="flex items-center justify-center gap-2 px-5 py-2 w-full sm:w-auto rounded-md bg-[#FAF8F5] border border-[#E9DED3] text-[#141225] text-sm font-semibold hover:bg-[#F0EAE1] transition shadow-sm">
-              <Filter className="w-4 h-4" /> Filter
-            </button>
+            <div className="relative w-full sm:w-auto">
+              <select
+                value={customizeFilterStatus}
+                onChange={(e) => {
+                  setCustomizeFilterStatus(e.target.value);
+                  setCustomizeOrdersPage(1);
+                }}
+                className="appearance-none flex w-full sm:w-auto items-center gap-2 pl-9 pr-8 py-2 rounded-md bg-[#FAF8F5] border border-[#E9DED3] text-[#141225] text-sm font-semibold hover:bg-[#F0EAE1] transition shadow-sm outline-none cursor-pointer"
+              >
+                <option value="All">All Status</option>
+                <option value="Pending">Pending</option>
+                <option value="Processing">Processing</option>
+                <option value="Shipped">Shipped</option>
+                <option value="Delivered">Delivered</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+              <Filter className="w-4 h-4 text-[#141225] absolute left-3 top-2.5 pointer-events-none" />
+              <ChevronDown className="w-4 h-4 text-[#141225] absolute right-2.5 top-2.5 pointer-events-none" />
+            </div>
           </div>
         </div>
 
@@ -1663,7 +1666,7 @@ export default function CustomerProfilePage({
             })}
             
             {/* Pagination Controls */}
-            {renderPagination(customizeOrdersPage, totalPages, setCustomizeOrdersPage)}
+            <Pagination currentPage={customizeOrdersPage} totalPages={totalPages} onPageChange={setCustomizeOrdersPage} />
           </div>
         )}
       </section>
@@ -1820,9 +1823,25 @@ export default function CustomerProfilePage({
               />
               <Search className="w-4 h-4 text-gray-400 absolute right-3 top-3" />
             </div>
-            <button className="flex items-center justify-center gap-2 px-5 py-2.5 w-full sm:w-auto rounded-md bg-[#FAF8F5] border border-[#E9DED3] text-[#141225] text-sm font-semibold hover:bg-[#F0EAE1] transition shadow-sm">
-              <Filter className="w-4 h-4" /> Filter
-            </button>
+            <div className="relative w-full sm:w-auto">
+              <select
+                value={bulkFilterStatus}
+                onChange={(e) => {
+                  setBulkFilterStatus(e.target.value);
+                  setBulkOrdersPage(1);
+                }}
+                className="appearance-none flex w-full sm:w-auto items-center gap-2 pl-9 pr-8 py-2.5 rounded-md bg-[#FAF8F5] border border-[#E9DED3] text-[#141225] text-sm font-semibold hover:bg-[#F0EAE1] transition shadow-sm outline-none cursor-pointer"
+              >
+                <option value="All">All Status</option>
+                <option value="Pending">Pending</option>
+                <option value="Processing">Processing</option>
+                <option value="Shipped">Shipped</option>
+                <option value="Delivered">Delivered</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+              <Filter className="w-4 h-4 text-[#141225] absolute left-3 top-3 pointer-events-none" />
+              <ChevronDown className="w-4 h-4 text-[#141225] absolute right-2.5 top-3 pointer-events-none" />
+            </div>
           </div>
         </div>
 
@@ -1957,7 +1976,7 @@ export default function CustomerProfilePage({
             </div>
             
             {/* Pagination Controls */}
-            {renderPagination(bulkOrdersPage, totalPages, setBulkOrdersPage, "mt-6 flex items-center justify-center gap-2 flex-wrap")}
+            <Pagination currentPage={bulkOrdersPage} totalPages={totalPages} onPageChange={setBulkOrdersPage} className="mt-6 flex items-center justify-center gap-2 flex-wrap" />
           </div>
         )}
       </section>
@@ -2852,6 +2871,10 @@ export default function CustomerProfilePage({
         return orderId.includes(giftSearchTerm.toLowerCase());
       });
     }
+
+    if (giftFilterStatus !== 'All') {
+      giftOrders = giftOrders.filter(o => o.status === giftFilterStatus);
+    }
     const giftItemsPerPage = isMobile ? 5 : 10;
     const totalGiftPages = Math.ceil(giftOrders.length / giftItemsPerPage);
     const paginatedGiftOrders = giftOrders.slice((giftOrdersPage - 1) * giftItemsPerPage, giftOrdersPage * giftItemsPerPage);
@@ -2879,9 +2902,25 @@ export default function CustomerProfilePage({
             />
             <Search className="w-4 h-4 text-gray-400 absolute right-3 top-2.5" />
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 rounded-md bg-[#FAF8F5] border border-[#E9DED3] text-[#141225] text-sm font-semibold hover:bg-[#F0EAE1] transition whitespace-nowrap">
-            <Filter className="w-4 h-4" /> Filter
-          </button>
+          <div className="relative">
+            <select
+              value={giftFilterStatus}
+              onChange={(e) => {
+                setGiftFilterStatus(e.target.value);
+                setGiftOrdersPage(1);
+              }}
+              className="appearance-none flex items-center gap-2 pl-9 pr-8 py-2 rounded-md bg-[#FAF8F5] border border-[#E9DED3] text-[#141225] text-sm font-semibold hover:bg-[#F0EAE1] transition whitespace-nowrap outline-none cursor-pointer"
+            >
+              <option value="All">All Status</option>
+              <option value="Pending">Pending</option>
+              <option value="Processing">Processing</option>
+              <option value="Shipped">Shipped</option>
+              <option value="Delivered">Delivered</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+            <Filter className="w-4 h-4 text-[#141225] absolute left-3 top-2.5 pointer-events-none" />
+            <ChevronDown className="w-4 h-4 text-[#141225] absolute right-2.5 top-2.5 pointer-events-none" />
+          </div>
         </div>
 
         {ordersLoading ? (
@@ -2896,15 +2935,37 @@ export default function CustomerProfilePage({
               const imageSrc = firstItem.image ? (firstItem.image.startsWith('http') || firstItem.image.startsWith('data:') ? firstItem.image : (firstItem.image.startsWith('/uploads') || firstItem.image.startsWith('uploads/')) ? `http://localhost:5000${firstItem.image.startsWith('/') ? '' : '/'}${firstItem.image}` : firstItem.image) : '';
               
               return (
-                <div key={order._id} className="rounded-xl border border-[#E9DED3] bg-white p-4 shadow-sm flex flex-col lg:flex-row gap-6">
+                <div key={order._id} className="rounded-xl border border-[#E9DED3] bg-white p-3 sm:p-4 shadow-sm flex flex-col lg:flex-row gap-4 lg:gap-6">
                   
-                  {/* Image Column */}
-                  <div className="w-full lg:w-48 h-48 shrink-0 rounded-lg overflow-hidden bg-[#F8F3EF]">
-                    {imageSrc ? <img src={imageSrc} alt="Product" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Package className="w-8 h-8 text-gray-400" /></div>}
+                  {/* Image Column - Mobile: side-by-side with basic info, Desktop: standalone column */}
+                  <div className="flex flex-row gap-3 sm:gap-4 lg:contents">
+                    <div className="w-24 h-24 sm:w-32 sm:h-32 lg:w-48 lg:h-48 shrink-0 rounded-lg overflow-hidden bg-[#F8F3EF]">
+                      {imageSrc ? <img src={imageSrc} alt="Product" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Package className="w-6 h-6 lg:w-8 lg:h-8 text-gray-400" /></div>}
+                    </div>
+
+                    {/* Mobile Only: Basic Info next to image */}
+                    <div className="flex flex-col justify-between py-0.5 sm:py-1 lg:hidden flex-1">
+                      <div>
+                        <h3 className="font-serif font-bold text-[#141225] text-[14px] sm:text-[16px] leading-tight">Order #{(order.orderId || order._id.slice(-8)).toUpperCase()}</h3>
+                        <p className="text-[11px] sm:text-xs text-gray-500 mt-1">{formatDate(order.createdAt)}</p>
+                      </div>
+                      
+                      <div className="flex items-center gap-1.5 mt-2 mb-1">
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 sm:px-2 sm:py-1 bg-[#FDF0EB] text-[#D04E26] text-[9px] sm:text-[10px] font-bold rounded whitespace-nowrap">
+                          <CalendarDays className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                          {formatDate(getDeliveryDate(order))}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-end mt-auto">
+                        <p className="text-[13px] sm:text-sm font-bold text-[#141225]">₹ {Number(order.totalPrice || 0).toLocaleString()}</p>
+                        <p className="text-[10px] sm:text-xs text-gray-500">{order.orderItems?.length || 1} Item{order.orderItems?.length > 1 ? 's' : ''}</p>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Details Grid */}
-                  <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 items-start py-2">
+                  {/* Details Grid - Desktop Only Columns (Hidden on Mobile) */}
+                  <div className="hidden lg:grid flex-1 grid-cols-4 gap-6 lg:gap-8 items-start py-2">
                     
                     {/* Column 1: Order ID & Message */}
                     <div className="flex flex-col gap-3 h-full">
@@ -2972,45 +3033,41 @@ export default function CustomerProfilePage({
                       >
                         View Details
                       </button>
-                      <button className="w-full py-2.5 rounded-md bg-[#8B5E3C] text-white text-sm font-semibold hover:bg-[#7E4B25] transition text-center">
-                        Track Order
+                      <button 
+                        onClick={() => { const pId = firstItem.product?._id || firstItem.product; if (pId) navigate(`/product/${pId}`); }}
+                        className="w-full py-2.5 rounded-md bg-[#8B5E3C] text-white text-sm font-semibold hover:bg-[#7E4B25] transition text-center flex items-center justify-center gap-2"
+                      >
+                        <RefreshCw className="w-4 h-4" /> Buy Again
                       </button>
                     </div>
+                  </div>
+                  
+                  {/* Actions Row - Mobile Only */}
+                  <div className="flex lg:hidden flex-row gap-2 sm:gap-3 mt-1 sm:mt-2 border-t border-[#E9DED3] pt-3 sm:pt-4">
+                    <button 
+                      onClick={() => { setActiveOrder(order); setActiveModule('order-details'); navigate('/profile/order-history/details'); }}
+                      className="flex-1 py-2 sm:py-2.5 rounded-md border border-[#8B5E3C] text-[#8B5E3C] text-[13px] sm:text-sm font-semibold hover:bg-[#FAF8F5] transition text-center"
+                    >
+                      View Details
+                    </button>
+                    <button 
+                      onClick={() => { const pId = firstItem.product?._id || firstItem.product; if (pId) navigate(`/product/${pId}`); }}
+                      className="flex-1 py-2 sm:py-2.5 rounded-md bg-[#8B5E3C] text-white text-[13px] sm:text-sm font-semibold hover:bg-[#7E4B25] transition text-center flex items-center justify-center gap-1.5"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Buy Again
+                    </button>
                   </div>
                 </div>
               );
             })}
           </div>
           
-          {totalGiftPages > 1 && (
-            <div className="mt-8 flex justify-center items-center gap-2">
-              <button
-                onClick={() => setGiftOrdersPage(p => Math.max(1, p - 1))}
-                disabled={giftOrdersPage === 1}
-                className="w-8 h-8 flex items-center justify-center text-sm font-semibold border rounded bg-white hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white text-gray-600"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              
-              {Array.from({ length: totalGiftPages }, (_, i) => i + 1).map(page => (
-                <button
-                  key={page}
-                  onClick={() => setGiftOrdersPage(page)}
-                  className={`w-8 h-8 flex items-center justify-center text-sm font-semibold border rounded ${giftOrdersPage === page ? 'bg-[#8B5E3C] text-white border-[#8B5E3C]' : 'bg-white hover:bg-gray-50 text-gray-600'}`}
-                >
-                  {page}
-                </button>
-              ))}
-
-              <button
-                onClick={() => setGiftOrdersPage(p => Math.min(totalGiftPages, p + 1))}
-                disabled={giftOrdersPage === totalGiftPages}
-                className="w-8 h-8 flex items-center justify-center text-sm font-semibold border rounded bg-white hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white text-gray-600"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
+          <Pagination 
+            currentPage={giftOrdersPage} 
+            totalPages={totalGiftPages} 
+            onPageChange={setGiftOrdersPage} 
+            className="mt-8 flex items-center justify-center gap-2 flex-wrap"
+          />
           </>
         )}
       </section>
@@ -3083,17 +3140,34 @@ export default function CustomerProfilePage({
         <div className="overflow-hidden rounded-[18px] border border-[#E9DED3] bg-white shadow-[0_18px_70px_rgba(62,39,35,0.07)]">
           <header className="flex flex-col gap-5 border-b border-[#E9DED3] px-5 py-7 sm:flex-row sm:items-center sm:justify-between lg:px-7">
             <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#F4EBE2] text-[#A7632E]">
-                <User className="h-6 w-6" strokeWidth={1.8} />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight text-[#141225]">{modules.find((item) => isModuleActive(item.id))?.label || 'My Profile'}</h1>
-              </div>
+              {(() => {
+                const ActiveModule = modules.find((item) => isModuleActive(item.id));
+                const ActiveIcon = ActiveModule?.icon || User;
+                return (
+                  <>
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#F4EBE2] text-[#A7632E]">
+                      <ActiveIcon className="h-6 w-6" strokeWidth={1.8} />
+                    </div>
+                    <div>
+                      <h1 className="text-2xl font-bold tracking-tight text-[#141225]">{ActiveModule?.label || 'My Profile'}</h1>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
             {activeModule === 'profile' && !isEditing && (
               <button type="button" onClick={() => navigate('/profile/edit')} className="inline-flex items-center justify-center gap-2 rounded-[8px] bg-[#9A6031] px-5 py-3 text-sm font-bold text-white shadow-[0_12px_25px_rgba(139,94,60,0.2)] transition hover:bg-[#7E4B25]">
                 <Edit3 className="h-4 w-4" strokeWidth={1.8} />
                 Edit Profile
+              </button>
+            )}
+            {activeModule === 'orders' && (
+              <button type="button" onClick={() => onNavigate('/order-history')} className="rounded-[10px] bg-[#9A6031] px-5 py-2.5 text-[15px] font-bold text-white hover:bg-[#7a5234] transition-colors shadow-[0_12px_25px_rgba(139,94,60,0.2)]">Open Full Page</button>
+            )}
+            {activeModule === 'addresses' && (
+              <button type="button" onClick={() => document.dispatchEvent(new CustomEvent('open-address-modal'))} className="inline-flex items-center justify-center gap-2 rounded-[8px] bg-[#9A6031] px-5 py-3 text-sm font-bold text-white shadow-[0_12px_25px_rgba(139,94,60,0.2)] transition hover:bg-[#7E4B25]">
+                <Plus className="h-4 w-4" strokeWidth={1.8} />
+                Add Address
               </button>
             )}
           </header>

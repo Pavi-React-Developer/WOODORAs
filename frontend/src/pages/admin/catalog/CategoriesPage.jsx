@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { categoryV2API } from '../../../api/catalogV2Service';
-import { Download, RefreshCw, Plus } from 'lucide-react';
+import { Plus, Download, RefreshCw, X, Image as ImageIcon } from 'lucide-react';
+import Pagination from '../../../components/common/Pagination';
 import { downloadExcelFile } from '../../../utils/exportUtils';
 import { API_BASE } from '../../../api/apiClient';
 
@@ -96,7 +97,7 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
       setFormData({ name: '', slug: '', description: '', displayOrder: 1, isActive: true, seoTitle: '', seoDescription: '', seoKeywords: '', availableWoodTypes: '', image: null });
       setImagePreview(null);
     }
-    setIsFormOpen(true);
+    window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + (editId || arguments[0] ? '/edit' : '/add')); setIsFormOpen(true);
   };
 
   const handleSave = async (e) => {
@@ -126,7 +127,7 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
         await categoryV2API.create(payload);
         setSuccessMsg('Category created!');
       }
-      setIsFormOpen(false);
+      (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setIsFormOpen(false));
       setImageFile(null);
       setImagePreview(null);
       fetchCategories();
@@ -430,23 +431,20 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
         </div>
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="px-5 py-3 border-t border-[#E6DFD4] flex items-center justify-between bg-[#FAFAFA]">
-            <p className="text-xs text-gray-500">Showing {categories.length} of {total} categories</p>
-            <div className="flex gap-2">
-              <button disabled={page === 1} onClick={() => setPage(p => p - 1)} className="px-3 py-1.5 text-xs border border-[#E6DFD4] rounded-lg disabled:opacity-40 hover:bg-[#F8F4EC]">Prev</button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-                <button key={p} onClick={() => setPage(p)} className={`px-3 py-1.5 text-xs border rounded-lg ${p === page ? 'bg-[#8B5E3C] text-white border-[#8B5E3C]' : 'border-[#E6DFD4] hover:bg-[#F8F4EC]'}`}>{p}</button>
-              ))}
-              <button disabled={page === totalPages} onClick={() => setPage(p => p + 1)} className="px-3 py-1.5 text-xs border border-[#E6DFD4] rounded-lg disabled:opacity-40 hover:bg-[#F8F4EC]">Next</button>
-            </div>
-          </div>
-        )}
+        <div className="px-5 py-3 border-t border-[#E6DFD4] flex flex-col sm:flex-row justify-center items-center bg-[#FAFAFA] gap-4">
+          
+          <Pagination 
+            currentPage={page} 
+            totalPages={totalPages} 
+            onPageChange={setPage} 
+            className="flex items-center justify-center gap-2 flex-wrap"
+          />
+        </div>
       </div>
 
       {/* ── SIDE DRAWER FORM ──────────────────────────────────────────────── */}
       {isFormOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-sm" onClick={() => setIsFormOpen(false)}>
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-sm" onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setIsFormOpen(false))}>
           <div
             className="w-full max-w-lg bg-white h-full shadow-2xl flex flex-col"
             onClick={e => e.stopPropagation()}
@@ -458,7 +456,7 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
                 <h2 className="text-lg font-bold text-gray-800">{editId ? 'Edit Category' : 'Add New Category'}</h2>
                 <p className="text-xs text-gray-500 mt-0.5">{editId ? 'Update the category details below.' : 'Fill in the details to create a new category.'}</p>
               </div>
-              <button onClick={() => setIsFormOpen(false)} className="p-2 rounded-xl hover:bg-[#E6DFD4] text-gray-400 hover:text-gray-700 transition-colors">
+              <button onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setIsFormOpen(false))} className="p-2 rounded-xl hover:bg-[#E6DFD4] text-gray-400 hover:text-gray-700 transition-colors">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
@@ -571,7 +569,7 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
 
             {/* Drawer Footer */}
             <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#E6DFD4] bg-[#FAFAFA]">
-              <button type="button" onClick={() => setIsFormOpen(false)} className="px-5 py-2.5 border border-[#E6DFD4] rounded-xl text-sm font-semibold text-gray-600 hover:bg-white transition-colors">
+              <button type="button" onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setIsFormOpen(false))} className="px-5 py-2.5 border border-[#E6DFD4] rounded-xl text-sm font-semibold text-gray-600 hover:bg-white transition-colors">
                 Cancel
               </button>
               <button

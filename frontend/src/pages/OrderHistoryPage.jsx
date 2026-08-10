@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { orderService } from '../api/orderService';
 import { ShoppingBag, Loader2, Package, Calendar, MapPin, ExternalLink, Download, Eye, RotateCw, RefreshCw } from 'lucide-react';
+import Pagination from '../components/common/Pagination';
 import toast from 'react-hot-toast';
 import { saveAs } from 'file-saver';
 import { API_ORIGIN } from '../api/apiClient';
@@ -73,14 +74,22 @@ export default function OrderHistoryPage({ onNavigate, user }) {
     <div className="min-h-screen bg-[#F8F4EC] py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
         {/* Desktop Header */}
-        <div className="hidden sm:flex items-center gap-3 mb-8">
-          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-[#8B5E3C] shadow-sm">
-            <ShoppingBag className="w-6 h-6" />
+        <div className="hidden sm:flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-[#8B5E3C] shadow-sm">
+              <ShoppingBag className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Order History</h1>
+              <p className="text-sm text-gray-500">Track and manage your previous orders</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Order History</h1>
-            <p className="text-sm text-gray-500">Track and manage your previous orders</p>
-          </div>
+          <button 
+            onClick={() => onNavigate('/profile/order-history')}
+            className="px-6 py-2.5 bg-white border border-[#E6DFD4] text-[#8B5E3C] rounded-xl font-bold hover:bg-[#FAF8F5] transition-colors shadow-sm"
+          >
+            Back to Orders
+          </button>
         </div>
 
         {/* Mobile Header */}
@@ -91,7 +100,13 @@ export default function OrderHistoryPage({ onNavigate, user }) {
                <RotateCw className="w-3.5 h-3.5" /> Refresh
              </button>
           </div>
-          <p className="text-[#666] text-sm">View and manage your recent orders.</p>
+          <p className="text-[#666] text-sm mb-4">View and manage your recent orders.</p>
+          <button 
+            onClick={() => onNavigate('/profile/order-history')}
+            className="w-full py-2.5 bg-white border border-[#E6DFD4] text-[#8B5E3C] rounded-xl font-bold hover:bg-[#FAF8F5] transition-colors shadow-sm"
+          >
+            Back to Orders
+          </button>
         </div>
 
         {orders.length === 0 ? (
@@ -319,24 +334,16 @@ export default function OrderHistoryPage({ onNavigate, user }) {
         )}
         
         {totalPages > 1 && orders.length > 0 && (
-          <div className="flex justify-center items-center gap-4 mt-8 pb-4">
-            <button 
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="px-4 py-2 border border-[#E6DFD4] rounded-lg text-sm font-bold text-[#4A3326] disabled:opacity-50 hover:bg-white bg-[#F8F4EC] transition-colors shadow-sm"
-            >
-              Previous
-            </button>
-            <span className="text-sm font-bold text-[#7C7370]">
+          <div className="flex flex-col sm:flex-row justify-between items-center mt-8 pb-4 gap-4">
+            <span className="text-sm font-bold text-[#7C7370] text-center sm:text-left">
               Page {currentPage} of {totalPages}
             </span>
-            <button 
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="px-4 py-2 border border-[#E6DFD4] rounded-lg text-sm font-bold text-[#4A3326] disabled:opacity-50 hover:bg-white bg-[#F8F4EC] transition-colors shadow-sm"
-            >
-              Next
-            </button>
+            <Pagination 
+              currentPage={currentPage} 
+              totalPages={totalPages} 
+              onPageChange={setCurrentPage} 
+              className="flex items-center justify-center gap-2 flex-wrap"
+            />
           </div>
         )}
       </div>

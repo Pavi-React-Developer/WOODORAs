@@ -7,6 +7,15 @@ import { adminService } from '../../../api/adminService';
 
 export default function CancellationManagementPage({ canCreate = true, canEdit = true, canDelete = true }) {
   const [activeTab, setActiveTab] = useState('COD');
+  const [selectedIds, setSelectedIds] = useState([]);
+
+  const toggleSelectAll = (checked) => {
+    setSelectedIds(checked ? rules.map(item => item._id) : []);
+  };
+
+  const toggleSelectOne = (id, checked) => {
+    setSelectedIds(prev => checked ? [...prev, id] : prev.filter(i => i !== id));
+  };
   const [rules, setRules] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -69,7 +78,7 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
         toast.success('Rule added successfully');
       }
       
-      setIsModalOpen(false);
+      (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setIsModalOpen(false));
       setEditingId(null);
       setFormData({ orderStatus: 'Order Placed', cancellationFee: '', timeLimit: '', isAllowed: true, refundPercentage: 100 });
       fetchRules();
@@ -87,7 +96,7 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
       refundPercentage: rule.refundPercentage ?? 100
     });
     setEditingId(rule._id);
-    setIsModalOpen(true);
+    window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setIsModalOpen(true);
   };
 
   const handleDeleteRule = async (id) => {
@@ -191,7 +200,7 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
               onClick={() => {
                 setEditingId(null);
                 setFormData({ orderStatus: 'Order Placed', cancellationFee: '', timeLimit: '', isAllowed: true });
-                setIsModalOpen(true);
+                window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setIsModalOpen(true);
               }}
               className="admin-btn"
             >
@@ -265,16 +274,24 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
                 <h2 className="text-lg font-bold text-[#141225]">Cancellation Rules ({activeTab})</h2>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
                     <tr className="bg-[#FAF8F5] border-b border-[#E9DED3]">
-                      <th className="px-6 py-3 text-xs font-bold text-[#6D625C] uppercase tracking-wider">Order Status</th>
-                      <th className="px-6 py-3 text-xs font-bold text-[#6D625C] uppercase tracking-wider text-center">Cancellation Fee (₹)</th>
-                      <th className="px-6 py-3 text-xs font-bold text-[#6D625C] uppercase tracking-wider text-center">Refund %</th>
-                      <th className="px-6 py-3 text-xs font-bold text-[#6D625C] uppercase tracking-wider">Time Limit</th>
-                      <th className="px-6 py-3 text-xs font-bold text-[#6D625C] uppercase tracking-wider text-center">Allowed</th>
-                      <th className="px-6 py-3 text-xs font-bold text-[#6D625C] uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-3 text-xs font-bold text-[#6D625C] uppercase tracking-wider text-right">Actions</th>
+                                <th className="px-4 py-3.5 w-10">
+                                    <input
+                                        type="checkbox"
+                                        checked={rules.length > 0 && selectedIds.length === rules.length}
+                                        onChange={e => toggleSelectAll(e.target.checked)}
+                                        className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                                    />
+                                </th>
+                      <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Order Status</th>
+                      <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Cancellation Fee (₹)</th>
+                      <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Refund %</th>
+                      <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Time Limit</th>
+                      <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Allowed</th>
+                      <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Status</th>
+                      <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#E9DED3]">
@@ -286,22 +303,22 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
                         </td>
                       </tr>
                     ) : filteredRules.map((rule, idx) => (
-                      <tr key={idx} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4">
+                      <tr key={idx} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${typeof idx !== "undefined" ? (idx % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : typeof index !== "undefined" ? (index % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : "bg-white"}`}>
+                        <td className="px-4 py-3.5">
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-bold text-[#141225]">{rule.orderStatus}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-center">
+                        <td className="px-4 py-3.5 text-center">
                           <span className="text-sm font-bold text-[#141225]">{rule.cancellationFee > 0 ? rule.cancellationFee : '-'}</span>
                         </td>
-                        <td className="px-6 py-4 text-center">
+                        <td className="px-4 py-3.5 text-center">
                           <span className="text-sm font-bold text-[#141225]">{rule.refundPercentage > 0 ? `${rule.refundPercentage}%` : '-'}</span>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-3.5">
                           <span className="text-sm font-bold text-[#141225]">{rule.timeLimit}</span>
                         </td>
-                        <td className="px-6 py-4 text-center">
+                        <td className="px-4 py-3.5 text-center">
                           <button
                             onClick={() => handleToggleAllowed(rule)}
                             disabled={!canEdit || rule.status === 'Locked'}
@@ -317,7 +334,7 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
                             />
                           </button>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-3.5">
                           <span className={`inline-flex px-2 py-1 rounded text-xs font-bold ${
                             rule.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 
                             rule.status === 'Disabled' ? 'bg-red-100 text-red-700' : 
@@ -326,7 +343,7 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
                             {rule.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-right">
+                        <td className="px-4 py-3.5 text-right">
                           {rule.status !== 'Locked' ? (
                             <div className="flex items-center justify-end gap-2">
                               {canEdit && (
@@ -356,7 +373,7 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
                   </tbody>
                 </table>
               </div>
-              <div className="px-6 py-4 border-t border-[#E9DED3] bg-[#FAF8F5]">
+              <div className="px-4 py-3.5 border-t border-[#E9DED3] bg-[#FAF8F5]">
                 <p className="text-xs text-[#8A817C] flex items-center gap-1.5">
                   <AlertCircle size={14} />
                   Rules are applied automatically based on order status and payment method.
@@ -378,7 +395,7 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
                 <h2 className="text-lg font-bold">{editingId ? 'Edit Cancellation Rule' : 'Add New Cancellation Rule'} ({activeTab})</h2>
               </div>
               <button 
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setIsModalOpen(false))}
                 className="text-red-500 hover:text-red-600 transition-colors"
               >
                 <X size={20} />
@@ -481,7 +498,7 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
 
               <div className="flex justify-end gap-3 mt-6 pt-2">
                 <button 
-                  onClick={() => setIsModalOpen(false)}
+                  onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setIsModalOpen(false))}
                   className="px-6 py-2 bg-white border border-[#E9DED3] text-[#6D625C] rounded font-bold hover:bg-gray-50 shadow-sm transition-colors text-sm"
                 >
                   Cancel

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Settings, ToggleLeft, ToggleRight, List, Columns, ShieldAlert, Download, RefreshCw, Sparkles, Layers, Globe , SquarePen , Trash } from 'lucide-react';
+import { Plus, Edit2, Trash2, Settings, ToggleLeft, ToggleRight, List, Columns, ShieldAlert, Download, RefreshCw, Sparkles, Layers, Globe, SquarePen, Trash, X, GripVertical, Image as ImageIcon } from 'lucide-react';
+import Pagination from '../../../components/common/Pagination';
 import { productV2API, categoryV2API, subCategoryV2API } from '../../../api/catalogV2Service';
 import toast from 'react-hot-toast';
 import { downloadExcelFile } from '../../../utils/exportUtils';
@@ -48,6 +49,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
     }, [isAddMode]);
 
     const handleCloseForm = () => {
+        window.history.pushState({}, '', '/admin/products');
         setIsFormOpen(false);
         setEditId(null);
         setFormData({
@@ -259,6 +261,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
     const handleOpenForm = async (product = null) => {
         setMappedAttributes([]);
         if (product) {
+            window.history.pushState({}, '', '/admin/products/edit');
             setEditId(product._id);
             setFormLoading(true);
             setIsFormOpen(true);
@@ -328,6 +331,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                 setFormLoading(false);
             }
         } else {
+            window.history.pushState({}, '', '/admin/products/add');
             setEditId(null);
             setFormData({
                 name: '',
@@ -559,10 +563,9 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                         <Download size={16} /> Export Excel
                     </button>
                     {canCreate && (
-                    <Button onClick={() => handleOpenForm()} className="shadow-lg hover:shadow-xl transition-all">
-                        <Plus size={20} />
-                        Add Product
-                    </Button>
+                    <button onClick={() => handleOpenForm()} className="admin-btn">
+                        <Plus size={16} /> Add Product
+                    </button>
                     )}
                 </div>
             </div>
@@ -643,119 +646,119 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
             />
 
             {/* Data Table */}
-            <Card className="overflow-hidden">
+            <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                <th className="px-6 py-4 w-12">
+                    <table className="w-full text-sm">
+                        <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
+                            <tr>
+                                <th className="px-4 py-3.5 w-10">
                                     <input
                                         type="checkbox"
-                                        checked={selectedIds.length > 0 && selectedIds.length === products.length}
-                                        onChange={(e) => handleSelectAll(e.target.checked)}
-                                        className="rounded text-amber-600 focus:ring-amber-500 cursor-pointer"
+                                        checked={products.length > 0 && selectedIds.length === products.length}
+                                        onChange={e => toggleSelectAll(e.target.checked)}
+                                        className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
                                     />
                                 </th>
-                                <th className="px-6 py-4">Product</th>
-                                <th className="px-6 py-4">Category</th>
-                                <th className="px-6 py-4">Price</th>
-                                <th className="px-6 py-4">Total Stock</th>
-                                <th className="px-6 py-4">Status</th>
-                                <th className="px-6 py-4 text-right">Actions</th>
+                                {['Product', 'Category', 'Price', 'Total Stock', 'Status', 'Actions'].map(h => (
+                                    <th key={h} className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">{h}</th>
+                                ))}
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100 text-sm text-gray-700">
+                        <tbody>
                             {loading ? (
-                                <tr>
-                                    <td colSpan="7" className="text-center py-8 text-gray-400">
-                                        <div className="w-8 h-8 border-4 border-amber-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                                <tr><td colSpan={7} className="text-center py-16 text-gray-400">
+                                    <div className="flex items-center justify-center gap-2">
+                                        <div className="w-4 h-4 border-2 border-[#8B5E3C] border-t-transparent rounded-full animate-spin" />
                                         Loading catalog products...
-                                    </td>
-                                </tr>
+                                    </div>
+                                </td></tr>
                             ) : products.length === 0 ? (
-                                <tr>
-                                    <td colSpan="7" className="text-center py-8 text-gray-400">
-                                        No products matched criteria.
-                                    </td>
-                                </tr>
+                                <tr><td colSpan={7} className="text-center py-16 text-gray-400">
+                                    <div className="flex flex-col items-center gap-3">
+                                        <div className="w-12 h-12 bg-[#F8F4EC] rounded-full flex items-center justify-center text-2xl">🧸</div>
+                                        <p className="font-medium">No products matched criteria.</p>
+                                    </div>
+                                </td></tr>
                             ) : (
-                                products.map((prod) => {
+                                products.map((prod, idx) => {
                                     const mainImage = prod.images?.find(img => img.isThumbnail)?.url || prod.images?.[0]?.url || null;
                                     return (
-                                        <tr key={prod._id} className="hover:bg-gray-50/50 transition-colors">
-                                            <td className="px-6 py-4">
+                                        <tr
+                                            key={prod._id}
+                                            className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}
+                                        >
+                                            <td className="px-4 py-3.5">
                                                 <input
                                                     type="checkbox"
                                                     checked={selectedIds.includes(prod._id)}
                                                     onChange={(e) => handleSelectRow(prod._id, e.target.checked)}
-                                                    className="rounded text-amber-600 focus:ring-amber-500 cursor-pointer"
+                                                    className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
                                                 />
                                             </td>
-                                            <td className="px-6 py-4">
+                                            <td className="px-4 py-3.5">
                                                 <div className="flex items-center gap-3">
                                                     {mainImage ? (
-                                                        <img src={mainImage} alt={prod.name} className="w-12 h-12 object-cover rounded-lg border border-gray-100" />
+                                                        <img src={mainImage} alt={prod.name} className="w-12 h-12 object-cover rounded-lg border border-[#E6DFD4]" />
                                                     ) : (
-                                                        <div className="w-12 h-12 bg-amber-50 border border-amber-100 rounded-lg flex items-center justify-center text-amber-800 font-bold text-xs">
+                                                        <div className="w-12 h-12 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center text-[#8B5E3C] font-bold text-xs">
                                                             TOY
                                                         </div>
                                                     )}
                                                     <div>
-                                                        <p className="font-semibold text-gray-900">{prod.name}</p>
+                                                        <p className="font-semibold text-gray-800">{prod.name}</p>
                                                         <p className="text-xs text-gray-400 font-mono mt-0.5">{prod.sku || 'No SKU'}</p>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <p className="text-gray-900">{prod.category?.name || 'Unknown'}</p>
+                                            <td className="px-4 py-3.5 font-semibold text-[#8B5E3C]">{prod.category?.name || 'Unknown'}</td>
+                                            <td className="px-4 py-3.5 font-semibold text-amber-900">₹{(prod.price || 0).toFixed(2)}</td>
+                                            <td className="px-4 py-3.5">
+                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                                                    prod.isLowStock ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+                                                }`}>
+                                                    {prod.totalStock} {prod.isLowStock ? 'low' : 'in stock'}
+                                                </span>
                                             </td>
-                                            <td className="px-6 py-4 font-semibold text-amber-900">₹{(prod.price || 0).toFixed(2)}</td>
-                                            <td className="px-6 py-4">
-                                                {prod.isLowStock ? (
-                                                    <Badge variant="red">{prod.totalStock} low</Badge>
-                                                ) : (
-                                                    <Badge variant="green">{prod.totalStock} in stock</Badge>
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-4">
+                                            <td className="px-4 py-3.5">
                                                 {canEdit ? (
-                                                    <button
-                                                        onClick={() => handleToggleStatus(prod)}
-                                                        className="focus:outline-none hover:opacity-80 transition-opacity"
-                                                    >
-                                                        {prod.isActive ? (
-                                                            <Badge variant="green">Active</Badge>
-                                                        ) : (
-                                                            <Badge variant="gray">Inactive</Badge>
-                                                        )}
+                                                    <button onClick={() => handleToggleStatus(prod)} title="Click to toggle">
+                                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                                                            prod.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                                                        }`}>
+                                                            <span className={`w-1.5 h-1.5 rounded-full ${prod.isActive ? 'bg-green-500' : 'bg-gray-400'}`} />
+                                                            {prod.isActive ? 'Active' : 'Inactive'}
+                                                        </span>
                                                     </button>
                                                 ) : (
-                                                    prod.isActive ? (
-                                                        <Badge variant="green">Active</Badge>
-                                                    ) : (
-                                                        <Badge variant="gray">Inactive</Badge>
-                                                    )
+                                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                                                        prod.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                                                    }`}>
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${prod.isActive ? 'bg-green-500' : 'bg-gray-400'}`} />
+                                                        {prod.isActive ? 'Active' : 'Inactive'}
+                                                    </span>
                                                 )}
                                             </td>
-                                            <td className="px-6 py-4 text-right flex justify-end gap-2 mt-2">
-                                                {canEdit && (
-                                                    <button
-                                                        onClick={() => handleOpenForm(prod)}
-                                                        className="text-blue-600 hover:text-blue-700 transition-colors"
-                                                        title="Edit"
-                                                    >
-                                                        <SquarePen size={16} />
-                                                    </button>
-                                                )}
-                                                {canDelete && (
-                                                    <button
-                                                        onClick={() => handleDeleteClick(prod._id)}
-                                                        className="text-red-500 hover:text-red-600 transition-colors"
-                                                        title="Delete"
-                                                    >
-                                                        <Trash size={16} />
-                                                    </button>
-                                                )}
+                                            <td className="px-4 py-3.5">
+                                                <div className="flex gap-2 justify-end">
+                                                    {canEdit && (
+                                                        <button
+                                                            onClick={() => handleOpenForm(prod)}
+                                                            className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
+                                                            title="Edit"
+                                                        >
+                                                            <SquarePen size={16} />
+                                                        </button>
+                                                    )}
+                                                    {canDelete && (
+                                                        <button
+                                                            onClick={() => handleDeleteClick(prod._id)}
+                                                            className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
+                                                            title="Delete"
+                                                        >
+                                                            <Trash size={16} />
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </td>
                                         </tr>
                                     );
@@ -766,30 +769,15 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                 </div>
 
                 {/* Paging */}
-                {totalPages > 1 && (
-                    <div className="flex justify-between items-center px-6 py-4 border-t border-gray-100 bg-gray-50">
-                        <span className="text-xs text-gray-500">Page {page} of {totalPages}</span>
-                        <div className="flex gap-2">
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                disabled={page === 1}
-                                onClick={() => setPage(p => p - 1)}
-                            >
-                                Previous
-                            </Button>
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                disabled={page === totalPages}
-                                onClick={() => setPage(p => p + 1)}
-                            >
-                                Next
-                            </Button>
-                        </div>
-                    </div>
-                )}
-            </Card>
+                <div className="px-5 py-3 border-t border-[#E6DFD4] flex flex-col sm:flex-row justify-center items-center bg-[#FAFAFA] gap-4">
+                    <Pagination
+                        currentPage={page}
+                        totalPages={totalPages}
+                        onPageChange={setPage}
+                        className="flex items-center justify-center gap-2 flex-wrap"
+                    />
+                </div>
+            </div>
 
             {/* Product Add/Edit Dialog Full Form Drawer */}
             {isFormOpen && (
@@ -939,8 +927,8 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                                 }}
                                                 className="w-1/3 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
                                             />
-                                            <input 
-                                                type="text" 
+                                            <textarea 
+                                                rows={2}
                                                 placeholder="Value (e.g. Oak Wood)" 
                                                 value={info.value}
                                                 onChange={(e) => {
@@ -948,7 +936,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                                     newArr[idx].value = e.target.value;
                                                     setFormData(prev => ({ ...prev, additionalInfo: newArr }));
                                                 }}
-                                                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
+                                                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm resize-y"
                                             />
                                             <button 
                                                 type="button" 

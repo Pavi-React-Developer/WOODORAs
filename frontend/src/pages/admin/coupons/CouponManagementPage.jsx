@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { adminService } from '../../../api/adminService';
 import { catalogService } from '../../../api/catalogService';
-import { Plus, Search, FileDown, Eye, Pencil, Trash2, CheckCircle2, XCircle, Loader2, BadgeCheck, BadgeX, ChevronLeft, ChevronRight, Ticket , RefreshCw , SquarePen , Trash , Check , X } from 'lucide-react';
+import { Download, Plus, SquarePen, Trash, RefreshCw, X, BadgeX, BadgeCheck, Check, Eye, Search, FileDown, Pencil, CheckCircle2, XCircle, Loader2, ChevronLeft, ChevronRight, Ticket } from 'lucide-react';
 import { downloadExcelFile } from '../../../utils/exportUtils';
+import Pagination from '../../../components/common/Pagination';
 
 const emptyForm = {
   couponCode: '',
@@ -38,6 +39,15 @@ const getStatusBadge = (status) => {
 
 export default function CouponManagementPage({ canCreate = true, canEdit = true, canDelete = true }) {
   const [coupons, setCoupons] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
+
+  const toggleSelectAll = (checked) => {
+    setSelectedIds(checked ? coupons.map(item => item._id) : []);
+  };
+
+  const toggleSelectOne = (id, checked) => {
+    setSelectedIds(prev => checked ? [...prev, id] : prev.filter(i => i !== id));
+  };
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState('list');
   const [editingCoupon, setEditingCoupon] = useState(null);
@@ -362,21 +372,37 @@ export default function CouponManagementPage({ canCreate = true, canEdit = true,
                 <p className="text-sm text-gray-500 mt-1">Create your first coupon to start offering discounts.</p>
               </div>
             ) : (
-              <table className="min-w-full divide-y divide-[#E6DFD4]">
-                <thead className="bg-[#FCF8F2] text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+              <table className="w-full text-sm">
+                <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
                   <tr>
-                    <th className="px-4 py-3">Coupon Code</th>
-                    <th className="px-4 py-3">Discount Type</th>
-                    <th className="px-4 py-3">Offer Type</th>
-                    <th className="px-4 py-3">Validity</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Visibility</th>
-                    <th className="px-4 py-3">Actions</th>
+                <th className="px-4 py-3.5 w-10">
+                  <input
+                    type="checkbox"
+                    checked={coupons.length > 0 && selectedIds.length === coupons.length}
+                    onChange={e => toggleSelectAll(e.target.checked)}
+                    className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                  />
+                </th>
+                    <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Coupon Code</th>
+                    <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Discount Type</th>
+                    <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Offer Type</th>
+                    <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Validity</th>
+                    <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Status</th>
+                    <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Visibility</th>
+                    <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E6DFD4] text-sm">
                   {sortedCoupons.map((coupon) => (
-                    <tr key={coupon._id} className="hover:bg-[#FCF8F2]">
+                    <tr key={coupon._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${typeof idx !== "undefined" ? (idx % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : typeof index !== "undefined" ? (index % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : "bg-white"}`}>
+                    <td className="px-4 py-3.5">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(coupon._id)}
+                        onChange={e => toggleSelectOne(coupon._id, e.target.checked)}
+                        className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                      />
+                    </td>
                       <td className="px-4 py-3 font-semibold text-[#2F241D]">{coupon.couponCode}</td>
                       <td className="px-4 py-3">{coupon.discountType}</td>
                       <td className="px-4 py-3">{coupon.offerType}</td>
@@ -399,13 +425,14 @@ export default function CouponManagementPage({ canCreate = true, canEdit = true,
             )}
           </div>
 
-          <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
+          <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-600">
             <span>Showing {sortedCoupons.length} of {pagination.total}</span>
-            <div className="flex items-center gap-2">
-              <button disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))} className="rounded-lg border border-[#E6DFD4] px-3 py-2 disabled:opacity-50"><ChevronLeft size={15} /></button>
-              <span>Page {page} of {pagination.pages || 1}</span>
-              <button disabled={page >= (pagination.pages || 1)} onClick={() => setPage((p) => p + 1)} className="rounded-lg border border-[#E6DFD4] px-3 py-2 disabled:opacity-50"><ChevronRight size={15} /></button>
-            </div>
+            <Pagination 
+              currentPage={page} 
+              totalPages={pagination.pages || 1} 
+              onPageChange={setPage} 
+              className="flex items-center justify-center gap-2 flex-wrap"
+            />
           </div>
         </>
       )}

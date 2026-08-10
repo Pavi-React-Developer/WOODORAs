@@ -139,7 +139,7 @@ export default function ProductGridAdmin() {
     try {
       if (editId) await cmsService.updateProductGrid(editId, payload);
       else await cmsService.createProductGrid(payload);
-      setShowForm(false); setForm(emptyForm); setEditId(null); fetchItems();
+      (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setShowForm(false)); setForm(emptyForm); setEditId(null); fetchItems();
     } catch (err) { alert(err.message); }
     finally { setSaving(false); }
   };
@@ -165,7 +165,7 @@ export default function ProductGridAdmin() {
       sortOrder: item.sortOrder || 0 
     });
     setEditId(item._id); 
-    setShowForm(true);
+    window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowForm(true);
   };
 
   const handleDelete = async (id) => {
@@ -187,7 +187,7 @@ export default function ProductGridAdmin() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-bold text-brand-dark">Product Grid Sections</h3>
-        <button onClick={() => { setShowForm(true); setEditId(null); setForm(emptyForm); }}
+        <button onClick={() => { window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowForm(true); setEditId(null); setForm(emptyForm); }}
           className="flex items-center gap-2 bg-brand-dark text-white text-sm px-4 py-2 rounded-xl hover:bg-black transition-colors">
           <Plus className="w-4 h-4" /> Add Grid
         </button>
@@ -287,7 +287,7 @@ export default function ProductGridAdmin() {
             </div>
             
             <div className="flex gap-3 justify-end pt-4 border-t border-[#E6DFD4]">
-              <button type="button" onClick={() => setShowForm(false)}
+              <button type="button" onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setShowForm(false))}
                 className="px-4 py-2 text-sm border border-[#E6DFD4] rounded-lg text-brand-medium">Cancel</button>
               <button type="submit" disabled={saving}
                 className="p-1.5 text-[#6D625C] hover:text-[#9A6031] hover:bg-[#F2E3D1] rounded transition-colors">

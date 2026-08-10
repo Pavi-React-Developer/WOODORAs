@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { productV2API, categoryV2API, subCategoryV2API } from '../api/catalogV2Service';
 import ProductCard from '../components/ProductCard';
-import { Star, Grid, List, ChevronLeft, ChevronRight, SlidersHorizontal, X } from 'lucide-react';
+import { Search, ChevronDown, Check, X, Filter, Grid, List, SlidersHorizontal, ChevronRight, Star } from 'lucide-react';
+import Pagination from '../components/common/Pagination';
 
 export default function ShopPage({ onNavigate, onAddToCart, onAddToWishlist, user }) {
   const [products, setProducts] = useState([]);
@@ -202,42 +203,7 @@ export default function ShopPage({ onNavigate, onAddToCart, onAddToWishlist, use
   const totalPages = Math.ceil(sortedProducts.length / itemsPerPage);
   const paginatedProducts = sortedProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const renderPaginationButtons = () => {
-    let pages = [];
-    if (totalPages <= 5) {
-      pages = Array.from({ length: totalPages }, (_, i) => i + 1);
-    } else {
-      if (currentPage <= 3) {
-        pages = [1, 2, 3, 4, '...', totalPages];
-      } else if (currentPage >= totalPages - 2) {
-        pages = [1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
-      } else {
-        pages = [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
-      }
-    }
 
-    return pages.map((page, index) => {
-      if (page === '...') {
-        return <span key={`ellipsis-${index}`} className="text-gray-400 px-1">...</span>;
-      }
-      return (
-        <button
-          key={page}
-          onClick={() => {
-            setCurrentPage(page);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-          className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium transition-colors ${
-            currentPage === page
-              ? 'bg-[#8B5E3C] text-white'
-              : 'hover:bg-[#8B5E3C]/10 hover:text-[#8B5E3C] text-gray-600'
-          }`}
-        >
-          {page}
-        </button>
-      );
-    });
-  };
 
   // Filter content — used inside the drawer
   const FilterContent = () => (
@@ -588,33 +554,15 @@ export default function ShopPage({ onNavigate, onAddToCart, onAddToWishlist, use
         )}
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 mt-12 border-t border-gray-200 pt-8">
-            <button 
-              onClick={() => {
-                setCurrentPage(p => Math.max(1, p - 1));
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              disabled={currentPage === 1}
-              className={`w-8 h-8 flex items-center justify-center transition-colors ${currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-400 hover:text-[#8B5E3C]'}`}
-            >
-              <ChevronLeft size={16} />
-            </button>
-            
-            {renderPaginationButtons()}
-
-            <button 
-              onClick={() => {
-                setCurrentPage(p => Math.min(totalPages, p + 1));
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              disabled={currentPage === totalPages}
-              className={`w-8 h-8 flex items-center justify-center transition-colors ${currentPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'text-gray-400 hover:text-[#8B5E3C]'}`}
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        )}
+        <Pagination 
+          currentPage={currentPage} 
+          totalPages={totalPages} 
+          onPageChange={(p) => {
+            setCurrentPage(p);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }} 
+          className="mt-12 flex items-center justify-center gap-2 flex-wrap border-t border-gray-200 pt-8"
+        />
 
       </div>
     </div>

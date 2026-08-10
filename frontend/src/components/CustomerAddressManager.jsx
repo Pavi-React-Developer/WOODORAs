@@ -39,6 +39,10 @@ export default function CustomerAddressManager() {
 
   useEffect(() => {
     fetchAddresses();
+    
+    const handleOpen = () => handleOpenModal();
+    document.addEventListener('open-address-modal', handleOpen);
+    return () => document.removeEventListener('open-address-modal', handleOpen);
   }, [fetchAddresses]);
 
   const handleOpenModal = (address = null) => {
@@ -94,19 +98,6 @@ export default function CustomerAddressManager() {
 
   return (
     <section className="px-5 py-7 lg:px-7">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h2 className="text-lg font-bold text-[#141225]">Addresses</h2>
-          <p className="mt-1 text-sm text-[#6D625C]">Manage your shipping addresses.</p>
-        </div>
-        <button
-          type="button"
-          onClick={() => handleOpenModal()}
-          className="rounded-[8px] bg-[#9A6031] px-4 py-2 text-sm font-bold text-white flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" /> Add Address
-        </button>
-      </div>
 
       {loading && addresses.length === 0 ? (
         <p className="mt-4 text-sm text-gray-500">Loading addresses...</p>

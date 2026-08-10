@@ -96,7 +96,7 @@ export default function HeroBannerAdmin() {
     try {
       if (editId) await cmsService.updateHeroBanner(editId, form);
       else await cmsService.createHeroBanner(form);
-      setShowForm(false); setForm(emptyForm); setEditId(null);
+      (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setShowForm(false)); setForm(emptyForm); setEditId(null);
       fetchItems();
     } catch (err) { alert(err.message); }
     finally { setSaving(false); }
@@ -112,7 +112,7 @@ export default function HeroBannerAdmin() {
       desktopVideo: item.desktopVideo || '', mobileVideo: item.mobileVideo || '',
       items: item.items || [],
     });
-    setEditId(item._id); setShowForm(true);
+    setEditId(item._id); window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowForm(true);
   };
 
   const handleDelete = async (id) => {
@@ -132,7 +132,7 @@ export default function HeroBannerAdmin() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-bold text-brand-dark">Hero Banners</h3>
-        <button onClick={() => { setShowForm(true); setEditId(null); setForm(emptyForm); }}
+        <button onClick={() => { window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowForm(true); setEditId(null); setForm(emptyForm); }}
           className="flex items-center gap-2 bg-brand-dark text-white text-sm px-4 py-2 rounded-xl hover:bg-black transition-colors">
           <Plus className="w-4 h-4" /> Add Banner
         </button>
@@ -232,7 +232,7 @@ export default function HeroBannerAdmin() {
               <label htmlFor="hero-status" className="text-sm text-brand-dark">Active (visible on site)</label>
             </div>
             <div className="flex gap-3 justify-end pt-2 border-t border-[#E6DFD4]">
-              <button type="button" onClick={() => setShowForm(false)}
+              <button type="button" onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setShowForm(false))}
                 className="px-4 py-2 text-sm border border-[#E6DFD4] rounded-lg text-brand-medium hover:bg-gray-50">Cancel</button>
               <button type="submit" disabled={saving}
                 className="p-1.5 text-[#6D625C] hover:text-[#9A6031] hover:bg-[#F2E3D1] rounded transition-colors">

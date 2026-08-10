@@ -120,7 +120,7 @@ export default function NavbarAdmin() {
       newItems.push(currentItem);
     }
     setConfig(prev => ({ ...prev, items: newItems }));
-    setShowItemForm(false);
+    (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setShowItemForm(false));
     setCurrentItem(emptyItem);
     setEditIndex(null);
   };
@@ -128,7 +128,7 @@ export default function NavbarAdmin() {
   const handleEditItem = (item, index) => {
     setCurrentItem(item);
     setEditIndex(index);
-    setShowItemForm(true);
+    window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowItemForm(true);
   };
 
   const handleDeleteItem = (index) => {
@@ -209,7 +209,7 @@ export default function NavbarAdmin() {
       <div className="flex items-center justify-between mt-8">
         <h3 className="text-lg font-bold text-brand-dark">Menu Items</h3>
         <button
-          onClick={() => { setShowItemForm(true); setEditIndex(null); setCurrentItem(emptyItem); }}
+          onClick={() => { window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowItemForm(true); setEditIndex(null); setCurrentItem(emptyItem); }}
           className="admin-btn flex items-center gap-2"
         >
           <Plus className="w-4 h-4" /> Add Item
@@ -365,7 +365,7 @@ export default function NavbarAdmin() {
               </div>
             )}
             <div className="sm:col-span-2 lg:col-span-3 flex gap-3 justify-end mt-2">
-              <button type="button" onClick={() => setShowItemForm(false)}
+              <button type="button" onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setShowItemForm(false))}
                 className="px-4 py-2 text-sm border border-[#E6DFD4] rounded-lg text-brand-medium hover:bg-gray-50">Cancel</button>
               <button type="submit"
                 className="p-1.5 text-[#6D625C] hover:text-[#9A6031] hover:bg-[#F2E3D1] rounded transition-colors">

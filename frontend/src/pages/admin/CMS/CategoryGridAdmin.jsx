@@ -161,7 +161,7 @@ export default function CategoryGridAdmin() {
       if (editId) await cmsService.updateCategoryGrid(editId, payload);
       else await cmsService.createCategoryGrid(payload);
 
-      setShowForm(false);
+      (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setShowForm(false));
       setForm(emptyForm);
       setEditId(null);
       const refreshed = await cmsService.getCategoryGrids();
@@ -191,7 +191,7 @@ export default function CategoryGridAdmin() {
       sortOrder: item.sortOrder || 0,
     });
     setEditId(item._id);
-    setShowForm(true);
+    window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowForm(true);
   };
 
   const handleDelete = async (id) => {
@@ -223,7 +223,7 @@ export default function CategoryGridAdmin() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-bold text-brand-dark">Category Grid Sections</h3>
-        <button onClick={() => { setShowForm(true); setEditId(null); setForm(emptyForm); }} className="flex items-center gap-2 bg-brand-dark text-white text-sm px-4 py-2 rounded-xl hover:bg-black transition-colors">
+        <button onClick={() => { window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowForm(true); setEditId(null); setForm(emptyForm); }} className="flex items-center gap-2 bg-brand-dark text-white text-sm px-4 py-2 rounded-xl hover:bg-black transition-colors">
           <Plus className="w-4 h-4" /> Add Category Grid
         </button>
       </div>
@@ -302,7 +302,7 @@ export default function CategoryGridAdmin() {
             </div>
 
             <div className="flex gap-3 justify-end pt-4 border-t border-[#E6DFD4]">
-              <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-sm border border-[#E6DFD4] rounded-lg text-brand-medium">Cancel</button>
+              <button type="button" onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setShowForm(false))} className="px-4 py-2 text-sm border border-[#E6DFD4] rounded-lg text-brand-medium">Cancel</button>
               <button type="submit" disabled={saving} className="px-5 py-2 text-sm font-semibold bg-brand-dark text-white rounded-xl hover:bg-black transition-colors disabled:opacity-50">
                 {saving ? 'Saving...' : editId ? 'Update Grid' : 'Save Grid'}
               </button>
