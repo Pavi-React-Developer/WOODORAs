@@ -89,15 +89,7 @@ const generateInvoice = async (order) => {
         }
       }
       
-      doc.font('Helvetica-Bold')
-         .fontSize(24)
-         .fillColor(colors.textDark)
-         .text('MARAKATHAI', 130, 50);
-         
-      doc.font('Helvetica')
-         .fontSize(12)
-         .fillColor(colors.textLight)
-         .text('Every wood tells a story', 130, 75);
+      // (Text removed, just logo is rendered)
 
       // --- INVOICE HEADER (Right Side) ---
       doc.save()
@@ -114,7 +106,7 @@ const generateInvoice = async (order) => {
       doc.font('Helvetica')
          .fontSize(10)
          .fillColor(colors.textLight)
-         .text(`#INV-${order._id.toString().slice(-8).toUpperCase()}`, 400, 75, { width: 160, align: 'center' });
+         .text(`${order.invoiceId || '#INV-' + order._id.toString().slice(-8).toUpperCase()}`, 400, 75, { width: 160, align: 'center' });
          
       doc.text(`${new Date(order.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`, 400, 90, { width: 160, align: 'center' });
 
@@ -175,14 +167,16 @@ const generateInvoice = async (order) => {
         orderY += 15;
       };
       
-      drawOrderRow('Order ID', `ORD-${order._id.toString().slice(-8).toUpperCase()}`);
+      drawOrderRow('Order ID', order.orderId || `ORD-${order._id.toString().slice(-8).toUpperCase()}`);
       drawOrderRow('Order Date', new Date(order.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }));
       drawOrderRow('Payment Method', order.paymentMethod || 'Online');
-      drawOrderRow('Shipping Method', 'Standard Delivery');
       
-      const estDate = new Date(order.createdAt);
-      estDate.setDate(estDate.getDate() + 7);
-      drawOrderRow('Delivery Date', estDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }));
+      if (order.paymentMethod === 'COD') {
+        const bal = order.balance_amount || order.balanceAmount || Math.max(0, (order.total_amount || order.totalPrice) - (order.advance_payment || order.codAdvance));
+        drawOrderRow('Balance Amount', bal.toLocaleString('en-IN'));
+      }
+      
+
 
       // --- TABLE HEADER ---
       y = Math.max(billY, orderY) + 30;
@@ -243,7 +237,7 @@ const generateInvoice = async (order) => {
                imgUrl = `http://localhost:5000${imgUrl}`;
             }
             const imgBuffer = await fetchImageBuffer(imgUrl);
-            doc.image(imgBuffer, 52, y + 12, { fit: [46, 46], align: 'center', valign: 'center' });
+            doc.image(imgBuffer, 52, y + 12, { width: 46, height: 46 });
           } catch (err) {
             console.error('Failed to load image for invoice', imgUrl);
           }
@@ -253,14 +247,12 @@ const generateInvoice = async (order) => {
         doc.font('Helvetica-Bold').fontSize(10).fillColor(colors.textDark).text(item.name, 160, y + 15, { width: 170 });
         if (item.variant && item.variant.size) {
             doc.font('Helvetica').fontSize(9).fillColor(colors.textLight).text(`Size: ${item.variant.size}`, 160, y + 30, { width: 170 });
-        } else {
-            doc.font('Helvetica').fontSize(9).fillColor(colors.textLight).text(`Handcrafted wooden toy`, 160, y + 30, { width: 170 });
         }
         
         doc.fillColor(colors.textDark).font('Helvetica').fontSize(10);
         doc.text(item.qty.toString(), 340, y + 30, { width: 30, align: 'center' });
-        doc.text(`₹${item.price.toLocaleString('en-IN')}`, 390, y + 30, { width: 80, align: 'center' });
-        doc.text(`₹${(item.price * item.qty).toLocaleString('en-IN')}`, 480, y + 30, { width: 70, align: 'center' });
+        doc.text(`${item.price.toLocaleString('en-IN')}`, 390, y + 30, { width: 80, align: 'center' });
+        doc.text(`${(item.price * item.qty).toLocaleString('en-IN')}`, 480, y + 30, { width: 70, align: 'center' });
 
         y += rowHeight;
         
@@ -274,70 +266,115 @@ const generateInvoice = async (order) => {
       // --- BOTTOM SECTION ---
       y += 20;
       
+      const bottomStartY = y;
+      
+      // Calculate how many rows Payment Summary needs for dynamic height
+      const fees = order.fees || [];
+      let rowCount = 1; // Subtotal
+      let hasShipping = false;
+      fees.forEach(fee => {
+          if (String(fee.name).toLowerCase().includes('shipping')) hasShipping = true;
+          if ((Number(fee.amount) || 0) > 0 || fee.isFree) rowCount++;
+      });
+      if (fees.length === 0) {
+         if (order.product_fee > 0) rowCount++;
+         if (order.gift_fee > 0) rowCount++;
+         if (order.platform_fee > 0) rowCount++;
+      }
+      if (!hasShipping && fees.length > 0) rowCount++;
+      else if (fees.length === 0) rowCount++;
+      
+      const tax = order.tax || order.taxPrice || 0;
+      if (tax > 0) rowCount++;
+      const discount = order.coupon_discount || order.discountAmount || 0;
+      if (discount > 0) rowCount++;
+      
+      rowCount += 2; // Grand Total line + Grand Total
+      if (order.paymentMethod === 'COD') rowCount += 3; // Advance, line, Balance
+      
+      const summaryBoxHeight = Math.max(140, rowCount * 20 + 30);
+      
       // NOTES
-      doc.font('Helvetica-Bold').fontSize(10).fillColor(colors.textDark).text('NOTES', 40, y);
+      doc.font('Helvetica-Bold').fontSize(10).fillColor(colors.textDark).text('NOTES', 40, bottomStartY);
       
       doc.save()
          .strokeColor(colors.line)
-         .roundedRect(40, y + 15, 230, 80, 8)
+         .roundedRect(40, bottomStartY + 15, 230, 80, 8)
          .stroke()
          .restore();
          
       doc.font('Helvetica').fontSize(9).fillColor(colors.textLight)
-         .text('Thank you for shopping with Marakathai.', 50, y + 30, { width: 210 })
-         .text('We hope you and your little ones enjoy our wooden toys!', 50, y + 60, { width: 210 });
-         
-      // Heart Icon Text
-      doc.font('Helvetica').fontSize(10).fillColor(colors.textLight).text('♥', 40, y + 110);
-      doc.fillColor(colors.textDark).text('Every wood tells a story.', 55, y + 110);
+         .text('Thank you for shopping with Marakathai.', 50, bottomStartY + 30, { width: 210 })
+         .text('We hope you and your little ones enjoy our wooden toys!', 50, bottomStartY + 60, { width: 210 });
 
-      // TOTALS
+      // PAYMENT SUMMARY
       doc.save()
          .strokeColor(colors.line)
-         .roundedRect(300, y - 10, 260, 140, 8)
+         .roundedRect(300, bottomStartY - 10, 260, summaryBoxHeight, 8)
          .stroke()
          .restore();
          
-      let totalY = y + 5;
+      doc.font('Helvetica-Bold').fontSize(10).fillColor(colors.textDark).text('Payment Summary', 320, bottomStartY + 5);
       
-      const drawTotalRowDynamic = (label, value) => {
-        doc.font('Helvetica').fontSize(10).fillColor(colors.textLight).text(label, 320, totalY);
-        doc.fillColor(colors.textDark).text(`₹${value.toLocaleString('en-IN')}`, 460, totalY, { width: 80, align: 'right' });
+      let totalY = bottomStartY + 30;
+      
+      const drawPaymentRow = (label, value) => {
+        doc.font('Helvetica').fontSize(9).fillColor(colors.textLight).text(label, 320, totalY);
+        doc.font('Helvetica').fillColor(colors.textDark).text(value, 460, totalY, { width: 80, align: 'right' });
         totalY += 20;
       };
 
-      if (order.subtotal) drawTotalRowDynamic('Subtotal', order.subtotal);
-      if (order.shipping_fee > 0) drawTotalRowDynamic('Shipping Charges', order.shipping_fee);
-      if (order.gift_fee > 0) drawTotalRowDynamic('Gift Fee', order.gift_fee);
+      const subtotal = order.subtotal || order.itemsPrice || 0;
+      if (subtotal > 0) drawPaymentRow('Subtotal', subtotal.toLocaleString('en-IN'));
       
-      // As requested by user: Don't write static default tax, only show dynamic fees
-      if (order.tax && order.tax > 0) drawTotalRowDynamic(`Tax`, order.tax);
-      
+      if (fees.length > 0) {
+        fees.forEach(fee => {
+          const amt = Number(fee.amount) || 0;
+          if (amt > 0) {
+            drawPaymentRow(fee.name, `+${amt.toLocaleString('en-IN')}`);
+          } else if (fee.isFree) {
+            drawPaymentRow(fee.name, 'FREE');
+          }
+        });
+      } else {
+        if (order.product_fee > 0) drawPaymentRow('Product Volume Fee', `+${order.product_fee.toLocaleString('en-IN')}`);
+        if (order.gift_fee > 0) drawPaymentRow('Gift Fee', `+${order.gift_fee.toLocaleString('en-IN')}`);
+        if (order.platform_fee > 0) drawPaymentRow('Platform Fee', `+${order.platform_fee.toLocaleString('en-IN')}`);
+      }
+
+      if (!hasShipping && fees.length > 0) {
+        const shipAmt = (order.shipping_fee || 0) + (order.weight_fee || 0);
+        if (shipAmt > 0) drawPaymentRow('Shipping Fee', `+${shipAmt.toLocaleString('en-IN')}`);
+        else drawPaymentRow('Shipping Fee', 'FREE');
+      } else if (fees.length === 0) {
+        const shipAmt = (order.shipping_fee || 0) + (order.weight_fee || 0) + (order.shippingPrice || 0);
+        if (shipAmt > 0) drawPaymentRow('Shipping Fee', `+${shipAmt.toLocaleString('en-IN')}`);
+        else drawPaymentRow('Shipping Fee', 'FREE');
+      }
+
+      if (tax > 0) drawPaymentRow('Tax', `+${tax.toLocaleString('en-IN')}`);
+      if (discount > 0) drawPaymentRow('Discount', `-${discount.toLocaleString('en-IN')}`);
+
       totalY += 5;
-      
-      // TOTAL Line
-      doc.strokeColor(colors.line)
-         .moveTo(300, totalY)
-         .lineTo(560, totalY)
-         .stroke();
-         
+      doc.strokeColor(colors.line).moveTo(320, totalY).lineTo(540, totalY).stroke();
       totalY += 15;
-      
-      doc.font('Helvetica-Bold').fontSize(12).fillColor(colors.textDark).text('TOTAL', 320, totalY);
-      doc.text(`₹${(order.totalPrice || 0).toLocaleString('en-IN')}`, 460, totalY, { width: 80, align: 'right' });
-      
+
+      doc.font('Helvetica-Bold').fontSize(10).fillColor(colors.textDark).text('Grand Total', 320, totalY);
+      doc.text((order.totalPrice || order.total_amount || 0).toLocaleString('en-IN'), 460, totalY, { width: 80, align: 'right' });
       totalY += 20;
 
-      // You Saved (if discount exists)
-      if (order.coupon_discount > 0) {
-        doc.save()
-           .fillColor(colors.boxBg)
-           .rect(300, totalY, 260, 35)
-           .fill()
-           .restore();
-           
-        doc.font('Helvetica-Bold').fontSize(10).fillColor(colors.textDark).text('You Saved', 320, totalY + 12);
-        doc.text(`₹${order.coupon_discount.toLocaleString('en-IN')}`, 460, totalY + 12, { width: 80, align: 'right' });
+      if (order.paymentMethod === 'COD') {
+        const advance = order.advance_payment || order.codAdvance || 0;
+        doc.font('Helvetica').fontSize(9).fillColor(colors.textLight).text('Advance Paid (COD)', 320, totalY);
+        doc.font('Helvetica').fillColor(colors.textDark).text(`-${advance.toLocaleString('en-IN')}`, 460, totalY, { width: 80, align: 'right' });
+        
+        totalY += 15;
+        doc.strokeColor(colors.line).moveTo(320, totalY).lineTo(540, totalY).stroke();
+        totalY += 15;
+        
+        const bal = order.balance_amount || order.balanceAmount || Math.max(0, (order.total_amount || order.totalPrice) - advance);
+        doc.font('Helvetica-Bold').fontSize(10).fillColor(colors.textDark).text('Balance to Pay', 320, totalY);
+        doc.text(bal.toLocaleString('en-IN'), 460, totalY, { width: 80, align: 'right' });
       }
 
       // --- FOOTER ---
@@ -346,14 +383,13 @@ const generateInvoice = async (order) => {
       doc.font('Helvetica').fontSize(9).fillColor(colors.textLight);
       
       // Emulating a clean footer layout
-      doc.text('www.marakathai.com', 40, footerY, { width: 140, align: 'center' });
+      doc.text('https://marakathai.com', 40, footerY, { width: 140, align: 'center' });
       doc.strokeColor(colors.line).moveTo(190, footerY).lineTo(190, footerY + 10).stroke();
-      doc.text('marakathai3@gmail.com', 200, footerY, { width: 160, align: 'center' });
+      doc.text('marakathai.support@gmail.com', 200, footerY, { width: 160, align: 'center' });
       doc.strokeColor(colors.line).moveTo(370, footerY).lineTo(370, footerY + 10).stroke();
       doc.text('+91 9876543210', 380, footerY, { width: 140, align: 'center' });
       
       doc.text('Thank you for choosing Marakathai!', 40, footerY + 30, { width: 520, align: 'center' });
-      doc.text('Crafted with love ♥', 40, footerY + 45, { width: 520, align: 'center' });
 
       doc.end();
     } catch (error) {

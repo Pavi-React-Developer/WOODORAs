@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const Counter = require('./Counter');
 
 const orderItemSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -32,6 +33,8 @@ const ORDER_STATUSES = [
 
 const orderSchema = new mongoose.Schema(
   {
+    orderId: { type: String, unique: true, sparse: true },
+    invoiceId: { type: String, unique: true, sparse: true },
     user: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
@@ -258,6 +261,19 @@ const orderSchema = new mongoose.Schema(
     },
   }
 );
+
+orderSchema.pre('save', async function () {
+  if (this.isNew) {
+    const orderCounter = await Counter.findByIdAndUpdate(
+      'orderId',
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true }
+    );
+    const newId = `MK${String(orderCounter.seq).padStart(5, '0')}`;
+    this.orderId = newId;
+    this.invoiceId = newId;
+  }
+});
 
 const OrderModel = mongoose.model('Order', orderSchema);
 OrderModel.VALID_STATUSES = ORDER_STATUSES;

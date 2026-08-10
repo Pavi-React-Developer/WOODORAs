@@ -81,7 +81,7 @@ export const authService = {
   // Forgot password
   forgotPassword: async (email) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/forgotpassword`, {
+      const response = await fetch(`${API_BASE_URL}/forgot-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -97,6 +97,42 @@ export const authService = {
       return data;
     } catch (error) {
       console.error('Forgot Password API Error:', error);
+      throw error;
+    }
+  },
+
+  // Verify Reset Password Token
+  verifyResetToken: async (token) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/reset-password/verify?token=${token}`, {
+        method: 'GET',
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Verify Token API Error:', error);
+      return { valid: false };
+    }
+  },
+
+  // Reset Password
+  resetPassword: async (token, password, confirmPassword) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token, password, confirmPassword }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Reset password failed');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Reset Password API Error:', error);
       throw error;
     }
   },

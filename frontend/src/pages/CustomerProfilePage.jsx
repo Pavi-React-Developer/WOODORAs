@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { RiHeartAdd2Line } from "react-icons/ri";
 import {
   Bell,
   CalendarDays,
@@ -12,6 +11,7 @@ import {
   Mail,
   MapPin,
   Minus,
+  Landmark,
   Package,
   Phone,
   Plus,
@@ -39,7 +39,21 @@ import {
   Loader2,
   RotateCw,
   RefreshCw,
-  Download
+  Download,
+  Search,
+  Filter,
+  Tag,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  ChevronDown,
+  FileText,
+  Hourglass,
+  IndianRupee,
+  Calendar,
+  Wallet,
+  Leaf,
+  RotateCcw
 } from 'lucide-react';
 import { saveAs } from 'file-saver';
 import { authService } from '../api/authService';
@@ -85,7 +99,7 @@ const modules = [
   { id: 'reviews', label: 'Reviews & Ratings', icon: Star },
   { id: 'cart', label: 'Cart', icon: ShoppingBag },
   { id: 'wallet', label: 'Wallet', icon: CreditCard },
-  { id: 'wishlist', label: 'Wishlist', icon: RiHeartAdd2Line },
+  { id: 'wishlist', label: 'Wishlist', icon: Heart },
   { id: 'refunds', label: 'Refunds', icon: ExternalLink },
   { id: 'gift-card', label: 'Gift & Card', icon: Gift },
 ];
@@ -205,14 +219,34 @@ export default function CustomerProfilePage({
   });
   const [orders, setOrders] = useState([]);
   const [ordersPage, setOrdersPage] = useState(1);
-  const itemsPerPage = 10;
+  const [giftOrdersPage, setGiftOrdersPage] = useState(1);
+  const [giftSearchTerm, setGiftSearchTerm] = useState('');
+  const [bulkOrdersPage, setBulkOrdersPage] = useState(1);
+  const [bulkSearchTerm, setBulkSearchTerm] = useState('');
+  const [bulkFilterStatus, setBulkFilterStatus] = useState('All');
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 640 : false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [bulkOrders, setBulkOrders] = useState([]);
   const [bulkOrdersLoading, setBulkOrdersLoading] = useState(false);
   const [customizeOrders, setCustomizeOrders] = useState([]);
   const [customizeOrdersLoading, setCustomizeOrdersLoading] = useState(false);
+  const [customizeOrdersPage, setCustomizeOrdersPage] = useState(1);
+  const [customizeSearchTerm, setCustomizeSearchTerm] = useState('');
+  const [customizeFilterStatus, setCustomizeFilterStatus] = useState('All');
+  const [expandedCustomizeOrders, setExpandedCustomizeOrders] = useState({});
+  const toggleCustomizeOrderExpand = (id) => {
+    setExpandedCustomizeOrders(prev => ({ ...prev, [id]: !prev[id] }));
+  };
   const [refunds, setRefunds] = useState([]);
   const [refundsLoading, setRefundsLoading] = useState(false);
+  const [refundsPage, setRefundsPage] = useState(1);
+  const [reviewsPage, setReviewsPage] = useState(1);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
   const [downloadingInvoice, setDownloadingInvoice] = useState(null);
 
@@ -227,6 +261,56 @@ export default function CustomerProfilePage({
     } finally {
       setDownloadingInvoice(null);
     }
+  };
+
+  const renderPagination = (currentPage, totalPages, onPageChange, className = "mt-8 flex items-center justify-center gap-2 flex-wrap") => {
+    if (totalPages <= 1) return null;
+
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, startPage + 4);
+
+    if (endPage - startPage < 4) {
+      startPage = Math.max(1, endPage - 4);
+    }
+
+    const pages = [];
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+
+    return (
+      <div className={className}>
+        <button 
+          onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+          disabled={currentPage === 1}
+          className="flex h-8 w-8 items-center justify-center rounded-md border border-[#E9DED3] text-[#8B5E3C] bg-white hover:bg-[#FAF8F5] disabled:opacity-50 transition shadow-sm shrink-0"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        
+        {pages.map(page => (
+          <button
+            key={page}
+            onClick={() => onPageChange(page)}
+            className={`flex h-8 w-8 items-center justify-center rounded-md text-sm font-bold transition shadow-sm shrink-0 ${
+              currentPage === page
+                ? 'bg-[#A7632E] text-white border-transparent'
+                : 'bg-white border border-[#E9DED3] text-[#6D625C] hover:bg-[#FAF8F5]'
+            }`}
+          >
+            {page}
+          </button>
+        ))}
+
+        <button 
+          onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+          disabled={currentPage === totalPages}
+          className="flex h-8 w-8 items-center justify-center rounded-md border border-[#E9DED3] text-[#8B5E3C] bg-white hover:bg-[#FAF8F5] disabled:opacity-50 transition shadow-sm shrink-0"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+    );
   };
 
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
@@ -463,7 +547,7 @@ export default function CustomerProfilePage({
   };
 
   useEffect(() => {
-    if (!['orders', 'reviews'].includes(activeModule)) return;
+    if (!['orders', 'reviews', 'gift-card'].includes(activeModule)) return;
     fetchOrders();
   }, [activeModule]);
 
@@ -533,20 +617,167 @@ export default function CustomerProfilePage({
         <EmptyState icon={ExternalLink} title="No refunds yet" text="Any approved refunds will appear here." />
       ) : (
         <div className="mt-6 space-y-4">
-          {refunds.map((refund) => (
-            <div key={refund._id} className="rounded-[14px] border border-[#E9DED3] bg-white p-4 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-bold text-[#141225]">Order {refund.orderId}</p>
-                  <p className="mt-1 text-sm text-[#6D625C]">Amount: ₹{(refund.amount || 0).toFixed(2)} • Method: {isWalletRefundDestination(refund.refundDestination) ? 'Wallet' : 'UPI / Phone'}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-semibold">{refund.status}</p>
-                  <p className="text-xs text-[#8A817C]">{new Date(refund.createdAt).toLocaleString()}</p>
-                </div>
-              </div>
-            </div>
-          ))}
+          {(() => {
+            const itemsPerPage = 5;
+            const totalPages = Math.ceil(refunds.length / itemsPerPage);
+            const paginatedRefunds = refunds.slice((refundsPage - 1) * itemsPerPage, refundsPage * itemsPerPage);
+            
+            return (
+              <>
+                {paginatedRefunds.map((refund) => {
+                  const status = refund.status || 'Pending';
+                  
+                  let currentStepIndex = 0;
+                  if (status === 'Refund Approved' || status === 'Approved Refund' || status === 'Approved') {
+                    currentStepIndex = 1;
+                  } else if (status === 'Refunded' || status === 'Completed') {
+                    currentStepIndex = 2;
+                  }
+                  
+                  const isWallet = isWalletRefundDestination(refund.refundDestination);
+
+                  return (
+                    <div key={refund._id} className="rounded-[20px] border border-[#FDF0E5]/50 bg-white p-5 sm:p-6 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] w-full mx-auto relative overflow-hidden">
+                      
+                      {/* Header */}
+                      <div className="flex items-center justify-between mb-6 relative z-10">
+                        <div className="flex items-center gap-3">
+                          <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-[#FAF5F0] text-[#D97736]">
+                            <Package className="h-6 w-6" />
+                            <div className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-white text-[#D97736] shadow-sm">
+                              <RotateCcw className="h-3 w-3" />
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold text-gray-400">Order</p>
+                            <p className="text-base font-bold text-[#141225]">#{refund.orderId?.slice(-8).toUpperCase() || refund.orderId}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 rounded-md bg-[#FFF3E9] px-3 py-1.5 text-xs font-bold text-[#D97736]">
+                          <Hourglass className="h-3.5 w-3.5" />
+                          {status === 'Pending' ? 'Approval Pending' : status}
+                        </div>
+                      </div>
+
+                      {/* 2x2 Grid */}
+                      <div className="grid grid-cols-2 rounded-[16px] bg-[#FAF8F5] p-1 mb-6 relative z-10">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 border-b border-r border-[#E9DED3]/40 p-4">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FCECDA] text-[#D97736]">
+                            <IndianRupee className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <p className="text-[11px] font-semibold text-gray-400">Refund Amount</p>
+                            <p className="text-sm font-bold text-[#141225]">₹{(refund.amount || 0).toFixed(2)}</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 border-b border-[#E9DED3]/40 p-4">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FCECDA] text-[#D97736]">
+                            <CreditCard className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <p className="text-[11px] font-semibold text-gray-400">Payment Method</p>
+                            <p className="text-sm font-bold text-[#141225]">{isWallet ? 'Wallet' : 'UPI / Phone'}</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 border-r border-[#E9DED3]/40 p-4">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FCECDA] text-[#D97736]">
+                            <Calendar className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <p className="text-[11px] font-semibold text-gray-400">Requested On</p>
+                            <p className="text-sm font-bold text-[#141225]">{new Date(refund.createdAt).toLocaleDateString()}</p>
+                            <p className="text-[10px] text-gray-500 mt-0.5">{new Date(refund.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FCECDA] text-[#D97736]">
+                            <Gift className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <p className="text-[11px] font-semibold text-gray-400">Items</p>
+                            <p className="text-sm font-bold text-[#141225]">{refund.items?.length || 1} {refund.items?.length > 1 ? 'Items' : 'Item'}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Timeline */}
+                      <div className="relative mx-auto mt-8 mb-6 w-full max-w-[90%] sm:max-w-sm">
+                        {/* Connecting Line */}
+                        <div className="absolute top-[19px] left-[16.66%] right-[16.66%] h-[2px]">
+                          <div className="absolute inset-0 border-t-2 border-solid border-[#E9DED3]" />
+                          <div 
+                            className="absolute top-0 left-0 h-full bg-[#D97736] transition-all duration-500" 
+                            style={{ width: currentStepIndex === 0 ? '0%' : currentStepIndex === 1 ? '50%' : '100%' }}
+                          />
+                        </div>
+                        
+                        <div className="relative z-10 flex w-full">
+                          {/* Step 1: Requested */}
+                          <div className="flex flex-1 flex-col items-center">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white">
+                              <div className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${currentStepIndex >= 0 ? 'bg-[#D97736] text-white ring-4 ring-[#FFF3E9]' : 'bg-[#E5E7EB] text-gray-400'}`}>
+                                <Clock className="h-4 w-4" />
+                              </div>
+                            </div>
+                            <p className={`mt-2 text-xs font-bold ${currentStepIndex >= 0 ? 'text-[#141225]' : 'text-gray-400'}`}>Requested</p>
+                            {currentStepIndex >= 0 && (
+                              <p className="text-[9px] text-gray-500 mt-0.5">{new Date(refund.createdAt).toLocaleDateString()}</p>
+                            )}
+                          </div>
+                          
+                          {/* Step 2: Approved */}
+                          <div className="flex flex-1 flex-col items-center">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white">
+                              <div className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${currentStepIndex >= 1 ? 'bg-[#D97736] text-white ring-4 ring-[#FFF3E9]' : 'bg-[#E5E7EB] text-white'}`}>
+                                <Check className="h-4 w-4" strokeWidth={3} />
+                              </div>
+                            </div>
+                            <p className={`mt-2 text-xs font-bold ${currentStepIndex >= 1 ? 'text-[#141225]' : 'text-gray-400'}`}>Approved</p>
+                          </div>
+                          
+                          {/* Step 3: Refunded */}
+                          <div className="flex flex-1 flex-col items-center">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white">
+                              <div className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${currentStepIndex >= 2 ? 'bg-[#D97736] text-white ring-4 ring-[#FFF3E9]' : 'bg-[#E5E7EB] text-gray-400'}`}>
+                                <Wallet className="h-4 w-4" />
+                              </div>
+                            </div>
+                            <p className={`mt-2 text-xs font-bold ${currentStepIndex >= 2 ? 'text-[#141225]' : 'text-gray-400'}`}>Refunded</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Footer Message */}
+                      <div className={`relative z-10 flex items-center gap-3 rounded-[12px] px-4 py-3 text-sm font-semibold ${
+                        currentStepIndex === 2 ? 'bg-emerald-50/80 text-emerald-700' :
+                        currentStepIndex === 1 ? 'bg-blue-50/80 text-blue-700' :
+                        'bg-[#E6F4EA]/60 text-[#2F6B42]'
+                      }`}>
+                        <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
+                          currentStepIndex === 2 ? 'bg-emerald-200' :
+                          currentStepIndex === 1 ? 'bg-blue-200' :
+                          'bg-[#C2E3CD]'
+                        }`}>
+                          <Leaf className="h-3.5 w-3.5" />
+                        </div>
+                        {currentStepIndex === 2 ? "Your refund has been processed successfully." :
+                         currentStepIndex === 1 ? "Your refund is approved and will be credited soon." :
+                         "We'll notify you once your refund is approved."}
+                         
+                         {/* Leaf decoration in corner */}
+                         <div className="absolute -bottom-4 -right-4 opacity-10 pointer-events-none">
+                            <Leaf className="h-16 w-16" />
+                         </div>
+                      </div>
+
+                    </div>
+                  );
+                })}
+                
+                {renderPagination(refundsPage, totalPages, setRefundsPage)}
+              </>
+            );
+          })()}
         </div>
       )}
     </section>
@@ -859,67 +1090,80 @@ export default function CustomerProfilePage({
         <EmptyState icon={Star} title="No review items yet" text="Once your order is delivered, the products will appear here for review." action="Shop Now" onAction={() => onNavigate('/')} />
       ) : (
         <div className="mt-6 space-y-4">
-          {reviewTargets.map(({ key, order, item, productId, orderId, orderItemId, hasReviewed, myRating, orderStatus }) => {
-            const imageSrc = getImageUrl(item.image);
+          {(() => {
+            const itemsPerPage = 5;
+            const totalPages = Math.ceil(reviewTargets.length / itemsPerPage);
+            const paginatedReviews = reviewTargets.slice((reviewsPage - 1) * itemsPerPage, reviewsPage * itemsPerPage);
+            
             return (
-              <div key={key} className="rounded-[14px] border border-[#E9DED3] bg-white p-4 shadow-sm">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                  <div className="flex flex-1 items-center gap-4">
-                    <div className="h-16 w-16 shrink-0 overflow-hidden rounded-[10px] bg-[#F8F3EF]">
-                      <img src={imageSrc} alt={item.name} className="h-full w-full object-cover" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-bold text-[#141225]">{item.name}</p>
-                      <p className="mt-1 text-sm text-[#6D625C]">Qty: {item.qty} • Rs. {Number(item.price || 0).toLocaleString()}</p>
-                      <p className="mt-1 text-sm text-[#6D625C]">Order #{order._id?.slice(-8).toUpperCase()} • Status: <span className={`font-semibold ${orderStatus === 'Delivered' ? 'text-emerald-600' : 'text-[#8B5E3C]'}`}>{orderStatus}</span></p>
-                    </div>
-                  </div>
+              <>
+                {paginatedReviews.map(({ key, order, item, productId, orderId, orderItemId, hasReviewed, myRating, orderStatus }) => {
+                  const imageSrc = getImageUrl(item.image);
+                  return (
+                    <div key={key} className="rounded-[14px] border border-[#E9DED3] bg-white p-4 shadow-sm">
+                      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                        <div className="flex flex-1 items-center gap-4">
+                          <div className="h-16 w-16 shrink-0 overflow-hidden rounded-[10px] bg-[#F8F3EF]">
+                            <img src={imageSrc} alt={item.name} className="h-full w-full object-cover" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-bold text-[#141225]">{item.name}</p>
+                            <p className="mt-1 text-sm text-[#6D625C]">Qty: {item.qty} • Rs. {Number(item.price || 0).toLocaleString()}</p>
+                            <p className="mt-1 text-sm text-[#6D625C]">Order #{(order.orderId || order._id?.slice(-8)).toUpperCase()} • Status: <span className={`font-semibold ${orderStatus === 'Delivered' ? 'text-emerald-600' : 'text-[#8B5E3C]'}`}>{orderStatus}</span></p>
+                          </div>
+                        </div>
 
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                    {orderStatus === 'Delivered' ? (
-                      hasReviewed ? (
-                        <div className="rounded-[10px] border border-emerald-200 bg-emerald-50 px-4 py-2 text-center">
-                          <p className="text-sm font-bold text-emerald-700">Reviewed ✓</p>
-                          <p className="text-xs text-emerald-600">Your rating: {myRating}/5</p>
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                          {orderStatus === 'Delivered' ? (
+                            hasReviewed ? (
+                              <div className="rounded-[10px] border border-emerald-200 bg-emerald-50 px-4 py-2 text-center">
+                                <p className="text-sm font-bold text-emerald-700">Reviewed ✓</p>
+                                <p className="text-xs text-emerald-600">Your rating: {myRating}/5</p>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <button
+                                    key={star}
+                                    type="button"
+                                    onClick={() => setReviewModalProduct({ productId, orderId, orderItemId, reviewKey: key })}
+                                    className="transition hover:scale-110"
+                                    title={`Rate ${star} star${star > 1 ? 's' : ''}`}
+                                  >
+                                    <Star className="h-5 w-5 text-[#C4B9B0]" fill="none" />
+                                  </button>
+                                ))}
+                              </div>
+                            )
+                          ) : (
+                            <div className="rounded-[10px] border border-[#E9DED3] bg-[#FAF8F5] px-4 py-2 text-sm font-semibold text-[#6D625C]">
+                              Review after delivery
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => { setActiveOrder(order); setActiveModule('order-details'); navigate('/profile/order-history/details'); }}
+                            className="rounded-[8px] border border-[#E9DED3] px-4 py-2.5 text-sm font-bold text-[#141225] transition hover:bg-[#FAF8F5]"
+                          >
+                            View Order
+                          </button>
                         </div>
-                      ) : (
-                        <div className="flex items-center gap-1">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <button
-                              key={star}
-                              type="button"
-                              onClick={() => setReviewModalProduct({ productId, orderId, orderItemId, reviewKey: key })}
-                              className="transition hover:scale-110"
-                              title={`Rate ${star} star${star > 1 ? 's' : ''}`}
-                            >
-                              <Star className="h-5 w-5 text-[#C4B9B0]" fill="none" />
-                            </button>
-                          ))}
-                        </div>
-                      )
-                    ) : (
-                      <div className="rounded-[10px] border border-[#E9DED3] bg-[#FAF8F5] px-4 py-2 text-sm font-semibold text-[#6D625C]">
-                        Review after delivery
                       </div>
-                    )}
-                    <button
-                      type="button"
-                              onClick={() => { setActiveOrder(order); setActiveModule('order-details'); navigate('/profile/order-history/details'); }}
-                      className="rounded-[8px] border border-[#E9DED3] px-4 py-2.5 text-sm font-bold text-[#141225] transition hover:bg-[#FAF8F5]"
-                    >
-                      View Order
-                    </button>
-                  </div>
-                </div>
-              </div>
+                    </div>
+                  );
+                })}
+                
+                {renderPagination(reviewsPage, totalPages, setReviewsPage)}
+              </>
             );
-          })}
+          })()}
         </div>
       )}
     </section>
   );
 
   const renderOrders = () => {
+    const itemsPerPage = isMobile ? 5 : 10;
     const totalPages = Math.ceil(orders.length / itemsPerPage);
     const paginatedOrders = orders.slice((ordersPage - 1) * itemsPerPage, ordersPage * itemsPerPage);
 
@@ -984,7 +1228,7 @@ export default function CustomerProfilePage({
                             <img src={imageSrc} alt={firstItem.name || 'Product'} className="h-full w-full object-cover" />
                           </div>
                           <div>
-                            <p className="font-bold text-[#141225] line-clamp-1">{firstItem.name || `Order #${order._id.slice(-8).toUpperCase()}`}</p>
+                            <p className="font-bold text-[#141225] line-clamp-1">{firstItem.name || `Order #${(order.orderId || order._id.slice(-8)).toUpperCase()}`}</p>
                             {order.isGiftOrder && (
                               <span className="mt-1 mb-1 inline-flex w-max items-center gap-1 rounded bg-[#FDF0EB] px-2 py-0.5 text-[10px] font-bold text-[#D04E26] uppercase tracking-wider">
                                 <Gift size={10} />
@@ -992,7 +1236,7 @@ export default function CustomerProfilePage({
                               </span>
                             )}
                             {extraItemsCount > 0 && <p className="text-xs font-semibold text-[#9A6031]">+{extraItemsCount} more item(s)</p>}
-                            <p className="text-xs text-[#6D625C] mt-0.5">#{order._id.slice(-8).toUpperCase()}</p>
+                            <p className="text-xs text-[#6D625C] mt-0.5">#{(order.orderId || order._id.slice(-8)).toUpperCase()}</p>
                           </div>
                         </div>
                       </td>
@@ -1122,7 +1366,7 @@ export default function CustomerProfilePage({
                          {imageSrc ? <img src={imageSrc} alt={firstItem.name} className="w-full h-full object-cover" /> : <Package className="w-6 h-6 text-gray-400" />}
                        </div>
                        <h4 className="font-bold text-[#111] text-[15px] line-clamp-2 leading-snug">
-                         {firstItem.name || `Order #${order._id.slice(-8).toUpperCase()}`}
+                         {firstItem.name || `Order #${(order.orderId || order._id.slice(-8)).toUpperCase()}`}
                        </h4>
                     </div>
                     <span className="shrink-0 px-2.5 py-1 rounded-[6px] text-[10px] font-bold uppercase tracking-wider bg-[#FFF9E6] text-[#B8860B] border border-[#F5E6B3]">
@@ -1201,68 +1445,230 @@ export default function CustomerProfilePage({
     );
   };
 
-  const renderCustomizeOrders = () => (
-    <section className="px-5 py-7 lg:px-7">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h2 className="text-lg font-bold text-[#141225]">Customize Orders</h2>
-          <p className="mt-1 text-sm text-[#6D625C]">Track the status of your customized order requests.</p>
-        </div>
-      </div>
+  const renderCustomizeOrders = () => {
+    let filteredOrders = customizeOrders;
 
-      {customizeOrdersLoading ? (
-        <p className="mt-8 text-sm text-[#6D625C]">Loading customize orders...</p>
-      ) : customizeOrders.length === 0 ? (
-        <div className="mt-6 flex flex-col items-center justify-center rounded-[14px] border border-dashed border-[#E9DED3] bg-[#FAF8F5] py-12 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-[#C4B9B0] shadow-sm">
-            <Settings className="h-8 w-8" strokeWidth={1.5} />
+    // Apply search
+    if (customizeSearchTerm) {
+      const term = customizeSearchTerm.toLowerCase();
+      filteredOrders = filteredOrders.filter(o => {
+        const idMatch = (o.orderId || o._id.slice(-8)).toLowerCase().includes(term);
+        const nameMatch = (o.customerInfo?.fullName || '').toLowerCase().includes(term);
+        const productMatch = getProductName(o.productDetails).toLowerCase().includes(term);
+        return idMatch || nameMatch || productMatch;
+      });
+    }
+
+    if (customizeFilterStatus !== 'All') {
+       filteredOrders = filteredOrders.filter(o => o.status === customizeFilterStatus);
+    }
+
+    const itemsPerPage = isMobile ? 5 : 10;
+    const totalPages = Math.ceil(filteredOrders.length / itemsPerPage) || 1;
+    const paginatedOrders = filteredOrders.slice((customizeOrdersPage - 1) * itemsPerPage, customizeOrdersPage * itemsPerPage);
+
+    return (
+      <section className="px-5 py-7 lg:px-7 relative">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+          <div className="flex items-center gap-3">
+             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#F4EBE2] text-[#A7632E] shrink-0">
+                <User className="h-5 w-5" strokeWidth={2} />
+             </div>
+             <div>
+                <h2 className="text-2xl font-serif font-bold text-[#141225]">Customize Orders</h2>
+                <p className="text-sm text-[#6D625C] mt-0.5">Track the status of your customized order requests.</p>
+             </div>
           </div>
-          <h3 className="mt-4 text-base font-bold text-[#141225]">No Customize Orders Yet</h3>
-          <p className="mt-2 max-w-sm text-sm text-[#6D625C]">You haven't placed any custom order requests.</p>
-          <button type="button" onClick={() => onNavigate('/customize')} className="mt-6 rounded-[8px] bg-[#9A6031] px-6 py-2.5 text-sm font-bold text-white transition hover:bg-[#7E4B25]">
-            Request Customize Order
-          </button>
+          
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+            <div className="relative w-full sm:w-64">
+              <input 
+                type="text" 
+                placeholder="Search by Order ID or Name..." 
+                value={customizeSearchTerm}
+                onChange={(e) => {
+                  setCustomizeSearchTerm(e.target.value);
+                  setCustomizeOrdersPage(1);
+                }}
+                className="w-full pl-4 pr-10 py-2 rounded-md border border-[#E9DED3] bg-white text-sm focus:outline-none focus:border-[#8B5E3C] shadow-sm"
+              />
+              <Search className="w-4 h-4 text-gray-400 absolute right-3 top-2.5" />
+            </div>
+            <button className="flex items-center justify-center gap-2 px-5 py-2 w-full sm:w-auto rounded-md bg-[#FAF8F5] border border-[#E9DED3] text-[#141225] text-sm font-semibold hover:bg-[#F0EAE1] transition shadow-sm">
+              <Filter className="w-4 h-4" /> Filter
+            </button>
+          </div>
         </div>
-      ) : (
-        <div className="mt-6 space-y-4">
-          {customizeOrders.map((order) => (
-            <div key={order._id} className="rounded-[14px] border border-[#E9DED3] bg-white p-5 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-                <div>
-                  <h3 className="font-bold text-[#141225]">{getProductName(order.productDetails)}</h3>
-                  <p className="text-sm text-[#6D625C]">Contact: {order.customerInfo.fullName} ({order.customerInfo.phone})</p>
-                  <p className="text-sm text-[#6D625C]">Wood Type: {getWoodType(order.productDetails)}</p>
-                  <p className="text-xs text-[#8A817C] mt-2">Requested on: {formatDate(order.createdAt)}</p>
-                </div>
-                <div className="flex flex-col items-end gap-2">
-                  <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider ${
-                    order.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' :
-                    order.status === 'Rejected' ? 'bg-red-100 text-red-700' :
-                    'bg-[#F2E3D1] text-[#8B5E3C]'
-                  }`}>
-                    {order.status || 'Pending'}
-                  </span>
-                  {order.status === 'Rejected' && order.rejectionReason && (
-                    <div className="mt-2 max-w-xs text-right">
-                      <p className="text-xs font-bold text-red-600">Rejection Reason:</p>
-                      <p className="text-xs text-[#6D625C]">{order.rejectionReason}</p>
+
+        {customizeOrdersLoading ? (
+          <p className="mt-8 text-sm text-[#6D625C]">Loading customize orders...</p>
+        ) : customizeOrders.length === 0 ? (
+          <div className="mt-6 flex flex-col items-center justify-center rounded-[14px] border border-dashed border-[#E9DED3] bg-[#FAF8F5] py-12 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-[#C4B9B0] shadow-sm">
+              <Settings className="h-8 w-8" strokeWidth={1.5} />
+            </div>
+            <h3 className="mt-4 text-base font-bold text-[#141225]">No Customize Orders Yet</h3>
+            <p className="mt-2 max-w-sm text-sm text-[#6D625C]">You haven't placed any custom order requests.</p>
+            <button type="button" onClick={() => onNavigate('/customize')} className="mt-6 rounded-[8px] bg-[#9A6031] px-6 py-2.5 text-sm font-bold text-white transition hover:bg-[#7E4B25]">
+              Request Customize Order
+            </button>
+          </div>
+        ) : filteredOrders.length === 0 ? (
+          <div className="py-12 text-center text-sm text-gray-500">No matching orders found.</div>
+        ) : (
+          <div className="space-y-4">
+            {paginatedOrders.map((order) => {
+              const reqId = `#CO${order.orderId || order._id.slice(-4)}`.toUpperCase();
+              const contactName = order.customerInfo?.fullName || 'N/A';
+              const productName = getProductName(order.productDetails);
+              const woodType = getWoodType(order.productDetails) || 'N/A';
+              const date = formatDate(order.createdAt);
+              const expectedDelivery = order.expectedDelivery ? formatDate(order.expectedDelivery) : 'Pending';
+              const status = (order.status || 'PENDING').toUpperCase();
+
+              let statusClasses = 'bg-gray-100 text-gray-600';
+              if (status === 'APPROVED') statusClasses = 'bg-emerald-100 text-emerald-700';
+              if (status === 'IN PROGRESS') statusClasses = 'bg-orange-100 text-orange-700';
+              if (status === 'PENDING') statusClasses = 'bg-blue-100 text-blue-700';
+              if (status === 'REJECTED') statusClasses = 'bg-red-100 text-red-700';
+              const imgObj = order.images?.[0];
+              let imageStr = '';
+              if (imgObj) {
+                 imageStr = typeof imgObj === 'string' ? imgObj : imgObj.url;
+              }
+              const imageUrl = imageStr ? (imageStr.startsWith('http') || imageStr.startsWith('data:') ? imageStr : `http://localhost:5000${imageStr.startsWith('/') ? '' : '/'}${imageStr}`) : 'https://placehold.co/150x150/F4EBE2/A7632E?text=Custom';
+
+              const isExpanded = !!expandedCustomizeOrders[order._id];
+              return (
+                <div key={order._id} className="rounded-[12px] border border-[#E9DED3] bg-white p-4 shadow-sm">
+                  {isMobile ? (
+                    <div className="flex flex-col">
+                      <div className="flex items-start gap-4">
+                        <div className="w-20 h-20 rounded-lg bg-[#FAF8F5] shrink-0 overflow-hidden">
+                          <img src={imageUrl} alt={productName} className="w-full h-full object-cover" />
+                        </div>
+                        <div className="flex-1 flex flex-col justify-between min-h-[5rem]">
+                          <div className="flex items-center justify-between w-full">
+                            <span className="text-sm font-bold text-[#141225]">{reqId}</span>
+                            <div className="flex items-center gap-2">
+                              <span className={`inline-flex rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${statusClasses}`}>
+                                {status}
+                              </span>
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-[#141225] truncate">{productName}</p>
+                            <p className="text-[11px] text-gray-500 mt-0.5">Requested on {date}</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4 bg-[#FAF5F0] rounded-[12px] p-4">
+                        <div className="flex">
+                          {/* Col 1 */}
+                          <div className="flex-1 space-y-4 pr-4 border-r border-[#E9DED3]/60">
+                            <div>
+                              <p className="text-[11px] text-gray-500 mb-0.5">Wood Type</p>
+                              <p className="text-sm font-bold text-[#141225] truncate">{woodType}</p>
+                            </div>
+                            <div>
+                              <p className="text-[11px] text-gray-500 mb-0.5">Request Date</p>
+                              <p className="text-sm font-bold text-[#141225] truncate">{date}</p>
+                            </div>
+                          </div>
+                          {/* Col 2 */}
+                          <div className="flex-1 space-y-4 pl-4">
+                            <div>
+                              <p className="text-[11px] text-gray-500 mb-0.5">Contact Name</p>
+                              <p className="text-sm font-bold text-[#141225] truncate">{contactName}</p>
+                            </div>
+                            <div>
+                              <p className="text-[11px] text-gray-500 mb-0.5">Email</p>
+                              <p className="text-sm font-bold text-[#141225] truncate">{order.customerInfo?.email || 'N/A'}</p>
+                            </div>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => { setActiveCustomizeOrder(order); setActiveModule('customize-order-details'); navigate('/profile/customize-orders/details'); }}
+                          className="w-full mt-5 flex items-center justify-center gap-1.5 py-2 rounded-md bg-white border border-[#D04E26] text-[#D04E26] text-xs font-bold hover:bg-[#FDF0EB] transition"
+                        >
+                          <Eye className="w-4 h-4" /> View Details
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                      {/* Image */}
+                      <div className="w-full md:w-36 h-40 md:h-24 rounded-lg bg-[#FAF8F5] shrink-0 overflow-hidden">
+                        <img src={imageUrl} alt={productName} className="w-full h-full object-cover" />
+                      </div>
+                      
+                      {/* Details Grid */}
+                      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+                        {/* Col 1 */}
+                        <div className="space-y-4">
+                          <div>
+                            <p className="text-[11px] text-gray-500 mb-0.5">Order ID</p>
+                            <p className="text-sm font-bold text-[#141225]">{reqId}</p>
+                          </div>
+                          <div>
+                            <p className="text-[11px] text-gray-500 mb-0.5">Contact Name</p>
+                            <p className="text-sm font-bold text-[#141225] truncate">{contactName}</p>
+                          </div>
+                        </div>
+                        
+                        {/* Col 2 */}
+                        <div className="space-y-4">
+                          <div>
+                            <p className="text-[11px] text-gray-500 mb-0.5">Product</p>
+                            <p className="text-sm font-bold text-[#141225] truncate">{productName}</p>
+                          </div>
+                          <div>
+                            <p className="text-[11px] text-gray-500 mb-0.5">Wood Type</p>
+                            <p className="text-sm font-bold text-[#141225] truncate">{woodType}</p>
+                          </div>
+                        </div>
+                        
+                        {/* Col 3 */}
+                        <div className="space-y-4">
+                          <div>
+                            <div className="flex items-center gap-1.5 mb-0.5">
+                              <CalendarDays className="w-3 h-3 text-gray-500" />
+                              <p className="text-[11px] text-gray-500">Requested On</p>
+                            </div>
+                            <p className="text-sm font-bold text-[#141225] pl-4">{date}</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Status & Action */}
+                      <div className="flex flex-row md:flex-col items-center md:items-end justify-between w-full md:w-auto mt-2 md:mt-0 gap-4 md:min-w-[120px]">
+                        <div className="text-left md:text-right">
+                          <p className="text-[11px] text-gray-500 mb-1 hidden md:block">Status</p>
+                          <span className={`inline-flex rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${statusClasses}`}>
+                            {status}
+                          </span>
+                        </div>
+                        <button 
+                          onClick={() => { setActiveCustomizeOrder(order); setActiveModule('customize-order-details'); navigate('/profile/customize-orders/details'); }}
+                          className="flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-md bg-white border border-[#D04E26] text-[#D04E26] text-[11px] font-bold hover:bg-[#FDF0EB] transition"
+                        >
+                          <Eye className="w-3.5 h-3.5" /> View Details
+                        </button>
+                      </div>
                     </div>
                   )}
-                  <button
-                    type="button"
-                    onClick={() => { setActiveCustomizeOrder(order); setActiveModule('customize-order-details'); navigate('/profile/customize-orders/details'); }}
-                    className="mt-2 flex items-center gap-1 rounded bg-[#9A6031] px-3 py-1.5 text-xs font-bold text-white transition hover:bg-[#7E4B25]"
-                  >
-                    <Eye className="h-3.5 w-3.5" /> View Details
-                  </button>
                 </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </section>
-  );
+              );
+            })}
+            
+            {/* Pagination Controls */}
+            {renderPagination(customizeOrdersPage, totalPages, setCustomizeOrdersPage)}
+          </div>
+        )}
+      </section>
+    );
+  };
 
   const renderCustomizeOrderDetails = () => {
     if (!activeCustomizeOrder) return null;
@@ -1360,71 +1766,203 @@ export default function CustomerProfilePage({
     );
   };
 
-  const renderBulkOrders = () => (
-    <section className="px-5 py-7 lg:px-7">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h2 className="text-lg font-bold text-[#141225]">Bulk Orders</h2>
-          <p className="mt-1 text-sm text-[#6D625C]">Track the status of your bulk order requests.</p>
-        </div>
-      </div>
+  const getBulkOrderValue = (order, keyword) => {
+    const field = order.customFields?.find(f => f.label?.toLowerCase().includes(keyword.toLowerCase()));
+    return field ? field.value : '-';
+  };
 
-      {bulkOrdersLoading ? (
-        <p className="mt-8 text-sm text-[#6D625C]">Loading bulk orders...</p>
-      ) : bulkOrders.length === 0 ? (
-        <div className="mt-6 flex flex-col items-center justify-center rounded-[14px] border border-dashed border-[#E9DED3] bg-[#FAF8F5] py-12 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-[#C4B9B0] shadow-sm">
-            <Package className="h-8 w-8" strokeWidth={1.5} />
+  const renderBulkOrders = () => {
+    let filteredOrders = bulkOrders;
+    
+    // Apply search
+    if (bulkSearchTerm) {
+      const term = bulkSearchTerm.toLowerCase();
+      filteredOrders = filteredOrders.filter(o => {
+        const idMatch = (o.orderId || o._id.slice(-8)).toLowerCase().includes(term);
+        const company = getBulkOrderValue(o, 'company').toLowerCase();
+        const name = getBulkOrderValue(o, 'name').toLowerCase();
+        return idMatch || company.includes(term) || name.includes(term);
+      });
+    }
+
+    if (bulkFilterStatus !== 'All') {
+       filteredOrders = filteredOrders.filter(o => o.status === bulkFilterStatus);
+    }
+
+    const itemsPerPage = isMobile ? 5 : 10;
+    const totalPages = Math.ceil(filteredOrders.length / itemsPerPage) || 1;
+    const paginatedOrders = filteredOrders.slice((bulkOrdersPage - 1) * itemsPerPage, bulkOrdersPage * itemsPerPage);
+
+    return (
+      <section className="px-5 py-7 lg:px-7 relative">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+          <div className="flex items-center gap-3">
+             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#F4EBE2] text-[#A7632E] shrink-0">
+                <User className="h-5 w-5" strokeWidth={2} />
+             </div>
+             <h2 className="text-2xl font-serif font-bold text-[#141225]">Bulk Orders</h2>
           </div>
-          <h3 className="mt-4 text-base font-bold text-[#141225]">No Bulk Orders Yet</h3>
-          <p className="mt-2 max-w-sm text-sm text-[#6D625C]">You haven't placed any bulk order requests.</p>
-          <button type="button" onClick={() => onNavigate('/bulk-orders')} className="mt-6 rounded-[8px] bg-[#9A6031] px-6 py-2.5 text-sm font-bold text-white transition hover:bg-[#7E4B25]">
-            Request Bulk Order
-          </button>
         </div>
-      ) : (
-        <div className="mt-6 space-y-4">
-          {bulkOrders.map((order) => (
-            <div key={order._id} className="rounded-[14px] border border-[#E9DED3] bg-white p-5 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-                <div>
-                  <h3 className="font-bold text-[#141225]">{order.product?.name || 'Bulk Order Request'}</h3>
-                  {order.customFields && order.customFields.slice(0, 3).map((field, idx) => (
-                    <p key={idx} className="text-sm text-[#6D625C]">
-                      <span className="font-medium">{field.label}:</span> {typeof field.value === 'boolean' ? (field.value ? 'Yes' : 'No') : field.value}
-                    </p>
-                  ))}
-                  <p className="text-xs text-[#8A817C] mt-2">Requested on: {formatDate(order.createdAt)}</p>
-                </div>
-                <div className="flex flex-col items-end gap-2">
-                  <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider ${
-                    order.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' :
-                    order.status === 'Rejected' ? 'bg-red-100 text-red-700' :
-                    'bg-[#F2E3D1] text-[#8B5E3C]'
-                  }`}>
-                    {order.status || 'Pending'}
-                  </span>
-                  {order.status === 'Rejected' && order.rejectionReason && (
-                    <div className="mt-2 max-w-xs text-right">
-                      <p className="text-xs font-bold text-red-600">Rejection Reason:</p>
-                      <p className="text-xs text-[#6D625C]">{order.rejectionReason}</p>
-                    </div>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => { setActiveBulkOrder(order); setActiveModule('bulk-order-details'); navigate('/profile/bulk-orders/details'); }}
-                    className="mt-2 flex items-center gap-1 rounded bg-[#9A6031] px-3 py-1.5 text-xs font-bold text-white transition hover:bg-[#7E4B25]"
-                  >
-                    <Eye className="h-3.5 w-3.5" /> View Details
-                  </button>
-                </div>
+
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
+          <h3 className="text-[17px] font-bold text-[#141225] font-serif">Your Bulk Order Requests</h3>
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+            <div className="relative w-full sm:w-72">
+              <input 
+                type="text" 
+                placeholder="Search by Company or Name..." 
+                value={bulkSearchTerm}
+                onChange={(e) => {
+                  setBulkSearchTerm(e.target.value);
+                  setBulkOrdersPage(1);
+                }}
+                className="w-full pl-4 pr-10 py-2.5 rounded-md border border-[#E9DED3] bg-white text-sm focus:outline-none focus:border-[#8B5E3C] shadow-sm"
+              />
+              <Search className="w-4 h-4 text-gray-400 absolute right-3 top-3" />
+            </div>
+            <button className="flex items-center justify-center gap-2 px-5 py-2.5 w-full sm:w-auto rounded-md bg-[#FAF8F5] border border-[#E9DED3] text-[#141225] text-sm font-semibold hover:bg-[#F0EAE1] transition shadow-sm">
+              <Filter className="w-4 h-4" /> Filter
+            </button>
+          </div>
+        </div>
+
+        {bulkOrdersLoading ? (
+          <p className="mt-8 text-sm text-[#6D625C]">Loading bulk orders...</p>
+        ) : bulkOrders.length === 0 ? (
+          <EmptyState icon={Package} title="No Bulk Orders Yet" text="You haven't placed any bulk order requests." action="Request Bulk Order" onAction={() => onNavigate('/bulk-orders')} />
+        ) : filteredOrders.length === 0 ? (
+           <div className="py-12 text-center text-sm text-gray-500">No matching orders found.</div>
+        ) : (
+          <div className="flex flex-col flex-1">
+            {/* Desktop Table View */}
+            <div className="hidden md:block rounded-[14px] border border-[#E9DED3] bg-white shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse min-w-[900px]">
+                  <thead>
+                    <tr className="bg-[#FAF8F5] border-b border-[#E9DED3] text-[13px] font-semibold text-[#141225]">
+                      <th className="px-6 py-4 whitespace-nowrap">Request ID</th>
+                      <th className="px-6 py-4 whitespace-nowrap">Company Name</th>
+                      <th className="px-6 py-4 whitespace-nowrap">Your Name</th>
+                      <th className="px-6 py-4 whitespace-nowrap">Email</th>
+                      <th className="px-6 py-4 whitespace-nowrap">Phone</th>
+                      <th className="px-6 py-4 whitespace-nowrap">Requested On</th>
+                      <th className="px-6 py-4 whitespace-nowrap">Status</th>
+                      <th className="px-6 py-4 whitespace-nowrap">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#E9DED3]">
+                    {paginatedOrders.map((order) => {
+                      const reqId = `#BO${order.orderId || order._id.slice(-4)}`.toUpperCase();
+                      const company = getBulkOrderValue(order, 'Company');
+                      const name = getBulkOrderValue(order, 'Name');
+                      const email = getBulkOrderValue(order, 'Email');
+                      const phone = getBulkOrderValue(order, 'Phone');
+                      const date = formatDate(order.createdAt);
+                      const status = (order.status || 'PENDING').toUpperCase();
+
+                      let statusClasses = 'bg-gray-100 text-gray-600';
+                      if (status === 'APPROVED') statusClasses = 'bg-emerald-100 text-emerald-700';
+                      if (status === 'PENDING') statusClasses = 'bg-orange-100 text-orange-700';
+                      if (status === 'UNDER REVIEW') statusClasses = 'bg-blue-100 text-blue-700';
+                      if (status === 'REJECTED') statusClasses = 'bg-red-100 text-red-700';
+                      if (status === 'COMPLETED') statusClasses = 'bg-gray-200 text-gray-700';
+
+                      return (
+                        <tr key={order._id} className="hover:bg-gray-50/50 transition">
+                          <td className="px-6 py-4 text-[13px] font-bold text-[#D04E26] whitespace-nowrap">{reqId}</td>
+                          <td className="px-6 py-4 text-[13px] text-[#141225] whitespace-nowrap uppercase">{company}</td>
+                          <td className="px-6 py-4 text-[13px] text-[#141225] whitespace-nowrap capitalize">{name}</td>
+                          <td className="px-6 py-4 text-[13px] text-[#141225] whitespace-nowrap">{email}</td>
+                          <td className="px-6 py-4 text-[13px] text-[#141225] whitespace-nowrap">{phone}</td>
+                          <td className="px-6 py-4 text-[13px] text-[#141225] whitespace-nowrap">{date}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-[10px] font-bold tracking-wider ${statusClasses}`}>
+                              {status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <button 
+                              onClick={() => { setActiveBulkOrder(order); setActiveModule('bulk-order-details'); navigate('/profile/bulk-orders/details'); }}
+                              className="flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-md bg-white border border-[#D04E26] text-[#D04E26] text-xs font-semibold hover:bg-[#FDF0EB] transition"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              View Details
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             </div>
-          ))}
-        </div>
-      )}
-    </section>
-  );
+
+            {/* Mobile Cards View */}
+            <div className="md:hidden space-y-4">
+              {paginatedOrders.map((order) => {
+                const reqId = `#BO${order.orderId || order._id.slice(-4)}`.toUpperCase();
+                const company = getBulkOrderValue(order, 'Company');
+                const name = getBulkOrderValue(order, 'Name');
+                const phone = getBulkOrderValue(order, 'Phone');
+                const date = formatDate(order.createdAt);
+                const status = (order.status || 'PENDING').toUpperCase();
+
+                let statusClasses = 'bg-gray-100 text-gray-600';
+                if (status === 'APPROVED') statusClasses = 'bg-emerald-100 text-emerald-700';
+                if (status === 'PENDING') statusClasses = 'bg-orange-100 text-orange-700';
+                if (status === 'UNDER REVIEW') statusClasses = 'bg-blue-100 text-blue-700';
+                if (status === 'REJECTED') statusClasses = 'bg-red-100 text-red-700';
+                if (status === 'COMPLETED') statusClasses = 'bg-gray-200 text-gray-700';
+
+                return (
+                  <div key={`mob-${order._id}`} className="rounded-[12px] border border-[#E9DED3] bg-white p-4 shadow-sm flex flex-col gap-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[15px] font-bold text-[#D04E26]">{reqId}</span>
+                      <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-[10px] font-bold tracking-wider ${statusClasses}`}>
+                        {status}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-y-3 gap-x-2 text-sm text-[#141225]">
+                      <div className="flex items-center gap-2">
+                        <Landmark className="w-4 h-4 text-gray-400 shrink-0" />
+                        <span className="uppercase truncate font-medium">{company}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CalendarDays className="w-4 h-4 text-gray-400 shrink-0" />
+                        <span className="truncate">{date}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-gray-400 shrink-0" />
+                        <span className="capitalize truncate">{name}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Phone className="w-4 h-4 text-gray-400 shrink-0" />
+                        <span className="truncate">{phone}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end pt-2 border-t border-gray-100/50 mt-1">
+                      <button 
+                        onClick={() => { setActiveBulkOrder(order); setActiveModule('bulk-order-details'); navigate('/profile/bulk-orders/details'); }}
+                        className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-md bg-white border border-[#D04E26] text-[#D04E26] text-xs font-semibold hover:bg-[#FDF0EB] transition"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        View Details
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            
+            {/* Pagination Controls */}
+            {renderPagination(bulkOrdersPage, totalPages, setBulkOrdersPage, "mt-6 flex items-center justify-center gap-2 flex-wrap")}
+          </div>
+        )}
+      </section>
+    );
+  };
 
   const renderBulkOrderDetails = () => {
     if (!activeBulkOrder) return null;
@@ -1603,7 +2141,7 @@ export default function CustomerProfilePage({
                 >
                   <div className="relative flex justify-center items-center">
                     <div className="bg-white rounded-full p-1 shadow-sm border border-[rgb(176,97,28)]/20 flex items-center justify-center">
-                      <Truck className="w-5 h-5 sm:w-6 sm:h-6 text-[rgb(176,97,28)] fill-current" />
+                      <Truck className="w-3.5 h-3.5 sm:w-6 sm:h-6 text-[rgb(176,97,28)] fill-current" />
                     </div>
                     <div className="absolute -top-10 sm:-top-11 bg-gray-800 text-white text-[9px] sm:text-xs font-bold px-2 py-1 rounded-lg shadow-lg flex items-center gap-1.5 whitespace-nowrap">
                       <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -1651,10 +2189,10 @@ export default function CustomerProfilePage({
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div>
             <h2 className="text-lg font-bold text-[#141225]">Order Details</h2>
-            <p className="mt-1 text-sm text-[#6D625C]">Order #{activeOrder._id.slice(-8).toUpperCase()}</p>
+            <p className="mt-1 text-sm text-[#6D625C]">Order #{(activeOrder.orderId || activeOrder._id.slice(-8)).toUpperCase()}</p>
           </div>
           <div className="flex items-center gap-3 w-full sm:w-auto">
-            {activeOrder.isPaid && (
+            {(activeOrder.isPaid || activeOrder.paymentMethod === 'COD') && activeOrder.status !== 'Pending' && activeOrder.status !== 'Cancelled' && (
               <button 
                 type="button" 
                 onClick={() => handleDownloadInvoice(activeOrder._id)}
@@ -1667,10 +2205,16 @@ export default function CustomerProfilePage({
             )}
             <button 
               type="button" 
-              onClick={() => openProfileModule('orders')} 
+              onClick={() => {
+                if (activeOrder.isGiftOrder) {
+                  openProfileModule('gift-card');
+                } else {
+                  openProfileModule('orders');
+                }
+              }} 
               className="flex-1 sm:flex-none rounded-[8px] border border-[#E9DED3] px-4 py-2 text-sm font-bold text-[#141225] hover:bg-gray-50 transition-colors"
             >
-              Back to Orders
+              {activeOrder.isGiftOrder ? 'Back to Gift Orders' : 'Back to Orders'}
             </button>
           </div>
         </div>
@@ -1965,40 +2509,33 @@ export default function CustomerProfilePage({
         </div>
 
         {wishlistItems.length === 0 ? (
-          <EmptyState icon={RiHeartAdd2Line} title="Your wishlist is empty" text="Start adding toys you love." action="Explore Toys" onAction={() => onNavigate('/')} />
+          <EmptyState icon={Heart} title="Your wishlist is empty" text="Start adding toys you love." action="Explore Toys" onAction={() => onNavigate('/')} />
         ) : (
-          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
             {wishlistItems.map((item, index) => {
               const product = item.product || item;
               if (!product || !product.name) return null; // Skip dummy or invalid products
               
-              const effectiveImages = item.selectedVariant?.images?.length ? item.selectedVariant.images : (product.images?.length ? product.images : [product.image || '']);
-              const image = typeof effectiveImages[0] === 'string' ? effectiveImages[0] : (effectiveImages[0]?.url || '');
-              const price = item.selectedVariant ? (item.selectedVariant.basePrice ?? item.selectedVariant.price) : (product.price ?? 0);
-
               return (
-                <div key={index} className="group relative overflow-hidden rounded-[16px] border border-[#E9DED3] bg-white transition hover:shadow-[0_12px_25px_rgba(62,39,35,0.06)]">
-                  <button onClick={() => onRemoveFromWishlist(index)} className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white text-red-500 shadow hover:bg-red-50">
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                  <div className="aspect-square bg-[#F8F3EF] p-4">
-                    <img src={image} alt={product.name} className="h-full w-full object-contain mix-blend-multiply transition duration-300 group-hover:scale-110" />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-bold text-[#141225] line-clamp-1 cursor-pointer hover:text-[#8B5E3C]" onClick={() => onNavigate(`/product/${product._id || product.id}`)}>{product.name}</h3>
-                    <div className="mt-2 flex items-center justify-between">
-                      <p className="text-lg font-black text-[#8B5E3C]">Rs. {price}</p>
-                      <span className="text-xs font-semibold text-emerald-600">In Stock</span>
-                    </div>
+                <ProductCard 
+                  key={product._id || index}
+                  product={product}
+                  viewMode="grid"
+                  onNavigate={onNavigate}
+                  user={user}
+                  onRemoveFromWishlist={() => onRemoveFromWishlist(index)}
+                  hideCartIcon={true}
+                  hideRating={true}
+                  actionButton={
                     <button 
-                      onClick={() => onMoveToCart(item, index)}
-                      className="mt-4 flex w-full items-center justify-center gap-2 rounded-[8px] bg-[#9A6031] py-2 text-sm font-bold text-white transition hover:bg-[#7E4B25]"
+                      onClick={(e) => { e.stopPropagation(); onMoveToCart(item, index); }}
+                      className="flex w-full items-center justify-center gap-2 rounded-[8px] bg-[#9A6031] py-2 text-sm font-bold text-white transition hover:bg-[#7E4B25]"
                     >
                       <ShoppingBag className="h-4 w-4" />
                       Move to Cart
                     </button>
-                  </div>
-                </div>
+                  }
+                />
               );
             })}
           </div>
@@ -2239,7 +2776,7 @@ export default function CustomerProfilePage({
         id: 'order', 
         type: 'order', 
         title: 'Order Processing', 
-        message: `Your latest order #${orders[0]._id?.slice(-8).toUpperCase()} is being processed.`, 
+        message: `Your latest order #${(orders[0].orderId || orders[0]._id?.slice(-8)).toUpperCase()} is being processed.`, 
         time: formatDate(orders[0].createdAt), 
         unread: true 
       });
@@ -2308,47 +2845,173 @@ export default function CustomerProfilePage({
   };
 
   const renderGiftCardOrders = () => {
-    const giftOrders = orders.filter(o => o.isGiftOrder);
+    let giftOrders = orders.filter(o => o.isGiftOrder);
+    if (giftSearchTerm) {
+      giftOrders = giftOrders.filter(o => {
+        const orderId = (o.orderId || o._id.slice(-8)).toLowerCase();
+        return orderId.includes(giftSearchTerm.toLowerCase());
+      });
+    }
+    const giftItemsPerPage = isMobile ? 5 : 10;
+    const totalGiftPages = Math.ceil(giftOrders.length / giftItemsPerPage);
+    const paginatedGiftOrders = giftOrders.slice((giftOrdersPage - 1) * giftItemsPerPage, giftOrdersPage * giftItemsPerPage);
     
     return (
-      <section className="px-5 py-7 lg:px-7">
-        <div className="flex items-center justify-between gap-4 border-b border-[#E9DED3] pb-5">
+      <section className="px-5 py-7 lg:px-7 relative">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 relative">
           <div>
-            <h2 className="text-lg font-bold text-[#141225]">Gift & Card Orders</h2>
+            <h2 className="text-xl font-serif font-bold text-[#141225]">Gift & Card Orders</h2>
             <p className="mt-1 text-sm text-[#6D625C]">Track your curated gifts and personalized messages.</p>
           </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row justify-end items-center gap-3 mb-6">
+          <div className="relative w-full sm:w-72">
+            <input 
+              type="text" 
+              placeholder="Search by Order ID..." 
+              value={giftSearchTerm}
+              onChange={(e) => {
+                setGiftSearchTerm(e.target.value);
+                setGiftOrdersPage(1);
+              }}
+              className="w-full pl-4 pr-10 py-2 rounded-md border border-[#E9DED3] bg-white text-sm focus:outline-none focus:border-[#8B5E3C]"
+            />
+            <Search className="w-4 h-4 text-gray-400 absolute right-3 top-2.5" />
+          </div>
+          <button className="flex items-center gap-2 px-4 py-2 rounded-md bg-[#FAF8F5] border border-[#E9DED3] text-[#141225] text-sm font-semibold hover:bg-[#F0EAE1] transition whitespace-nowrap">
+            <Filter className="w-4 h-4" /> Filter
+          </button>
         </div>
 
         {ordersLoading ? (
           <p className="mt-8 text-sm text-[#6D625C]">Loading gift orders...</p>
         ) : giftOrders.length === 0 ? (
-          <EmptyState icon={Gift} title="No Gift Orders" text="You haven't placed any gift orders yet." action="Send a Gift" onAction={() => onNavigate('/gift-and-card')} />
+          <EmptyState icon={Gift} title="No Gift Orders" text={giftSearchTerm ? "No matching gift orders found." : "You haven't placed any gift orders yet."} action="Send a Gift" onAction={() => onNavigate('/gift-and-card')} />
         ) : (
-          <div className="mt-6 space-y-4">
-            {giftOrders.map((order) => (
-              <div key={order._id} className="rounded-[14px] border border-[#E9DED3] bg-white p-5 shadow-sm">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-                  <div>
-                    <h3 className="font-bold text-[#141225]">Order #{order._id.slice(-8).toUpperCase()}</h3>
-                    <p className="text-sm text-[#6D625C] mt-1">Status: <span className="font-bold text-[#8B5E3C]">{order.status || 'Pending'}</span></p>
-                    {order.giftMessage && (
-                       <div className="mt-3 p-3 bg-[#FAF8F5] rounded-[8px] border border-dashed border-[#E9DED3]">
-                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Personalized Message</p>
-                         <p className="text-sm italic font-serif">"{order.giftMessage}"</p>
-                         <p className="text-xs text-gray-400 mt-2">Style: {order.giftMessageStyle || 'Classic'}</p>
-                       </div>
-                    )}
-                    <p className="text-sm text-gray-700 mt-3 font-semibold bg-gray-50 inline-block px-3 py-1.5 rounded-[6px] border border-gray-100">
-                      Scheduled Delivery: {formatDeliveryDate(getDeliveryDate(order))}
-                    </p>
+          <>
+          <div className="space-y-6">
+            {paginatedGiftOrders.map((order) => {
+              const firstItem = order.orderItems?.[0] || {};
+              const imageSrc = firstItem.image ? (firstItem.image.startsWith('http') || firstItem.image.startsWith('data:') ? firstItem.image : (firstItem.image.startsWith('/uploads') || firstItem.image.startsWith('uploads/')) ? `http://localhost:5000${firstItem.image.startsWith('/') ? '' : '/'}${firstItem.image}` : firstItem.image) : '';
+              
+              return (
+                <div key={order._id} className="rounded-xl border border-[#E9DED3] bg-white p-4 shadow-sm flex flex-col lg:flex-row gap-6">
+                  
+                  {/* Image Column */}
+                  <div className="w-full lg:w-48 h-48 shrink-0 rounded-lg overflow-hidden bg-[#F8F3EF]">
+                    {imageSrc ? <img src={imageSrc} alt="Product" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Package className="w-8 h-8 text-gray-400" /></div>}
                   </div>
-                  <div className="flex flex-col items-end gap-2">
-                     <p className="font-bold text-[#141225] text-lg">₹{Number(order.totalPrice || 0).toLocaleString()}</p>
+
+                  {/* Details Grid */}
+                  <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 items-start py-2">
+                    
+                    {/* Column 1: Order ID & Message */}
+                    <div className="flex flex-col gap-3 h-full">
+                      <h3 className="font-serif font-bold text-[#141225] text-[17px]">Order #{(order.orderId || order._id.slice(-8)).toUpperCase()}</h3>
+                      {order.giftMessage ? (
+                         <div className="p-3 bg-[#FAF8F5] rounded-md border border-[#E9DED3] flex-1">
+                           <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Personalized Message</p>
+                           <p className="text-sm italic font-serif text-[#141225]">"{order.giftMessage}"</p>
+                           <p className="text-xs text-gray-500 mt-2">Style: {order.giftMessageStyle || 'Classic'}</p>
+                         </div>
+                      ) : (
+                         <div className="p-3 bg-gray-50 rounded-md border border-gray-100 flex-1 flex items-center justify-center">
+                           <p className="text-xs text-gray-400">No message provided</p>
+                         </div>
+                      )}
+                      <div className="mt-auto pt-2">
+                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#FDF0EB] text-[#D04E26] text-[11px] font-bold rounded-md whitespace-nowrap">
+                           <CalendarDays className="w-3 h-3" />
+                           Scheduled Delivery: {formatDate(getDeliveryDate(order))}
+                         </span>
+                      </div>
+                    </div>
+
+                    {/* Column 2: Dates */}
+                    <div className="flex flex-col gap-5 lg:border-l border-[#E9DED3] lg:pl-6 h-full justify-center">
+                      <div className="flex items-start gap-3">
+                        <CalendarDays className="w-5 h-5 text-[#8B5E3C] shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-xs text-gray-500 mb-0.5">Order Date</p>
+                          <p className="text-sm font-bold text-[#141225]">{formatDate(order.createdAt)}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <Truck className="w-5 h-5 text-[#8B5E3C] shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-xs text-gray-500 mb-0.5">Delivery Date</p>
+                          <p className="text-sm font-bold text-[#141225]">{order.status === 'Delivered' ? formatDate(order.updatedAt) : formatDate(getDeliveryDate(order))}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Column 3: Items & Amount */}
+                    <div className="flex flex-col gap-5 lg:border-l border-[#E9DED3] lg:pl-6 h-full justify-center">
+                      <div className="flex items-start gap-3">
+                        <Package className="w-5 h-5 text-[#8B5E3C] shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-xs text-gray-500 mb-0.5">Items</p>
+                          <p className="text-sm font-bold text-[#141225]">{order.orderItems?.length || 1} Gift Box{order.orderItems?.length > 1 ? 'es' : ''}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <Tag className="w-5 h-5 text-[#8B5E3C] shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-xs text-gray-500 mb-0.5">Amount</p>
+                          <p className="text-sm font-bold text-[#141225]">₹ {Number(order.totalPrice || 0).toLocaleString()}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Column 4: Actions */}
+                    <div className="flex flex-col gap-3 lg:border-l border-[#E9DED3] lg:pl-6 h-full justify-center">
+                      <button 
+                        onClick={() => { setActiveOrder(order); setActiveModule('order-details'); navigate('/profile/order-history/details'); }}
+                        className="w-full py-2.5 rounded-md border border-[#8B5E3C] text-[#8B5E3C] text-sm font-semibold hover:bg-[#FAF8F5] transition text-center"
+                      >
+                        View Details
+                      </button>
+                      <button className="w-full py-2.5 rounded-md bg-[#8B5E3C] text-white text-sm font-semibold hover:bg-[#7E4B25] transition text-center">
+                        Track Order
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
+          
+          {totalGiftPages > 1 && (
+            <div className="mt-8 flex justify-center items-center gap-2">
+              <button
+                onClick={() => setGiftOrdersPage(p => Math.max(1, p - 1))}
+                disabled={giftOrdersPage === 1}
+                className="w-8 h-8 flex items-center justify-center text-sm font-semibold border rounded bg-white hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white text-gray-600"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              
+              {Array.from({ length: totalGiftPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  onClick={() => setGiftOrdersPage(page)}
+                  className={`w-8 h-8 flex items-center justify-center text-sm font-semibold border rounded ${giftOrdersPage === page ? 'bg-[#8B5E3C] text-white border-[#8B5E3C]' : 'bg-white hover:bg-gray-50 text-gray-600'}`}
+                >
+                  {page}
+                </button>
+              ))}
+
+              <button
+                onClick={() => setGiftOrdersPage(p => Math.min(totalGiftPages, p + 1))}
+                disabled={giftOrdersPage === totalGiftPages}
+                className="w-8 h-8 flex items-center justify-center text-sm font-semibold border rounded bg-white hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white text-gray-600"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+          </>
         )}
       </section>
     );
@@ -2376,6 +3039,17 @@ export default function CustomerProfilePage({
     navRef.current.scrollLeft = scrollLeft - walk;
   };
 
+  const isModuleActive = (id) => {
+    if (activeModule === id) return true;
+    if (activeModule === 'order-details') {
+      if (id === 'gift-card' && activeOrder?.isGiftOrder) return true;
+      if (id === 'orders' && !activeOrder?.isGiftOrder) return true;
+    }
+    if (activeModule === 'bulk-order-details' && id === 'bulk-orders') return true;
+    if (activeModule === 'customize-order-details' && id === 'customize-orders') return true;
+    return false;
+  };
+
   return (
     <section className="min-h-screen bg-[#FAF8F5] px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
       <div className="mx-auto flex max-w-[1440px] flex-col gap-6">
@@ -2395,7 +3069,7 @@ export default function CustomerProfilePage({
               type="button"
               onClick={() => openProfileModule(id)}
               className={`flex shrink-0 whitespace-nowrap items-center gap-2 lg:gap-3 rounded-[10px] px-4 py-3 text-left text-sm font-semibold transition ${
-                activeModule === id
+                isModuleActive(id)
                   ? 'bg-[#F4EBE2] text-[#2E2E2E] shadow-sm border border-[#E9DED3]'
                   : 'text-[#6D625C] hover:bg-[#FAF4EF] hover:text-[#8B5E3C]'
               }`}
@@ -2413,7 +3087,7 @@ export default function CustomerProfilePage({
                 <User className="h-6 w-6" strokeWidth={1.8} />
               </div>
               <div>
-                <h1 className="text-2xl font-bold tracking-tight text-[#141225]">{modules.find((item) => item.id === activeModule)?.label || 'My Profile'}</h1>
+                <h1 className="text-2xl font-bold tracking-tight text-[#141225]">{modules.find((item) => isModuleActive(item.id))?.label || 'My Profile'}</h1>
               </div>
             </div>
             {activeModule === 'profile' && !isEditing && (

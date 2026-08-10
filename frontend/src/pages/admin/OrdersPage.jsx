@@ -360,7 +360,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
               ) : filteredOrders.map(order => (
                 <tr key={order._id} className="hover:bg-gray-50/50 transition-colors">
                   <td className="px-6 py-4">
-                    <div className="font-mono text-sm font-bold text-gray-900 mb-1">{(order._id || '').substring((order._id || '').length - 8)}</div>
+                    <div className="font-mono text-sm font-bold text-gray-900 mb-1">{(order.orderId || 'DEBUG_' + (order._id||'').substring(order._id.length - 8))}</div>
                     {order.isGiftOrder && (() => {
                       const giftItems = (order.orderItems || []).filter(item => item.isGift);
                       const noWrapperFee = (order.gift_fee || 0) === 0;
@@ -478,7 +478,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Order Details</h1>
-              <p className="text-sm text-gray-500">View information for order #{(selectedOrder._id || '').substring((selectedOrder._id || '').length - 8)}</p>
+              <p className="text-sm text-gray-500">View information for order #{selectedOrder.orderId || (selectedOrder._id || '').substring((selectedOrder._id || '').length - 8)}</p>
             </div>
             <button onClick={closeViewModal} className="flex items-center gap-2 px-3 py-1.5 text-[#6D625C] hover:text-[#9A6031] hover:bg-[#F2E3D1] rounded-lg transition-colors font-medium">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
@@ -490,7 +490,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <p className="text-xs uppercase tracking-widest text-gray-500">Order ID</p>
-                  <p className="font-semibold text-gray-900">{(selectedOrder._id || '').substring((selectedOrder._id || '').length - 8)}</p>
+                  <p className="font-semibold text-gray-900">{selectedOrder.orderId || (selectedOrder._id || '').substring((selectedOrder._id || '').length - 8)}</p>
                 </div>
                 <div>
                   <p className="text-xs uppercase tracking-widest text-gray-500">Customer</p>
@@ -659,7 +659,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
           <div className="flex items-center justify-between mb-6 shrink-0">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Edit Order Details</h1>
-              <p className="text-sm text-gray-500">Update information for order #{(selectedOrder._id || '').substring((selectedOrder._id || '').length - 8)}</p>
+              <p className="text-sm text-gray-500">Update information for order #{selectedOrder.orderId || (selectedOrder._id || '').substring((selectedOrder._id || '').length - 8)}</p>
             </div>
             <button onClick={closeEditModal} className="flex items-center gap-2 px-4 py-2 rounded-xl text-gray-700 bg-white border border-[#E6DFD4] hover:bg-gray-50 transition-colors font-semibold text-sm">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
@@ -673,7 +673,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs uppercase tracking-widest text-gray-500">Order ID</p>
-                  <p className="font-semibold text-gray-900">{(selectedOrder._id || '').substring((selectedOrder._id || '').length - 8)}</p>
+                  <p className="font-semibold text-gray-900">{selectedOrder.orderId || (selectedOrder._id || '').substring((selectedOrder._id || '').length - 8)}</p>
                 </div>
                 <div>
                   <p className="text-xs uppercase tracking-widest text-gray-500">Customer</p>
@@ -909,7 +909,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
             <div className="p-6 space-y-4">
               <div>
                 <p className="text-xs uppercase tracking-widest text-gray-500 mb-1">Order ID</p>
-                <p className="font-semibold text-gray-900">{shippingModalOrder._id.substring(shippingModalOrder._id.length - 8)}</p>
+                <p className="font-semibold text-gray-900">{shippingModalOrder.orderId || shippingModalOrder._id.substring(shippingModalOrder._id.length - 8)}</p>
               </div>
 
               <div className="relative">

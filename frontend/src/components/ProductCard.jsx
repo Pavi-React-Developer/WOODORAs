@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { BsBagHeartFill } from "react-icons/bs";
-import { RiHeartAdd2Line } from "react-icons/ri";
+import { RiHeartAdd2Line, RiHeartFill } from "react-icons/ri";
 import { API_ORIGIN } from '../api/apiClient';
 import useWishlistStore from '../store/useWishlistStore';
 
-export default function ProductCard({ product, viewMode = 'grid', onNavigate, onAddToCart, onAddToWishlist, user }) {
+export default function ProductCard({ product, viewMode = 'grid', onNavigate, onAddToCart, onAddToWishlist, onRemoveFromWishlist, user, hideCartIcon = false, hideRating = false, actionButton = null }) {
   const [isAdding, setIsAdding] = useState(false);
   
   // Use global wishlist state to stay in sync with sidebar removals
@@ -63,8 +63,12 @@ export default function ProductCard({ product, viewMode = 'grid', onNavigate, on
       }
       
       if (isCurrentlyWishlisted) {
-         // If already wishlisted, just remove it directly via store
-         useWishlistStore.getState().toggleWishlist(p, defaultVariant, 1);
+         // If already wishlisted, use provided callback or default to store toggle
+         if (onRemoveFromWishlist) {
+             onRemoveFromWishlist(p);
+         } else {
+             useWishlistStore.getState().toggleWishlist(p, defaultVariant, 1);
+         }
       } else {
          // If adding, use the passed function so it can open the offcanvas
          onAddToWishlist?.(p, defaultVariant, 1);
@@ -121,21 +125,27 @@ export default function ProductCard({ product, viewMode = 'grid', onNavigate, on
             onClick={(e) => { e.stopPropagation(); handleAction('Wishlist', product, e); }}
             className={`bg-white rounded-full flex items-center justify-center hover:shadow-md transition-all shadow-sm ${viewMode === 'list' ? 'w-6 h-6 sm:w-10 sm:h-10' : 'w-[clamp(28px,2.5vw,36px)] h-[clamp(28px,2.5vw,36px)]'}`}
           >
-            <RiHeartAdd2Line className={`transition-colors duration-300 ${localWishlist ? 'text-red-500 fill-red-500 scale-110' : 'text-[#999999] hover:text-red-500'} ${viewMode === 'list' ? 'w-3 h-3 sm:w-5 sm:h-5' : 'w-[clamp(14px,1.2vw,18px)] h-[clamp(14px,1.2vw,18px)]'}`} />
-          </motion.button>
-          
-          <motion.button
-            whileTap={{ scale: 0.7 }}
-            transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            onClick={(e) => { e.stopPropagation(); handleAction('Cart', product, e); }}
-            className={`bg-white rounded-full flex items-center justify-center hover:shadow-md transition-all shadow-sm text-[#999999] hover:text-[#B1621F] ${viewMode === 'list' ? 'w-6 h-6 sm:w-10 sm:h-10' : 'w-[clamp(28px,2.5vw,36px)] h-[clamp(28px,2.5vw,36px)]'}`}
-          >
-            {isAdding ? (
-               <div className={`border-2 border-[#B1621F] border-t-transparent rounded-full animate-spin ${viewMode === 'list' ? 'w-3 h-3 sm:w-4 sm:h-4' : 'w-[clamp(12px,1vw,16px)] h-[clamp(12px,1vw,16px)]'}`} />
+            {localWishlist ? (
+              <RiHeartFill className={`transition-colors duration-300 text-red-500 scale-110 ${viewMode === 'list' ? 'w-3 h-3 sm:w-5 sm:h-5' : 'w-[clamp(14px,1.2vw,18px)] h-[clamp(14px,1.2vw,18px)]'}`} />
             ) : (
-               <BsBagHeartFill className={`${viewMode === 'list' ? 'w-3 h-3 sm:w-5 sm:h-5' : 'w-[clamp(14px,1.2vw,18px)] h-[clamp(14px,1.2vw,18px)]'}`} />
+              <RiHeartAdd2Line className={`transition-colors duration-300 text-[#999999] hover:text-red-500 ${viewMode === 'list' ? 'w-3 h-3 sm:w-5 sm:h-5' : 'w-[clamp(14px,1.2vw,18px)] h-[clamp(14px,1.2vw,18px)]'}`} />
             )}
           </motion.button>
+          
+          {hideCartIcon ? null : (
+            <motion.button
+              whileTap={{ scale: 0.7 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              onClick={(e) => { e.stopPropagation(); handleAction('Cart', product, e); }}
+              className={`bg-white rounded-full flex items-center justify-center hover:shadow-md transition-all shadow-sm text-[#999999] hover:text-[#B1621F] ${viewMode === 'list' ? 'w-6 h-6 sm:w-10 sm:h-10' : 'w-[clamp(28px,2.5vw,36px)] h-[clamp(28px,2.5vw,36px)]'}`}
+            >
+              {isAdding ? (
+                 <div className={`border-2 border-[#B1621F] border-t-transparent rounded-full animate-spin ${viewMode === 'list' ? 'w-3 h-3 sm:w-4 sm:h-4' : 'w-[clamp(12px,1vw,16px)] h-[clamp(12px,1vw,16px)]'}`} />
+              ) : (
+                 <BsBagHeartFill className={`${viewMode === 'list' ? 'w-3 h-3 sm:w-5 sm:h-5' : 'w-[clamp(14px,1.2vw,18px)] h-[clamp(14px,1.2vw,18px)]'}`} />
+              )}
+            </motion.button>
+          )}
         </div>
       </div>
       <div className={`flex flex-col flex-1 bg-white ${viewMode === 'list' ? 'p-3 sm:p-8 justify-center gap-1 sm:gap-2' : 'p-2.5 sm:p-4'}`}>
@@ -151,10 +161,17 @@ export default function ProductCard({ product, viewMode = 'grid', onNavigate, on
             </>
           )}
         </div>
-        <div className="flex items-center gap-1 mt-auto">
-          <svg className={`text-[#F5C518] ${viewMode === 'list' ? 'w-4 h-4 sm:w-5 sm:h-5' : 'w-3.5 h-3.5'}`} fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-          <span className={`font-medium text-[#666666] ${viewMode === 'list' ? 'text-xs sm:text-base' : 'text-[11px]'}`}>{reviewInfo.rating} <span className="text-[#999999] font-normal">({reviewInfo.count})</span></span>
-        </div>
+        {hideRating ? null : (
+          <div className="flex items-center gap-1 mt-auto">
+            <svg className={`text-[#F5C518] ${viewMode === 'list' ? 'w-4 h-4 sm:w-5 sm:h-5' : 'w-3.5 h-3.5'}`} fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <span className={`font-medium text-[#666666] ${viewMode === 'list' ? 'text-xs sm:text-base' : 'text-[11px]'}`}>{reviewInfo.rating} <span className="text-[#999999] font-normal">({reviewInfo.count})</span></span>
+          </div>
+        )}
+        {actionButton && (
+          <div className="mt-4">
+            {actionButton}
+          </div>
+        )}
       </div>
     </motion.div>
   );

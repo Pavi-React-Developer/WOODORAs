@@ -174,12 +174,12 @@ export default function Header({
 
     if (isCategories) {
       return (
-        <div key={item._id || `nav-${idx}`} className="relative flex h-[46px] items-center" onMouseEnter={() => setActiveMenu(titleLower)} onMouseLeave={() => setActiveMenu(null)}>
+        <div key={item._id || `nav-${idx}`} className="flex h-[46px] items-center" onMouseEnter={() => setActiveMenu(titleLower)} onMouseLeave={() => setActiveMenu(null)}>
           <button type="button" onClick={() => onNavigate('/categories')} className={`${navLinkCls} gap-1`} style={{ color: item.textColor || '#B1621D' }}>
             {item.title} <ChevronDown className="h-3.5 w-3.5" strokeWidth={1.5} />
           </button>
           {activeMenu === titleLower && (
-            <div className="absolute left-1/2 -translate-x-[45%] top-full mt-0 w-[950px] max-w-[95vw] rounded-b-2xl rounded-t-sm border border-t-0 border-[#E9DED3] bg-[#FDFCF8] p-10 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] z-50">
+            <div className="absolute left-1/2 -translate-x-1/2 top-full mt-0 w-[950px] max-w-[95vw] rounded-b-2xl rounded-t-sm border border-t-0 border-[#E9DED3] bg-[#FDFCF8] p-10 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] z-50">
               {mainCategories.length === 0 ? (<div className="text-sm text-[#8B827C]">Loading...</div>) : (
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-12 gap-y-10">
                   {mainCategories.map((mainCat) => {

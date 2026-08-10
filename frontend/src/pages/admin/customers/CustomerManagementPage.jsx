@@ -158,7 +158,7 @@ function CustomerDetailPage({ customer, onBack }) {
                     <tr key={order._id} className="hover:bg-[#FAF8F5] transition-colors">
                       {/* Order ID */}
                       <td className="px-5 py-4 whitespace-nowrap">
-                        <p className="text-xs font-bold text-[#141225]">#{String(order._id).slice(-8).toUpperCase()}</p>
+                        <p className="text-xs font-bold text-[#141225]">#{(order.orderId || String(order._id).slice(-8)).toUpperCase()}</p>
                       </td>
                       {/* Date */}
                       <td className="px-5 py-4 whitespace-nowrap text-xs text-[#6D625C]">

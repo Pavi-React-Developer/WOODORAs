@@ -26,6 +26,8 @@ const CustomerProfilePage = lazy(() => import('./pages/CustomerProfilePage'));
 const WishlistPage = lazy(() => import('./pages/WishlistPage'));
 const GiftAndCardPage = lazy(() => import('./pages/GiftAndCardPage'));
 const OAuthCallback = lazy(() => import('./pages/OAuthCallback'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children, user, requiredRole }) => {
@@ -351,6 +353,8 @@ export default function AppRouter() {
         {/* Auth Layout without Header/Footer */}
         <Route element={<PageLayout headerProps={headerProps} hideHeaderFooter={true} />}>
           <Route path="/login" element={<Login onAuthSuccess={handleAuthSuccess} onNavigate={handleNavigate} />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/oauth-success" element={<OAuthCallback onAuthSuccess={handleAuthSuccess} />} />
         </Route>
 

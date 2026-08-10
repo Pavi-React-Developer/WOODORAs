@@ -125,7 +125,7 @@ export default function OrderHistoryPage({ onNavigate, user }) {
                          {imageSrc ? <img src={imageSrc} alt={firstItem.name} className="w-full h-full object-cover" /> : <Package className="w-6 h-6 text-gray-400" />}
                        </div>
                        <h4 className="font-bold text-[#111] text-[15px] line-clamp-2 leading-snug">
-                         {firstItem.name || `Order #${order._id.slice(-8).toUpperCase()}`}
+                         {firstItem.name || `Order #${(order.orderId || order._id.slice(-8)).toUpperCase()}`}
                        </h4>
                     </div>
                     <span className="shrink-0 px-2.5 py-1 rounded-[6px] text-[10px] font-bold uppercase tracking-wider bg-[#FFF9E6] text-[#B8860B] border border-[#F5E6B3]">

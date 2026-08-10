@@ -1,14 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const passport = require('passport');
-const { registerUser, loginUser, refreshToken, forgotPassword, getProfile, updateProfile, getCustomers, getCustomerOrders, oauthSuccessCallback } = require('../controllers/authController');
+const { registerUser, loginUser, refreshToken, forgotPassword, verifyResetToken, resetPassword, getProfile, updateProfile, getCustomers, getCustomerOrders, oauthSuccessCallback } = require('../controllers/authController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 const { authLimiter } = require('../middleware/rateLimiter');
 
 router.post('/register', authLimiter, registerUser);
 router.post('/login', loginUser); // Rate limiting temporarily disabled
 router.post('/refresh', refreshToken);
-router.post('/forgotpassword', authLimiter, forgotPassword);
+router.post('/forgot-password', authLimiter, forgotPassword);
+router.get('/reset-password/verify', verifyResetToken);
+router.post('/reset-password', resetPassword);
 
 // ==========================================
 // OAuth Routes

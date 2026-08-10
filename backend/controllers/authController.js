@@ -2,6 +2,7 @@ const User = require('../models/User');
 const Staff = require('../models/Staff');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const { sendPasswordResetEmail } = require('../services/emailService');
 
 const generateAccessToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' }); // 30 days
@@ -184,13 +185,13 @@ const forgotPassword = async (req, res) => {
         // Generate a cryptographically secure reset token
         const resetToken = crypto.randomBytes(20).toString('hex');
         user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-        user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
+        user.resetPasswordExpire = Date.now() + 15 * 60 * 1000; // 15 minutes
         await user.save();
 
-        // TODO: Send resetToken via email (e.g. using nodemailer / SendGrid / Resend).
-        // The token must NEVER be returned in the API response — doing so exposes
-        // it to network observers, server logs, and any intercepting proxy.
-        // Example: await sendResetEmail(user.email, resetToken);
+        // Dynamically get the frontend URL from the request origin, fallback to env, then localhost
+        const frontendUrl = process.env.FRONTEND_URL || req.headers.origin || 'http://localhost:5173';
+        const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
+        await sendPasswordResetEmail(user.email, resetUrl);
 
         res.status(200).json({
             message: 'If an account with that email exists, a password reset link has been sent.',
@@ -360,4 +361,76 @@ const oauthSuccessCallback = (req, res) => {
     }
 };
 
-module.exports = { registerUser, loginUser, refreshToken, forgotPassword, getProfile, updateProfile, getCustomers, getCustomerOrders, oauthSuccessCallback };
+// @desc    Verify reset password token
+// @route   GET /api/auth/reset-password/verify?token=TOKEN
+// @access  Public
+const verifyResetToken = async (req, res) => {
+    try {
+        const { token } = req.query;
+        if (!token) {
+            return res.json({ valid: false });
+        }
+
+        const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+        const user = await User.findOne({
+            resetPasswordToken: hashedToken,
+            resetPasswordExpire: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.json({ valid: false });
+        }
+
+        res.json({ valid: true });
+    } catch (error) {
+        console.error('Verify Token Error:', error);
+        res.json({ valid: false });
+    }
+};
+
+// @desc    Reset password
+// @route   POST /api/auth/reset-password
+// @access  Public
+const resetPassword = async (req, res) => {
+    try {
+        const { token, password, confirmPassword } = req.body;
+        
+        if (!token || !password || !confirmPassword) {
+            return res.status(400).json({ message: 'Missing required fields' });
+        }
+        
+        if (password !== confirmPassword) {
+            return res.status(400).json({ message: 'Passwords do not match' });
+        }
+
+        // Basic password validation
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d\w\W]{8,}$/;
+        if (!passwordRegex.test(password)) {
+            return res.status(400).json({ message: 'Password does not meet the required security rules.' });
+        }
+
+        const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+        
+        const user = await User.findOne({
+            resetPasswordToken: hashedToken,
+            resetPasswordExpire: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: 'This password reset link is invalid or has expired.' });
+        }
+
+        // Update password (pre-save hook will hash it)
+        user.password = password;
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpire = undefined;
+        await user.save();
+
+        res.json({ message: 'Password has been updated successfully.' });
+    } catch (error) {
+        console.error('Reset Password Error:', error);
+        res.status(500).json({ message: 'Server error during password reset' });
+    }
+};
+
+module.exports = { registerUser, loginUser, refreshToken, forgotPassword, verifyResetToken, resetPassword, getProfile, updateProfile, getCustomers, getCustomerOrders, oauthSuccessCallback };

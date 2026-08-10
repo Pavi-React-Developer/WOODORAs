@@ -21,6 +21,8 @@ import BulkOrderPage from './pages/BulkOrderPage';
 import GiftAndCardPage from './pages/GiftAndCardPage';
 import CustomizePage from './pages/CustomizePage';
 import OAuthCallback from './pages/OAuthCallback';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import { authService } from './api/authService';
 import { productV2API } from './api/catalogV2Service';
 import CartOffcanvas from './components/CartOffcanvas';
@@ -500,6 +502,26 @@ export default function App() {
           element={
             <LoginLayout>
               <OAuthCallback onAuthSuccess={handleAuthSuccess} />
+            </LoginLayout>
+          }
+        />
+
+        {/* Forgot Password */}
+        <Route
+          path="/forgot-password"
+          element={
+            <LoginLayout>
+              <ForgotPassword />
+            </LoginLayout>
+          }
+        />
+
+        {/* Reset Password */}
+        <Route
+          path="/reset-password"
+          element={
+            <LoginLayout>
+              <ResetPassword />
             </LoginLayout>
           }
         />
