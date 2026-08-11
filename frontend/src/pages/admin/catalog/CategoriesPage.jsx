@@ -7,19 +7,17 @@ import { API_BASE } from '../../../api/apiClient';
 
 // ─── Reusable Badge ───────────────────────────────────────────────────────────
 const StatusBadge = ({ active }) => (
-  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
-    active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-  }`}>
+  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+    }`}>
     <span className={`w-1.5 h-1.5 rounded-full ${active ? 'bg-green-500' : 'bg-gray-400'}`} />
     {active ? 'Active' : 'Inactive'}
   </span>
 );
 
-// ─── Input Field Wrapper ──────────────────────────────────────────────────────
 const Field = ({ label, required, children }) => (
   <div>
-    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-      {label} {required && <span className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">*</span>}
+    <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">
+      {label} {required && <span className="text-red-500 text-lg ml-1">*</span>}
     </label>
     {children}
   </div>
@@ -97,7 +95,7 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
       setFormData({ name: '', slug: '', description: '', displayOrder: 1, isActive: true, seoTitle: '', seoDescription: '', seoKeywords: '', availableWoodTypes: '', image: null });
       setImagePreview(null);
     }
-    window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + (editId || arguments[0] ? '/edit' : '/add')); setIsFormOpen(true);
+    window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + ((cat && cat._id) || editId ? '/edit' : '/add')); setIsFormOpen(true);
   };
 
   const handleSave = async (e) => {
@@ -251,15 +249,14 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
-    <div>
+    <div className="flex-1 overflow-y-auto p-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <p className="text-xs text-gray-400 mb-1">
-            Dashboard &rsaquo; Catalog Management &rsaquo; <span className="text-[#8B5E3C] font-semibold">Categories</span>
+          <p className="text-[13px] md:text-sm font-serif text-[#94A3B8] mb-1">
+            Dashboard &rsaquo; Catalog Management &rsaquo; <span className="font-semibold text-[#8B5E3C]">Categories</span>
           </p>
-          <h1 className="text-2xl font-bold text-gray-800">Categories</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Manage product categories, SEO settings, and wood preferences.</p>
+          <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Categories</h1>
         </div>
         <div className="flex items-center gap-3">
           <button onClick={fetchCategories} className="admin-secondary-btn">
@@ -269,12 +266,12 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
             <Download size={16} /> Export Excel
           </button>
           {canCreate && (
-          <button
-            onClick={() => openForm()}
-            className="admin-btn"
-          >
-            <Plus size={16} /> Add Category
-          </button>
+            <button
+              onClick={() => openForm()}
+              className="admin-btn"
+            >
+              <Plus size={16} /> Add Category
+            </button>
           )}
         </div>
       </div>
@@ -309,7 +306,7 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
       {selectedIds.length > 0 && (
         <div className="bg-[#F8F4EC] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3 flex-wrap">
           <span className="text-sm font-semibold text-[#8B5E3C]">{selectedIds.length} selected</span>
-          <div className="flex gap-2 ml-auto">
+          <div className="flex gap-2 ml-auto flex-wrap">
             {canEdit && (
               <>
                 <button onClick={() => handleBulkStatus(true)} className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">Set Active</button>
@@ -317,7 +314,7 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
               </>
             )}
             {canDelete && (
-            <button onClick={handleBulkDelete} className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">Delete Selected</button>
+              <button onClick={handleBulkDelete} className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">Delete Selected</button>
             )}
             <button onClick={() => setSelectedIds([])} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-white transition-colors text-gray-500">Clear</button>
           </div>
@@ -339,7 +336,7 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
                   />
                 </th>
                 {['Category Name', 'Slug', 'Display Order', 'Status', 'Created Date', 'Actions'].map(h => (
-                  <th key={h} className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">{h}</th>
+                  <th key={h} className={`px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap ${h === 'Actions' ? 'text-right pr-8' : 'text-left'}`}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -357,7 +354,7 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
                     <div className="w-12 h-12 bg-[#F8F4EC] rounded-full flex items-center justify-center text-2xl">🗂️</div>
                     <p className="font-medium">No categories found.</p>
                     {canCreate && (
-                    <button onClick={() => openForm()} className="text-[#8B5E3C] text-sm font-semibold hover:underline">+ Add your first category</button>
+                      <button onClick={() => openForm()} className="text-[#8B5E3C] text-sm font-semibold hover:underline">+ Add your first category</button>
                     )}
                   </div>
                 </td></tr>
@@ -401,25 +398,25 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
                     <td className="px-4 py-3.5 text-gray-500 text-xs whitespace-nowrap">
                       {new Date(cat.createdAt).toLocaleDateString('en-IN')}
                     </td>
-                    <td className="px-4 py-3.5">
+                    <td className="px-4 py-3.5 pr-8">
                       <div className="flex gap-2 justify-end">
                         {canEdit && (
-                        <button
-                          onClick={() => openForm(cat)}
-                          className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
-                          title="Edit"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                        </button>
+                          <button
+                            onClick={() => openForm(cat)}
+                            className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
+                            title="Edit"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                          </button>
                         )}
                         {canDelete && (
-                        <button
-                          onClick={() => setDeleteTarget(cat._id)}
-                          className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
-                          title="Delete"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                        </button>
+                          <button
+                            onClick={() => setDeleteTarget(cat._id)}
+                            className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
+                            title="Delete"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                          </button>
                         )}
                       </div>
                     </td>
@@ -432,11 +429,11 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
 
         {/* Pagination */}
         <div className="px-5 py-3 border-t border-[#E6DFD4] flex flex-col sm:flex-row justify-center items-center bg-[#FAFAFA] gap-4">
-          
-          <Pagination 
-            currentPage={page} 
-            totalPages={totalPages} 
-            onPageChange={setPage} 
+
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
             className="flex items-center justify-center gap-2 flex-wrap"
           />
         </div>
@@ -451,12 +448,11 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
             style={{ animation: 'slideInRight 0.25s ease' }}
           >
             {/* Drawer Header */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-[#E6DFD4] bg-[#F8F4EC]">
+            <div className="flex items-center justify-between px-8 py-8 border-b border-[#E6DFD4] bg-[#F8F4EC]">
               <div>
-                <h2 className="text-lg font-bold text-gray-800">{editId ? 'Edit Category' : 'Add New Category'}</h2>
-                <p className="text-xs text-gray-500 mt-0.5">{editId ? 'Update the category details below.' : 'Fill in the details to create a new category.'}</p>
+                <h2 className="text-3xl font-serif font-bold text-[#141225] tracking-tight">{editId ? 'Edit Category' : 'Add New Category'}</h2>
               </div>
-              <button onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setIsFormOpen(false))} className="p-2 rounded-xl hover:bg-[#E6DFD4] text-gray-400 hover:text-gray-700 transition-colors">
+              <button onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setIsFormOpen(false))} className="p-2 rounded-full hover:bg-[#E6DFD4] text-gray-400 hover:text-gray-700 transition-colors">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
@@ -468,8 +464,8 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
               )}
 
               {/* Basic Info */}
-              <div className="bg-[#FAFAFA] border border-[#F0EAE2] rounded-2xl p-5 space-y-4">
-                <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+              <div className="bg-[#FAFAFA] border border-[#F0EAE2] rounded-2xl p-6 space-y-5">
+                <h3 className="text-[17px] font-serif font-bold text-[#3E2723] flex items-center gap-2">
                   <span className="w-6 h-6 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center text-xs">📦</span>
                   Basic Information
                 </h3>
@@ -505,9 +501,8 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
                       </div>
                     )}
                     {/* File Input */}
-                    <label className={`flex items-center justify-center px-4 py-6 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
-                      imagePreview ? 'border-[#E6DFD4] bg-[#FAFAFA]' : 'border-[#E6DFD4] hover:border-[#8B5E3C] hover:bg-[#F8F4EC]'
-                    }`}>
+                    <label className={`flex items-center justify-center px-4 py-6 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${imagePreview ? 'border-[#E6DFD4] bg-[#FAFAFA]' : 'border-[#E6DFD4] hover:border-[#8B5E3C] hover:bg-[#F8F4EC]'
+                      }`}>
                       <input
                         type="file"
                         accept="image/*"
@@ -539,8 +534,8 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
               </div>
 
               {/* SEO Settings */}
-              <div className="bg-[#FAFAFA] border border-[#F0EAE2] rounded-2xl p-5 space-y-4">
-                <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+              <div className="bg-[#FAFAFA] border border-[#F0EAE2] rounded-2xl p-6 space-y-5">
+                <h3 className="text-[17px] font-serif font-bold text-[#3E2723] flex items-center gap-2">
                   <span className="w-6 h-6 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center text-xs">🔍</span>
                   SEO & Metadata
                 </h3>
@@ -556,8 +551,8 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
               </div>
 
               {/* Preferences */}
-              <div className="bg-[#FAFAFA] border border-[#F0EAE2] rounded-2xl p-5 space-y-4">
-                <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+              <div className="bg-[#FAFAFA] border border-[#F0EAE2] rounded-2xl p-6 space-y-5">
+                <h3 className="text-[17px] font-serif font-bold text-[#3E2723] flex items-center gap-2">
                   <span className="w-6 h-6 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center text-xs">🪵</span>
                   Wood Preferences
                 </h3>
@@ -565,22 +560,21 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
                   <input type="text" value={formData.availableWoodTypes} onChange={setField('availableWoodTypes')} placeholder="Oak, Pine, Maple" className={inputCls} />
                 </Field>
               </div>
+              {/* Form Actions */}
+              <div className="flex items-center justify-center gap-4 pt-6 pb-2">
+                <button type="button" onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setIsFormOpen(false))} className="px-8 py-3 border border-[#E6DFD4] rounded-full text-[15px] font-bold text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm">
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={formLoading}
+                  className="flex items-center gap-2 bg-[#8B5E3C] hover:bg-[#7a5234] disabled:opacity-60 text-white px-8 py-3 rounded-full text-[15px] font-bold transition-colors shadow-sm"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                  {formLoading ? 'Saving...' : editId ? 'Save Changes' : 'Create Category'}
+                </button>
+              </div>
             </form>
-
-            {/* Drawer Footer */}
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#E6DFD4] bg-[#FAFAFA]">
-              <button type="button" onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setIsFormOpen(false))} className="px-5 py-2.5 border border-[#E6DFD4] rounded-xl text-sm font-semibold text-gray-600 hover:bg-white transition-colors">
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={formLoading}
-                className="flex items-center gap-2 bg-[#8B5E3C] hover:bg-[#7a5234] disabled:opacity-60 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow-sm"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                {formLoading ? 'Saving...' : editId ? 'Save Changes' : 'Create Category'}
-              </button>
-            </div>
           </div>
         </div>
       )}

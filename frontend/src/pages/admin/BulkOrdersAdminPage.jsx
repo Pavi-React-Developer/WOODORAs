@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Package, Search, Clock, Eye, X, RefreshCw, Check } from 'lucide-react';
+import { Package, Search, Clock, Eye, X, RefreshCw, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { bulkOrderService } from '../../api/bulkOrderService';
 
@@ -8,6 +8,9 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [rejectingOrder, setRejectingOrder] = useState(null);
@@ -16,14 +19,11 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingOrder, setViewingOrder] = useState(null);
 
-  // AbortController ref — cancels in-flight requests if the component unmounts
   const abortRef = useRef(null);
 
   const fetchOrders = async () => {
-    // Cancel any previous in-flight request
     if (abortRef.current) abortRef.current.abort();
     abortRef.current = new AbortController();
-
     setLoading(true);
     try {
       const data = await bulkOrderService.getAllBulkOrders();
@@ -33,7 +33,6 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
         toast.error(data.message || 'Failed to load bulk orders');
       }
     } catch (err) {
-      // Don't show error toast if the request was intentionally cancelled
       if (err.name !== 'CanceledError' && err.name !== 'AbortError') {
         toast.error(err.message || 'Failed to load bulk orders');
       }
@@ -44,10 +43,7 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
 
   useEffect(() => {
     fetchOrders();
-    return () => {
-      // Cancel request when component unmounts to prevent state updates on dead component
-      if (abortRef.current) abortRef.current.abort();
-    };
+    return () => { if (abortRef.current) abortRef.current.abort(); };
   }, []);
 
   const handleApprove = async (id) => {
@@ -98,6 +94,29 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
     setIsViewModalOpen(true);
   };
 
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Delete ${selectedIds.length} selected bulk order(s)? This cannot be undone.`)) return;
+    try {
+      await Promise.all(selectedIds.map(id => bulkOrderService.deleteBulkOrder?.(id) || Promise.resolve()));
+      toast.success(`${selectedIds.length} order(s) deleted`);
+      setSelectedIds([]);
+      fetchOrders();
+    } catch (err) {
+      toast.error(err.message || 'Failed to delete orders');
+    }
+  };
+
+  const handleBulkStatus = async (status) => {
+    try {
+      await Promise.all(selectedIds.map(id => bulkOrderService.updateBulkOrderStatus(id, { status })));
+      toast.success(`${selectedIds.length} order(s) set to ${status}`);
+      setSelectedIds([]);
+      fetchOrders();
+    } catch (err) {
+      toast.error(err.message || 'Failed to update orders');
+    }
+  };
+
   const filteredOrders = orders.filter(order => {
     const searchLower = searchTerm.toLowerCase();
     const matchesSearch =
@@ -110,43 +129,96 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
     return matchesSearch && matchesStatus;
   });
 
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / ITEMS_PER_PAGE));
+  const paginatedOrders = filteredOrders.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  // Reset to page 1 when filters change
+  const handleSearch = (val) => { setSearchTerm(val); setCurrentPage(1); };
+  const handleStatusFilter = (val) => { setStatusFilter(val); setCurrentPage(1); };
+
+  // Checkbox helpers
+  const pageIds = paginatedOrders.map(o => o._id);
+  const allChecked = pageIds.length > 0 && pageIds.every(id => selectedIds.includes(id));
+  const toggleAll = () => {
+    if (allChecked) setSelectedIds(prev => prev.filter(id => !pageIds.includes(id)));
+    else setSelectedIds(prev => [...new Set([...prev, ...pageIds])]);
+  };
+  const toggleOne = (id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+
+  // Pagination page list
+  const getPaginationPages = () => {
+    const pages = [];
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (currentPage <= 3) pages.push(1, 2, 3, 4, '...', totalPages);
+      else if (currentPage >= totalPages - 2) pages.push(1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+      else pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
+    }
+    return pages;
+  };
+
+  const navCls = (disabled) => [
+    'w-8 h-8 flex items-center justify-center rounded-md border text-sm font-medium transition-all select-none',
+    disabled
+      ? 'border-[#E9DED3] text-[#C5B8AD] cursor-not-allowed opacity-50'
+      : 'border-[#D6C9BC] text-[#7A5C44] hover:bg-[#F5EDE4] hover:border-[#C4A98B] cursor-pointer',
+  ].join(' ');
+
   return (
-    <div className="flex-1 overflow-auto bg-[#FAF8F5]">
-      <div className="px-8 py-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
+    <div className="flex-1 overflow-y-auto p-8">
+        {/* Header */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-[#141225]">Bulk Orders Requests</h1>
-            <p className="mt-1 text-sm text-[#6D625C]">Review and manage corporate and wholesale orders.</p>
+            <p className="text-[13px] md:text-sm font-serif text-[#94A3B8] mb-1">
+              Dashboard &rsaquo; Order Management &rsaquo; <span className="font-semibold text-[#8B5E3C]">Bulk Orders</span>
+            </p>
+            <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Bulk Orders Requests</h1>
           </div>
           <button onClick={fetchOrders} disabled={loading} className="admin-secondary-btn flex items-center gap-2">
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Refresh
           </button>
         </div>
 
-        <div className="rounded-[20px] bg-white border border-[#E9DED3] shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
-          <div className="flex flex-col sm:flex-row gap-4 p-5 border-b border-[#E9DED3]">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A817C]" />
-              <input
-                type="text"
-                placeholder="Search custom fields..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-[#FAF8F5] border border-[#E9DED3] rounded-[10px] text-sm focus:outline-none focus:border-[#9A6031] focus:ring-1 focus:ring-[#9A6031] transition-all"
-              />
-            </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-[#FAF8F5] border border-[#E9DED3] rounded-[10px] px-4 py-2 text-sm text-[#4A403B] font-semibold outline-none focus:border-[#9A6031]"
-            >
-              <option value="All">All Statuses</option>
-              <option value="Pending">Pending</option>
-              <option value="Approved">Approved</option>
-              <option value="Rejected">Rejected</option>
-            </select>
+        {/* Search & Filter — outside the card */}
+        <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm p-4 mb-5 flex flex-wrap gap-3 items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A817C]" />
+            <input
+              type="text"
+              placeholder="Search custom fields..."
+              value={searchTerm}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="w-full pl-9 pr-4 py-2.5 bg-white border border-[#E9DED3] rounded-[10px] text-sm focus:outline-none focus:border-[#9A6031] focus:ring-1 focus:ring-[#9A6031] transition-all"
+            />
           </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => handleStatusFilter(e.target.value)}
+            className="bg-white border border-[#E9DED3] rounded-[10px] px-4 py-2.5 text-sm text-[#4A403B] font-semibold outline-none focus:border-[#9A6031]"
+          >
+            <option value="All">All Statuses</option>
+            <option value="Pending">Pending</option>
+            <option value="Approved">Approved</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+        </div>
 
+        {/* Selection bar */}
+        {selectedIds.length > 0 && (
+          <div className="bg-[#F8F4EC] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3 flex-wrap">
+            <span className="text-sm font-semibold text-[#8B5E3C]">{selectedIds.length} selected</span>
+            <div className="flex gap-2 ml-auto flex-wrap">
+              <button onClick={() => handleBulkStatus('Approved')} className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">Set Active</button>
+              <button onClick={() => handleBulkStatus('Rejected')} className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">Set Inactive</button>
+              <button onClick={handleBulkDelete} className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">Delete Selected</button>
+              <button onClick={() => setSelectedIds([])} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-white transition-colors text-gray-500">Clear</button>
+            </div>
+          </div>
+        )}
+
+        {/* Table Card */}
+        <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             {loading ? (
               <div className="p-8 text-center text-[#6D625C] flex items-center justify-center gap-2">
@@ -161,20 +233,39 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                 <p className="text-[#6D625C] text-sm mt-1">There are no bulk order requests matching your criteria.</p>
               </div>
             ) : (
-              <table className="w-full text-sm">
-                <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
-                  <tr>
-                    <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Date &amp; ID</th>
-                    <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Selected Product</th>
-                    <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Custom Fields Preview</th>
-                    <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Status</th>
-                    <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Actions</th>
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-[#FAF4EF] text-[#8A817C] text-xs uppercase tracking-wider">
+                    <th className="p-4 font-bold border-b border-[#E6DFD4] w-10">
+                      <input
+                        type="checkbox"
+                        checked={allChecked}
+                        onChange={toggleAll}
+                        className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer"
+                      />
+                    </th>
+                    <th className="p-4 font-bold border-b border-[#E6DFD4] whitespace-nowrap">Date &amp; ID</th>
+                    <th className="p-4 font-bold border-b border-[#E6DFD4] whitespace-nowrap">Selected Product</th>
+                    <th className="p-4 font-bold border-b border-[#E6DFD4] whitespace-nowrap">Custom Fields Preview</th>
+                    <th className="p-4 font-bold border-b border-[#E6DFD4] whitespace-nowrap">Status</th>
+                    <th className="p-4 font-bold border-b border-[#E6DFD4] whitespace-nowrap">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#E9DED3]">
-                  {filteredOrders.map((order, index) => (
-                    <tr key={order._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${index % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
-                      <td className="px-4 py-3.5">
+                <tbody>
+                  {paginatedOrders.map((order) => (
+                    <tr
+                      key={order._id}
+                      className="bg-white transition-colors"
+                    >
+                      <td className="p-4 border-b border-[#E6DFD4]">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(order._id)}
+                          onChange={() => toggleOne(order._id)}
+                          className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer"
+                        />
+                      </td>
+                      <td className="p-4 border-b border-[#E6DFD4]">
                         <p className="font-bold text-[#141225]">
                           Order #{order._id.substring(order._id.length - 6).toUpperCase()}
                         </p>
@@ -182,7 +273,7 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                           {new Date(order.createdAt).toLocaleDateString()}
                         </p>
                       </td>
-                      <td className="px-4 py-3.5">
+                      <td className="p-4 border-b border-[#E6DFD4]">
                         {order.product ? (
                           <>
                             <p className="font-bold text-[#4A3326] max-w-[150px] truncate" title={order.product?.name}>
@@ -194,7 +285,7 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                           <span className="text-xs text-[#8A817C]">Not Specified</span>
                         )}
                       </td>
-                      <td className="px-4 py-3.5 whitespace-normal min-w-[200px]">
+                      <td className="p-4 border-b border-[#E6DFD4] whitespace-normal min-w-[200px]">
                         <div className="space-y-1">
                           {order.customFields &&
                             order.customFields.slice(0, 2).map((cf, idx) => (
@@ -210,7 +301,7 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3.5 text-center">
+                      <td className="p-4 border-b border-[#E6DFD4]">
                         <span
                           className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                             order.status === 'Approved'
@@ -226,13 +317,13 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                           {order.status || 'Pending'}
                         </span>
                         {order.status === 'Rejected' && order.rejectionReason && (
-                          <p className="text-[10px] text-red-600 mt-1 max-w-[150px] mx-auto truncate" title={order.rejectionReason}>
+                          <p className="text-[10px] text-red-600 mt-1 max-w-[150px] truncate" title={order.rejectionReason}>
                             {order.rejectionReason}
                           </p>
                         )}
                       </td>
-                      <td className="px-4 py-3.5 text-center">
-                        <div className="flex items-center justify-center gap-2">
+                      <td className="p-4 border-b border-[#E6DFD4]">
+                        <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleViewClick(order)}
                             className="text-green-600 hover:text-green-700 transition-colors"
@@ -264,8 +355,54 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
               </table>
             )}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center px-4 py-4 border-t border-[#E9DED3]">
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                  className={navCls(currentPage === 1)}
+                  title="First page"
+                >«</button>
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className={navCls(currentPage === 1)}
+                  title="Previous page"
+                >‹</button>
+                {getPaginationPages().map((page, i) =>
+                  page === '...' ? (
+                    <span key={`dots-${i}`} className="w-8 h-8 flex items-center justify-center text-[#A89585] text-sm select-none">…</span>
+                  ) : (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-8 h-8 flex items-center justify-center rounded-md border text-sm font-semibold transition-all ${
+                        currentPage === page
+                          ? 'bg-[#C4965A] text-white border-[#C4965A] shadow-sm'
+                          : 'border-[#D6C9BC] text-[#7A5C44] hover:bg-[#F5EDE4] hover:border-[#C4A98B]'
+                      }`}
+                    >{page}</button>
+                  )
+                )}
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className={navCls(currentPage === totalPages)}
+                  title="Next page"
+                >›</button>
+                <button
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={currentPage === totalPages}
+                  className={navCls(currentPage === totalPages)}
+                  title="Last page"
+                >»</button>
+              </div>
+            </div>
+          )}
         </div>
-      </div>
 
       {/* ── Reject Modal ───────────────────────────────────────────────── */}
       {isRejectModalOpen && (

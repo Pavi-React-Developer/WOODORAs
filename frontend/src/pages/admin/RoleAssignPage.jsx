@@ -47,8 +47,8 @@ const PermissionTable = ({ modules, permissions, onToggle, onToggleRow, onToggle
   return (
     <div className="overflow-x-auto">
       <div className="flex justify-end gap-2 mb-3">
-        <button onClick={onSelectAll} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-[#F8F4EC] text-gray-600 transition-colors">Select All</button>
-        <button onClick={onClearAll} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-[#F8F4EC] text-gray-600 transition-colors">Clear All</button>
+        <button onClick={onSelectAll} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-full hover:bg-[#F8F4EC] text-gray-600 transition-colors">Select All</button>
+        <button onClick={onClearAll} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-full hover:bg-[#F8F4EC] text-gray-600 transition-colors">Clear All</button>
       </div>
       <table className="w-full text-sm border border-[#E6DFD4] rounded-xl overflow-hidden">
         <thead className="bg-[#F8F4EC]">
@@ -282,14 +282,16 @@ export default function RoleAssignPage({ onBack, targetStaff, currentUserPermiss
   };
 
   return (
-    <div>
+    <div className="flex-1 overflow-y-auto p-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
         <div>
-          <p className="text-xs text-gray-400 mb-1">Dashboard &rsaquo; Staff Management &rsaquo; <span className="text-[#8B5E3C] font-semibold">Role Assign</span></p>
-          <h1 className="text-2xl font-bold text-gray-800">Role Assign &amp; Permissions</h1>
+          <p className="text-[13px] md:text-sm font-serif text-[#94A3B8] mb-1">
+            Dashboard &rsaquo; Staff Management &rsaquo; <span className="font-semibold text-[#8B5E3C]">Role Assign</span>
+          </p>
+          <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Role Assign &amp; Permissions</h1>
         </div>
-        <button onClick={onBack} className="px-4 py-2 border border-[#E6DFD4] rounded-xl text-sm text-gray-600 hover:bg-gray-50">
+        <button onClick={onBack} className="admin-btn">
           ← Back to List
         </button>
       </div>
@@ -342,7 +344,7 @@ export default function RoleAssignPage({ onBack, targetStaff, currentUserPermiss
           <button
             onClick={handleCreateRole}
             disabled={creatingRole || !roleName.trim()}
-            className="flex items-center gap-2 bg-[#8B5E3C] hover:bg-[#7a5234] disabled:opacity-50 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+            className="flex items-center gap-2 bg-[#8B5E3C] hover:bg-[#7a5234] disabled:opacity-50 text-white px-6 py-2.5 rounded-full text-sm font-semibold transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
             {creatingRole ? 'Creating...' : 'Create Role'}
@@ -411,7 +413,7 @@ export default function RoleAssignPage({ onBack, targetStaff, currentUserPermiss
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center gap-2 bg-[#8B5E3C] hover:bg-[#7a5234] disabled:opacity-50 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+              className="flex items-center gap-2 bg-[#8B5E3C] hover:bg-[#7a5234] disabled:opacity-50 text-white px-6 py-2.5 rounded-full text-sm font-semibold transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
               {saving ? 'Saving...' : 'Save Permissions'}

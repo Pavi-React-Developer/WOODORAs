@@ -65,7 +65,7 @@ export default function EditGiftBoxRulePage({ ruleId, onBack }) {
         <h2 className="text-2xl font-serif font-bold text-gray-900">Edit Gift Box Rule</h2>
       </div>
 
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#E6DFD4]">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>

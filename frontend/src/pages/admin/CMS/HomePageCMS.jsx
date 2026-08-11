@@ -51,11 +51,13 @@ export default function HomePageCMS() {
   };
 
   return (
-    <div className="w-full flex flex-col p-6 gap-6">
-      <div className="w-full flex items-center justify-between">
+    <div className="flex-1 overflow-y-auto p-8 flex flex-col gap-6">
+      <div className="w-full flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-2xl font-bold text-[#4A403B]">Home Page CMS</h2>
-          <p className="text-sm text-[#8A817C] mt-1">Manage all dynamic content on the homepage.</p>
+          <p className="text-[13px] md:text-sm font-serif text-[#94A3B8] mb-1">
+            Dashboard &rsaquo; <span className="font-semibold text-[#8B5E3C]">Home Page CMS</span>
+          </p>
+          <h2 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Home Page CMS</h2>
         </div>
         <button onClick={() => setRefreshKey(prev => prev + 1)} className="admin-secondary-btn flex items-center gap-2">
           <RefreshCw size={16} /> Refresh

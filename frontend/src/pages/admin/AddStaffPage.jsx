@@ -44,100 +44,105 @@ const PermissionTable = ({ modules, permissions, onToggle, onToggleRow, onToggle
 
   return (
     <div className="overflow-x-auto">
-      <div className="flex justify-end gap-2 mb-3">
-        <button onClick={onSelectAll} type="button" className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-[#F8F4EC] text-gray-600 transition-colors">Select All</button>
-        <button onClick={onClearAll} type="button" className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-[#F8F4EC] text-gray-600 transition-colors">Clear All</button>
+      <div className="flex justify-end gap-3 mb-4">
+        <button onClick={onSelectAll} type="button" className="px-4 py-2 text-[13px] font-bold border border-[#E6DFD4] rounded-full hover:bg-[#F8F4EC] text-[#3B322D] transition-colors">Select All</button>
+        <button onClick={onClearAll} type="button" className="px-4 py-2 text-[13px] font-bold border border-[#E6DFD4] rounded-full hover:bg-[#F8F4EC] text-[#3B322D] transition-colors">Clear All</button>
       </div>
-      <table className="w-full text-sm border border-[#E6DFD4] rounded-xl overflow-hidden">
-        <thead className="bg-[#F8F4EC]">
-          <tr>
-            <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 w-48">Module</th>
-            {ACTIONS.map(action => {
-              const allowedModules = visibleModules.filter((m) => canToggleActionForModule(m.key || m, action));
-              const allChecked = allowedModules.length > 0 && allowedModules.every(mod => permissions[mod.key || mod]?.[action]);
+      <div className="border border-[#E6DFD4] rounded-[14px] overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-[#F8F4EC] border-b border-[#E6DFD4]">
+            <tr>
+              <th className="px-6 py-4 text-left text-[13px] font-bold uppercase tracking-wider text-[#3B322D] w-48 font-serif">Module</th>
+              {ACTIONS.map(action => {
+                const allowedModules = visibleModules.filter((m) => canToggleActionForModule(m.key || m, action));
+                const allChecked = allowedModules.length > 0 && allowedModules.every(mod => permissions[mod.key || mod]?.[action]);
+                return (
+                  <th key={action} className="px-6 py-4 text-center">
+                    <div className="flex items-center justify-center gap-2 cursor-pointer" onClick={() => onToggleColumn(action)}>
+                      <input 
+                        type="checkbox" 
+                        checked={allChecked} 
+                        readOnly
+                        className="w-[18px] h-[18px] accent-[#70482B] rounded-[4px] border-[#D7CFC8] cursor-pointer pointer-events-none"
+                      />
+                      <span className="capitalize text-[16px] font-serif font-bold text-[#3B322D] hover:text-[#70482B] transition-colors">{action}</span>
+                    </div>
+                  </th>
+                );
+              })}
+              <th className="px-6 py-4 text-center">
+                <div className="flex items-center justify-center gap-2 cursor-pointer" onClick={(e) => {
+                  const allChecked = visibleModules.length > 0 && visibleModules.every(mod => ACTIONS.every(a => permissions[mod.key || mod]?.[a]));
+                  allChecked ? onClearAll() : onSelectAll();
+                }}>
+                  <input 
+                    type="checkbox" 
+                    checked={visibleModules.length > 0 && visibleModules.every(mod => ACTIONS.every(a => permissions[mod.key || mod]?.[a]))} 
+                    readOnly
+                    className="w-[18px] h-[18px] accent-[#70482B] rounded-[4px] border-[#D7CFC8] cursor-pointer pointer-events-none"
+                  />
+                  <span className="capitalize text-[16px] font-serif font-bold text-[#3B322D] hover:text-[#70482B] transition-colors">All</span>
+                </div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {visibleModules.map((mod, idx) => {
+              const moduleKey = mod.key || mod;
+              const perm = permissions[moduleKey] || {};
+              const allOn = ACTIONS.every(a => perm[a]);
+              const canToggleRowForModule = ACTIONS.some((action) => canToggleActionForModule(moduleKey, action));
               return (
-                <th key={action} className="px-5 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-gray-500">
-                  <div className="flex items-center justify-center gap-2 cursor-pointer" onClick={() => onToggleColumn(action)}>
-                    <input 
-                      type="checkbox" 
-                      checked={allChecked} 
-                      readOnly
-                      className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer pointer-events-none"
-                    />
-                    <span className="capitalize hover:text-[#8B5E3C] transition-colors">{action}</span>
-                  </div>
-                </th>
-              );
-            })}
-            <th className="px-5 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-gray-500">
-              <div className="flex items-center justify-center gap-2 cursor-pointer" onClick={(e) => {
-                const allChecked = visibleModules.length > 0 && visibleModules.every(mod => ACTIONS.every(a => permissions[mod.key || mod]?.[a]));
-                allChecked ? onClearAll() : onSelectAll();
-              }}>
-                <input 
-                  type="checkbox" 
-                  checked={visibleModules.length > 0 && visibleModules.every(mod => ACTIONS.every(a => permissions[mod.key || mod]?.[a]))} 
-                  readOnly
-                  className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer pointer-events-none"
-                />
-                <span className="hover:text-[#8B5E3C] transition-colors">All</span>
-              </div>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {visibleModules.map((mod, idx) => {
-            const moduleKey = mod.key || mod;
-            const perm = permissions[moduleKey] || {};
-            const allOn = ACTIONS.every(a => perm[a]);
-            const canToggleRowForModule = ACTIONS.some((action) => canToggleActionForModule(moduleKey, action));
-            return (
-              <tr key={moduleKey} className={`border-b border-[#F0EAE2] hover:bg-[#FDF9F5] transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
-                <td className="px-5 py-3.5 font-semibold text-gray-700">
-                  <span className="mr-2">{mod.icon}</span>{mod.label}
-                </td>
-                {ACTIONS.map(action => (
-                  <td key={action} className="px-5 py-3.5 text-center">
+                <tr key={moduleKey} className={`hover:bg-[#FDF9F5] transition-colors ${idx !== visibleModules.length - 1 ? 'border-b border-[#F0EAE2]' : ''} ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
+                  <td className="px-6 py-4 text-[15px] font-serif font-bold text-[#3B322D]">
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-400">{mod.icon}</span>
+                      {mod.label}
+                    </div>
+                  </td>
+                  {ACTIONS.map(action => (
+                    <td key={action} className="px-6 py-4 text-center">
+                      <input
+                        type="checkbox"
+                        checked={!!perm[action]}
+                        disabled={!canToggleActionForModule(moduleKey, action)}
+                        onChange={() => onToggle(moduleKey, action)}
+                        className="w-[18px] h-[18px] accent-[#70482B] rounded-[4px] border-[#D7CFC8] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                      />
+                    </td>
+                  ))}
+                  <td className="px-6 py-4 text-center">
                     <input
                       type="checkbox"
-                      checked={!!perm[action]}
-                      disabled={!canToggleActionForModule(moduleKey, action)}
-                      onChange={() => onToggle(moduleKey, action)}
-                      className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                      checked={allOn}
+                      disabled={!canToggleRowForModule}
+                      onChange={() => onToggleRow(moduleKey)}
+                      className="w-[18px] h-[18px] accent-[#70482B] rounded-[4px] border-[#D7CFC8] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                     />
                   </td>
-                ))}
-                <td className="px-5 py-3.5 text-center">
-                  <input
-                    type="checkbox"
-                    checked={allOn}
-                    disabled={!canToggleRowForModule}
-                    onChange={() => onToggleRow(moduleKey)}
-                    className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-                  />
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
 
 const InputField = ({ label, error, required, children }) => (
   <div>
-    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-      {label} {required && <span className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">*</span>}
+    <label className="block text-[15px] font-serif font-bold text-[#3B322D] mb-1.5">
+      {label} {required && <span className="text-[#E05C5C] ml-1">*</span>}
     </label>
     {children}
-    {error && <p className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"><svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>{error}</p>}
+    {error && <p className="mt-1 text-sm text-[#E05C5C] flex items-center gap-1"><svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>{error}</p>}
   </div>
 );
 
 const inputClass = (hasError) =>
-  `w-full px-4 py-2.5 text-sm border rounded-xl focus:outline-none focus:ring-2 transition-colors ${
-    hasError ? 'border-red-400 focus:ring-red-200' : 'border-[#E6DFD4] focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C]'
+  `w-full px-4 py-3 text-sm border rounded-[10px] focus:outline-none focus:ring-1 transition-colors bg-white ${
+    hasError ? 'border-red-400 focus:ring-red-400 focus:border-red-400' : 'border-[#E6DFD4] focus:ring-[#8B5E3C] focus:border-[#8B5E3C]'
   }`;
 
 export default function AddStaffPage({ onBack, onSuccess, editingStaff, currentUserPermissions = [], isAdmin = false }) {
@@ -321,133 +326,137 @@ export default function AddStaffPage({ onBack, onSuccess, editingStaff, currentU
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="flex-1 overflow-y-auto p-8">
+      <div className="max-w-4xl mx-auto">
       <div className="mb-6">
-        <p className="text-xs text-gray-400 mb-1">
-          Dashboard &rsaquo; Staff Management &rsaquo; <span className="text-[#8B5E3C] font-semibold">{isEdit ? 'Edit Staff' : 'Add Staff'}</span>
+        <p className="text-[13px] md:text-sm font-serif text-[#94A3B8] mb-1">
+          Dashboard &rsaquo; Staff Management &rsaquo; <span className="font-semibold text-[#8B5E3C]">{isEdit ? 'Edit Staff' : 'Add Staff'}</span>
         </p>
-        <h1 className="text-2xl font-bold text-gray-800">{isEdit ? 'Edit Staff Member' : 'Add New Staff'}</h1>
+        <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">{isEdit ? 'Edit Staff Member' : 'Add New Staff'}</h1>
       </div>
 
       <form onSubmit={handleSubmit} noValidate>
-        <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm p-6 md:p-8 space-y-5">
-          <div className="flex items-center gap-2 mb-2 pb-4 border-b border-[#F0EAE2]">
-            <div className="w-8 h-8 bg-[#F8F4EC] rounded-lg flex items-center justify-center">
-              <svg className="w-4 h-4 text-[#8B5E3C]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+        <div className="bg-white rounded-[20px] shadow-sm p-8 md:p-10 space-y-8">
+          
+          <div>
+            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-[#F0EAE2]">
+              <div className="w-9 h-9 bg-[#F8F4EC] rounded-lg flex items-center justify-center">
+                <svg className="w-5 h-5 text-[#70482B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+              </div>
+              <h2 className="text-xl font-serif font-bold text-[#141225]">Basic Information</h2>
             </div>
-            <h2 className="font-bold text-gray-700">Basic Information</h2>
-          </div>
 
-          {errors.submit && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-600">{errors.submit}</div>
-          )}
+            {errors.submit && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-600 mb-6">{errors.submit}</div>
+            )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <InputField label="Full Name" error={errors.fullName} required>
-              <input
-                type="text"
-                value={form.fullName}
-                onChange={handleChange('fullName')}
-                placeholder="e.g. Ravi Kumar"
-                className={inputClass(errors.fullName)}
-              />
-            </InputField>
-            <InputField label="Email Address" error={errors.email} required>
-              <input
-                type="email"
-                value={form.email}
-                onChange={handleChange('email')}
-                placeholder="e.g. ravi@woodentoys.com"
-                className={inputClass(errors.email)}
-              />
-            </InputField>
-            <InputField label="Mobile Number" error={errors.mobile}>
-              <input
-                type="tel"
-                value={form.mobile}
-                onChange={handleChange('mobile')}
-                placeholder="e.g. 9876543210"
-                className={inputClass(errors.mobile)}
-              />
-            </InputField>
-            <InputField label={isEdit ? 'New Password (leave blank to keep)' : 'Password'} error={errors.password} required={!isEdit}>
-              <div className="relative">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+              <InputField label="Full Name" error={errors.fullName} required>
                 <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={form.password}
-                  onChange={handleChange('password')}
-                  placeholder="Min. 8 characters"
-                  className={inputClass(errors.password) + ' pr-11'}
+                  type="text"
+                  value={form.fullName}
+                  onChange={handleChange('fullName')}
+                  placeholder="e.g. Ravi Kumar"
+                  className={inputClass(errors.fullName)}
                 />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                  {showPassword
-                    ? <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
-                    : <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                  }
-                </button>
-              </div>
-            </InputField>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <InputField label="Role Assignment" error={errors.role} required>
-              <div className="relative" ref={roleDropdownRef}>
-                <button 
-                  type="button" 
-                  onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
-                  className={`w-full flex items-center justify-between px-4 py-2.5 text-sm bg-white border rounded-xl focus:outline-none transition-colors ${errors.role ? 'border-red-400' : 'border-[#E6DFD4]'}`}
-                >
-                  <span className={form.role ? 'text-gray-900' : 'text-gray-500'}>
-                    {form.role || "Select Role..."}
-                  </span>
-                  <ChevronDown className="w-4 h-4 text-gray-500" />
-                </button>
-                {isRoleDropdownOpen && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-[#E6DFD4] rounded-xl shadow-lg max-h-60 overflow-y-auto">
-                    <button
-                      type="button"
-                      className="w-full text-left px-4 py-2 text-sm text-gray-500 hover:bg-[#F8F4EC] transition-colors"
-                      onClick={() => handleRoleChange('')}
-                    >
-                      Select Role...
-                    </button>
-                    {dynamicRoles.map(r => (
-                      <div key={r._id} className="flex items-center justify-between px-4 py-2 hover:bg-[#F8F4EC] transition-colors">
-                        <button
-                          type="button"
-                          className="flex-1 text-left text-sm text-gray-900"
-                          onClick={() => handleRoleChange(r.name)}
-                        >
-                          {r.name}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => handleDeleteRole(e, r._id)}
-                          className="text-red-500 hover:text-red-600 transition-colors"
-                          title="Delete Role"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </InputField>
-            <InputField label="Status">
-              <select value={form.status} onChange={handleChange('status')} className={inputClass(false)}>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-            </InputField>
+              </InputField>
+              <InputField label="Email Address" error={errors.email} required>
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={handleChange('email')}
+                  placeholder="e.g. ravi@woodentoys.com"
+                  className={inputClass(errors.email)}
+                />
+              </InputField>
+              <InputField label="Mobile Number" error={errors.mobile}>
+                <input
+                  type="tel"
+                  value={form.mobile}
+                  onChange={handleChange('mobile')}
+                  placeholder="e.g. 9876543210"
+                  className={inputClass(errors.mobile)}
+                />
+              </InputField>
+              <InputField label={isEdit ? 'New Password (leave blank to keep)' : 'Password'} error={errors.password} required={!isEdit}>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={form.password}
+                    onChange={handleChange('password')}
+                    placeholder="Min. 8 characters"
+                    className={inputClass(errors.password) + ' pr-11'}
+                  />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#70482B]">
+                    {showPassword
+                      ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
+                      : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                    }
+                  </button>
+                </div>
+              </InputField>
+              <InputField label="Role Assignment" error={errors.role} required>
+                <div className="relative" ref={roleDropdownRef}>
+                  <button 
+                    type="button" 
+                    onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
+                    className={`w-full flex items-center justify-between px-4 py-3 text-sm bg-white border rounded-[10px] focus:outline-none transition-colors ${errors.role ? 'border-red-400' : 'border-[#E6DFD4]'}`}
+                  >
+                    <span className={form.role ? 'text-gray-900' : 'text-gray-500'}>
+                      {form.role || "Select Role..."}
+                    </span>
+                    <ChevronDown className="w-4 h-4 text-gray-500" />
+                  </button>
+                  {isRoleDropdownOpen && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-[#E6DFD4] rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                      <button
+                        type="button"
+                        className="w-full text-left px-4 py-2 text-sm text-gray-500 hover:bg-[#F8F4EC] transition-colors"
+                        onClick={() => handleRoleChange('')}
+                      >
+                        Select Role...
+                      </button>
+                      {dynamicRoles.map(r => (
+                        <div key={r._id} className="flex items-center justify-between px-4 py-2 hover:bg-[#F8F4EC] transition-colors">
+                          <button
+                            type="button"
+                            className="flex-1 text-left text-sm text-gray-900"
+                            onClick={() => handleRoleChange(r.name)}
+                          >
+                            {r.name}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeleteRole(e, r._id)}
+                            className="text-red-500 hover:text-red-600 transition-colors"
+                            title="Delete Role"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </InputField>
+              <InputField label="Status">
+                <div className="relative">
+                  <select value={form.status} onChange={handleChange('status')} className={`${inputClass(false)} appearance-none pr-10`}>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-gray-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
+              </InputField>
+            </div>
           </div>
           
-          <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm p-6 md:p-8 space-y-5 mt-6">
-            <div className="flex items-center gap-2 mb-2 pb-4 border-b border-[#F0EAE2]">
-              <div className="w-8 h-8 bg-[#F8F4EC] rounded-lg flex items-center justify-center">
-                <span className="text-[#8B5E3C] text-sm">👥</span>
+          <div className="rounded-2xl border border-[#E6DFD4] p-6 md:p-8">
+            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-[#F0EAE2]">
+              <div className="w-9 h-9 bg-[#F8F4EC] rounded-lg flex items-center justify-center">
+                <svg className="w-5 h-5 text-[#3B2C52]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
               </div>
-              <h2 className="font-bold text-gray-700">Assign Permissions</h2>
+              <h2 className="text-xl font-serif font-bold text-[#141225]">Assign Permissions</h2>
             </div>
             {loadingPerms ? (
               <div className="text-center py-6 text-gray-400">Loading permissions...</div>
@@ -466,20 +475,21 @@ export default function AddStaffPage({ onBack, onSuccess, editingStaff, currentU
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 mt-6">
-          <button type="button" onClick={onBack} className="px-6 py-2.5 border border-[#E6DFD4] rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
+        <div className="flex items-center justify-center gap-4 mt-8 pb-4">
+          <button type="button" onClick={onBack} className="px-8 py-3 border border-[#E6DFD4] rounded-full text-[15px] font-bold text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm">
             Cancel
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="flex items-center gap-2 bg-[#8B5E3C] hover:bg-[#7a5234] disabled:opacity-60 text-white px-7 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-colors"
+            className="flex items-center gap-2 bg-[#8B5E3C] hover:bg-[#7a5234] disabled:opacity-60 text-white px-8 py-3 rounded-full text-[15px] font-bold shadow-sm transition-colors"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-            {loading ? 'Saving...' : isEdit ? 'Save Changes' : 'Save Staff'}
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+            {loading ? 'Saving...' : isEdit ? 'Save Changes' : 'Create Staff'}
           </button>
         </div>
       </form>
+      </div>
     </div>
   );
 }

@@ -7,6 +7,17 @@ import ConfirmDialog from '../../../components/admin/ConfirmDialog';
 import BulkActions from '../../../components/admin/BulkActions';
 import Pagination from '../../../components/common/Pagination';
 
+const Field = ({ label, required, children }) => (
+  <div>
+    <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">
+      {label} {required && <span className="text-red-500 text-lg ml-1">*</span>}
+    </label>
+    {children}
+  </div>
+);
+
+const inputCls = 'w-full px-4 py-2.5 text-sm border border-[#E6DFD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-colors';
+
 export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete = true }) => {
     // Lists
     const [subCategories, setSubCategories] = useState([]);
@@ -339,6 +350,7 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                 selectedIds={selectedIds}
                 onBulkDelete={canDelete ? handleBulkDelete : undefined}
                 onBulkStatusChange={canEdit ? handleBulkStatus : undefined}
+                onClear={() => setSelectedIds([])}
             />
             )}
 
@@ -469,15 +481,12 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
             {isFormOpen && (
                 <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-xs animate-fade-in">
                     <div className="w-full max-w-lg bg-white h-full shadow-2xl flex flex-col animate-slide-left">
-                        <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50">
-                            <h2 className="text-xl font-bold text-gray-900">
-                                {editId ? 'Edit Sub-Category' : 'Create Sub-Category'}
-                            </h2>
-                            <button
-                                onClick={() => setIsFormOpen(false)}
-                                className="text-gray-400 hover:text-gray-600 p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
-                            >
-                                ✕
+                        <div className="flex items-center justify-between px-8 py-8 border-b border-[#E6DFD4] bg-[#F8F4EC]">
+                            <div>
+                                <h2 className="text-3xl font-serif font-bold text-[#141225] tracking-tight">{editId ? 'Edit Sub-Category' : 'Create Sub-Category'}</h2>
+                            </div>
+                            <button onClick={() => setIsFormOpen(false)} className="p-2 rounded-full hover:bg-[#E6DFD4] text-gray-400 hover:text-gray-700 transition-colors">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
                         </div>
 
@@ -488,123 +497,74 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                                 </div>
                             )}
 
-                            <div className="space-y-4">
-                                <div className="flex flex-col gap-1.5">
-                                    <label className="text-sm font-semibold text-gray-700">Sub-Category Name *</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={formData.name}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                                        placeholder="e.g. Wooden Block Set"
-                                        className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
-                                    />
-                                </div>
-
-                                <div className="flex flex-col gap-1.5">
-                                    <label className="text-sm font-semibold text-gray-700">Parent Category *</label>
-                                    <select
-                                        required
-                                        value={formData.category}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                                        className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm bg-white"
-                                    >
+                            {/* Basic Info */}
+                            <div className="bg-[#FAFAFA] border border-[#F0EAE2] rounded-2xl p-6 space-y-5">
+                                <h3 className="text-[17px] font-serif font-bold text-[#3E2723] flex items-center gap-2">
+                                    <span className="w-6 h-6 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center text-xs">📦</span>
+                                    Basic Information
+                                </h3>
+                                <Field label="Sub-Category Name" required>
+                                    <input type="text" required value={formData.name} onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))} placeholder="e.g. Wooden Block Set" className={inputCls} />
+                                </Field>
+                                <Field label="Parent Category" required>
+                                    <select required value={formData.category} onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))} className={inputCls}>
                                         <option value="">Select Parent Category</option>
-                                        {categories.map(c => (
-                                            <option key={c._id} value={c._id}>{c.name}</option>
-                                        ))}
+                                        {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
                                     </select>
-                                </div>
+                                </Field>
+                                <Field label="Slug (Optional)">
+                                    <input type="text" value={formData.slug} onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))} placeholder="e.g. wooden-block-set" className={inputCls + ' font-mono text-xs'} />
+                                </Field>
+                                <Field label="Description">
+                                    <textarea rows={3} value={formData.description} onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))} placeholder="Enter subcategory description..." className={inputCls} />
+                                </Field>
+                            </div>
 
-                                <div className="flex flex-col gap-1.5">
-                                    <label className="text-sm font-semibold text-gray-700">Slug (Optional)</label>
-                                    <input
-                                        type="text"
-                                        value={formData.slug}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
-                                        placeholder="e.g. wooden-block-set"
-                                        className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm font-mono"
-                                    />
-                                </div>
-
-                                <div className="flex flex-col gap-1.5">
-                                    <label className="text-sm font-semibold text-gray-700">Description</label>
-                                    <textarea
-                                        rows={3}
-                                        value={formData.description}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                                        placeholder="Enter subcategory description..."
-                                        className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
-                                    />
-                                </div>
-
+                            {/* Settings */}
+                            <div className="bg-[#FAFAFA] border border-[#F0EAE2] rounded-2xl p-6 space-y-5">
+                                <h3 className="text-[17px] font-serif font-bold text-[#3E2723] flex items-center gap-2">
+                                    <span className="w-6 h-6 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center text-xs">⚙️</span>
+                                    Settings
+                                </h3>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="flex flex-col gap-1.5">
-                                        <label className="text-sm font-semibold text-gray-700">Display Order</label>
-                                        <input
-                                            type="text" inputMode="numeric"
-                                            value={formData.displayOrder}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, displayOrder: e.target.value }))}
-                                            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
-                                        />
-                                    </div>
+                                    <Field label="Display Order">
+                                        <input type="text" inputMode="numeric" value={formData.displayOrder} onChange={(e) => setFormData(prev => ({ ...prev, displayOrder: e.target.value }))} className={inputCls} />
+                                    </Field>
                                     <div className="flex flex-col gap-1.5 justify-center mt-6">
-                                        <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-700">
-                                            <input
-                                                type="checkbox"
-                                                checked={formData.isActive}
-                                                onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
-                                                className="rounded text-amber-600 focus:ring-amber-500"
-                                            />
+                                        <label className="flex items-center gap-2 cursor-pointer text-[15px] font-serif font-bold text-[#3E2723]">
+                                            <input type="checkbox" checked={formData.isActive} onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))} className="rounded text-[#8B5E3C] focus:ring-[#8B5E3C]" />
                                             Active Status
                                         </label>
                                     </div>
                                 </div>
-
-                                <div className="border-t border-gray-100 pt-4 mt-6">
-                                    <h3 className="font-bold text-gray-800 text-sm mb-3">SEO & Metadata Settings</h3>
-                                    <div className="space-y-4">
-                                        <div className="flex flex-col gap-1.5">
-                                            <label className="text-xs font-semibold text-gray-600">SEO Title</label>
-                                            <input
-                                                type="text"
-                                                value={formData.seoTitle}
-                                                onChange={(e) => setFormData(prev => ({ ...prev, seoTitle: e.target.value }))}
-                                                placeholder="Meta title for Google search"
-                                                className="px-4 py-2 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
-                                            />
-                                        </div>
-                                        <div className="flex flex-col gap-1.5">
-                                            <label className="text-xs font-semibold text-gray-600">SEO Description</label>
-                                            <textarea
-                                                rows={2}
-                                                value={formData.seoDescription}
-                                                onChange={(e) => setFormData(prev => ({ ...prev, seoDescription: e.target.value }))}
-                                                placeholder="Meta description for search snippets"
-                                                className="px-4 py-2 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
-                                            />
-                                        </div>
-                                        <div className="flex flex-col gap-1.5">
-                                            <label className="text-xs font-semibold text-gray-600">SEO Keywords (comma separated)</label>
-                                            <input
-                                                type="text"
-                                                value={formData.seoKeywords}
-                                                onChange={(e) => setFormData(prev => ({ ...prev, seoKeywords: e.target.value }))}
-                                                placeholder="toys, blocks, stacking"
-                                                className="px-4 py-2 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
 
-                            <div className="flex justify-end gap-3 pt-6 border-t border-gray-100">
-                                <Button variant="secondary" type="button" onClick={() => setIsFormOpen(false)}>
+                            {/* SEO */}
+                            <div className="bg-[#FAFAFA] border border-[#F0EAE2] rounded-2xl p-6 space-y-5">
+                                <h3 className="text-[17px] font-serif font-bold text-[#3E2723] flex items-center gap-2">
+                                    <span className="w-6 h-6 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center text-xs">🔍</span>
+                                    SEO & Metadata
+                                </h3>
+                                <Field label="SEO Title">
+                                    <input type="text" value={formData.seoTitle} onChange={(e) => setFormData(prev => ({ ...prev, seoTitle: e.target.value }))} placeholder="Meta title for Google search" className={inputCls} />
+                                </Field>
+                                <Field label="SEO Description">
+                                    <textarea rows={2} value={formData.seoDescription} onChange={(e) => setFormData(prev => ({ ...prev, seoDescription: e.target.value }))} placeholder="Meta description for search snippets" className={inputCls} />
+                                </Field>
+                                <Field label="SEO Keywords (comma separated)">
+                                    <input type="text" value={formData.seoKeywords} onChange={(e) => setFormData(prev => ({ ...prev, seoKeywords: e.target.value }))} placeholder="toys, blocks, stacking" className={inputCls} />
+                                </Field>
+                            </div>
+
+                            {/* Form Actions */}
+                            <div className="flex items-center justify-center gap-4 pt-6 pb-2">
+                                <button type="button" onClick={() => setIsFormOpen(false)} className="px-8 py-3 border border-[#E6DFD4] rounded-full text-[15px] font-bold text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm">
                                     Cancel
-                                </Button>
-                                <Button variant="primary" type="submit" loading={formLoading}>
-                                    Save
-                                </Button>
+                                </button>
+                                <button type="submit" disabled={formLoading} className="flex items-center gap-2 bg-[#8B5E3C] hover:bg-[#7a5234] disabled:opacity-60 text-white px-8 py-3 rounded-full text-[15px] font-bold transition-colors shadow-sm">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                    {formLoading ? 'Saving...' : editId ? 'Save Changes' : 'Create Sub-Category'}
+                                </button>
                             </div>
                         </form>
                     </div>

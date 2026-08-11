@@ -11,6 +11,17 @@ import ImageUploader from '../../../components/admin/ImageUploader';
 import DynamicFormBuilder from '../../../components/admin/DynamicFormBuilder';
 import VariantManagement from '../../../components/admin/VariantManagement';
 
+const Field = ({ label, required, children }) => (
+  <div>
+    <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">
+      {label} {required && <span className="text-red-500 text-lg ml-1">*</span>}
+    </label>
+    {children}
+  </div>
+);
+
+const inputCls = 'w-full px-4 py-2.5 text-sm border border-[#E6DFD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-colors';
+
 export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = true, isAddMode = false, onCancelAdd = null }) => {
     // List/Table state
     const [products, setProducts] = useState([]);
@@ -44,6 +55,8 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                 seoTitle: '',
                 seoDescription: '',
                 attributeValues: {},
+                additionalInfo: [],
+                variants: [],
             });
         }
     }, [isAddMode]);
@@ -108,13 +121,13 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
         metaKeywords: '',
         tags: '',
         additionalInfo: [], // Custom dynamic fields
-        
+
         // Relational fields
         images: [],
         variants: [],
         attributeValues: {}, // Keyed by attributeId: payload
     });
-    
+
     const [categories, setCategories] = useState([]);
     const [subCategories, setSubCategories] = useState([]);
     const [formSubCategories, setFormSubCategories] = useState([]); // Subcategories for the parent category in the form
@@ -269,7 +282,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                 const res = await productV2API.getById(product._id);
                 if (res.success) {
                     const prod = res.product;
-                    
+
                     // Map attribute values back into key-value shape for form builder
                     const attrVals = {};
                     if (prod.attributeValues) {
@@ -370,7 +383,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
         console.log('--- SAVE PRODUCT BUTTON CLICKED ---');
         console.log('Current form data:', formData);
         setErrorMsg('');
-        
+
         let errors = {};
         if (!formData.name || formData.name.trim().length < 3) errors.name = 'Product name must be at least 3 characters.';
         if (!formData.category) errors.category = 'Category is required.';
@@ -381,7 +394,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
         if (Object.keys(errors).length > 0) {
             setFormErrors(errors);
             toast.error("Please fix the validation errors at the top of the form before saving.");
-            
+
             setTimeout(() => {
                 const firstErrorEl = document.querySelector('.border-red-500');
                 if (firstErrorEl) {
@@ -548,12 +561,14 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
     };
 
     return (
-        <div className="p-6 max-w-7xl mx-auto space-y-6">
+        <div className="flex-1 overflow-y-auto p-8 space-y-6">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
                 <div>
-                    <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Products</h1>
-                    <p className="text-gray-500 mt-1">Manage catalog inventory, customizable variables, and attributes.</p>
+                    <p className="text-[13px] md:text-sm font-serif text-[#94A3B8] mb-1">
+                        Dashboard &rsaquo; Catalog Management &rsaquo; <span className="font-semibold text-[#8B5E3C]">Products</span>
+                    </p>
+                    <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Products</h1>
                 </div>
                 <div className="flex items-center gap-3">
                     <button onClick={fetchProducts} className="admin-secondary-btn">
@@ -563,9 +578,9 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                         <Download size={16} /> Export Excel
                     </button>
                     {canCreate && (
-                    <button onClick={() => handleOpenForm()} className="admin-btn">
-                        <Plus size={16} /> Add Product
-                    </button>
+                        <button onClick={() => handleOpenForm()} className="admin-btn">
+                            <Plus size={16} /> Add Product
+                        </button>
                     )}
                 </div>
             </div>
@@ -578,7 +593,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                     placeholder="Search products SKU, name..."
                     className="w-full md:max-w-xs"
                 />
-                
+
                 <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
                     <select
                         value={categoryFilter}
@@ -609,7 +624,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                             .filter(s => (s.category?._id || s.category) === categoryFilter)
                             .map(s => (
                                 <option key={s._id} value={s._id}>{s.name}</option>
-                        ))}
+                            ))}
                     </select>
 
                     {filterAttributes.map(mapping => {
@@ -643,6 +658,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                 selectedIds={selectedIds}
                 onBulkDelete={handleBulkDelete}
                 onBulkStatusChange={handleBulkStatus}
+                onClear={() => setSelectedIds([])}
             />
 
             {/* Data Table */}
@@ -655,12 +671,12 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                     <input
                                         type="checkbox"
                                         checked={products.length > 0 && selectedIds.length === products.length}
-                                        onChange={e => toggleSelectAll(e.target.checked)}
+                                        onChange={e => handleSelectAll(e.target.checked)}
                                         className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
                                     />
                                 </th>
                                 {['Product', 'Category', 'Price', 'Total Stock', 'Status', 'Actions'].map(h => (
-                                    <th key={h} className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">{h}</th>
+                                    <th key={h} className={`px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap ${h === 'Actions' ? 'text-right pr-8' : 'text-left'}`}>{h}</th>
                                 ))}
                             </tr>
                         </thead>
@@ -713,32 +729,29 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                             <td className="px-4 py-3.5 font-semibold text-[#8B5E3C]">{prod.category?.name || 'Unknown'}</td>
                                             <td className="px-4 py-3.5 font-semibold text-amber-900">₹{(prod.price || 0).toFixed(2)}</td>
                                             <td className="px-4 py-3.5">
-                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                                                    prod.isLowStock ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
-                                                }`}>
+                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${prod.isLowStock ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+                                                    }`}>
                                                     {prod.totalStock} {prod.isLowStock ? 'low' : 'in stock'}
                                                 </span>
                                             </td>
                                             <td className="px-4 py-3.5">
                                                 {canEdit ? (
                                                     <button onClick={() => handleToggleStatus(prod)} title="Click to toggle">
-                                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                                                            prod.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                                                        }`}>
+                                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${prod.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                                                            }`}>
                                                             <span className={`w-1.5 h-1.5 rounded-full ${prod.isActive ? 'bg-green-500' : 'bg-gray-400'}`} />
                                                             {prod.isActive ? 'Active' : 'Inactive'}
                                                         </span>
                                                     </button>
                                                 ) : (
-                                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                                                        prod.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                                                    }`}>
+                                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${prod.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                                                        }`}>
                                                         <span className={`w-1.5 h-1.5 rounded-full ${prod.isActive ? 'bg-green-500' : 'bg-gray-400'}`} />
                                                         {prod.isActive ? 'Active' : 'Inactive'}
                                                     </span>
                                                 )}
                                             </td>
-                                            <td className="px-4 py-3.5">
+                                            <td className="px-4 py-3.5 pr-8">
                                                 <div className="flex gap-2 justify-end">
                                                     {canEdit && (
                                                         <button
@@ -784,18 +797,12 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                 <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-xs animate-fade-in">
                     <div className="w-full max-w-4xl bg-white h-full shadow-2xl flex flex-col animate-slide-left">
                         {/* Drawer Header */}
-                        <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50">
+                        <div className="flex items-center justify-between px-8 py-8 border-b border-[#E6DFD4] bg-[#F8F4EC]">
                             <div>
-                                <h2 className="text-xl font-bold text-gray-900">
-                                    {editId ? 'Edit Product Catalog Item' : 'New Product Catalog Item'}
-                                </h2>
-                                <p className="text-xs text-gray-500 mt-0.5">Build customized attributes and variants details.</p>
+                                <h2 className="text-3xl font-serif font-bold text-[#141225] tracking-tight">{editId ? 'Edit Product Catalog Item' : 'New Product Catalog Item'}</h2>
                             </div>
-                            <button
-                                onClick={handleCloseForm}
-                                className="text-gray-400 hover:text-gray-600 p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
-                            >
-                                ✕
+                            <button onClick={handleCloseForm} className="p-2 rounded-full hover:bg-[#E6DFD4] text-gray-400 hover:text-gray-700 transition-colors">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
                         </div>
 
@@ -808,95 +815,90 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                             )}
 
                             {/* Section 1: Base details */}
-                            <div className="space-y-4">
-                                <h3 className="text-base font-bold text-gray-900 border-b border-gray-100 pb-2">Basic Information</h3>
-                                
+                            <div className="bg-[#FAFAFA] border border-[#F0EAE2] rounded-2xl p-6 space-y-5">
+                                <h3 className="text-[17px] font-serif font-bold text-[#3E2723] flex items-center gap-2">
+                                    <span className="w-6 h-6 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center text-xs">📦</span>
+                                    Basic Information
+                                </h3>
+
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="flex flex-col gap-1.5">
-                                        <label className="text-sm font-semibold text-gray-700">Product Name *</label>
+                                    <Field label="Product Name" required>
                                         <input
                                             type="text"
                                             required
                                             value={formData.name}
-                                            onChange={(e) => { setFormData(prev => ({ ...prev, name: e.target.value })); if(formErrors.name) setFormErrors({...formErrors, name: ''}); }}
+                                            onChange={(e) => { setFormData(prev => ({ ...prev, name: e.target.value })); if (formErrors.name) setFormErrors({ ...formErrors, name: '' }); }}
                                             placeholder="e.g. Classic Wooden Train"
-                                            className={`px-4 py-2 border ${formErrors.name ? 'border-red-500 bg-red-50 focus:ring-red-500' : 'border-gray-300 focus:ring-amber-500'} rounded-lg focus:outline-none focus:ring-2 text-sm`}
+                                            className={inputCls + (formErrors.name ? ' border-red-500 focus:ring-red-500' : '')}
                                         />
-                                        {formErrors.name && <p className="text-red-500 text-[10px]">{formErrors.name}</p>}
-                                    </div>
-                                    <div className="flex flex-col gap-1.5">
-                                        <label className="text-sm font-semibold text-gray-700">Base SKU *</label>
+                                        {formErrors.name && <p className="text-red-500 text-[10px] mt-1">{formErrors.name}</p>}
+                                    </Field>
+                                    <Field label="Base SKU" required>
                                         <input
                                             type="text"
                                             required
                                             value={formData.sku}
                                             onChange={(e) => setFormData(prev => ({ ...prev, sku: e.target.value.toUpperCase() }))}
                                             placeholder="e.g. TOY-TRAIN-01"
-                                            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm font-mono"
+                                            className={inputCls + ' font-mono'}
                                         />
-                                    </div>
+                                    </Field>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="flex flex-col gap-1.5">
-                                        <label className="text-sm font-semibold text-gray-700">Category *</label>
+                                    <Field label="Category" required>
                                         <select
                                             required
                                             value={formData.category}
                                             onChange={(e) => {
                                                 const newCatId = e.target.value;
-                                                setFormData(prev => ({ 
-                                                    ...prev, 
+                                                setFormData(prev => ({
+                                                    ...prev,
                                                     category: newCatId,
                                                     subCategory: '',
-                                                    attributeValues: {} 
+                                                    attributeValues: {}
                                                 }));
                                                 setMappedAttributes([]);
                                                 generateSKU(newCatId, '');
-                                                if(formErrors.category) setFormErrors({...formErrors, category: ''});
+                                                if (formErrors.category) setFormErrors({ ...formErrors, category: '' });
                                             }}
-                                            className={`px-4 py-2 border ${formErrors.category ? 'border-red-500 bg-red-50 focus:ring-red-500' : 'border-gray-300 focus:ring-amber-500'} rounded-lg focus:outline-none focus:ring-2 text-sm bg-white`}
+                                            className={inputCls + ' bg-white' + (formErrors.category ? ' border-red-500 focus:ring-red-500' : '')}
                                         >
                                             <option value="">Select Category</option>
-                                            {categories.map(c => (
-                                                <option key={c._id} value={c._id}>{c.name}</option>
-                                            ))}
+                                            {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
                                         </select>
-                                        {formErrors.category && <p className="text-red-500 text-[10px]">{formErrors.category}</p>}
-                                    </div>
-                                    <div className="flex flex-col gap-1.5">
-                                        <label className="text-sm font-semibold text-gray-700">Sub-Category *</label>
+                                        {formErrors.category && <p className="text-red-500 text-[10px] mt-1">{formErrors.category}</p>}
+                                    </Field>
+                                    <Field label="Sub-Category" required>
                                         <select
                                             required
                                             value={formData.subCategory}
                                             onChange={(e) => {
                                                 const newSubId = e.target.value;
-                                                setFormData(prev => ({ 
-                                                    ...prev, 
+                                                setFormData(prev => ({
+                                                    ...prev,
                                                     subCategory: newSubId,
-                                                    attributeValues: {} 
+                                                    attributeValues: {}
                                                 }));
                                                 generateSKU(formData.category, newSubId);
                                             }}
                                             disabled={!formData.category}
-                                            className={`px-4 py-2 border ${formErrors.subCategory ? 'border-red-500 bg-red-50 focus:ring-red-500' : 'border-gray-300 focus:ring-amber-500'} rounded-lg focus:outline-none focus:ring-2 text-sm bg-white disabled:opacity-50`}
+                                            className={inputCls + ' bg-white disabled:opacity-50' + (formErrors.subCategory ? ' border-red-500 focus:ring-red-500' : '')}
                                         >
                                             <option value="">Select Sub-Category</option>
-                                            {formSubCategories.map(s => (
-                                                <option key={s._id} value={s._id}>{s.name}</option>
-                                            ))}
+                                            {formSubCategories.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
                                         </select>
-                                        {formErrors.subCategory && <p className="text-red-500 text-[10px]">{formErrors.subCategory}</p>}
-                                    </div>
+                                        {formErrors.subCategory && <p className="text-red-500 text-[10px] mt-1">{formErrors.subCategory}</p>}
+                                    </Field>
                                 </div>
 
                                 <div className="flex flex-col gap-1.5">
-                                    <div className="flex justify-between items-center">
-                                        <label className="text-sm font-semibold text-gray-700">Description *</label>
+                                    <div className="flex justify-between items-center mb-1.5">
+                                        <label className="text-[15px] font-serif font-bold text-[#3E2723]">Description <span className="text-red-500 text-lg ml-1">*</span></label>
                                         <button
                                             type="button"
-                                            onClick={() => setFormData(prev => ({ ...prev, additionalInfo: [...prev.additionalInfo, { key: '', value: '' }] }))}
-                                            className="text-xs font-bold text-amber-600 hover:text-amber-800 flex items-center gap-1"
+                                            onClick={() => setFormData(prev => ({ ...prev, additionalInfo: [...(prev.additionalInfo || []), { key: '', value: '' }] }))}
+                                            className="text-xs font-bold text-[#8B5E3C] hover:text-[#7a5234] flex items-center gap-1 bg-[#F8F4EC] px-2 py-1 rounded-md"
                                         >
                                             <Plus size={14} /> Add Field
                                         </button>
@@ -910,41 +912,45 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                             if (formErrors.description) setFormErrors({ ...formErrors, description: '' });
                                         }}
                                         placeholder="Detailed description of the product features, benefits..."
-                                        className={`px-4 py-2 border ${formErrors.description ? 'border-red-500 bg-red-50 focus:ring-red-500' : 'border-gray-300 focus:ring-amber-500'} rounded-lg focus:outline-none focus:ring-2 text-sm`}
+                                        className={inputCls + (formErrors.description ? ' border-red-500 focus:ring-red-500' : '')}
                                     />
-                                    {formErrors.description && <p className="text-red-500 text-[10px]">{formErrors.description}</p>}
-                                    
+                                    {formErrors.description && <p className="text-red-500 text-[10px] mt-1">{formErrors.description}</p>}
+
                                     {formData.additionalInfo?.map((info, idx) => (
-                                        <div key={idx} className="flex gap-2 mt-2 items-start">
-                                            <input 
-                                                type="text" 
-                                                placeholder="Field Name (e.g. Material)" 
-                                                value={info.key}
-                                                onChange={(e) => {
-                                                    const newArr = [...formData.additionalInfo];
-                                                    newArr[idx].key = e.target.value;
-                                                    setFormData(prev => ({ ...prev, additionalInfo: newArr }));
-                                                }}
-                                                className="w-1/3 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
-                                            />
-                                            <textarea 
-                                                rows={2}
-                                                placeholder="Value (e.g. Oak Wood)" 
-                                                value={info.value}
-                                                onChange={(e) => {
-                                                    const newArr = [...formData.additionalInfo];
-                                                    newArr[idx].value = e.target.value;
-                                                    setFormData(prev => ({ ...prev, additionalInfo: newArr }));
-                                                }}
-                                                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm resize-y"
-                                            />
-                                            <button 
-                                                type="button" 
+                                        <div key={idx} className="flex gap-2 mt-3 items-start bg-white p-3 rounded-xl border border-[#E6DFD4]">
+                                            <div className="w-1/3">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Field Name (e.g. Material)"
+                                                    value={info.key}
+                                                    onChange={(e) => {
+                                                        const newArr = [...formData.additionalInfo];
+                                                        newArr[idx].key = e.target.value;
+                                                        setFormData(prev => ({ ...prev, additionalInfo: newArr }));
+                                                    }}
+                                                    className={inputCls}
+                                                />
+                                            </div>
+                                            <div className="flex-1">
+                                                <textarea
+                                                    rows={1}
+                                                    placeholder="Value (e.g. Oak Wood)"
+                                                    value={info.value}
+                                                    onChange={(e) => {
+                                                        const newArr = [...formData.additionalInfo];
+                                                        newArr[idx].value = e.target.value;
+                                                        setFormData(prev => ({ ...prev, additionalInfo: newArr }));
+                                                    }}
+                                                    className={inputCls + ' resize-y min-h-[44px]'}
+                                                />
+                                            </div>
+                                            <button
+                                                type="button"
                                                 onClick={() => {
                                                     const newArr = formData.additionalInfo.filter((_, i) => i !== idx);
                                                     setFormData(prev => ({ ...prev, additionalInfo: newArr }));
                                                 }}
-                                                className="text-red-500 hover:text-red-600 transition-colors"
+                                                className="mt-2.5 p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full transition-colors"
                                             >
                                                 <Trash size={16} />
                                             </button>
@@ -955,9 +961,9 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
 
                             {/* Section 2: Custom attributes */}
                             {mappedAttributes.length > 0 && (
-                                <div className="space-y-4">
-                                    <h3 className="text-base font-bold text-gray-900 border-b border-gray-100 pb-2 flex items-center gap-2">
-                                        <Sparkles size={18} className="text-amber-600" />
+                                <div className="bg-[#FAFAFA] border border-[#F0EAE2] rounded-2xl p-6 space-y-5">
+                                    <h3 className="text-[17px] font-serif font-bold text-[#3E2723] flex items-center gap-2">
+                                        <span className="w-6 h-6 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center text-xs">✨</span>
                                         Custom Specifications
                                     </h3>
                                     <DynamicFormBuilder
@@ -970,18 +976,16 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
 
                             {/* Section 5: Dynamic Variants Management */}
                             {mappedAttributes.some(m => m.attribute?.isVariant) && (
-                                <div className="space-y-4">
-                                    <div className="flex justify-between items-center border-b border-gray-100 pb-2">
-                                        <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-                                            <Layers size={18} className="text-amber-700" />
-                                            Variant Management
-                                        </h3>
-                                    </div>
-                                    <VariantManagement 
+                                <div className="bg-[#FAFAFA] border border-[#F0EAE2] rounded-2xl p-6 space-y-5">
+                                    <h3 className="text-[17px] font-serif font-bold text-[#3E2723] flex items-center gap-2">
+                                        <span className="w-6 h-6 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center text-xs">📑</span>
+                                        Variant Management
+                                    </h3>
+                                    <VariantManagement
                                         variants={formData.variants}
-                                        onChange={(updater) => setFormData(prev => ({ 
-                                            ...prev, 
-                                            variants: typeof updater === 'function' ? updater(prev.variants) : updater 
+                                        onChange={(updater) => setFormData(prev => ({
+                                            ...prev,
+                                            variants: typeof updater === 'function' ? updater(prev.variants) : updater
                                         }))}
                                         mappedAttributes={mappedAttributes}
                                         attributeValues={formData.attributeValues}
@@ -996,53 +1000,50 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                             )}
 
                             {/* Section 6: SEO */}
-                            <div className="border-t border-gray-100 pt-6 mt-6">
-                                <h3 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
-                                    <Globe size={18} className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors" />
+                            <div className="bg-[#FAFAFA] border border-[#F0EAE2] rounded-2xl p-6 space-y-5">
+                                <h3 className="text-[17px] font-serif font-bold text-[#3E2723] flex items-center gap-2">
+                                    <span className="w-6 h-6 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center text-xs">🌐</span>
                                     SEO & Search Indexing
                                 </h3>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="flex flex-col gap-1.5">
-                                        <label className="text-xs font-semibold text-gray-600">SEO Custom Title</label>
+                                    <Field label="SEO Custom Title">
                                         <input
                                             type="text"
                                             value={formData.seoTitle}
                                             onChange={(e) => setFormData(prev => ({ ...prev, seoTitle: e.target.value }))}
                                             placeholder="Page title for search engines"
-                                            className="px-4 py-2 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                            className={inputCls}
                                         />
-                                    </div>
-                                    <div className="flex flex-col gap-1.5">
-                                        <label className="text-xs font-semibold text-gray-600">SEO Keywords (comma separated)</label>
+                                    </Field>
+                                    <Field label="SEO Keywords (comma separated)">
                                         <input
                                             type="text"
                                             value={formData.metaKeywords}
                                             onChange={(e) => setFormData(prev => ({ ...prev, metaKeywords: e.target.value }))}
                                             placeholder="building blocks, kids toys"
-                                            className="px-4 py-2 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                            className={inputCls}
                                         />
-                                    </div>
+                                    </Field>
                                 </div>
-                                <div className="flex flex-col gap-1.5 mt-4">
-                                    <label className="text-xs font-semibold text-gray-600">SEO Snippet / Description</label>
+                                <Field label="SEO Snippet / Description">
                                     <textarea
                                         rows={3}
                                         value={formData.seoDescription}
                                         onChange={(e) => setFormData(prev => ({ ...prev, seoDescription: e.target.value }))}
                                         placeholder="Google snippet text (max 160 characters)"
-                                        className="px-4 py-2 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                        className={inputCls}
                                     />
-                                </div>
+                                </Field>
                             </div>
 
                             {/* Form Actions */}
-                            <div className="flex justify-end gap-3 pt-6 border-t border-gray-100 bg-gray-50 -mx-6 -mb-6 p-6">
-                                <Button variant="secondary" type="button" onClick={handleCloseForm}>
-                                    Cancel
-                                </Button>
-                                <Button variant="primary" type="submit" loading={formLoading}>
-                                    Save Product
-                                </Button>
+                            <div className="flex items-center justify-center gap-4 pt-6 pb-2">
+                                <button type="button" onClick={handleCloseForm} className="px-8 py-3 border border-[#E6DFD4] rounded-full text-[15px] font-bold text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm">
+                                    CANCEL
+                                </button>
+                                <button type="submit" disabled={formLoading} className="flex items-center gap-2 bg-[#8B5E3C] hover:bg-[#7a5234] disabled:opacity-60 text-white px-8 py-3 rounded-full text-[15px] font-bold transition-colors shadow-sm uppercase tracking-wide">
+                                    {formLoading ? 'Saving...' : 'SAVE PRODUCT'}
+                                </button>
                             </div>
                         </form>
                     </div>

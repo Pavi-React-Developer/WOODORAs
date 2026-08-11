@@ -6,7 +6,7 @@ export default function CustomizeAdminPage({ activeSubTab, canCreate = true, can
   return (
     <div className="space-y-6">
       {activeSubTab === 'list' && <CustomizeList canEdit={canEdit} canDelete={canDelete} />}
-      {activeSubTab === 'add' && <CustomizeFieldManager canCreate={canCreate} canEdit={canEdit} canDelete={canDelete} />}
+      {activeSubTab === 'form-fields' && <CustomizeFieldManager canCreate={canCreate} canEdit={canEdit} canDelete={canDelete} />}
     </div>
   );
 }

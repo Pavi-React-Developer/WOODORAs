@@ -54,9 +54,13 @@ const adminRouteState = {
   '/admin/refunds': { tab: 'refund', refundSubTab: 'list', refundMenuOpen: true },
   '/admin/bulk-orders': { tab: 'bulk-orders', bulkOrderSubTab: 'list', bulkOrderMenuOpen: true },
   '/admin/bulk-orders/fields': { tab: 'bulk-orders', bulkOrderSubTab: 'fields', bulkOrderMenuOpen: true },
-  '/admin/gift-and-card': { tab: 'gift_and_card' },
+  '/admin/gift-and-card': { tab: 'gift_and_card', giftAndCardSubTab: 'rules', giftAndCardMenuOpen: true },
+  '/admin/gift-and-card/rules': { tab: 'gift_and_card', giftAndCardSubTab: 'rules', giftAndCardMenuOpen: true },
+  '/admin/gift-and-card/messages': { tab: 'gift_and_card', giftAndCardSubTab: 'messages', giftAndCardMenuOpen: true },
+  '/admin/gift-and-card/orders': { tab: 'gift_and_card', giftAndCardSubTab: 'orders', giftAndCardMenuOpen: true },
+  '/admin/gift-and-card/gift-fee': { tab: 'gift_and_card', giftAndCardSubTab: 'gift-fee', giftAndCardMenuOpen: true },
   '/admin/customize': { tab: 'customize_order', customizeSubTab: 'list', customizeMenuOpen: true },
-  '/admin/customize/add': { tab: 'customize_order', customizeSubTab: 'add', customizeMenuOpen: true },
+  '/admin/customize/form-fields': { tab: 'customize_order', customizeSubTab: 'form-fields', customizeMenuOpen: true },
 };
 
 const adminTabPaths = {
@@ -305,6 +309,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
     if (routeState.feeSubTab) setFeeSubTab(routeState.feeSubTab);
     if (routeState.refundSubTab) setRefundSubTab(routeState.refundSubTab);
     if (routeState.bulkOrderSubTab) setBulkOrderSubTab(routeState.bulkOrderSubTab);
+    if (routeState.giftAndCardSubTab) setGiftAndCardSubTab(routeState.giftAndCardSubTab);
+    if (routeState.customizeSubTab) setCustomizeSubTab(routeState.customizeSubTab);
     if (routeState.staffMenuOpen !== undefined) setStaffMenuOpen(routeState.staffMenuOpen);
     if (routeState.catalogMenuOpen !== undefined) setCatalogMenuOpen(routeState.catalogMenuOpen);
     if (routeState.productMenuOpen !== undefined) setProductMenuOpen(routeState.productMenuOpen);
@@ -313,6 +319,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
     if (routeState.feeMenuOpen !== undefined) setFeeMenuOpen(routeState.feeMenuOpen);
     if (routeState.bulkOrderMenuOpen !== undefined) setBulkOrderMenuOpen(routeState.bulkOrderMenuOpen);
     if (routeState.refundMenuOpen !== undefined) setRefundMenuOpen(routeState.refundMenuOpen);
+    if (routeState.giftAndCardMenuOpen !== undefined) setGiftAndCardMenuOpen(routeState.giftAndCardMenuOpen);
+    if (routeState.customizeMenuOpen !== undefined) setCustomizeMenuOpen(routeState.customizeMenuOpen);
   }, [location.pathname]);
 
   // Load the current logged-in staff member's permissions dynamically
@@ -828,7 +836,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                 {bulkOrderMenuOpen && (
                   <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
                     <button
-                      onClick={() => openAdminTab('bulk-orders', { bulkOrderSubTab: 'list', bulkOrderMenuOpen: true })}
+                      onClick={() => openAdminTab('bulk-orders', { bulkOrderSubTab: 'list', bulkOrderMenuOpen: true, path: '/admin/bulk-orders' })}
                       className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
                         currentTab === 'bulk-orders' && bulkOrderSubTab === 'list' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
                       }`}
@@ -837,7 +845,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                       Bulk Order List
                     </button>
                     <button
-                      onClick={() => openAdminTab('bulk-orders', { bulkOrderSubTab: 'fields', bulkOrderMenuOpen: true })}
+                      onClick={() => openAdminTab('bulk-orders', { bulkOrderSubTab: 'fields', bulkOrderMenuOpen: true, path: '/admin/bulk-orders/fields' })}
                       className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
                         currentTab === 'bulk-orders' && bulkOrderSubTab === 'fields' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
                       }`}
@@ -868,7 +876,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                 {giftAndCardMenuOpen && (
                   <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
                     <button
-                      onClick={() => openAdminTab('gift_and_card', { giftAndCardSubTab: 'rules', giftAndCardMenuOpen: true })}
+                      onClick={() => openAdminTab('gift_and_card', { giftAndCardSubTab: 'rules', giftAndCardMenuOpen: true, path: '/admin/gift-and-card/rules' })}
                       className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
                         currentTab === 'gift_and_card' && giftAndCardSubTab === 'rules' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
                       }`}
@@ -877,7 +885,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                       Delivery Rules
                     </button>
                     <button
-                      onClick={() => openAdminTab('gift_and_card', { giftAndCardSubTab: 'messages', giftAndCardMenuOpen: true })}
+                      onClick={() => openAdminTab('gift_and_card', { giftAndCardSubTab: 'messages', giftAndCardMenuOpen: true, path: '/admin/gift-and-card/messages' })}
                       className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
                         currentTab === 'gift_and_card' && giftAndCardSubTab === 'messages' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
                       }`}
@@ -886,7 +894,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                       Personalized Messages
                     </button>
                     <button
-                      onClick={() => openAdminTab('gift_and_card', { giftAndCardSubTab: 'orders', giftAndCardMenuOpen: true })}
+                      onClick={() => openAdminTab('gift_and_card', { giftAndCardSubTab: 'orders', giftAndCardMenuOpen: true, path: '/admin/gift-and-card/orders' })}
                       className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
                         currentTab === 'gift_and_card' && giftAndCardSubTab === 'orders' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
                       }`}
@@ -895,12 +903,12 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                       Gift Orders
                     </button>
                     <button
-                      onClick={() => openAdminTab('gift_and_card', { giftAndCardSubTab: 'gift-fee', giftAndCardMenuOpen: true })}
+                      onClick={() => openAdminTab('gift_and_card', { giftAndCardSubTab: 'gift-fee', giftAndCardMenuOpen: true, path: '/admin/gift-and-card/gift-fee' })}
                       className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
                         currentTab === 'gift_and_card' && giftAndCardSubTab === 'gift-fee' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
                       }`}
                     >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0a9 9 0 0118 0z" /></svg>
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                       Gift Fee
                     </button>
                   </div>
@@ -926,7 +934,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                 {customizeMenuOpen && (
                   <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
                     <button
-                      onClick={() => openAdminTab('customize_order', { customizeSubTab: 'list', customizeMenuOpen: true })}
+                      onClick={() => openAdminTab('customize_order', { customizeSubTab: 'list', customizeMenuOpen: true, path: '/admin/customize' })}
                       className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
                         currentTab === 'customize_order' && customizeSubTab === 'list' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
                       }`}
@@ -935,13 +943,13 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                       Customize List
                     </button>
                     <button
-                      onClick={() => openAdminTab('customize_order', { customizeSubTab: 'add', customizeMenuOpen: true })}
+                      onClick={() => openAdminTab('customize_order', { customizeSubTab: 'form-fields', customizeMenuOpen: true, path: '/admin/customize/form-fields' })}
                       className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
-                        currentTab === 'customize_order' && customizeSubTab === 'add' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                        currentTab === 'customize_order' && customizeSubTab === 'form-fields' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
                       }`}
                     >
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                      Add Customize
+                      Form Fields Builder
                     </button>
                   </div>
                 )}
@@ -1193,10 +1201,12 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
           {canAccessDashboard && currentTab === 'dashboard' && (
             <>
               {/* Header Row */}
-              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                 <div>
-                  <h2 className="text-2xl font-bold text-brand-dark font-sans tracking-tight">Dashboard Overview</h2>
-                  <p className="text-sm text-brand-medium mt-1">Welcome back. Here's what is happening today.</p>
+                  <p className="text-[13px] md:text-sm font-serif text-[#94A3B8] mb-1">
+                    Dashboard &rsaquo; <span className="font-semibold text-[#8B5E3C]">Overview</span>
+                  </p>
+                  <h2 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Dashboard Overview</h2>
                 </div>
                 <div className="flex items-center gap-3">
                   <button onClick={() => loadData()} disabled={isRefreshing} className="admin-secondary-btn flex items-center gap-2 disabled:opacity-60">

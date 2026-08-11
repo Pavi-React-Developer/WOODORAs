@@ -123,11 +123,13 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-[#E6DFD4] pb-4 gap-4">
+    <div className="flex-1 overflow-y-auto p-8 space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-[#E6DFD4] pb-4 gap-4 mb-4">
         <div>
-          <h2 className="text-2xl font-bold text-brand-dark font-serif">Fee List</h2>
-          <p className="text-sm text-brand-medium">Manage all configured fees</p>
+          <p className="text-[13px] md:text-sm font-serif text-[#94A3B8] mb-1">
+            Dashboard &rsaquo; Setup &rsaquo; <span className="font-semibold text-[#8B5E3C]">Fee List</span>
+          </p>
+          <h2 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Fee List</h2>
         </div>
         <div className="flex justify-end gap-3 mb-4 flex-wrap">
           <button onClick={loadData} className="admin-secondary-btn">
@@ -198,9 +200,9 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
 
         {/* Bulk Actions */}
       {selectedIds.length > 0 && (
-        <div className="bg-[#F8F4EC] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3">
+        <div className="bg-[#F8F4EC] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3 flex-wrap">
           <span className="text-sm font-semibold text-[#8B5E3C]">{selectedIds.length} selected</span>
-          <div className="flex gap-2 ml-auto">
+          <div className="flex gap-2 ml-auto flex-wrap">
              {typeof handleBulkDelete !== 'undefined' && (
                 <button onClick={handleBulkDelete} className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">Delete Selected</button>
              )}

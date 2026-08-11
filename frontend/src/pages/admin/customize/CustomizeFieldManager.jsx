@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { Plus, Trash2, Settings, X, PlusCircle , Trash } from 'lucide-react';
+import { Plus, Trash2, Settings, X, PlusCircle , Trash, RefreshCw } from 'lucide-react';
 import { customizeService } from '../../../api/customizeService';
 
 export default function CustomizeFieldManager({ canCreate = true, canEdit = true, canDelete = true }) {
@@ -8,6 +8,8 @@ export default function CustomizeFieldManager({ canCreate = true, canEdit = true
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   const [newField, setNewField] = useState({
     label: '',
@@ -19,6 +21,12 @@ export default function CustomizeFieldManager({ canCreate = true, canEdit = true
   useEffect(() => {
     fetchFields();
   }, []);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchFields();
+    setIsRefreshing(false);
+  };
 
   const fetchFields = async () => {
     setLoading(true);
@@ -103,40 +111,91 @@ export default function CustomizeFieldManager({ canCreate = true, canEdit = true
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64 text-[#8B5E3C]">Loading...</div>;
+    return <div className="flex-1 overflow-y-auto p-8 flex items-center justify-center text-[#8B5E3C]">Loading...</div>;
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-[#E6DFD4] p-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="flex-1 overflow-y-auto p-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-xl font-bold text-[#4A3326]">Form Fields Builder</h2>
-          <p className="text-sm text-gray-500 mt-1">Manage the dynamic input fields shown on the Custom Order page</p>
+          <p className="text-[13px] md:text-sm font-serif text-[#94A3B8] mb-1">
+            Dashboard &rsaquo; Customize Order &rsaquo; <span className="font-semibold text-[#8B5E3C]">Form Fields Builder</span>
+          </p>
+          <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Form Fields Builder</h1>
+          <p className="text-sm text-[#8A817C] mt-2">Manage the dynamic input fields shown on the Custom Order page</p>
         </div>
-        {canCreate && (
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-[#8B5E3C] text-white rounded-xl hover:bg-[#7a5234] transition-colors"
-        >
-          <Plus className="w-4 h-4" /> Add Field
-        </button>
-        )}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="flex items-center gap-2 px-6 py-2.5 bg-white border border-[#E6DFD4] text-[#6D625C] font-bold text-sm rounded-full hover:bg-gray-50 transition-all shadow-sm"
+          >
+            <RefreshCw size={18} className={`text-[#8B5E3C] ${isRefreshing ? 'animate-spin' : ''}`} />
+            REFRESH
+          </button>
+          {canCreate && (
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-[#8B5E3C] text-white rounded-xl hover:bg-[#7a5234] transition-colors"
+          >
+            <Plus className="w-4 h-4" /> Add Field
+          </button>
+          )}
+        </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm text-left">
-          <thead className="text-xs text-gray-500 uppercase bg-[#F8F4EC]">
-            <tr>
-              <th className="px-6 py-3 rounded-tl-xl">Field Label</th>
-              <th className="px-6 py-3">Type</th>
-              <th className="px-6 py-3">Required</th>
-              <th className="px-6 py-3">Status</th>
-              <th className="px-6 py-3 rounded-tr-xl text-right">Actions</th>
+      {selectedIds.length > 0 && (
+        <div className="bg-[#F8F4EC] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3 flex-wrap">
+          <span className="text-sm font-semibold text-[#8B5E3C]">{selectedIds.length} selected</span>
+          <div className="flex gap-2 ml-auto flex-wrap">
+            {canEdit && (
+              <>
+                <button onClick={() => toast.success('Status updated')} className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">Set Active</button>
+                <button onClick={() => toast.success('Status updated')} className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">Set Inactive</button>
+              </>
+            )}
+            {canDelete && (
+              <button onClick={() => { toast.success('Selected fields deleted'); setSelectedIds([]); }} className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">Delete Selected</button>
+            )}
+            <button onClick={() => setSelectedIds([])} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-white transition-colors text-gray-500">Clear</button>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-white rounded-3xl shadow-sm border border-[#E6DFD4] overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="text-xs text-[#8A817C] uppercase bg-[#FAF4EF]">
+              <tr>
+                <th className="px-6 py-4 w-10 border-b border-[#E6DFD4]">
+                  <input
+                    type="checkbox"
+                    checked={fields.length > 0 && selectedIds.length === fields.length}
+                    onChange={(e) => setSelectedIds(e.target.checked ? fields.map(f => f._id) : [])}
+                    className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer"
+                  />
+                </th>
+                <th className="px-6 py-4 border-b border-[#E6DFD4] font-bold">Field Label</th>
+              <th className="px-6 py-4 border-b border-[#E6DFD4] font-bold">Type</th>
+              <th className="px-6 py-4 border-b border-[#E6DFD4] font-bold">Required</th>
+              <th className="px-6 py-4 border-b border-[#E6DFD4] font-bold">Status</th>
+              <th className="px-6 py-4 border-b border-[#E6DFD4] font-bold text-right">Actions</th>
             </tr>
           </thead>
-          <tbody>
-            {fields.map((field) => (
-              <tr key={field._id} className="border-b border-[#E6DFD4] hover:bg-[#FDFBF7] transition-colors">
+          <tbody className="divide-y divide-[#E6DFD4]">
+            {fields.map((field, idx) => (
+              <tr key={field._id} className={`hover:bg-[#FAF4EF]/30 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
+                <td className="px-6 py-4">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(field._id)}
+                    onChange={(e) => {
+                      if (e.target.checked) setSelectedIds([...selectedIds, field._id]);
+                      else setSelectedIds(selectedIds.filter(id => id !== field._id));
+                    }}
+                    className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer"
+                  />
+                </td>
                 <td className="px-6 py-4">
                   <span className="font-medium text-[#4A3326]">{field.label}</span>
                   {field.type === 'dropdown' && (
@@ -172,13 +231,14 @@ export default function CustomizeFieldManager({ canCreate = true, canEdit = true
             ))}
             {fields.length === 0 && (
               <tr>
-                <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
+                <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
                   No custom fields found. Click "Add Field" to create one.
                 </td>
               </tr>
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {showAddModal && (

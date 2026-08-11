@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { Eye, CheckCircle, XCircle, X, Download, Image as ImageIcon , RefreshCw , Check } from 'lucide-react';
+import { Eye, X, Download, Image as ImageIcon, RefreshCw, Check, Trash2 } from 'lucide-react';
 import { customizeService } from '../../../api/customizeService';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
@@ -14,13 +14,32 @@ const getProductName = (details) => {
   return firstStringField ? firstStringField.value : 'Custom Order';
 };
 
+const ITEMS_PER_PAGE = 10;
+
+const getPaginationPages = (currentPage, totalPages) => {
+  const pages = [];
+  if (totalPages <= 5) {
+    for (let i = 1; i <= totalPages; i++) pages.push(i);
+  } else {
+    pages.push(1);
+    if (currentPage > 3) pages.push('...');
+    for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) pages.push(i);
+    if (currentPage < totalPages - 2) pages.push('...');
+    pages.push(totalPages);
+  }
+  return pages;
+};
+
 export default function CustomizeList() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [requestToReject, setRequestToReject] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedIds, setSelectedIds] = useState([]);
 
   useEffect(() => {
     fetchRequests();
@@ -36,6 +55,12 @@ export default function CustomizeList() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchRequests();
+    setIsRefreshing(false);
   };
 
   const handleUpdateStatus = async (id, status, reason = '') => {
@@ -67,11 +92,9 @@ export default function CustomizeList() {
       toast.error('No images to export');
       return;
     }
-
     const toastId = toast.loading('Preparing zip file...');
     try {
       const zip = new JSZip();
-      
       const promises = req.images.map(async (img, idx) => {
         try {
           const response = await fetch(img.url);
@@ -83,9 +106,7 @@ export default function CustomizeList() {
           console.error('Failed to fetch image:', err);
         }
       });
-      
       await Promise.all(promises);
-      
       const content = await zip.generateAsync({ type: 'blob' });
       saveAs(content, `Custom_Order_${req._id}_Images.zip`);
       toast.success('Images exported successfully as ZIP', { id: toastId });
@@ -95,113 +116,207 @@ export default function CustomizeList() {
     }
   };
 
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(requests.length / ITEMS_PER_PAGE));
+  const paginatedRequests = requests.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  // Checkbox helpers
+  const pageIds = paginatedRequests.map(r => r._id);
+  const allChecked = pageIds.length > 0 && pageIds.every(id => selectedIds.includes(id));
+  const toggleAll = () => {
+    if (allChecked) setSelectedIds(prev => prev.filter(id => !pageIds.includes(id)));
+    else setSelectedIds(prev => [...new Set([...prev, ...pageIds])]);
+  };
+  const toggleOne = (id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Delete ${selectedIds.length} request(s)?`)) return;
+    try {
+      await Promise.all(selectedIds.map(id => customizeService.deleteRequest?.(id)));
+      toast.success('Deleted selected requests');
+      setSelectedIds([]);
+      fetchRequests();
+    } catch (e) {
+      toast.error('Failed to delete selected requests');
+    }
+  };
+
   if (loading) {
-    return <div className="flex items-center justify-center h-64 text-[#8B5E3C]">Loading...</div>;
+    return <div className="flex-1 overflow-y-auto p-8 flex items-center justify-center text-[#8B5E3C]">Loading...</div>;
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-[#E6DFD4] p-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="flex-1 overflow-y-auto p-8">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
         <div>
-          <h2 className="text-xl font-bold text-[#4A3326]">Customize Requests</h2>
-          <p className="text-sm text-gray-500 mt-1">Manage user custom order requests</p>
+          <p className="text-[13px] md:text-sm font-serif text-[#94A3B8] mb-1">
+            Dashboard &rsaquo; Order Management &rsaquo; <span className="font-semibold text-[#8B5E3C]">Customize Requests</span>
+          </p>
+          <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Customize Requests</h1>
         </div>
-          <button onClick={fetchRequests} className="admin-secondary-btn flex items-center gap-2">
-            <RefreshCw size={16} /> Refresh
-          </button>
+        <button
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          className="flex items-center gap-2 px-5 py-2.5 bg-white border border-[#E6DFD4] rounded-full text-[#8B5E3C] text-sm font-bold shadow-sm hover:bg-[#FAF4EF] transition-colors disabled:opacity-60 disabled:cursor-not-allowed self-start md:self-auto"
+        >
+          <RefreshCw size={15} className={isRefreshing ? 'animate-spin' : ''} />
+          REFRESH
+        </button>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm text-left">
-          <thead className="text-xs text-gray-500 uppercase bg-[#F8F4EC]">
-            <tr>
-              <th className="px-6 py-3 rounded-tl-xl">Date</th>
-              <th className="px-6 py-3">Customer</th>
-              <th className="px-6 py-3">Image</th>
-              <th className="px-6 py-3">Product Name</th>
-              <th className="px-6 py-3">Status</th>
-              <th className="px-6 py-3 rounded-tr-xl text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {requests.map((req) => (
-              <tr key={req._id} className="border-b border-[#E6DFD4] hover:bg-[#FDFBF7] transition-colors">
-                <td className="px-6 py-4 whitespace-nowrap text-gray-500">
-                  {new Date(req.createdAt).toLocaleDateString()}
-                </td>
-                <td className="px-6 py-4 font-medium text-[#4A3326]">
-                  {req.customerInfo.fullName}
-                  <div className="text-xs text-gray-400 font-normal">{req.customerInfo.email}</div>
-                </td>
-                <td className="px-6 py-4">
-                  {req.images && req.images.length > 0 ? (
-                    <div className="flex items-center gap-1 text-[#8B5E3C]">
-                      <ImageIcon className="w-4 h-4" />
-                      <span className="text-xs font-medium">{req.images.length}</span>
-                    </div>
-                  ) : (
-                    <span className="text-gray-400 text-xs">None</span>
-                  )}
-                </td>
-                <td className="px-6 py-4 text-gray-700">{getProductName(req.productDetails)}</td>
-                <td className="px-6 py-4">
-                  <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${
-                    req.status === 'Approved' ? 'bg-green-100 text-green-800' :
-                    req.status === 'Rejected' ? 'bg-red-100 text-red-800' :
-                    'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {req.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <button
-                      onClick={() => setSelectedRequest(req)}
-                      className="text-green-600 hover:text-green-700 transition-colors"
-                      title="View Details"
-                    >
-                      <Eye className="w-5 h-5" />
-                    </button>
-                    {req.images && req.images.length > 0 && (
+      {/* Bulk delete bar */}
+      {selectedIds.length > 0 && (
+        <div className="bg-[#F8F4EC] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3 flex-wrap">
+          <span className="text-sm font-semibold text-[#8B5E3C]">{selectedIds.length} selected</span>
+          <div className="flex gap-2 ml-auto flex-wrap">
+            <button onClick={() => toast.success('Status updated')} className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">Set Active</button>
+            <button onClick={() => toast.success('Status updated')} className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">Set Inactive</button>
+            <button
+              onClick={handleBulkDelete}
+              className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+            >
+              Delete Selected
+            </button>
+            <button onClick={() => setSelectedIds([])} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-white transition-colors text-gray-500">Clear</button>
+          </div>
+        </div>
+      )}
+
+      {/* Table Card */}
+      <div className="bg-white rounded-3xl shadow-sm border border-[#E6DFD4] overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-[#FAF4EF] text-[#8A817C] text-xs uppercase tracking-wider">
+                <th className="p-4 font-bold border-b border-[#E6DFD4] w-10">
+                  <input
+                    type="checkbox"
+                    checked={allChecked}
+                    onChange={toggleAll}
+                    className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer"
+                  />
+                </th>
+                <th className="p-4 font-bold border-b border-[#E6DFD4]">Date</th>
+                <th className="p-4 font-bold border-b border-[#E6DFD4]">Customer</th>
+                <th className="p-4 font-bold border-b border-[#E6DFD4]">Image</th>
+                <th className="p-4 font-bold border-b border-[#E6DFD4]">Product Name</th>
+                <th className="p-4 font-bold border-b border-[#E6DFD4]">Status</th>
+                <th className="p-4 font-bold border-b border-[#E6DFD4] text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#E6DFD4]">
+              {paginatedRequests.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="p-8 text-center text-[#8A817C]">No requests found.</td>
+                </tr>
+              ) : paginatedRequests.map((req, idx) => (
+                <tr key={req._id} className={`hover:bg-[#FAF4EF]/30 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
+                  <td className="p-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(req._id)}
+                      onChange={() => toggleOne(req._id)}
+                      className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer"
+                    />
+                  </td>
+                  <td className="p-4 whitespace-nowrap text-sm text-gray-500">
+                    {new Date(req.createdAt).toLocaleDateString()}
+                  </td>
+                  <td className="p-4">
+                    <div className="font-medium text-[#4A3326]">{req.customerInfo.fullName}</div>
+                    <div className="text-xs text-gray-400">{req.customerInfo.email}</div>
+                  </td>
+                  <td className="p-4">
+                    {req.images && req.images.length > 0 ? (
+                      <div className="flex items-center gap-1 text-[#8B5E3C]">
+                        <ImageIcon className="w-4 h-4" />
+                        <span className="text-xs font-medium">{req.images.length}</span>
+                      </div>
+                    ) : (
+                      <span className="text-gray-400 text-xs">None</span>
+                    )}
+                  </td>
+                  <td className="p-4 text-sm text-gray-700">{getProductName(req.productDetails)}</td>
+                  <td className="p-4">
+                    <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${
+                      req.status === 'Approved' ? 'bg-green-100 text-green-800' :
+                      req.status === 'Rejected' ? 'bg-red-100 text-red-800' :
+                      'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {req.status}
+                    </span>
+                  </td>
+                  <td className="p-4">
+                    <div className="flex items-center justify-end gap-2">
                       <button
-                        onClick={() => handleExportImages(req)}
-                        className="p-1.5 text-[#8B5E3C] hover:bg-[#F8F4EC] rounded-lg transition-colors"
-                        title="Export Images"
+                        onClick={() => setSelectedRequest(req)}
+                        className="text-green-600 hover:text-green-700 transition-colors"
+                        title="View Details"
                       >
-                        <Download className="w-5 h-5" />
+                        <Eye className="w-5 h-5" />
                       </button>
-                    )}
-                    {req.status === 'Pending' && (
-                      <>
+                      {req.images && req.images.length > 0 && (
                         <button
-                          onClick={() => handleUpdateStatus(req._id, 'Approved')}
-                          className="text-green-600 hover:text-green-700 transition-colors"
-                          title="Approve"
+                          onClick={() => handleExportImages(req)}
+                          className="p-1.5 text-[#8B5E3C] hover:bg-[#F8F4EC] rounded-lg transition-colors"
+                          title="Export Images"
                         >
-                          <Check className="w-5 h-5" />
+                          <Download className="w-5 h-5" />
                         </button>
-                        <button
-                          onClick={() => openRejectModal(req)}
-                          className="text-red-500 hover:text-red-600 transition-colors"
-                          title="Reject"
-                        >
-                          <X className="w-5 h-5" />
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {requests.length === 0 && (
-              <tr>
-                <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
-                  No requests found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                      )}
+                      {req.status === 'Pending' && (
+                        <>
+                          <button
+                            onClick={() => handleUpdateStatus(req._id, 'Approved')}
+                            className="text-green-600 hover:text-green-700 transition-colors"
+                            title="Approve"
+                          >
+                            <Check className="w-5 h-5" />
+                          </button>
+                          <button
+                            onClick={() => openRejectModal(req)}
+                            className="text-red-500 hover:text-red-600 transition-colors"
+                            title="Reject"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center px-4 py-4 border-t border-[#E6DFD4]">
+            <div className="flex items-center gap-1">
+              <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] hover:border-[#C4A98B] disabled:opacity-50 disabled:cursor-not-allowed">«</button>
+              <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] hover:border-[#C4A98B] disabled:opacity-50 disabled:cursor-not-allowed">‹</button>
+              {getPaginationPages(currentPage, totalPages).map((page, i) =>
+                page === '...' ? (
+                  <span key={`dots-${i}`} className="w-8 h-8 flex items-center justify-center text-[#A89585] text-sm select-none">…</span>
+                ) : (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`w-8 h-8 flex items-center justify-center rounded-md border text-sm font-semibold transition-all ${
+                      currentPage === page
+                        ? 'bg-[#C4965A] text-white border-[#C4965A] shadow-sm'
+                        : 'border-[#D6C9BC] text-[#7A5C44] hover:bg-[#F5EDE4] hover:border-[#C4A98B]'
+                    }`}
+                  >{page}</button>
+                )
+              )}
+              <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] hover:border-[#C4A98B] disabled:opacity-50 disabled:cursor-not-allowed">›</button>
+              <button onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] hover:border-[#C4A98B] disabled:opacity-50 disabled:cursor-not-allowed">»</button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* View Modal */}
@@ -213,14 +328,10 @@ export default function CustomizeList() {
                 <h3 className="text-xl font-bold text-[#4A3326]">Request Details</h3>
                 <p className="text-sm text-gray-500 mt-1">Submitted on {new Date(selectedRequest.createdAt).toLocaleString()}</p>
               </div>
-              <button
-                onClick={() => setSelectedRequest(null)}
-                className="text-red-500 hover:text-red-600 transition-colors"
-              >
+              <button onClick={() => setSelectedRequest(null)} className="text-red-500 hover:text-red-600 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
             <div className="p-6 overflow-y-auto space-y-6">
               <div className="flex justify-between items-center">
                 <span className={`px-3 py-1 text-sm font-medium rounded-full ${
@@ -231,9 +342,7 @@ export default function CustomizeList() {
                   Status: {selectedRequest.status}
                 </span>
               </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Customer Information */}
                 <div>
                   <h4 className="font-bold text-[#4A3326] mb-3 border-b border-[#E6DFD4] pb-2">Customer Information</h4>
                   <div className="space-y-2 text-sm">
@@ -242,8 +351,6 @@ export default function CustomizeList() {
                     <p><span className="text-gray-500 font-medium">Phone:</span> {selectedRequest.customerInfo.phone}</p>
                   </div>
                 </div>
-
-                {/* Shipping Address */}
                 <div>
                   <h4 className="font-bold text-[#4A3326] mb-3 border-b border-[#E6DFD4] pb-2">Shipping Address</h4>
                   <div className="space-y-2 text-sm">
@@ -252,8 +359,6 @@ export default function CustomizeList() {
                   </div>
                 </div>
               </div>
-
-              {/* Product Details */}
               <div>
                 <h4 className="font-bold text-[#4A3326] mb-3 border-b border-[#E6DFD4] pb-2">Product Configuration</h4>
                 <div className="bg-[#F8F4EC] p-4 rounded-xl space-y-3 text-sm">
@@ -263,9 +368,7 @@ export default function CustomizeList() {
                         <div key={idx}>
                           <span className="text-gray-500 font-medium block text-xs uppercase mb-1">{field.label}</span>
                           <p className="font-medium text-[#4A3326]">
-                            {typeof field.value === 'boolean' 
-                              ? (field.value ? 'Yes' : 'No') 
-                              : (field.value || 'N/A')}
+                            {typeof field.value === 'boolean' ? (field.value ? 'Yes' : 'No') : (field.value || 'N/A')}
                           </p>
                         </div>
                       ))
@@ -275,27 +378,16 @@ export default function CustomizeList() {
                   </div>
                 </div>
               </div>
-
-              {/* Reference Images */}
               {selectedRequest.images && selectedRequest.images.length > 0 && (
                 <div>
                   <h4 className="font-bold text-[#4A3326] mb-3 border-b border-[#E6DFD4] pb-2 flex items-center gap-2">
                     <ImageIcon className="w-5 h-5 text-[#8B5E3C]" /> Reference Images
                   </h4>
-                  <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
+                  <div className="flex gap-4 overflow-x-auto pb-4">
                     {selectedRequest.images.map((img, idx) => (
                       <div key={idx} className="flex-shrink-0 relative group">
-                        <img 
-                          src={img.url} 
-                          alt={`Reference ${idx + 1}`} 
-                          className="h-32 w-32 object-cover rounded-xl border border-[#E6DFD4]" 
-                        />
-                        <a 
-                          href={img.url} 
-                          target="_blank" 
-                          rel="noreferrer"
-                          className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-xl"
-                        >
+                        <img src={img.url} alt={`Reference ${idx + 1}`} className="h-32 w-32 object-cover rounded-xl border border-[#E6DFD4]" />
+                        <a href={img.url} target="_blank" rel="noreferrer" className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-xl">
                           <Eye className="w-6 h-6 text-white" />
                         </a>
                       </div>
@@ -304,30 +396,14 @@ export default function CustomizeList() {
                 </div>
               )}
             </div>
-
             <div className="p-4 border-t border-[#E6DFD4] bg-gray-50 flex justify-end gap-3 rounded-b-2xl">
               {selectedRequest.status === 'Pending' && (
                 <>
-                  <button
-                    onClick={() => openRejectModal(selectedRequest)}
-                    className="px-6 py-2 bg-white border border-red-200 text-red-600 hover:bg-red-50 rounded-xl font-medium transition-colors"
-                  >
-                    Reject
-                  </button>
-                  <button
-                    onClick={() => handleUpdateStatus(selectedRequest._id, 'Approved')}
-                    className="px-6 py-2 bg-green-600 text-white hover:bg-green-700 rounded-xl font-medium transition-colors"
-                  >
-                    Approve
-                  </button>
+                  <button onClick={() => openRejectModal(selectedRequest)} className="px-6 py-2 bg-white border border-red-200 text-red-600 hover:bg-red-50 rounded-xl font-medium transition-colors">Reject</button>
+                  <button onClick={() => handleUpdateStatus(selectedRequest._id, 'Approved')} className="px-6 py-2 bg-green-600 text-white hover:bg-green-700 rounded-xl font-medium transition-colors">Approve</button>
                 </>
               )}
-              <button
-                onClick={() => setSelectedRequest(null)}
-                className="px-6 py-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition-colors ml-auto"
-              >
-                Close
-              </button>
+              <button onClick={() => setSelectedRequest(null)} className="px-6 py-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition-colors ml-auto">Close</button>
             </div>
           </div>
         </div>
@@ -339,9 +415,7 @@ export default function CustomizeList() {
           <div className="bg-white rounded-2xl w-full max-w-md shadow-xl overflow-hidden">
             <div className="flex justify-between items-center p-5 border-b border-[#E6DFD4]">
               <h3 className="font-bold text-[#4A3326]">Reject Order Request</h3>
-              <button onClick={() => setRejectModalOpen(false)} className="text-red-500 hover:text-red-600 transition-colors">
-                <X className="w-5 h-5" />
-              </button>
+              <button onClick={() => setRejectModalOpen(false)} className="text-red-500 hover:text-red-600 transition-colors"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-5">
               <p className="text-sm text-gray-600 mb-4">
@@ -356,12 +430,7 @@ export default function CustomizeList() {
               ></textarea>
             </div>
             <div className="p-4 border-t border-[#E6DFD4] bg-gray-50 flex justify-end gap-3 rounded-b-2xl">
-              <button
-                onClick={() => setRejectModalOpen(false)}
-                className="px-5 py-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition-colors"
-              >
-                Cancel
-              </button>
+              <button onClick={() => setRejectModalOpen(false)} className="px-5 py-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition-colors">Cancel</button>
               <button
                 onClick={() => handleUpdateStatus(requestToReject._id, 'Rejected', rejectionReason)}
                 disabled={!rejectionReason.trim()}

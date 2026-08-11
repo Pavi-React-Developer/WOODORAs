@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { orderService } from '../../api/orderService';
-import { Package, Search, Calendar, MapPin, Eye, X, Download, RefreshCw, Gift, SquarePen, Trash, Save } from 'lucide-react';
+import { Package, Search, Calendar, MapPin, Eye, X, Download, RefreshCw, Gift, SquarePen, Trash, Save, Printer, FileText } from 'lucide-react';
+import { useReactToPrint } from 'react-to-print';
+import { PackingSlip } from '../../components/admin/PackingSlip';
 import { downloadExcelFile } from '../../utils/exportUtils';
 import toast from 'react-hot-toast';
 import OrderPricingSummary from '../../components/OrderPricingSummary';
@@ -18,7 +20,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
   const [editFormData, setEditFormData] = useState({});
   const [saving, setSaving] = useState(false);
   const [isEditingShipping, setIsEditingShipping] = useState(false);
-  
+
   const [couriers, setCouriers] = useState([]);
   const [showNewCourierInput, setShowNewCourierInput] = useState(false);
   const [newCourierName, setNewCourierName] = useState('');
@@ -32,6 +34,19 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
   const [shippingTrackingUrl, setShippingTrackingUrl] = useState('');
   const [shippingAdditionalTracking, setShippingAdditionalTracking] = useState([]);
   const [shippingCourierName, setShippingCourierName] = useState('');
+
+  // Packing Slip State
+  const [showPackingSlipModal, setShowPackingSlipModal] = useState(false);
+  const packingSlipRef = useRef();
+
+  const handlePrint = useReactToPrint({
+    contentRef: packingSlipRef,
+    documentTitle: 'Packing_Slips',
+    pageStyle: `
+      @page { size: 100mm 100mm !important; margin: 0 !important; }
+      @media print { body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }
+    `
+  });
 
   useEffect(() => {
     fetchOrders();
@@ -228,13 +243,35 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
     }
   };
 
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Delete ${selectedIds.length} selected order(s)? This cannot be undone.`)) return;
+    try {
+      await Promise.all(selectedIds.map(id => orderService.deleteOrder(id)));
+      toast.success(`${selectedIds.length} order(s) deleted`);
+      setSelectedIds([]);
+      fetchOrders();
+    } catch (error) {
+      toast.error(error.message || 'Failed to delete orders');
+    }
+  };
+
+  const handleBulkStatus = async (status) => {
+    try {
+      await Promise.all(selectedIds.map(id => orderService.updateOrderStatus(id, { status })));
+      toast.success(`${selectedIds.length} order(s) updated to ${status}`);
+      setSelectedIds([]);
+      fetchOrders();
+    } catch (error) {
+      toast.error(error.message || 'Failed to update order status');
+    }
+  };
 
   const filteredOrders = orders.filter(order => {
     const searchLower = searchTerm.toLowerCase();
     const matchId = order._id?.toLowerCase().includes(searchLower);
     const matchUser = (order.user?.name || '').toLowerCase().includes(searchLower);
     const matchShipping = (order.shippingAddress?.fullName || '').toLowerCase().includes(searchLower);
-    
+
     return matchId || matchUser || matchShipping;
   });
 
@@ -335,243 +372,328 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
   }
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
+    <div className="flex-1 overflow-y-auto p-8">
       {!(showViewModal || showEditModal) && (
         <>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Orders Management</h1>
-          <p className="text-sm text-gray-500">View and manage customer orders</p>
-        </div>
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
-          <button onClick={fetchOrders} className="admin-secondary-btn">
-            <RefreshCw size={16} /> Refresh
-          </button>
-          <div className="relative w-full sm:w-64">
-            <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input 
-              type="text" 
-              placeholder="Search by Order ID or Name"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-[#E6DFD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 w-full"
-            />
-          </div>
-          <button onClick={exportOrdersExcel} className="admin-export-btn self-start sm:self-auto">
-            <Download size={16} /> Export Excel
-          </button>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-3xl shadow-sm border border-[#E6DFD4] overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
-              <tr>
-                <th className="px-4 py-3.5 w-10">
-                  <input
-                    type="checkbox"
-                    checked={filteredOrders.length > 0 && selectedIds.length === filteredOrders.length}
-                    onChange={e => toggleSelectAll(e.target.checked)}
-                    className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
-                  />
-                </th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Order ID & Date</th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Customer</th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Total</th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Payment</th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Status</th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#E6DFD4]">
-              {paginatedOrders.length === 0 ? (
-                <tr>
-                  <td colSpan="7" className="px-6 py-12 text-center">
-                    <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500 font-medium">No orders found</p>
-                  </td>
-                </tr>
-              ) : paginatedOrders.map((order, idx) => (
-                <tr key={order._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
-                  <td className="px-4 py-3.5">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.includes(order._id)}
-                      onChange={e => toggleSelectOne(order._id, e.target.checked)}
-                      className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
-                    />
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <div className="font-mono text-sm font-bold text-gray-900 mb-1">{(order.orderId || 'DEBUG_' + (order._id||'').substring(order._id.length - 8))}</div>
-                    {order.isGiftOrder && (() => {
-                      const giftItems = (order.orderItems || []).filter(item => item.isGift);
-                      const noWrapperFee = (order.gift_fee || 0) === 0;
-                      const allNoWrapper = (giftItems.length > 0 && giftItems.every(item => item.isGiftWrapper === false)) || noWrapperFee;
-                      return (
-                        <span className="mb-2 inline-flex items-center gap-1 rounded bg-[#FDF0EB] px-2 py-0.5 text-[10px] font-bold text-[#D04E26] uppercase tracking-wider">
-                          <Gift className="w-3 h-3" />
-                          GIFT & CARD {allNoWrapper ? '(NO WRAPPER)' : ''}
-                        </span>
-                      );
-                    })()}
-                    <div className="text-xs text-gray-500 flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <div className="font-semibold text-gray-900">{order.user?.name || order.shippingAddress?.fullName}</div>
-                    <div className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-                      <MapPin className="w-3 h-3" />
-                      {order.shippingAddress?.city}, {order.shippingAddress?.state}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <div className="font-bold text-gray-900">₹{(order.totalPrice || 0).toLocaleString()}</div>
-                    <div className="text-xs text-gray-500">{(order.orderItems || []).reduce((acc, item) => acc + (item.qty || 0), 0)} items</div>
-                  </td>
-                  <td className="px-4 py-3.5">
-                    {order.paymentMethod === 'COD' ? (
-                      <div className="space-y-2">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${order.codAdvance > 0 ? 'bg-yellow-100 text-yellow-700' : order.isPaid ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
-                          COD{order.codAdvance > 0 ? ' (Partially Paid)' : ''}
-                        </span>
-                        {order.codAdvance > 0 && (
-                          <div className="text-xs text-gray-500 space-y-0.5">
-                            <div>Paid online: ₹{(order.codAdvance || 0).toLocaleString()}</div>
-                            <div>Balance due: ₹{(order.balanceAmount ?? 0).toLocaleString()}</div>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${order.isPaid ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                        {order.paymentMethod} {order.isPaid ? '(Paid)' : '(Unpaid)'}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <div className="inline-flex items-center rounded-full border border-[#E6DFD4] bg-white shadow-sm">
-                      <select
-                        className={`appearance-none bg-transparent px-4 py-2 text-sm font-semibold text-gray-900 rounded-full focus:outline-none ${!canEdit || normalizeOrderStatus(order.status) === 'Delivered' ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
-                        value={normalizeOrderStatus(order.status)}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val) {
-                            handleStatusSelectChange(order, val);
-                          }
-                        }}
-                        disabled={!canEdit || normalizeOrderStatus(order.status) === 'Delivered' || normalizeOrderStatus(order.status) === 'Cancelled'}
-                      >
-                        {getOrderStatusSelectOptions(order.status).map((statusOption) => (
-                          <option key={statusOption} value={statusOption}>
-                            {statusOption}
-                          </option>
-                        ))}
-                      </select>
-                      <span className="pointer-events-none px-3 text-gray-500">▾</span>
-                    </div>
-                    {order.courierName && (
-                      <div className="mt-2 text-xs font-bold text-[#8B5E3C]">
-                        {order.courierName}
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <div className="flex gap-2 justify-end mt-2">
-                    {canView && (
-                      <button
-                        onClick={() => handleViewOrder(order)}
-                        className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors"
-                        title="View"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    )}
-                    {canEdit && (
-                      <button
-                        onClick={() => handleEditOrder(order)}
-                        className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
-                        title="Edit"
-                      >
-                        <SquarePen className="w-4 h-4" />
-                      </button>
-                    )}
-                    {canDelete && (
-                      <button
-                        onClick={() => handleDeleteOrder(order._id)}
-                        className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
-                        title="Delete"
-                      >
-                        <Trash className="w-4 h-4" />
-                      </button>
-                    )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-4 border-t border-[#E6DFD4]">
-            <p className="text-sm text-gray-500">
-              Showing <span className="font-semibold text-gray-700">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span>–<span className="font-semibold text-gray-700">{Math.min(currentPage * ITEMS_PER_PAGE, filteredOrders.length)}</span> of <span className="font-semibold text-gray-700">{filteredOrders.length}</span> orders
-            </p>
-            <div className="flex items-center gap-1">
-              {/* First page */}
-              <button
-                onClick={() => setCurrentPage(1)}
-                disabled={currentPage === 1}
-                className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#E6DFD4] text-gray-500 hover:bg-[#F8F4EC] disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm"
-                title="First page"
-              >«</button>
-              {/* Prev */}
-              <button
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#E6DFD4] text-gray-500 hover:bg-[#F8F4EC] disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm"
-                title="Previous page"
-              >‹</button>
-              {/* Page numbers */}
-              {getPaginationPages(currentPage, totalPages).map((page, i) =>
-                page === '...' ? (
-                  <span key={`dots-${i}`} className="w-8 h-8 flex items-center justify-center text-gray-400 text-sm">…</span>
-                ) : (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`w-8 h-8 flex items-center justify-center rounded-lg border text-sm font-semibold transition-colors ${
-                      currentPage === page
-                        ? 'bg-[#8B5E3C] text-white border-[#8B5E3C]'
-                        : 'border-[#E6DFD4] text-gray-700 hover:bg-[#F8F4EC]'
-                    }`}
-                  >{page}</button>
-                )
-              )}
-              {/* Next */}
-              <button
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#E6DFD4] text-gray-500 hover:bg-[#F8F4EC] disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm"
-                title="Next page"
-              >›</button>
-              {/* Last page */}
-              <button
-                onClick={() => setCurrentPage(totalPages)}
-                disabled={currentPage === totalPages}
-                className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#E6DFD4] text-gray-500 hover:bg-[#F8F4EC] disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm"
-                title="Last page"
-              >»</button>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+            <div>
+              <p className="text-[13px] md:text-sm font-serif text-[#94A3B8] mb-1">
+                Dashboard &rsaquo; Order Management &rsaquo; <span className="font-semibold text-[#8B5E3C]">Orders</span>
+              </p>
+              <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Orders Management</h1>
+            </div>
+            <div className="flex items-center gap-3">
+              <button onClick={fetchOrders} className="admin-secondary-btn">
+                <RefreshCw size={16} /> Refresh
+              </button>
+              <button onClick={exportOrdersExcel} className="admin-export-btn">
+                <Download size={16} /> Export Excel
+              </button>
             </div>
           </div>
-        )}
-      </div>
-      </>
+
+          <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm p-4 mb-5 flex flex-wrap gap-3 items-center">
+            <div className="relative flex-1 min-w-[240px]">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search by Order ID, Name..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-4 py-2.5 text-sm border border-[#E6DFD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30"
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowPackingSlipModal(true)}
+                className="flex items-center gap-2 px-4 py-2.5 bg-[#F8F4EC] text-[#8B5E3C] border border-[#E6DFD4] rounded-xl text-sm font-bold hover:bg-[#F0EAE2] transition-colors"
+              >
+                <FileText size={16} /> Packing Slip
+              </button>
+              <button
+                onClick={() => {
+                  // Slight delay to ensure React commits the hidden ref before printing
+                  setTimeout(() => handlePrint(), 100);
+                }}
+                className="flex items-center gap-2 px-4 py-2.5 bg-[#8B5E3C] text-white border border-[#8B5E3C] rounded-xl text-sm font-bold hover:bg-[#7a5234] transition-colors shadow-sm"
+              >
+                <Printer size={16} /> Print
+              </button>
+            </div>
+          </div>
+
+          <div style={{ display: 'none' }}>
+            <PackingSlip
+              ref={packingSlipRef}
+              orders={selectedIds.length > 0 ? orders.filter(o => selectedIds.includes(o._id)) : filteredOrders}
+            />
+          </div>
+
+          {/* Selection bar */}
+          {selectedIds.length > 0 && (
+            <div className="bg-[#F8F4EC] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3 flex-wrap">
+              <span className="text-sm font-semibold text-[#8B5E3C]">{selectedIds.length} selected</span>
+              <div className="flex gap-2 ml-auto flex-wrap">
+                {canEdit && (
+                  <>
+                    <button onClick={() => handleBulkStatus('Active')} className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">Set Active</button>
+                    <button onClick={() => handleBulkStatus('Inactive')} className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">Set Inactive</button>
+                  </>
+                )}
+                {canDelete && (
+                  <button onClick={handleBulkDelete} className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">Delete Selected</button>
+                )}
+                <button onClick={() => setSelectedIds([])} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-white transition-colors text-gray-500">Clear</button>
+              </div>
+            </div>
+          )}
+
+          <div className="bg-white rounded-3xl shadow-sm border border-[#E6DFD4] overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
+                  <tr>
+                    <th className="px-4 py-3.5 w-10">
+                      <input
+                        type="checkbox"
+                        checked={filteredOrders.length > 0 && selectedIds.length === filteredOrders.length}
+                        onChange={e => toggleSelectAll(e.target.checked)}
+                        className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                      />
+                    </th>
+                    <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Order ID & Date</th>
+                    <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Customer</th>
+                    <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Total</th>
+                    <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Payment</th>
+                    <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Status</th>
+                    <th className="px-4 py-3.5 text-right pr-8 text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E6DFD4]">
+                  {paginatedOrders.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="px-6 py-12 text-center">
+                        <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                        <p className="text-gray-500 font-medium">No orders found</p>
+                      </td>
+                    </tr>
+                  ) : paginatedOrders.map((order, idx) => (
+                    <tr key={order._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
+                      <td className="px-4 py-3.5">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(order._id)}
+                          onChange={e => toggleSelectOne(order._id, e.target.checked)}
+                          className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                        />
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <div className="font-mono text-sm font-bold text-gray-900 mb-1">{(order.orderId || 'DEBUG_' + (order._id || '').substring(order._id.length - 8))}</div>
+                        {order.isGiftOrder && (() => {
+                          const giftItems = (order.orderItems || []).filter(item => item.isGift);
+                          const noWrapperFee = (order.gift_fee || 0) === 0;
+                          const allNoWrapper = (giftItems.length > 0 && giftItems.every(item => item.isGiftWrapper === false)) || noWrapperFee;
+                          return (
+                            <span className="mb-2 inline-flex items-center gap-1 rounded bg-[#FDF0EB] px-2 py-0.5 text-[10px] font-bold text-[#D04E26] uppercase tracking-wider">
+                              <Gift className="w-3 h-3" />
+                              GIFT & CARD {allNoWrapper ? '(NO WRAPPER)' : ''}
+                            </span>
+                          );
+                        })()}
+                        <div className="text-xs text-gray-500 flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <div className="font-semibold text-gray-900">{order.user?.name || order.shippingAddress?.fullName}</div>
+                        <div className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                          <MapPin className="w-3 h-3" />
+                          {order.shippingAddress?.city}, {order.shippingAddress?.state}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <div className="font-bold text-gray-900">₹{(order.totalPrice || 0).toLocaleString()}</div>
+                        <div className="text-xs text-gray-500">{(order.orderItems || []).reduce((acc, item) => acc + (item.qty || 0), 0)} items</div>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        {order.paymentMethod === 'COD' ? (
+                          <div className="space-y-2">
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${order.codAdvance > 0 ? 'bg-yellow-100 text-yellow-700' : order.isPaid ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
+                              COD{order.codAdvance > 0 ? ' (Partially Paid)' : ''}
+                            </span>
+                            {order.codAdvance > 0 && (
+                              <div className="text-xs text-gray-500 space-y-0.5">
+                                <div>Paid online: ₹{(order.codAdvance || 0).toLocaleString()}</div>
+                                <div>Balance due: ₹{(order.balanceAmount ?? 0).toLocaleString()}</div>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${order.isPaid ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                            {order.paymentMethod} {order.isPaid ? '(Paid)' : '(Unpaid)'}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <div className="inline-flex items-center rounded-full border border-[#E6DFD4] bg-white shadow-sm">
+                          <select
+                            className={`appearance-none bg-transparent px-4 py-2 text-sm font-semibold text-gray-900 rounded-full focus:outline-none ${!canEdit || normalizeOrderStatus(order.status) === 'Delivered' ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                            value={normalizeOrderStatus(order.status)}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val) {
+                                handleStatusSelectChange(order, val);
+                              }
+                            }}
+                            disabled={!canEdit || normalizeOrderStatus(order.status) === 'Delivered' || normalizeOrderStatus(order.status) === 'Cancelled'}
+                          >
+                            {getOrderStatusSelectOptions(order.status).map((statusOption) => (
+                              <option key={statusOption} value={statusOption}>
+                                {statusOption}
+                              </option>
+                            ))}
+                          </select>
+                          <span className="pointer-events-none px-3 text-gray-500">▾</span>
+                        </div>
+                        {order.courierName && (
+                          <div className="mt-2 text-xs font-bold text-[#8B5E3C]">
+                            {order.courierName}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3.5 pr-8">
+                        <div className="flex gap-2 justify-end mt-2">
+                          {canView && (
+                            <button
+                              onClick={() => handleViewOrder(order)}
+                              className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors"
+                              title="View"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                          )}
+                          {canEdit && (
+                            <button
+                              onClick={() => handleEditOrder(order)}
+                              className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
+                              title="Edit"
+                            >
+                              <SquarePen className="w-4 h-4" />
+                            </button>
+                          )}
+                          {canDelete && (
+                            <button
+                              onClick={() => handleDeleteOrder(order._id)}
+                              className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
+                              title="Delete"
+                            >
+                              <Trash className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center px-4 py-4 border-t border-[#E6DFD4]">
+                <div className="flex items-center gap-1">
+                  {/* First page */}
+                  <button
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
+                    className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] hover:border-[#C4A98B] disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="First page"
+                  >«</button>
+                  {/* Prev */}
+                  <button
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] hover:border-[#C4A98B] disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Previous page"
+                  >‹</button>
+                  {/* Page numbers */}
+                  {getPaginationPages(currentPage, totalPages).map((page, i) =>
+                    page === '...' ? (
+                      <span key={`dots-${i}`} className="w-8 h-8 flex items-center justify-center text-[#A89585] text-sm select-none">…</span>
+                    ) : (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`w-8 h-8 flex items-center justify-center rounded-md border text-sm font-semibold transition-all ${currentPage === page
+                          ? 'bg-[#C4965A] text-white border-[#C4965A] shadow-sm'
+                          : 'border-[#D6C9BC] text-[#7A5C44] hover:bg-[#F5EDE4] hover:border-[#C4A98B]'
+                          }`}
+                      >{page}</button>
+                    )
+                  )}
+                  {/* Next */}
+                  <button
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] hover:border-[#C4A98B] disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Next page"
+                  >›</button>
+                  {/* Last page */}
+                  <button
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage === totalPages}
+                    className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] hover:border-[#C4A98B] disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Last page"
+                  >»</button>
+                </div>
+              </div>
+            )}
+
+
+          </div>
+        </>
       )}
 
+      {showPackingSlipModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-3xl shadow-xl flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-[#E6DFD4] bg-[#F8F4EC]">
+              <div>
+                <h2 className="text-xl font-serif font-bold text-[#1C1F2A]">Packing Slip Preview</h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  {selectedIds.length > 0 ? selectedIds.length : filteredOrders.length} order(s) will be printed
+                </p>
+              </div>
+              <button onClick={() => setShowPackingSlipModal(false)} className="p-2 hover:bg-black/5 rounded-full transition-colors">
+                <X size={20} className="text-gray-500" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 bg-gray-50 flex flex-col items-center gap-6">
+              {/* Render a visual preview of what will be printed */}
+              <div className="bg-white shadow-sm border border-gray-200 pointer-events-none scale-150 origin-top my-10">
+                <PackingSlip
+                  orders={selectedIds.length > 0 ? orders.filter(o => selectedIds.includes(o._id)) : filteredOrders}
+                />
+              </div>
+            </div>
+            <div className="p-6 border-t border-[#E6DFD4] bg-white flex justify-end gap-3">
+              <button onClick={() => setShowPackingSlipModal(false)} className="px-6 py-2.5 border border-[#E6DFD4] text-[#6D625C] font-bold text-sm rounded-full hover:bg-gray-50 transition-colors">
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  setShowPackingSlipModal(false);
+                  setTimeout(() => handlePrint(), 300);
+                }}
+                className="px-6 py-2.5 bg-[#8B5E3C] text-white font-bold text-sm rounded-full hover:bg-[#7a5234] transition-colors flex items-center gap-2"
+              >
+                <Printer size={16} /> Print Now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showViewModal && selectedOrder && (
         <div>
@@ -580,7 +702,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
               <h1 className="text-3xl font-serif font-bold text-[#1C1F2A]">Order Details</h1>
               <p className="text-sm text-gray-500 mt-1">View information for order #{selectedOrder.orderId || (selectedOrder._id || '').substring((selectedOrder._id || '').length - 8)}</p>
             </div>
-            <button onClick={closeViewModal} className="flex items-center gap-2 text-[#6D625C] hover:text-gray-900 transition-colors text-sm font-medium">
+            <button onClick={closeViewModal} className="admin-btn flex items-center gap-2 text-[#6D625C] hover:text-gray-900 transition-colors text-sm font-medium">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
               Back to Orders
             </button>
@@ -761,13 +883,13 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
               <h1 className="text-3xl font-serif font-bold text-[#1C1F2A]">Edit Order Details</h1>
               <p className="text-sm text-gray-500 mt-1">Update information for order #{selectedOrder.orderId || (selectedOrder._id || '').substring((selectedOrder._id || '').length - 8)}</p>
             </div>
-            <button onClick={closeEditModal} className="flex items-center gap-2 text-[#6D625C] hover:text-gray-900 transition-colors text-sm font-medium">
+            <button onClick={closeEditModal} className="admin-btn flex items-center gap-2 text-[#6D625C] hover:text-gray-900 transition-colors text-sm font-medium">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
               Back to Orders
             </button>
           </div>
           <div className="w-full rounded-3xl bg-white shadow-sm border border-[#E6DFD4] overflow-hidden flex flex-col flex-1">
-            
+
             <div className="p-6 overflow-y-auto space-y-6 flex-1">
               {/* Top Read-Only Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -785,7 +907,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
               <div className="rounded-3xl bg-[#F8F4EC] p-4">
                 <div className="flex justify-between items-center mb-3">
                   <p className="text-xs uppercase tracking-widest text-gray-500">Shipping To</p>
-                  <button 
+                  <button
                     onClick={() => setIsEditingShipping(!isEditingShipping)}
                     className="text-blue-600 hover:text-blue-700 transition-colors"
                     title={isEditingShipping ? 'Cancel Edit' : 'Edit Shipping Address'}
@@ -795,21 +917,21 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                 </div>
                 {isEditingShipping ? (
                   <div className="space-y-3">
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       placeholder="Full Name"
                       className="w-full px-3 py-2 rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 text-sm"
                       value={editFormData.shippingAddress?.fullName || ''}
                       onChange={(e) => setEditFormData({ ...editFormData, shippingAddress: { ...editFormData.shippingAddress, fullName: e.target.value } })}
                     />
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       placeholder="Phone"
                       className="w-full px-3 py-2 rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 text-sm"
                       value={editFormData.shippingAddress?.phone || ''}
                       onChange={(e) => setEditFormData({ ...editFormData, shippingAddress: { ...editFormData.shippingAddress, phone: e.target.value } })}
                     />
-                    <textarea 
+                    <textarea
                       placeholder="Address"
                       rows={2}
                       className="w-full px-3 py-2 rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 text-sm resize-none"
@@ -817,22 +939,22 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                       onChange={(e) => setEditFormData({ ...editFormData, shippingAddress: { ...editFormData.shippingAddress, address: e.target.value } })}
                     />
                     <div className="grid grid-cols-3 gap-2">
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         placeholder="City"
                         className="w-full px-3 py-2 rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 text-sm"
                         value={editFormData.shippingAddress?.city || ''}
                         onChange={(e) => setEditFormData({ ...editFormData, shippingAddress: { ...editFormData.shippingAddress, city: e.target.value } })}
                       />
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         placeholder="State"
                         className="w-full px-3 py-2 rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 text-sm"
                         value={editFormData.shippingAddress?.state || ''}
                         onChange={(e) => setEditFormData({ ...editFormData, shippingAddress: { ...editFormData.shippingAddress, state: e.target.value } })}
                       />
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         placeholder="PIN"
                         className="w-full px-3 py-2 rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 text-sm"
                         value={editFormData.shippingAddress?.pinCode || ''}
@@ -961,11 +1083,11 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                         </button>
                       </div>
                     ))}
-                    
+
                     <button
-                      onClick={() => setEditFormData({ 
-                        ...editFormData, 
-                        additionalTracking: [...(editFormData.additionalTracking || []), { trackingId: '', trackingUrl: '' }] 
+                      onClick={() => setEditFormData({
+                        ...editFormData,
+                        additionalTracking: [...(editFormData.additionalTracking || []), { trackingId: '', trackingUrl: '' }]
                       })}
                       className="text-xs font-bold text-[#8B5E3C] hover:text-[#7a5234] inline-flex items-center gap-1 mt-2"
                     >
@@ -975,21 +1097,21 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                 )}
               </div>
             </div>
-            
+
             <div className="border-t border-[#E6DFD4] p-6 flex justify-end gap-3 bg-gray-50 shrink-0">
-              <button 
-                onClick={closeEditModal} 
+              <button
+                onClick={closeEditModal}
                 className="px-6 py-2 rounded-xl font-bold text-gray-700 bg-white border border-[#E6DFD4] hover:bg-gray-50 transition-colors"
                 disabled={saving}
               >
                 Cancel
               </button>
-              <button 
-                onClick={handleSaveOrderDetails} 
+              <button
+                onClick={handleSaveOrderDetails}
                 className="px-6 py-2 rounded-xl font-bold text-white bg-[#8B5E3C] hover:bg-[#7a5234] transition-colors flex items-center gap-2"
                 disabled={saving}
               >
-                {saving ? 'Saving...' : <><Save className="w-4 h-4"/> Save Changes</>}
+                {saving ? 'Saving...' : <><Save className="w-4 h-4" /> Save Changes</>}
               </button>
             </div>
           </div>
@@ -1005,7 +1127,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <div className="p-6 space-y-4">
               <div>
                 <p className="text-xs uppercase tracking-widest text-gray-500 mb-1">Order ID</p>
@@ -1021,7 +1143,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                     </button>
                   )}
                 </div>
-                
+
                 {showNewCourierInput ? (
                   <div className="flex flex-col gap-2 p-3 bg-[#F8F4EC] rounded-xl border border-[#E6DFD4]">
                     <div className="flex items-center gap-2">
@@ -1075,7 +1197,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                       ))}
                     </select>
                     {shippingCourierName && couriers.find(c => c.name === shippingCourierName) && (
-                      <button 
+                      <button
                         onClick={(e) => handleDeleteCourier(e, couriers.find(c => c.name === shippingCourierName)._id)}
                         className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded"
                         title="Delete this courier"
@@ -1145,17 +1267,17 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                 </button>
               </div>
             </div>
-            
+
             <div className="border-t border-[#E6DFD4] p-6 flex justify-end gap-3 bg-gray-50">
-              <button 
-                onClick={() => setShowShippingModal(false)} 
+              <button
+                onClick={() => setShowShippingModal(false)}
                 className="px-6 py-2 rounded-xl font-bold text-gray-700 bg-white border border-[#E6DFD4] hover:bg-gray-50 transition-colors"
                 disabled={saving}
               >
                 Cancel
               </button>
-              <button 
-                onClick={submitShippingDetails} 
+              <button
+                onClick={submitShippingDetails}
                 className="px-6 py-2 rounded-xl font-bold text-white bg-[#8B5E3C] hover:bg-[#7a5234] transition-colors flex items-center gap-2"
                 disabled={saving}
               >

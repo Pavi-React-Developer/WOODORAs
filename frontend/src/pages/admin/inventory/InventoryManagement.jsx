@@ -29,6 +29,8 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
   const [products, setProducts] = useState([]);
   const [variants, setVariants] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   // Modals state
   const [stockHistoryModalOpen, setStockHistoryModalOpen] = useState(false);
@@ -243,6 +245,9 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
     return p.name?.toLowerCase().includes(query) || getInventorySku(p, productVariants).toLowerCase().includes(query);
   });
 
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
+  const paginatedProducts = filteredProducts.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
   // Calculate summary stats dynamically
   let totalProducts = products.length;
   let totalStock = 0;
@@ -264,31 +269,24 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
   });
 
   if (loading) {
-    return <div className="p-10 text-center text-gray-500 font-medium">Loading inventory...</div>;
+    return <div className="flex-1 overflow-y-auto p-8 flex items-center justify-center text-[#8B5E3C] font-medium">Loading inventory...</div>;
   }
 
   return (
-    <div className="inventory-management-wrapper">
+    <div className="flex-1 overflow-y-auto p-8">
       {/* HEADER & ACTION BAR */}
-      <div className="inventory-header">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="inventory-page-title">Inventory Management</h1>
-          <p className="inventory-page-subtitle">Track and manage your product stock efficiently.</p>
+          <p className="text-[13px] md:text-sm font-serif text-[#94A3B8] mb-1">
+            Dashboard &rsaquo; <span className="font-semibold text-[#8B5E3C]">Inventory Management</span>
+          </p>
+          <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Inventory Management</h1>
+          <p className="text-sm text-[#8A817C] mt-2">Track and manage your product stock efficiently.</p>
         </div>
-        <div className="action-bar flex items-center gap-3">
+        <div className="flex items-center gap-3">
           <button className="admin-secondary-btn" onClick={fetchInventoryData}>
             <RefreshCw size={16} /> Refresh
           </button>
-          <div className="search-wrapper">
-            <Search className="search-icon" size={18} />
-            <input 
-              type="text" 
-              placeholder="Search Product or SKU..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
-          </div>
           <button className="admin-export-btn" onClick={exportInventoryExcel}>
             <Download size={16} /> Export Excel
           </button>
@@ -336,18 +334,14 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
       </div>
 
       {viewMode === 'detail' && viewProduct ? (
-        <div className="inventory-detail-view bg-white p-8 rounded-2xl shadow-sm border border-gray-100 mt-6">
-          <div className="detail-header">
-            <div className="detail-breadcrumb">
-              <button onClick={closeViewMode} className="detail-backlink">
-                <span className="detail-back-icon">&larr;</span> Back to Inventory
-              </button>
-              <span className="detail-breadcrumb-separator">|</span>
-              <span className="detail-breadcrumb-title">{viewProduct?.name}</span>
-            </div>
+        <>
+          <div className="mb-6 flex justify-end">
+            <button onClick={closeViewMode} className="admin-secondary-btn flex items-center gap-2">
+              <span>&larr;</span> Back to Inventory
+            </button>
           </div>
-
-          <div className="flex flex-col md:flex-row gap-8 items-start">
+          <div className="inventory-detail-view bg-[#F8F4EC] p-8 rounded-2xl shadow-sm border border-[#E6DFD4]">
+            <div className="flex flex-col md:flex-row gap-8 items-start">
             <ProductThumbnail
               src={getInventoryImage(viewProduct, getProductVariants(viewProduct))}
               alt={viewProduct?.name}
@@ -434,6 +428,7 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
             </div>
           )}
         </div>
+        </>
       ) : (
       <div className="inventory-main-layout mt-6">
         <div className="inventory-tables-section">
@@ -449,53 +444,62 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
           ) : (
             <>
               {/* MAIN INVENTORY TABLE */}
-              <div className="table-container">
-                <div className="table-header-section">
-                  <h2 className="table-title">Main Inventory</h2>
-                </div>
-                <div className="table-responsive">
-                  <table className="premium-table">
-                    <thead>
+              <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm overflow-hidden mb-6">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
                       <tr>
-                        <th>Product</th>
-                        <th>Category</th>
-                        <th>SKU</th>
-                        <th className="text-right">Stock</th>
-                        <th>Status</th>
-                        <th className="text-center">Action</th>
+                        {['Product', 'Category', 'SKU', 'Stock', 'Status', 'Action'].map((h) => (
+                          <th key={h} className={`px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap ${h === 'Stock' ? 'text-right' : h === 'Action' ? 'text-center' : 'text-left'}`}>
+                            {h}
+                          </th>
+                        ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredProducts.map((item) => {
+                      {paginatedProducts.map((item, idx) => {
                         const productVariants = getProductVariants(item);
                         const currentStock = productVariants.length > 0
                           ? productVariants.reduce((acc, v) => acc + Math.max(0, (v.inventory || 0) - (v.reserveStock || 0)), 0)
                           : (item.inventory?.stockQuantity || 0);
-                        const status = currentStock === 0 ? { label: 'Out of Stock', class: 'status-out-of-stock' } : (item.isLowStock ? { label: 'Low Stock', class: 'status-low-stock' } : { label: 'In Stock', class: 'status-in-stock' });
+                        
+                        let statusColor = 'bg-green-100 text-green-700';
+                        let statusLabel = 'In Stock';
+                        if (currentStock === 0) {
+                          statusColor = 'bg-red-100 text-red-700';
+                          statusLabel = 'Out of Stock';
+                        } else if (item.isLowStock) {
+                          statusColor = 'bg-orange-100 text-orange-700';
+                          statusLabel = 'Low Stock';
+                        }
 
                         return (
                           <React.Fragment key={item._id}>
-                            <tr className={productVariants.length > 0 ? "border-b-0" : ""}>
-                              <td>
-                                <div className="product-cell">
-                                  <ProductThumbnail src={getInventoryImage(item, productVariants)} alt={item.name} />
-                                  <span className="product-name">{item.name}</span>
+                            <tr className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
+                              <td className="px-4 py-3.5">
+                                <div className="flex items-center gap-3">
+                                  <ProductThumbnail src={getInventoryImage(item, productVariants)} alt={item.name} className="w-10 h-10 rounded-lg object-cover bg-gray-100" />
+                                  <span className="font-semibold text-gray-800">{item.name}</span>
                                 </div>
                               </td>
-                              <td className="capitalize">{item.category?.name || 'General'}</td>
-                              <td><code className="sku-code">{getInventorySku(item, productVariants)}</code></td>
-                              <td className="text-right font-semibold">{currentStock}</td>
-                              <td>
-                                <span className={`status-badge ${status.class}`}>
-                                  {status.label}
+                              <td className="px-4 py-3.5 capitalize text-gray-600">{item.category?.name || 'General'}</td>
+                              <td className="px-4 py-3.5">
+                                <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-md text-xs font-medium tracking-wide">
+                                  {getInventorySku(item, productVariants)}
                                 </span>
                               </td>
-                              <td>
-                                <div className="action-buttons">
-
-                                  <button className="text-green-600 hover:text-green-700 transition-colors" title="View" onClick={() => openViewModal(item)}><Eye size={16}/></button>
+                              <td className="px-4 py-3.5 text-right font-semibold text-gray-800">{currentStock}</td>
+                              <td className="px-4 py-3.5">
+                                <span className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 w-fit ${statusColor}`}>
+                                  <span className={`w-1.5 h-1.5 rounded-full ${statusColor.replace('bg-', 'bg-').replace('100', '500').split(' ')[0]}`}></span>
+                                  {statusLabel}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3.5 text-center">
+                                <div className="flex items-center justify-center gap-3">
+                                  <button className="text-[#8B5E3C] hover:text-[#7a5234] transition-colors" title="View" onClick={() => openViewModal(item)}><Eye size={16}/></button>
                                   {canEdit && (
-                                  <button className="text-blue-600 hover:text-blue-700 transition-colors" title="Edit Stock" onClick={() => openEditModal(item, 'product')}><SquarePen size={16}/></button>
+                                  <button className="text-blue-500 hover:text-blue-700 transition-colors" title="Edit Stock" onClick={() => openEditModal(item, 'product')}><SquarePen size={16}/></button>
                                   )}
                                 </div>
                               </td>
@@ -505,6 +509,55 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
                       })}
                     </tbody>
                   </table>
+                </div>
+                {/* Pagination Controls */}
+                {/* Pagination Controls */}
+                <div className="flex items-center justify-center px-6 py-6 border-t border-[#E6DFD4] bg-[#FAF8F5]">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setCurrentPage(1)}
+                      disabled={currentPage === 1}
+                      className="w-10 h-10 flex items-center justify-center text-sm font-semibold text-[#8B5E3C] bg-white border border-[#E6DFD4] rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#FDF9F5] transition-colors"
+                    >
+                      &laquo;
+                    </button>
+                    <button
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="w-10 h-10 flex items-center justify-center text-sm font-semibold text-[#8B5E3C] bg-white border border-[#E6DFD4] rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#FDF9F5] transition-colors"
+                    >
+                      &lsaquo;
+                    </button>
+                    
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`w-10 h-10 flex items-center justify-center text-sm font-bold rounded-xl transition-colors ${
+                          currentPage === page 
+                            ? 'bg-[#C29864] text-white shadow-sm border border-[#C29864]' 
+                            : 'bg-white border border-[#E6DFD4] text-[#8B5E3C] hover:bg-[#FDF9F5]'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+
+                    <button
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      className="w-10 h-10 flex items-center justify-center text-sm font-semibold text-[#8B5E3C] bg-white border border-[#E6DFD4] rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#FDF9F5] transition-colors"
+                    >
+                      &rsaquo;
+                    </button>
+                    <button
+                      onClick={() => setCurrentPage(totalPages)}
+                      disabled={currentPage === totalPages}
+                      className="w-10 h-10 flex items-center justify-center text-sm font-semibold text-[#8B5E3C] bg-white border border-[#E6DFD4] rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#FDF9F5] transition-colors"
+                    >
+                      &raquo;
+                    </button>
+                  </div>
                 </div>
               </div>
 

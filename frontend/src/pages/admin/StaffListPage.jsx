@@ -96,12 +96,14 @@ export default function StaffListPage({ onAddStaff, onEditStaff, onRoleAssign, c
   };
 
   return (
-    <div>
+    <div className="flex-1 overflow-y-auto p-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
         <div>
-          <p className="text-xs text-gray-400 mb-1">Dashboard &rsaquo; Staff Management &rsaquo; <span className="text-[#8B5E3C] font-semibold">Staff List</span></p>
-          <h1 className="text-2xl font-bold text-gray-800">Staff List</h1>
+          <p className="text-[13px] md:text-sm font-serif text-[#94A3B8] mb-1">
+            Dashboard &rsaquo; Staff Management &rsaquo; <span className="font-semibold text-[#8B5E3C]">Staff List</span>
+          </p>
+          <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Staff List</h1>
         </div>
         <div className="flex items-center gap-3">
           <button onClick={fetchStaff} className="admin-secondary-btn">
@@ -149,9 +151,9 @@ export default function StaffListPage({ onAddStaff, onEditStaff, onRoleAssign, c
 
       {/* Bulk Actions */}
       {selectedIds.length > 0 && (
-        <div className="bg-[#F8F4EC] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3">
+        <div className="bg-[#F8F4EC] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3 flex-wrap">
           <span className="text-sm font-semibold text-[#8B5E3C]">{selectedIds.length} selected</span>
-          <div className="flex gap-2 ml-auto">
+          <div className="flex gap-2 ml-auto flex-wrap">
              {typeof handleBulkDelete !== 'undefined' && (
                 <button onClick={handleBulkDelete} className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">Delete Selected</button>
              )}
@@ -175,7 +177,7 @@ export default function StaffListPage({ onAddStaff, onEditStaff, onRoleAssign, c
                   />
                 </th>
                 {['Profile', 'Full Name', 'Email', 'Mobile', 'Role', 'Status', 'Created Date', 'Actions'].map(h => (
-                  <th key={h} className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">{h}</th>
+                  <th key={h} className={`px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap ${h === 'Actions' ? 'text-right pr-8' : 'text-left'}`}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -231,8 +233,8 @@ export default function StaffListPage({ onAddStaff, onEditStaff, onRoleAssign, c
                       )}
                     </td>
                     <td className="px-4 py-3.5 text-gray-500 whitespace-nowrap">{new Date(member.createdAt).toLocaleDateString('en-IN')}</td>
-                    <td className="px-4 py-3.5">
-                      <div className="flex items-center gap-1">
+                    <td className="px-4 py-3.5 pr-8">
+                      <div className="flex items-center justify-end gap-1">
                         {canEdit && (
                         <button onClick={() => onEditStaff(member)} className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors" title="Edit">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>

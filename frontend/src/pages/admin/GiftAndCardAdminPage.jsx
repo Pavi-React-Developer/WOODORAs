@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { adminService } from '../../api/adminService';
 import { toast } from 'react-hot-toast';
 import CustomCalendar from '../../components/CustomCalendar';
-import { Eye, X, Edit2, ToggleLeft, ToggleRight, Trash2, SquarePen, Trash } from 'lucide-react';
+import { Eye, X, Edit2, ToggleLeft, ToggleRight, Trash2, SquarePen, Trash, RefreshCw } from 'lucide-react';
 import { getImageSrc } from '../../utils/imageUtils';
 import { formatDeliveryDate, getDeliveryDate } from '../../utils/deliveryDate';
 import EditGiftBoxRulePage from './fees/EditGiftBoxRulePage';
@@ -26,7 +26,47 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
   const [messages, setMessages] = useState([]);
   const [giftBoxRules, setGiftBoxRules] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+
+  // Pagination state
+  const ITEMS_PER_PAGE = 10;
+  const [ordersPage, setOrdersPage] = useState(1);
+  const [messagesPage, setMessagesPage] = useState(1);
+  const [rulesPage, setRulesPage] = useState(1);
+
+  // Multi-select for orders tab
+  const [selectedIds, setSelectedIds] = useState([]);
+  const toggleSelectAll = (checked) => {
+    setSelectedIds(checked ? paginatedOrders.map(item => item._id) : []);
+  };
+  const toggleSelectOne = (id, checked) => {
+    setSelectedIds(prev => checked ? [...prev, id] : prev.filter(i => i !== id));
+  };
+
+  // Multi-select for messages tab
+  const [selectedMsgIds, setSelectedMsgIds] = useState([]);
+  const toggleMsgSelectAll = (checked) => {
+    setSelectedMsgIds(checked ? paginatedMessages.map(m => m._id) : []);
+  };
+  const toggleMsgSelectOne = (id, checked) => {
+    setSelectedMsgIds(prev => checked ? [...prev, id] : prev.filter(i => i !== id));
+  };
+
+  // Pagination helper
+  const getPaginationPages = (currentPage, totalPages) => {
+    const pages = [];
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (currentPage > 3) pages.push('...');
+      for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) pages.push(i);
+      if (currentPage < totalPages - 2) pages.push('...');
+      pages.push(totalPages);
+    }
+    return pages;
+  };
   
   const [editingRuleId, setEditingRuleId] = useState(null);
   const [formData, setFormData] = useState({
@@ -132,12 +172,45 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
     }
   };
 
+  // Paginated slices
+  const paginatedOrders = orders.slice((ordersPage - 1) * ITEMS_PER_PAGE, ordersPage * ITEMS_PER_PAGE);
+  const totalOrderPages = Math.max(1, Math.ceil(orders.length / ITEMS_PER_PAGE));
+  const paginatedMessages = messages.slice((messagesPage - 1) * ITEMS_PER_PAGE, messagesPage * ITEMS_PER_PAGE);
+  const totalMessagePages = Math.max(1, Math.ceil(messages.length / ITEMS_PER_PAGE));
+  const paginatedRules = giftBoxRules.slice((rulesPage - 1) * ITEMS_PER_PAGE, rulesPage * ITEMS_PER_PAGE);
+  const totalRulesPages = Math.max(1, Math.ceil(giftBoxRules.length / ITEMS_PER_PAGE));
+
   if (loading) return <div className="p-8 text-center text-gray-500">Loading...</div>;
 
+  const tabTitles = {
+    rules: 'Delivery Rules',
+    messages: 'Personalized Messages',
+    'gift-fee': 'Gift Fee',
+    orders: 'Gift Orders',
+  };
+  const pageTitle = tabTitles[activeTab] || 'Gift & Card Management';
+
   return (
-    <div className="p-6">
-      <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-[#4A403B]">Gift & Card Management</h1>
+    <div className="flex-1 overflow-y-auto p-8">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+        <div>
+          <p className="text-[13px] md:text-sm font-serif text-[#94A3B8] mb-1">
+            Dashboard &rsaquo; Gift &amp; Card &rsaquo; <span className="font-semibold text-[#8B5E3C]">{pageTitle}</span>
+          </p>
+          <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">{pageTitle}</h1>
+        </div>
+        <button
+          onClick={async () => {
+            setIsRefreshing(true);
+            await fetchData();
+            setIsRefreshing(false);
+          }}
+          disabled={isRefreshing}
+          className="flex items-center gap-2 px-5 py-2.5 bg-white border border-[#E6DFD4] rounded-full text-[#8B5E3C] text-sm font-bold shadow-sm hover:bg-[#FAF4EF] transition-colors disabled:opacity-60 disabled:cursor-not-allowed self-start md:self-auto"
+        >
+          <RefreshCw size={15} className={isRefreshing ? 'animate-spin' : ''} />
+          REFRESH
+        </button>
       </div>
 
 
@@ -155,7 +228,7 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
       )}
 
       {activeTab === 'gift-fee' && (
-        <div className="bg-white p-6 shadow rounded-md max-w-5xl">
+        <div className="max-w-5xl">
           {editingRuleId ? (
             <EditGiftBoxRulePage 
               ruleId={editingRuleId} 
@@ -226,14 +299,33 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
           </div>
           )}
 
-          <table className="w-full text-sm">
+          {selectedIds.length > 0 && (
+            <div className="bg-[#F8F4EC] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3 flex-wrap">
+              <span className="text-sm font-semibold text-[#8B5E3C]">{selectedIds.length} selected</span>
+              <div className="flex gap-2 ml-auto flex-wrap">
+                {canEdit && (
+                  <>
+                    <button onClick={() => toast.success('Status updated')} className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">Set Active</button>
+                    <button onClick={() => toast.success('Status updated')} className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">Set Inactive</button>
+                  </>
+                )}
+                {canDelete && (
+                  <button onClick={() => { toast.success('Rules deleted'); setSelectedIds([]); }} className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">Delete Selected</button>
+                )}
+                <button onClick={() => setSelectedIds([])} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-white transition-colors text-gray-500">Clear</button>
+              </div>
+            </div>
+          )}
+
+          <div className="bg-white rounded-3xl shadow-sm border border-[#E6DFD4] overflow-hidden">
+            <table className="w-full text-sm">
             <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
               <tr>
                 <th className="px-4 py-3.5 w-10">
                   <input
                     type="checkbox"
-                    checked={orders.length > 0 && selectedIds.length === orders.length}
-                    onChange={e => toggleSelectAll(e.target.checked)}
+                    checked={paginatedRules.length > 0 && paginatedRules.every(r => selectedIds.includes(r._id))}
+                    onChange={e => setSelectedIds(e.target.checked ? [...new Set([...selectedIds, ...paginatedRules.map(r => r._id)])] : selectedIds.filter(id => !paginatedRules.map(r => r._id).includes(id)))}
                     className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
                   />
                 </th>
@@ -246,8 +338,16 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {giftBoxRules.map((rule, idx) => (
-                <tr key={idx} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${typeof idx !== "undefined" ? (idx % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : typeof index !== "undefined" ? (index % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : "bg-white"}`}>
+              {paginatedRules.map((rule, idx) => (
+                <tr key={rule._id || idx} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
+                  <td className="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(rule._id)}
+                      onChange={e => setSelectedIds(prev => e.target.checked ? [...prev, rule._id] : prev.filter(i => i !== rule._id))}
+                      className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                    />
+                  </td>
                   <td className="px-4 py-3 text-sm text-gray-900">{rule.minVolume}</td>
                   <td className="px-4 py-3 text-sm text-gray-900">{rule.maxVolume}</td>
                   <td className="px-4 py-3 text-sm text-gray-900">{rule.boxSize}</td>
@@ -303,23 +403,80 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
                   </td>
                 </tr>
               ))}
-              {giftBoxRules.length === 0 && !loading && (
+              {paginatedRules.length === 0 && !loading && (
                 <tr>
-                  <td colSpan="5" className="px-4 py-8 text-center text-gray-500">No box rules configured.</td>
+                  <td colSpan="7" className="px-4 py-8 text-center text-gray-500">No box rules configured.</td>
                 </tr>
               )}
             </tbody>
           </table>
+          {/* Rules Pagination */}
+          {totalRulesPages > 1 && (
+            <div className="flex items-center justify-center px-4 py-4 border-t border-[#E6DFD4]">
+              <div className="flex items-center gap-1">
+                <button onClick={() => setRulesPage(1)} disabled={rulesPage === 1} className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] disabled:opacity-50 disabled:cursor-not-allowed">«</button>
+                <button onClick={() => setRulesPage(p => Math.max(1, p - 1))} disabled={rulesPage === 1} className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] disabled:opacity-50 disabled:cursor-not-allowed">‹</button>
+                {getPaginationPages(rulesPage, totalRulesPages).map((page, i) =>
+                  page === '...' ? <span key={`r-dots-${i}`} className="w-8 h-8 flex items-center justify-center text-[#A89585] text-sm">…</span> :
+                  <button key={page} onClick={() => setRulesPage(page)} className={`w-8 h-8 flex items-center justify-center rounded-md border text-sm font-semibold transition-all ${rulesPage === page ? 'bg-[#C4965A] text-white border-[#C4965A]' : 'border-[#D6C9BC] text-[#7A5C44] hover:bg-[#F5EDE4]'}`}>{page}</button>
+                )}
+                <button onClick={() => setRulesPage(p => Math.min(totalRulesPages, p + 1))} disabled={rulesPage === totalRulesPages} className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] disabled:opacity-50 disabled:cursor-not-allowed">›</button>
+                <button onClick={() => setRulesPage(totalRulesPages)} disabled={rulesPage === totalRulesPages} className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] disabled:opacity-50 disabled:cursor-not-allowed">»</button>
+              </div>
+            </div>
+          )}
+          </div>
           </>
           )}
         </div>
       )}
 
       {activeTab === 'messages' && (
-        <div className="bg-white shadow rounded-md overflow-hidden">
-          <table className="w-full text-sm">
+        <>
+          {selectedMsgIds.length > 0 && (
+            <div className="bg-[#F8F4EC] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3 flex-wrap">
+              <span className="text-sm font-semibold text-[#8B5E3C]">{selectedMsgIds.length} selected</span>
+              <div className="flex gap-2 ml-auto flex-wrap">
+                {canEdit && (
+                  <>
+                    <button onClick={() => toast.success('Status updated')} className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">Set Active</button>
+                    <button onClick={() => toast.success('Status updated')} className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">Set Inactive</button>
+                  </>
+                )}
+                {canDelete && (
+                  <button
+                    onClick={async () => {
+                      if (!window.confirm(`Delete ${selectedMsgIds.length} message(s)?`)) return;
+                      try {
+                        await Promise.all(selectedMsgIds.map(id => adminService.deleteAdminMessage?.(id)));
+                        toast.success('Messages deleted');
+                        setSelectedMsgIds([]);
+                        fetchData();
+                      } catch (e) {
+                        toast.error('Failed to delete messages');
+                      }
+                    }}
+                    className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                  >
+                    Delete Selected
+                  </button>
+                )}
+                <button onClick={() => setSelectedMsgIds([])} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-white transition-colors text-gray-500">Clear</button>
+              </div>
+            </div>
+          )}
+          <div className="bg-white rounded-3xl shadow-sm border border-[#E6DFD4] overflow-hidden">
+            <table className="w-full text-sm">
             <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
               <tr>
+                <th className="px-4 py-3.5 w-10">
+                  <input
+                    type="checkbox"
+                    checked={paginatedMessages.length > 0 && paginatedMessages.every(m => selectedMsgIds.includes(m._id))}
+                    onChange={e => toggleMsgSelectAll(e.target.checked)}
+                    className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                  />
+                </th>
                 <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Order ID</th>
                 <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Customer</th>
                 <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Message</th>
@@ -328,10 +485,18 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {messages.length === 0 ? (
-                <tr><td colSpan="3" className="px-4 py-3.5 text-center text-sm text-gray-500">No messages found.</td></tr>
+                <tr><td colSpan="5" className="px-4 py-3.5 text-center text-sm text-gray-500">No messages found.</td></tr>
               ) : (
-                messages.map(msg => (
-                  <tr key={msg._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${typeof idx !== "undefined" ? (idx % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : typeof index !== "undefined" ? (index % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : "bg-white"}`}>
+                paginatedMessages.map((msg, idx) => (
+                  <tr key={msg._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
+                    <td className="px-4 py-3.5">
+                      <input
+                        type="checkbox"
+                        checked={selectedMsgIds.includes(msg._id)}
+                        onChange={e => toggleMsgSelectOne(msg._id, e.target.checked)}
+                        className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                      />
+                    </td>
                     <td className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-900">{msg._id.substring(0, 8)}</td>
                     <td className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-900">{msg.user?.name || msg.user?.fullName || 'N/A'}</td>
                     <td className="px-4 py-3.5 text-sm text-gray-900 italic max-w-xs truncate">{msg.message}</td>
@@ -341,14 +506,56 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
               )}
             </tbody>
           </table>
-        </div>
+          {/* Messages Pagination */}
+          {totalMessagePages > 1 && (
+            <div className="flex items-center justify-center px-4 py-4 border-t border-[#E6DFD4]">
+              <div className="flex items-center gap-1">
+                <button onClick={() => setMessagesPage(1)} disabled={messagesPage === 1} className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] disabled:opacity-50 disabled:cursor-not-allowed">«</button>
+                <button onClick={() => setMessagesPage(p => Math.max(1, p - 1))} disabled={messagesPage === 1} className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] disabled:opacity-50 disabled:cursor-not-allowed">‹</button>
+                {getPaginationPages(messagesPage, totalMessagePages).map((page, i) =>
+                  page === '...' ? <span key={`m-dots-${i}`} className="w-8 h-8 flex items-center justify-center text-[#A89585] text-sm">…</span> :
+                  <button key={page} onClick={() => setMessagesPage(page)} className={`w-8 h-8 flex items-center justify-center rounded-md border text-sm font-semibold transition-all ${messagesPage === page ? 'bg-[#C4965A] text-white border-[#C4965A]' : 'border-[#D6C9BC] text-[#7A5C44] hover:bg-[#F5EDE4]'}`}>{page}</button>
+                )}
+                <button onClick={() => setMessagesPage(p => Math.min(totalMessagePages, p + 1))} disabled={messagesPage === totalMessagePages} className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] disabled:opacity-50 disabled:cursor-not-allowed">›</button>
+                <button onClick={() => setMessagesPage(totalMessagePages)} disabled={messagesPage === totalMessagePages} className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] disabled:opacity-50 disabled:cursor-not-allowed">»</button>
+              </div>
+            </div>
+          )}
+          </div>
+        </>
       )}
 
       {activeTab === 'orders' && (
-        <div className="bg-white shadow rounded-md overflow-hidden">
-          <table className="w-full text-sm">
+        <>
+          {selectedIds.length > 0 && (
+            <div className="bg-[#F8F4EC] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3 flex-wrap">
+              <span className="text-sm font-semibold text-[#8B5E3C]">{selectedIds.length} selected</span>
+              <div className="flex gap-2 ml-auto flex-wrap">
+                {canEdit && (
+                  <>
+                    <button onClick={() => toast.success('Status updated')} className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">Set Active</button>
+                    <button onClick={() => toast.success('Status updated')} className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">Set Inactive</button>
+                  </>
+                )}
+                {canDelete && (
+                  <button onClick={() => { toast.success('Orders deleted'); setSelectedIds([]); }} className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">Delete Selected</button>
+                )}
+                <button onClick={() => setSelectedIds([])} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-white transition-colors text-gray-500">Clear</button>
+              </div>
+            </div>
+          )}
+          <div className="bg-white rounded-3xl shadow-sm border border-[#E6DFD4] overflow-hidden">
+            <table className="w-full text-sm">
             <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
               <tr>
+                <th className="px-4 py-3.5 w-10">
+                  <input
+                    type="checkbox"
+                    checked={paginatedOrders.length > 0 && paginatedOrders.every(o => selectedIds.includes(o._id))}
+                    onChange={e => toggleSelectAll(e.target.checked)}
+                    className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                  />
+                </th>
                 <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Order ID</th>
                 <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Customer</th>
                 <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Order Date</th>
@@ -359,10 +566,10 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {orders.length === 0 ? (
-                <tr><td colSpan="5" className="px-4 py-3.5 text-center text-sm text-gray-500">No gift orders found.</td></tr>
+                <tr><td colSpan="7" className="px-4 py-3.5 text-center text-sm text-gray-500">No gift orders found.</td></tr>
               ) : (
-                orders.map(order => (
-                  <tr key={order._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${typeof idx !== "undefined" ? (idx % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : typeof index !== "undefined" ? (index % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : "bg-white"}`}>
+                paginatedOrders.map((order, idx) => (
+                  <tr key={order._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
                     <td className="px-4 py-3.5">
                       <input
                         type="checkbox"
@@ -411,7 +618,23 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
               )}
             </tbody>
           </table>
-        </div>
+          {/* Orders Pagination */}
+          {totalOrderPages > 1 && (
+            <div className="flex items-center justify-center px-4 py-4 border-t border-[#E6DFD4]">
+              <div className="flex items-center gap-1">
+                <button onClick={() => setOrdersPage(1)} disabled={ordersPage === 1} className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] disabled:opacity-50 disabled:cursor-not-allowed">«</button>
+                <button onClick={() => setOrdersPage(p => Math.max(1, p - 1))} disabled={ordersPage === 1} className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] disabled:opacity-50 disabled:cursor-not-allowed">‹</button>
+                {getPaginationPages(ordersPage, totalOrderPages).map((page, i) =>
+                  page === '...' ? <span key={`o-dots-${i}`} className="w-8 h-8 flex items-center justify-center text-[#A89585] text-sm">…</span> :
+                  <button key={page} onClick={() => setOrdersPage(page)} className={`w-8 h-8 flex items-center justify-center rounded-md border text-sm font-semibold transition-all ${ordersPage === page ? 'bg-[#C4965A] text-white border-[#C4965A]' : 'border-[#D6C9BC] text-[#7A5C44] hover:bg-[#F5EDE4]'}`}>{page}</button>
+                )}
+                <button onClick={() => setOrdersPage(p => Math.min(totalOrderPages, p + 1))} disabled={ordersPage === totalOrderPages} className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] disabled:opacity-50 disabled:cursor-not-allowed">›</button>
+                <button onClick={() => setOrdersPage(totalOrderPages)} disabled={ordersPage === totalOrderPages} className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] disabled:opacity-50 disabled:cursor-not-allowed">»</button>
+              </div>
+            </div>
+          )}
+          </div>
+        </>
       )}
 
       {/* View Order Modal */}

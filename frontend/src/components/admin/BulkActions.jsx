@@ -1,60 +1,53 @@
 import React from 'react';
-import { Trash2, CheckCircle2, XCircle } from 'lucide-react';
-import { Button } from './CommonComponents';
 
 export const BulkActions = ({
     selectedIds = [],
     onBulkDelete,
     onBulkStatusChange,
+    onClear,
     loading = false
 }) => {
     if (selectedIds.length === 0) return null;
 
     return (
-        <div className="flex items-center justify-between px-6 py-3 bg-amber-50 border border-amber-200 rounded-xl mb-6 shadow-sm animate-slide-down">
-            <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-                <span className="font-semibold text-amber-900 text-sm">
-                    {selectedIds.length} item{selectedIds.length > 1 ? 's' : ''} selected
-                </span>
-            </div>
-            
-            <div className="flex items-center gap-3">
+        <div className="bg-[#F8F4EC] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3 flex-wrap">
+            <span className="text-sm font-semibold text-[#8B5E3C]">
+                {selectedIds.length} selected
+            </span>
+            <div className="flex gap-2 ml-auto flex-wrap">
                 {onBulkStatusChange && (
                     <>
-                        <Button
-                            variant="outline"
-                            size="sm"
+                        <button
                             onClick={() => onBulkStatusChange(true)}
                             disabled={loading}
-                            className="bg-white border-green-600 text-green-700 hover:bg-green-50"
+                            className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors disabled:opacity-50"
                         >
-                            <CheckCircle2 size={16} />
-                            Activate
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
+                            Set Active
+                        </button>
+                        <button
                             onClick={() => onBulkStatusChange(false)}
                             disabled={loading}
-                            className="bg-white border-gray-400 text-gray-700 hover:bg-gray-50"
+                            className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
                         >
-                            <XCircle size={16} />
-                            Deactivate
-                        </Button>
+                            Set Inactive
+                        </button>
                     </>
                 )}
                 {onBulkDelete && (
-                    <Button
-                        variant="danger"
-                        size="sm"
+                    <button
                         onClick={onBulkDelete}
                         disabled={loading}
+                        className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors disabled:opacity-50"
                     >
-                        <Trash2 size={16} />
                         Delete Selected
-                    </Button>
+                    </button>
                 )}
+                <button
+                    onClick={onClear}
+                    className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-white transition-colors text-gray-500"
+                >
+                    Clear
+                </button>
             </div>
         </div>
     );

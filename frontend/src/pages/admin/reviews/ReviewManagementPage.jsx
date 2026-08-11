@@ -86,15 +86,7 @@ const KpiCard = ({ label, value, icon: Icon, iconBg, badge, badgeColor, sub, loa
 /* ── Detail Modal ─────────────────────────────────── */
 function ReviewDetailModal({ review, onClose, onStatusChange, onDelete, canEdit, canDelete }) {
   const [note, setNote] = useState("");
-  const [selectedIds, setSelectedIds] = useState([]);
 
-  const toggleSelectAll = (checked) => {
-    setSelectedIds(checked ? reviews.map(item => item._id) : []);
-  };
-
-  const toggleSelectOne = (id, checked) => {
-    setSelectedIds(prev => checked ? [...prev, id] : prev.filter(i => i !== id));
-  };
   if (!review) return null;
   const p = review.product || {};
   const u = review.user || {};
@@ -256,6 +248,15 @@ function ReviewDetailModal({ review, onClose, onStatusChange, onDelete, canEdit,
 export default function ReviewManagementPage({ canEdit = true, canDelete = true }) {
   const [reviews,   setReviews]   = useState([]);
   const [stats,     setStats]     = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
+
+  const toggleSelectAll = (checked) => {
+    setSelectedIds(checked ? reviews.map(item => item._id) : []);
+  };
+
+  const toggleSelectOne = (id, checked) => {
+    setSelectedIds(prev => checked ? [...prev, id] : prev.filter(i => i !== id));
+  };
   const [loading,   setLoading]   = useState(true);
   const [statsLoad, setStatsLoad] = useState(true);
   const [search,    setSearch]    = useState("");
@@ -488,9 +489,9 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
 
         {/* Bulk Actions */}
       {selectedIds.length > 0 && (
-        <div className="bg-[#F8F4EC] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3">
+        <div className="bg-[#F8F4EC] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3 flex-wrap">
           <span className="text-sm font-semibold text-[#8B5E3C]">{selectedIds.length} selected</span>
-          <div className="flex gap-2 ml-auto">
+          <div className="flex gap-2 ml-auto flex-wrap">
              {typeof handleBulkDelete !== 'undefined' && (
                 <button onClick={handleBulkDelete} className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">Delete Selected</button>
              )}
