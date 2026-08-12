@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Settings, ToggleLeft, ToggleRight, List, Columns, ShieldAlert, Download, RefreshCw , SquarePen , Trash } from 'lucide-react';
+import { Plus, Edit2, Trash2, Settings, ToggleLeft, ToggleRight, List, Columns, ShieldAlert, Download, RefreshCw, SquarePen, Trash } from 'lucide-react';
 import { subCategoryV2API, categoryV2API, attributeV2API } from '../../../api/catalogV2Service';
 import { downloadExcelFile } from '../../../utils/exportUtils';
 import { SearchBar, Button, Badge, Card } from '../../../components/admin/CommonComponents';
@@ -8,12 +8,12 @@ import BulkActions from '../../../components/admin/BulkActions';
 import Pagination from '../../../components/common/Pagination';
 
 const Field = ({ label, required, children }) => (
-  <div>
-    <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">
-      {label} {required && <span className="text-red-500 text-lg ml-1">*</span>}
-    </label>
-    {children}
-  </div>
+    <div>
+        <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">
+            {label} {required && <span className="text-red-500 text-lg ml-1">*</span>}
+        </label>
+        {children}
+    </div>
 );
 
 const inputCls = 'w-full px-4 py-2.5 text-sm border border-[#E6DFD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-colors';
@@ -307,8 +307,10 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Sub-Categories</h1>
-                    <p className="text-gray-500 mt-1">Manage subcategories and map fields or specifications to them.</p>
+                    <p className="text-[13px] md:text-sm font-serif text-white mb-1">
+                        Dashboard &rsaquo; Catalog Management &rsaquo; <span className="font-semibold text-[#8B5E3C]">Sub-Categories</span>
+                    </p>
+                    <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Sub-Categories</h1>
                 </div>
                 <div className="flex flex-col sm:flex-row items-center gap-3">
                     <button onClick={fetchSubCategories} className="admin-secondary-btn">
@@ -318,40 +320,44 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                         <Download size={16} /> Export Excel
                     </button>
                     {canCreate && (
-                    <button onClick={() => handleOpenForm()} className="admin-btn">
-                        <Plus size={16} /> Add Sub-Category
-                    </button>
+                        <button onClick={() => handleOpenForm()} className="admin-btn">
+                            <Plus size={16} /> Add Sub-Category
+                        </button>
                     )}
                 </div>
             </div>
 
             {/* Filter Panel */}
-            <Card className="p-4 flex flex-col sm:flex-row gap-4 items-center">
-                <SearchBar
-                    value={search}
-                    onChange={setSearch}
-                    placeholder="Search subcategories..."
-                    className="w-full sm:max-w-xs"
-                />
+            <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm p-4 flex flex-wrap gap-3 items-center">
+                <div className="relative flex-1 min-w-[180px]">
+                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    <input
+                        type="text"
+                        placeholder="Search subcategories..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="w-full pl-9 pr-4 py-2.5 text-sm border border-[#E6DFD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30"
+                    />
+                </div>
                 <select
                     value={categoryFilter}
                     onChange={(e) => setCategoryFilter(e.target.value)}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="py-2.5 px-3 text-sm border border-[#E6DFD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 bg-white"
                 >
                     <option value="">All Categories</option>
                     {categories.map(c => (
                         <option key={c._id} value={c._id}>{c.name}</option>
                     ))}
                 </select>
-            </Card>
+            </div>
 
             {(canEdit || canDelete) && (
-            <BulkActions
-                selectedIds={selectedIds}
-                onBulkDelete={canDelete ? handleBulkDelete : undefined}
-                onBulkStatusChange={canEdit ? handleBulkStatus : undefined}
-                onClear={() => setSelectedIds([])}
-            />
+                <BulkActions
+                    selectedIds={selectedIds}
+                    onBulkDelete={canDelete ? handleBulkDelete : undefined}
+                    onBulkStatusChange={canEdit ? handleBulkStatus : undefined}
+                    onClear={() => setSelectedIds([])}
+                />
             )}
 
             {/* Table */}
@@ -466,12 +472,11 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                 </div>
 
                 {/* Pagination */}
-                <div className="px-5 py-3 border-t border-[#E6DFD4] flex flex-col sm:flex-row justify-center items-center bg-[#FAFAFA] gap-4">
-                    <Pagination 
-                        currentPage={page} 
-                        totalPages={totalPages} 
-                        onPageChange={setPage} 
-                        className="flex items-center justify-center gap-2 flex-wrap"
+                <div className="px-5 py-6 border-t border-[#E6DFD4] flex justify-center bg-white">
+                    <Pagination
+                        currentPage={page}
+                        totalPages={totalPages}
+                        onPageChange={setPage}
                     />
                 </div>
             </div>
@@ -558,9 +563,7 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
 
                             {/* Form Actions */}
                             <div className="flex items-center justify-center gap-4 pt-6 pb-2">
-                                <button type="button" onClick={() => setIsFormOpen(false)} className="px-8 py-3 border border-[#E6DFD4] rounded-full text-[15px] font-bold text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm">
-                                    Cancel
-                                </button>
+                                <button type="button" onClick={() => setIsFormOpen(false)} className="admin-cancel-btn">CANCEL</button>
                                 <button type="submit" disabled={formLoading} className="flex items-center gap-2 bg-[#8B5E3C] hover:bg-[#7a5234] disabled:opacity-60 text-white px-8 py-3 rounded-full text-[15px] font-bold transition-colors shadow-sm">
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                                     {formLoading ? 'Saving...' : editId ? 'Save Changes' : 'Create Sub-Category'}
@@ -606,9 +609,8 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                                             const isChecked = !!mapEntry;
 
                                             return (
-                                                <div key={attr._id} className={`flex items-center justify-between p-4 transition-all ${
-                                                    isChecked ? 'bg-amber-50/30' : 'hover:bg-gray-50/50'
-                                                }`}>
+                                                <div key={attr._id} className={`flex items-center justify-between p-4 transition-all ${isChecked ? 'bg-amber-50/30' : 'hover:bg-gray-50/50'
+                                                    }`}>
                                                     <div className="flex items-center gap-3">
                                                         <input
                                                             type="checkbox"

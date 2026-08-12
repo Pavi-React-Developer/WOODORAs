@@ -50,7 +50,7 @@ export default function HomeLayoutBuilder() {
 
     useEffect(() => {
         dispatch(fetchLayout());
-        
+
         Promise.allSettled([
             cmsService.getHeroBanners(),
             catalogService.getShopCategories(),
@@ -98,7 +98,7 @@ export default function HomeLayoutBuilder() {
                 cartCount: 0,
                 wishlistCount: 0,
                 user: { name: 'Admin' },
-                onNavigate: () => {},
+                onNavigate: () => { },
             });
         });
 
@@ -108,7 +108,7 @@ export default function HomeLayoutBuilder() {
     useEffect(() => {
         if (status === 'succeeded' && realContext && !blocksLoaded && draftSections.length > 0) {
             setBlocksLoaded(true);
-            
+
             const allBlocks = [
                 { id: 'navbar', sectionType: 'navbar', title: 'Navbar' },
                 ...realContext.heroBanners.map(b => ({ id: `heroBanner_${b._id}`, sectionType: 'heroBanner', title: b.title || 'Hero Banner' })),
@@ -122,7 +122,7 @@ export default function HomeLayoutBuilder() {
 
             let reconciled = [];
             let usedIds = new Set();
-            
+
             // Map existing saved sections
             draftSections.forEach(ds => {
                 // If it's an old legacy id like 'heroBanner', map it to the first available if any, or just keep it
@@ -169,12 +169,12 @@ export default function HomeLayoutBuilder() {
         if (over && active.id !== over.id) {
             const oldIndex = draftSections.findIndex((item) => item.id === active.id);
             const newIndex = draftSections.findIndex((item) => item.id === over.id);
-            
+
             const newOrder = arrayMove(draftSections, oldIndex, newIndex).map((item, index) => ({
                 ...item,
                 order: index + 1
             }));
-            
+
             dispatch(updateDraftSections(newOrder));
         }
     };
@@ -204,7 +204,7 @@ export default function HomeLayoutBuilder() {
         const base = typeLabels[section.sectionType || section.id] || section.sectionType;
         return section.title && section.title !== section.sectionType ? `${base} - ${section.title}` : base;
     };
-    
+
 
     return (
         <div className="flex flex-col lg:flex-row gap-6 h-[80vh]">
@@ -212,7 +212,7 @@ export default function HomeLayoutBuilder() {
             <div className="w-full lg:w-[350px] flex flex-col bg-white p-5 rounded-2xl border border-[#E6DFD4] shadow-sm">
                 <h3 className="text-lg font-bold text-brand-dark mb-4">Layout Builder</h3>
                 <p className="text-xs text-brand-medium mb-4">Drag and drop to reorder. Toggle visibility for the customer website.</p>
-                
+
                 <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
                     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                         <SortableContext items={draftSections.map(s => s.id)} strategy={verticalListSortingStrategy}>
@@ -223,19 +223,19 @@ export default function HomeLayoutBuilder() {
                     </DndContext>
                 </div>
 
-                <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-[#E6DFD4]">
-                    <button onClick={() => toast.success('Draft saved locally')} className="flex-1 px-4 py-2.5 bg-[#FDFCFB] border border-[#E6DFD4] text-brand-dark rounded-xl hover:bg-[#F7F3EE] text-sm font-semibold transition-colors">Save Draft</button>
-                    <button onClick={handlePublish} className="flex-1 px-4 py-2.5 bg-brand-dark text-white rounded-xl hover:bg-[#7a5234] text-sm font-semibold transition-colors">Publish</button>
+                <div className="flex flex-wrap gap-3 mt-4 pt-4 border-t border-[#E6DFD4]">
+                    <button onClick={() => toast.success('Draft saved locally')} className="flex-1 px-8 py-3 border border-[#E6DFD4] rounded-full text-[15px] font-bold text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm text-center">Save Draft</button>
+                    <button onClick={handlePublish} className="flex-1 flex items-center justify-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60 text-center font-bold text-[15px]">Publish</button>
                 </div>
-                <button onClick={() => dispatch(resetDraft())} className="w-full mt-2 px-4 py-2 bg-white text-red-600 rounded-xl hover:bg-red-50 text-sm font-semibold border border-red-100 transition-colors">Reset to Published</button>
+                <button onClick={() => dispatch(resetDraft())} className="w-full mt-3 px-8 py-3 border border-red-200 rounded-full text-[15px] font-bold text-red-600 bg-white hover:bg-red-50 transition-colors shadow-sm uppercase tracking-wide">Reset to Published</button>
             </div>
 
             {/* Right Side: Live Preview */}
             <div className="flex-1 flex flex-col bg-[#FDF9F1] rounded-2xl border border-[#E6DFD4] overflow-hidden relative shadow-inner">
-                <PreviewPanel 
-                    draftSections={draftSections} 
-                    dummyContext={realContext || {}} 
-                    mode={previewMode} 
+                <PreviewPanel
+                    draftSections={draftSections}
+                    dummyContext={realContext || {}}
+                    mode={previewMode}
                     setMode={setPreviewMode}
                 >
                     {draftSections.filter(s => s.visible).map(section => (

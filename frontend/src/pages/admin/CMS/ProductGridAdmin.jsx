@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { cmsService } from '../../../api/cmsService';
-import { Pencil, Trash2, Plus, Eye, EyeOff, Search, X , SquarePen , Trash } from 'lucide-react';
+import { Pencil, Trash2, Plus, Eye, EyeOff, Search, X, SquarePen, Trash } from 'lucide-react';
 import { categoryV2API, subCategoryV2API, productV2API } from '../../../api/catalogV2Service';
 import { API_ORIGIN } from '../../../api/apiClient';
 
 function ProductPicker({ selected, onChange, productsList }) {
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
-  
+
   const [selectedCat, setSelectedCat] = useState('');
   const [selectedSubCat, setSelectedSubCat] = useState('');
   const [search, setSearch] = useState('');
@@ -30,8 +30,8 @@ function ProductPicker({ selected, onChange, productsList }) {
   }, []);
 
   const availableSubs = subcategories.filter(s => {
-      const catId = typeof s.category === 'object' ? s.category?._id : s.category;
-      return catId === selectedCat;
+    const catId = typeof s.category === 'object' ? s.category?._id : s.category;
+    return catId === selectedCat;
   });
 
   // Filter products
@@ -39,12 +39,12 @@ function ProductPicker({ selected, onChange, productsList }) {
     let match = true;
     if (search && !p.name?.toLowerCase().includes(search.toLowerCase())) match = false;
     if (selectedCat) {
-        const pCatId = typeof p.category === 'object' ? p.category?._id : p.category;
-        if (pCatId !== selectedCat) match = false;
+      const pCatId = typeof p.category === 'object' ? p.category?._id : p.category;
+      if (pCatId !== selectedCat) match = false;
     }
     if (selectedSubCat) {
-        const pSubId = typeof p.subCategory === 'object' ? p.subCategory?._id : p.subCategory;
-        if (pSubId !== selectedSubCat) match = false;
+      const pSubId = typeof p.subCategory === 'object' ? p.subCategory?._id : p.subCategory;
+      if (pSubId !== selectedSubCat) match = false;
     }
     return match;
   });
@@ -129,7 +129,7 @@ export default function ProductGridAdmin() {
     e.preventDefault();
     if (!form.products.length) return alert('Select at least one product.');
     setSaving(true);
-    
+
     // We only want to send product IDs to the backend
     const payload = {
       ...form,
@@ -151,20 +151,20 @@ export default function ProductGridAdmin() {
       return allProducts.find(x => x._id === pId) || { _id: pId, name: 'Unknown Product' };
     });
 
-    setForm({ 
-      title: item.title, 
-      products: populatedProducts, 
-      mobileCount: item.mobileCount || 2, 
+    setForm({
+      title: item.title,
+      products: populatedProducts,
+      mobileCount: item.mobileCount || 2,
       desktopCount: item.desktopCount || 4,
       ctaText: item.ctaText || '',
       ctaUrl: item.ctaUrl || '',
       ctaPosition: item.ctaPosition || 'right',
       showArrows: item.showArrows !== false,
       showDots: item.showDots || false,
-      status: item.status, 
-      sortOrder: item.sortOrder || 0 
+      status: item.status,
+      sortOrder: item.sortOrder || 0
     });
-    setEditId(item._id); 
+    setEditId(item._id);
     window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowForm(true);
   };
 
@@ -188,7 +188,7 @@ export default function ProductGridAdmin() {
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-bold text-brand-dark">Product Grid Sections</h3>
         <button onClick={() => { window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowForm(true); setEditId(null); setForm(emptyForm); }}
-          className="flex items-center gap-2 bg-brand-dark text-white text-sm px-4 py-2 rounded-xl hover:bg-black transition-colors">
+          className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60">
           <Plus className="w-4 h-4" /> Add Grid
         </button>
       </div>
@@ -197,7 +197,7 @@ export default function ProductGridAdmin() {
         <div className="bg-white rounded-2xl border border-[#E6DFD4] p-6 shadow-sm">
           <h4 className="font-semibold text-brand-dark mb-5">{editId ? 'Edit Grid' : 'New Product Grid'}</h4>
           <form onSubmit={handleSubmit} className="space-y-6">
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-xs font-semibold text-brand-medium uppercase tracking-wider block mb-1">Section Title *</label>
@@ -285,12 +285,12 @@ export default function ProductGridAdmin() {
               <input type="checkbox" id="grid-status" checked={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.checked }))} />
               <label htmlFor="grid-status" className="text-sm text-brand-dark">Active</label>
             </div>
-            
+
             <div className="flex gap-3 justify-end pt-4 border-t border-[#E6DFD4]">
               <button type="button" onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setShowForm(false))}
-                className="px-4 py-2 text-sm border border-[#E6DFD4] rounded-lg text-brand-medium">Cancel</button>
+                className="admin-cancel-btn">CANCEL</button>
               <button type="submit" disabled={saving}
-                className="p-1.5 text-[#6D625C] hover:text-[#9A6031] hover:bg-[#F2E3D1] rounded transition-colors">
+                className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60">
                 {saving ? 'Saving...' : 'Save Grid'}
               </button>
             </div>
@@ -299,20 +299,20 @@ export default function ProductGridAdmin() {
       )}
 
       <div className="space-y-3">
-        {loading ? [1,2].map(i => <div key={i} className="h-20 bg-gray-100 rounded-2xl animate-pulse" />) :
+        {loading ? [1, 2].map(i => <div key={i} className="h-20 bg-gray-100 rounded-2xl animate-pulse" />) :
           items.length === 0 ? (
             <div className="p-8 text-center text-brand-medium text-sm bg-white rounded-2xl border border-[#E6DFD4]">No product grids yet.</div>
           ) : items.map(item => (
             <div key={item._id} className="bg-white rounded-2xl border border-[#E6DFD4] p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 shadow-sm">
               <div className="flex gap-1">
-                {(item.products || []).slice(0,4).map((p, i) => {
+                {(item.products || []).slice(0, 4).map((p, i) => {
                   const populated = typeof p === 'object' ? p : allProducts.find(x => x._id === p);
                   let src = populated?.images?.[0]?.url || populated?.images?.[0] || (typeof populated?.image === 'object' ? populated?.image?.url : populated?.image) || null;
                   if (src && typeof src === 'string' && src.startsWith('/uploads')) {
                     src = `${API_ORIGIN}${src}`;
                   }
                   if (!src) return <div key={i} className="w-10 h-10 rounded-lg border border-[#E6DFD4] bg-[#F7F3EE]" />;
-                  return <img key={i} src={src} alt="" onError={e => e.target.style.display='none'} className="w-10 h-10 rounded-lg object-cover border border-[#E6DFD4] bg-[#F7F3EE]" />;
+                  return <img key={i} src={src} alt="" onError={e => e.target.style.display = 'none'} className="w-10 h-10 rounded-lg object-cover border border-[#E6DFD4] bg-[#F7F3EE]" />;
                 })}
               </div>
               <div className="flex-1 w-full">

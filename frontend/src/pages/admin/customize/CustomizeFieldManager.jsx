@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { Plus, Trash2, Settings, X, PlusCircle , Trash, RefreshCw } from 'lucide-react';
+import { Plus, Trash2, Settings, X, PlusCircle, Trash, RefreshCw, Edit } from 'lucide-react';
 import { customizeService } from '../../../api/customizeService';
 
 export default function CustomizeFieldManager({ canCreate = true, canEdit = true, canDelete = true }) {
@@ -8,9 +8,12 @@ export default function CustomizeFieldManager({ canCreate = true, canEdit = true
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingField, setEditingField] = useState(null);
+  const [editing, setEditing] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  
+
   const [newField, setNewField] = useState({
     label: '',
     type: 'text',
@@ -43,9 +46,9 @@ export default function CustomizeFieldManager({ canCreate = true, canEdit = true
   const handleAddField = async (e) => {
     e.preventDefault();
     if (!newField.label.trim()) return;
-    
+
     // Filter out empty options if dropdown
-    const filteredOptions = newField.type === 'dropdown' 
+    const filteredOptions = newField.type === 'dropdown'
       ? newField.options.filter(opt => opt.trim() !== '')
       : [];
 
@@ -56,12 +59,12 @@ export default function CustomizeFieldManager({ canCreate = true, canEdit = true
 
     setAdding(true);
     try {
-      await customizeService.createField({ 
-        label: newField.label.trim(), 
+      await customizeService.createField({
+        label: newField.label.trim(),
         type: newField.type,
         options: filteredOptions,
         isRequired: newField.isRequired,
-        isActive: true 
+        isActive: true
       });
       toast.success('Field created successfully');
       setNewField({ label: '', type: 'text', isRequired: true, options: [''] });
@@ -71,6 +74,46 @@ export default function CustomizeFieldManager({ canCreate = true, canEdit = true
       toast.error(error.message || 'Failed to create field');
     } finally {
       setAdding(false);
+    }
+  };
+
+  const openEditModal = (field) => {
+    setEditingField({
+      ...field,
+      options: field.options && field.options.length > 0 ? [...field.options] : ['']
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateField = async (e) => {
+    e.preventDefault();
+    if (!editingField.label.trim()) return;
+
+    const filteredOptions = editingField.type === 'dropdown'
+      ? editingField.options.filter(opt => opt.trim() !== '')
+      : [];
+
+    if (editingField.type === 'dropdown' && filteredOptions.length === 0) {
+      toast.error('Please add at least one option for the dropdown');
+      return;
+    }
+
+    setEditing(true);
+    try {
+      await customizeService.updateField(editingField._id, {
+        label: editingField.label.trim(),
+        type: editingField.type,
+        options: filteredOptions,
+        isRequired: editingField.isRequired
+      });
+      toast.success('Field updated successfully');
+      setShowEditModal(false);
+      setEditingField(null);
+      fetchFields();
+    } catch (error) {
+      toast.error(error.message || 'Failed to update field');
+    } finally {
+      setEditing(false);
     }
   };
 
@@ -110,6 +153,21 @@ export default function CustomizeFieldManager({ canCreate = true, canEdit = true
     setNewField({ ...newField, options: newOptions });
   };
 
+  const updateEditOption = (index, value) => {
+    const newOptions = [...editingField.options];
+    newOptions[index] = value;
+    setEditingField({ ...editingField, options: newOptions });
+  };
+
+  const addEditOption = () => {
+    setEditingField({ ...editingField, options: [...editingField.options, ''] });
+  };
+
+  const removeEditOption = (index) => {
+    const newOptions = editingField.options.filter((_, i) => i !== index);
+    setEditingField({ ...editingField, options: newOptions });
+  };
+
   if (loading) {
     return <div className="flex-1 overflow-y-auto p-8 flex items-center justify-center text-[#8B5E3C]">Loading...</div>;
   }
@@ -118,11 +176,10 @@ export default function CustomizeFieldManager({ canCreate = true, canEdit = true
     <div className="flex-1 overflow-y-auto p-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
-          <p className="text-[13px] md:text-sm font-serif text-[#94A3B8] mb-1">
+          <p className="text-[13px] md:text-sm font-serif text-white mb-1">
             Dashboard &rsaquo; Customize Order &rsaquo; <span className="font-semibold text-[#8B5E3C]">Form Fields Builder</span>
           </p>
           <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Form Fields Builder</h1>
-          <p className="text-sm text-[#8A817C] mt-2">Manage the dynamic input fields shown on the Custom Order page</p>
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -134,12 +191,12 @@ export default function CustomizeFieldManager({ canCreate = true, canEdit = true
             REFRESH
           </button>
           {canCreate && (
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-[#8B5E3C] text-white rounded-xl hover:bg-[#7a5234] transition-colors"
-          >
-            <Plus className="w-4 h-4" /> Add Field
-          </button>
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="flex items-center gap-2 px-6 py-2.5 bg-[#8B5E3C] text-white font-bold text-sm rounded-full hover:bg-[#7a5234] transition-colors shadow-sm uppercase tracking-wide"
+            >
+              <Plus className="w-4 h-4" /> Add Field
+            </button>
           )}
         </div>
       </div>
@@ -176,97 +233,112 @@ export default function CustomizeFieldManager({ canCreate = true, canEdit = true
                   />
                 </th>
                 <th className="px-6 py-4 border-b border-[#E6DFD4] font-bold">Field Label</th>
-              <th className="px-6 py-4 border-b border-[#E6DFD4] font-bold">Type</th>
-              <th className="px-6 py-4 border-b border-[#E6DFD4] font-bold">Required</th>
-              <th className="px-6 py-4 border-b border-[#E6DFD4] font-bold">Status</th>
-              <th className="px-6 py-4 border-b border-[#E6DFD4] font-bold text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[#E6DFD4]">
-            {fields.map((field, idx) => (
-              <tr key={field._id} className={`hover:bg-[#FAF4EF]/30 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
-                <td className="px-6 py-4">
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.includes(field._id)}
-                    onChange={(e) => {
-                      if (e.target.checked) setSelectedIds([...selectedIds, field._id]);
-                      else setSelectedIds(selectedIds.filter(id => id !== field._id));
-                    }}
-                    className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer"
-                  />
-                </td>
-                <td className="px-6 py-4">
-                  <span className="font-medium text-[#4A3326]">{field.label}</span>
-                  {field.type === 'dropdown' && (
-                    <div className="text-xs text-gray-500 mt-1">Options: {field.options.join(', ')}</div>
-                  )}
-                </td>
-                <td className="px-6 py-4 uppercase text-xs tracking-wider font-semibold text-gray-600">
-                  {field.type}
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`text-xs px-2 py-1 rounded-md ${field.isRequired ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600'}`}>
-                    {field.isRequired ? 'Required' : 'Optional'}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  {canEdit && (
-                  <button
-                    onClick={() => handleToggleStatus(field._id, field.isActive)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${field.isActive ? 'bg-[#4ADE80]' : 'bg-gray-200'}`}
-                  >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${field.isActive ? 'translate-x-6' : 'translate-x-1'}`} />
-                  </button>
-                  )}
-                </td>
-                <td className="px-6 py-4 text-right">
-                  {canDelete && (
-                  <button onClick={() => handleDelete(field._id)} className="text-red-500 hover:text-red-600 transition-colors">
-                    <Trash className="w-4 h-4" />
-                  </button>
-                  )}
-                </td>
+                <th className="px-6 py-4 border-b border-[#E6DFD4] font-bold">Type</th>
+                <th className="px-6 py-4 border-b border-[#E6DFD4] font-bold">Required</th>
+                <th className="px-6 py-4 border-b border-[#E6DFD4] font-bold">Status</th>
+                <th className="px-6 py-4 border-b border-[#E6DFD4] font-bold text-right">Actions</th>
               </tr>
-            ))}
-            {fields.length === 0 && (
-              <tr>
-                <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
-                  No custom fields found. Click "Add Field" to create one.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-[#E6DFD4]">
+              {fields.map((field, idx) => (
+                <tr key={field._id} className={`hover:bg-[#FAF4EF]/30 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
+                  <td className="px-6 py-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(field._id)}
+                      onChange={(e) => {
+                        if (e.target.checked) setSelectedIds([...selectedIds, field._id]);
+                        else setSelectedIds(selectedIds.filter(id => id !== field._id));
+                      }}
+                      className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer"
+                    />
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="font-medium text-[#4A3326]">{field.label}</span>
+                    {field.type === 'dropdown' && (
+                      <div className="text-xs text-gray-500 mt-1">Options: {field.options.join(', ')}</div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 uppercase text-xs tracking-wider font-semibold text-gray-600">
+                    {field.type}
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`text-xs px-2 py-1 rounded-md ${field.isRequired ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600'}`}>
+                      {field.isRequired ? 'Required' : 'Optional'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    {canEdit && (
+                      <button
+                        onClick={() => handleToggleStatus(field._id, field.isActive)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${field.isActive ? 'bg-[#4ADE80]' : 'bg-gray-200'}`}
+                      >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${field.isActive ? 'translate-x-6' : 'translate-x-1'}`} />
+                      </button>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex justify-end gap-3">
+                      {canEdit && (
+                        <button onClick={() => openEditModal(field)} className="text-blue-600 hover:text-blue-700 transition-colors p-1" title="Edit Field">
+                          <Edit className="w-4 h-4" />
+                        </button>
+                      )}
+                      {canDelete && (
+                        <button onClick={() => handleDelete(field._id)} className="text-red-500 hover:text-red-600 transition-colors p-1" title="Delete Field">
+                          <Trash className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {fields.length === 0 && (
+                <tr>
+                  <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                    No custom fields found. Click "Add Field" to create one.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg p-6 shadow-xl max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-bold text-[#4A3326] mb-6 flex items-center gap-2">
-              <Settings className="w-5 h-5 text-[#8B5E3C]" /> Create New Field
-            </h3>
-            <form onSubmit={handleAddField} className="space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-[20px] shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 md:px-8 border-b border-[#E6DFD4] bg-[#F8F4EC]">
+              <h2 className="text-[28px] font-serif font-bold text-[#141225] tracking-tight flex items-center gap-2">
+                <Settings className="w-6 h-6 text-[#8B5E3C]" /> Create New Field
+              </h2>
+              <button onClick={() => setShowAddModal(false)} className="p-2 rounded-full hover:bg-[#E6DFD4] text-gray-400 hover:text-gray-700 transition-colors">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            
+            {/* Content */}
+            <form onSubmit={handleAddField} className="p-8 space-y-6 bg-white overflow-y-auto max-h-[70vh]">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Field Label *</label>
+                <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Field Label <span className="text-red-500">*</span></label>
                 <input
                   type="text"
                   required
                   value={newField.label}
                   onChange={(e) => setNewField({ ...newField, label: e.target.value })}
-                  className="w-full px-4 py-2 border border-[#E6DFD4] rounded-xl focus:ring-2 focus:ring-[#8B5E3C] outline-none"
+                  className="w-full px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all"
                   placeholder="e.g. Wood Type, Product Name, Gift Wrap"
                 />
               </div>
-              
-              <div className="grid grid-cols-2 gap-4">
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Field Type *</label>
+                  <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Field Type <span className="text-red-500">*</span></label>
                   <select
                     value={newField.type}
                     onChange={(e) => setNewField({ ...newField, type: e.target.value })}
-                    className="w-full px-4 py-2 border border-[#E6DFD4] rounded-xl focus:ring-2 focus:ring-[#8B5E3C] outline-none bg-white"
+                    className="w-full px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all appearance-none"
                   >
                     <option value="text">Text Input</option>
                     <option value="dropdown">Dropdown</option>
@@ -274,11 +346,11 @@ export default function CustomizeFieldManager({ canCreate = true, canEdit = true
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Requirement</label>
+                  <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Requirement</label>
                   <select
                     value={newField.isRequired ? 'yes' : 'no'}
                     onChange={(e) => setNewField({ ...newField, isRequired: e.target.value === 'yes' })}
-                    className="w-full px-4 py-2 border border-[#E6DFD4] rounded-xl focus:ring-2 focus:ring-[#8B5E3C] outline-none bg-white"
+                    className="w-full px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all appearance-none"
                   >
                     <option value="yes">Required</option>
                     <option value="no">Optional</option>
@@ -287,49 +359,159 @@ export default function CustomizeFieldManager({ canCreate = true, canEdit = true
               </div>
 
               {newField.type === 'dropdown' && (
-                <div className="bg-[#F8F4EC] p-4 rounded-xl space-y-3 border border-[#E9DED3]">
-                  <label className="block text-sm font-medium text-[#4A3326]">Dropdown Options</label>
+                <div className="bg-[#F8F4EC] p-6 rounded-xl space-y-4 border border-[#E9DED3]">
+                  <label className="block text-[15px] font-serif font-bold text-[#3E2723]">Dropdown Options</label>
                   {newField.options.map((opt, idx) => (
-                    <div key={idx} className="flex gap-2">
+                    <div key={idx} className="flex gap-3">
                       <input
                         type="text"
                         value={opt}
                         onChange={(e) => updateOption(idx, e.target.value)}
                         placeholder={`Option ${idx + 1}`}
-                        className="flex-1 px-3 py-1.5 border border-[#E6DFD4] rounded-lg outline-none"
+                        className="flex-1 px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all"
                         required
                       />
-                      {newField.options.length > 1 && (
-                        <button type="button" onClick={() => removeOption(idx)} className="text-red-500 hover:text-red-600 transition-colors">
-                          <X className="w-5 h-5" />
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => removeOption(idx)}
+                        disabled={newField.options.length === 1}
+                        className="p-3 text-red-500 hover:bg-red-50 rounded-xl transition-colors disabled:opacity-50"
+                      >
+                        <Trash className="w-5 h-5" />
+                      </button>
                     </div>
                   ))}
                   <button
                     type="button"
                     onClick={addOption}
-                    className="flex items-center gap-1 text-sm text-[#8B5E3C] font-medium hover:underline mt-2"
+                    className="text-[15px] font-bold text-[#8B5E3C] hover:text-[#7a5234] flex items-center gap-1 transition-colors"
                   >
-                    <PlusCircle className="w-4 h-4" /> Add Another Option
+                    <Plus className="w-4 h-4" /> Add Option
                   </button>
                 </div>
               )}
 
-              <div className="flex justify-end gap-3 mt-8 pt-4 border-t border-[#E6DFD4]">
+              <div className="pt-6 mt-6 border-t border-[#E6DFD4] flex items-center justify-center gap-4">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-5 py-2 text-gray-600 border border-gray-200 hover:bg-gray-50 rounded-xl font-medium transition-colors"
+                  className="admin-cancel-btn"
                 >
-                  Cancel
+                  CANCEL
                 </button>
                 <button
                   type="submit"
                   disabled={adding}
-                  className="px-6 py-2 bg-[#8B5E3C] text-white rounded-xl font-medium hover:bg-[#7a5234] transition-colors disabled:opacity-50"
+                  className="flex items-center justify-center gap-2 bg-[#8B5E3C] hover:bg-[#7a5234] text-white px-8 py-3 rounded-full text-[15px] font-bold shadow-sm transition-all uppercase tracking-wide disabled:opacity-60"
                 >
-                  {adding ? 'Saving...' : 'Save Field'}
+                  {adding ? 'SAVING...' : 'SAVE FIELD'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showEditModal && editingField && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-[20px] shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 md:px-8 border-b border-[#E6DFD4] bg-[#F8F4EC]">
+              <h2 className="text-[28px] font-serif font-bold text-[#141225] tracking-tight flex items-center gap-2">
+                <Settings className="w-6 h-6 text-[#8B5E3C]" /> Edit Field
+              </h2>
+              <button onClick={() => setShowEditModal(false)} className="p-2 rounded-full hover:bg-[#E6DFD4] text-gray-400 hover:text-gray-700 transition-colors">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            
+            {/* Content */}
+            <form onSubmit={handleUpdateField} className="p-8 space-y-6 bg-white overflow-y-auto max-h-[70vh]">
+              <div>
+                <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Field Label <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  required
+                  value={editingField.label}
+                  onChange={(e) => setEditingField({ ...editingField, label: e.target.value })}
+                  className="w-full px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all"
+                  placeholder="e.g. Wood Type, Product Name, Gift Wrap"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Field Type <span className="text-red-500">*</span></label>
+                  <select
+                    value={editingField.type}
+                    onChange={(e) => setEditingField({ ...editingField, type: e.target.value })}
+                    className="w-full px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all appearance-none"
+                  >
+                    <option value="text">Text Input</option>
+                    <option value="dropdown">Dropdown</option>
+                    <option value="checkbox">Checkbox</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Requirement</label>
+                  <select
+                    value={editingField.isRequired ? 'yes' : 'no'}
+                    onChange={(e) => setEditingField({ ...editingField, isRequired: e.target.value === 'yes' })}
+                    className="w-full px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all appearance-none"
+                  >
+                    <option value="yes">Required</option>
+                    <option value="no">Optional</option>
+                  </select>
+                </div>
+              </div>
+
+              {editingField.type === 'dropdown' && (
+                <div className="bg-[#F8F4EC] p-6 rounded-xl space-y-4 border border-[#E9DED3]">
+                  <label className="block text-[15px] font-serif font-bold text-[#3E2723]">Dropdown Options</label>
+                  {editingField.options.map((opt, idx) => (
+                    <div key={idx} className="flex gap-3">
+                      <input
+                        type="text"
+                        value={opt}
+                        onChange={(e) => updateEditOption(idx, e.target.value)}
+                        placeholder={`Option ${idx + 1}`}
+                        className="flex-1 px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeEditOption(idx)}
+                        disabled={editingField.options.length === 1}
+                        className="p-3 text-red-500 hover:bg-red-50 rounded-xl transition-colors disabled:opacity-50"
+                      >
+                        <Trash className="w-5 h-5" />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={addEditOption}
+                    className="text-[15px] font-bold text-[#8B5E3C] hover:text-[#7a5234] flex items-center gap-1 transition-colors"
+                  >
+                    <Plus className="w-4 h-4" /> Add Option
+                  </button>
+                </div>
+              )}
+
+              <div className="pt-6 mt-6 border-t border-[#E6DFD4] flex items-center justify-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="admin-cancel-btn"
+                >
+                  CANCEL
+                </button>
+                <button
+                  type="submit"
+                  disabled={editing}
+                  className="flex items-center justify-center gap-2 bg-[#8B5E3C] hover:bg-[#7a5234] text-white px-8 py-3 rounded-full text-[15px] font-bold shadow-sm transition-all uppercase tracking-wide disabled:opacity-60"
+                >
+                  {editing ? 'SAVING...' : 'SAVE CHANGES'}
                 </button>
               </div>
             </form>

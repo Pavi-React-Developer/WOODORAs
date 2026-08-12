@@ -117,11 +117,19 @@ body {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
   transition: all 0.2s ease;
   cursor: pointer;
   box-sizing: border-box;
 }
+
+.admin-cancel-btn {
+  @apply px-8 py-3 border border-red-200 rounded-full text-[15px] font-bold text-red-600 bg-white hover:bg-red-50 transition-colors shadow-sm uppercase tracking-wide;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 
 .admin-secondary-btn:hover {
   background-color: #F8F4EC;

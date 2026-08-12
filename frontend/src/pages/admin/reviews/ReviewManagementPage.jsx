@@ -8,6 +8,7 @@ import {
   CheckCircle, XCircle, Award, Zap, ArrowUpRight, RotateCcw, Trash
 } from 'lucide-react';
 import { downloadExcelFile } from '../../../utils/exportUtils';
+import Pagination from '../../../components/common/Pagination';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar,
@@ -20,15 +21,15 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 const API = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api`;
 
-const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const getToken = () => localStorage.getItem("token");
 const authHeader = () => ({ Authorization: `Bearer ${getToken()}` });
-const DONUT_COLORS = ["#10b981","#3b82f6","#f59e0b","#f97316","#ef4444"];
+const DONUT_COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#f97316", "#ef4444"];
 
 /* ── helpers ──────────────────────────────────────── */
 const StarRating = ({ rating, size = 14 }) => (
   <span className="flex items-center gap-0.5">
-    {[1,2,3,4,5].map(s => (
+    {[1, 2, 3, 4, 5].map(s => (
       <Star key={s} size={size}
         className={s <= rating ? "text-amber-400 fill-amber-400" : "text-gray-200 fill-gray-200"}
       />
@@ -39,8 +40,8 @@ const StarRating = ({ rating, size = 14 }) => (
 const StatusBadge = ({ status }) => {
   const cfg = {
     approved: { cls: "bg-emerald-100 text-emerald-700 border-emerald-200", label: "Approved", Icon: CheckCircle },
-    pending:  { cls: "bg-amber-100 text-amber-700 border-amber-200",       label: "Pending",  Icon: Clock },
-    rejected: { cls: "bg-red-100 text-red-700 border-red-200",             label: "Rejected", Icon: XCircle },
+    pending: { cls: "bg-amber-100 text-amber-700 border-amber-200", label: "Pending", Icon: Clock },
+    rejected: { cls: "bg-red-100 text-red-700 border-red-200", label: "Rejected", Icon: XCircle },
   };
   const { cls, label, Icon } = cfg[status] || cfg.pending;
   return (
@@ -51,7 +52,7 @@ const StatusBadge = ({ status }) => {
 };
 
 const Avatar = ({ name = "", size = 36 }) => {
-  const colors = ["#6366f1","#8b5cf6","#ec4899","#f59e0b","#10b981","#3b82f6","#ef4444","#06b6d4"];
+  const colors = ["#6366f1", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#3b82f6", "#ef4444", "#06b6d4"];
   const bg = colors[(name.charCodeAt(0) || 0) % colors.length];
   return (
     <div className="rounded-xl flex items-center justify-center text-white font-bold shrink-0"
@@ -78,7 +79,7 @@ const KpiCard = ({ label, value, icon: Icon, iconBg, badge, badgeColor, sub, loa
         <p className="text-2xl font-bold text-gray-900">{value}</p>
       )}
       <p className="text-xs text-gray-500 font-medium mt-1">{label}</p>
-      {sub && <p className="text-xs text-emerald-600 font-semibold mt-0.5 flex items-center gap-1"><ArrowUpRight size={11}/>{sub}</p>}
+      {sub && <p className="text-xs text-emerald-600 font-semibold mt-0.5 flex items-center gap-1"><ArrowUpRight size={11} />{sub}</p>}
     </div>
   </div>
 );
@@ -93,71 +94,72 @@ function ReviewDetailModal({ review, onClose, onStatusChange, onDelete, canEdit,
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
-              <MessageCircle size={18} className="text-indigo-600" />
+      <div className="bg-white rounded-[24px] shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+        {/* Header - Fixed */}
+        <div className="flex items-center justify-between px-7 py-6 bg-[#F8F4EC] border-b border-[#E6DFD4] shrink-0">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm">
+              <MessageCircle size={18} className="text-[#5B43D6]" />
             </div>
             <div>
-              <h2 className="font-bold text-gray-900 text-lg">Review Details</h2>
-              <p className="text-xs text-gray-500">#{String(review._id).slice(-8).toUpperCase()}</p>
+              <h2 className="font-bold text-[#141225] font-serif text-xl leading-tight">Review Details</h2>
+              <p className="text-[13px] text-gray-400 mt-0.5">#{String(review._id).slice(-8).toUpperCase()}</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+          <button onClick={onClose} className="text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors p-1">
             <X size={20} />
           </button>
         </div>
-        <div className="p-6 space-y-5">
+        {/* Body - Scrollable */}
+        <div className="p-7 space-y-6 overflow-y-auto bg-[#FDFDFD] flex-1">
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-gray-50 rounded-2xl p-4">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-1.5"><User size={11}/>Customer</p>
-              <div className="flex items-center gap-3">
-                <Avatar name={u.name || "?"} size={42} />
+            <div className="bg-[#F8F9FA] rounded-[20px] p-5 border border-gray-100">
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-1.5"><User size={12} />Customer</p>
+              <div className="flex items-center gap-3.5">
+                <Avatar name={u.name || "?"} size={44} />
                 <div>
-                  <p className="font-bold text-gray-900 text-sm">{u.name || "Unknown"}</p>
-                  <p className="text-xs text-gray-500">{u.email || "—"}</p>
-                  {u.phone && <p className="text-xs text-gray-500">{u.phone}</p>}
+                  <p className="font-bold text-[#141225] text-[15px]">{u.name || "Unknown"}</p>
+                  <p className="text-[13px] text-gray-500 mt-0.5">{u.email || "—"}</p>
+                  {u.phone && <p className="text-[13px] text-gray-500">{u.phone}</p>}
                 </div>
               </div>
             </div>
-            <div className="bg-gray-50 rounded-2xl p-4">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-1.5"><Package size={11}/>Product</p>
-              <div className="flex items-center gap-3">
-                {/* Product thumbnail — p.images is a string[] from attachProductImages */}
+            <div className="bg-[#F8F9FA] rounded-[20px] p-5 border border-gray-100">
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-1.5"><Package size={12} />Product</p>
+              <div className="flex items-center gap-3.5">
                 {p.images?.[0] ? (
-                  <img src={p.images[0]} alt={p.name} className="w-11 h-11 rounded-xl object-cover border border-gray-200 shrink-0" />
+                  <img src={p.images[0]} alt={p.name} className="w-11 h-11 rounded-xl object-cover border border-gray-200 shrink-0 shadow-sm" />
                 ) : (
-                  <div className="w-11 h-11 rounded-xl bg-gray-200 flex items-center justify-center shrink-0">
+                  <div className="w-11 h-11 rounded-xl bg-gray-200 flex items-center justify-center shrink-0 shadow-sm">
                     <Package size={16} className="text-gray-400" />
                   </div>
                 )}
                 <div>
-                  <p className="font-bold text-gray-900 text-sm leading-tight">{p.name || "Unknown"}</p>
-                  {p.sku && <p className="text-xs text-gray-400 mt-0.5">SKU: {p.sku}</p>}
+                  <p className="font-bold text-[#141225] text-[15px] leading-tight">{p.name || "Unknown"}</p>
+                  {p.sku && <p className="text-[13px] text-gray-400 mt-1">SKU: {p.sku}</p>}
                 </div>
               </div>
             </div>
           </div>
           <div className="flex items-center justify-between flex-wrap gap-3">
-            <div><p className="text-xs text-gray-400 mb-1">Rating</p><StarRating rating={review.rating} size={20} /></div>
-            <div><p className="text-xs text-gray-400 mb-1">Status</p><StatusBadge status={review.status} /></div>
+            <div><p className="text-[11px] text-gray-400 mb-1.5">Rating</p><StarRating rating={review.rating} size={22} /></div>
+            <div><p className="text-[11px] text-gray-400 mb-1.5">Status</p><StatusBadge status={review.status} /></div>
             <div>
-              <p className="text-xs text-gray-400 mb-1">Date</p>
-              <p className="text-sm font-semibold text-gray-700">
-                {new Date(review.createdAt).toLocaleDateString("en-IN", { day:"2-digit", month:"short", year:"numeric" })}
+              <p className="text-[11px] text-gray-400 mb-1.5">Date</p>
+              <p className="text-[15px] font-serif font-bold text-[#141225]">
+                {new Date(review.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
               </p>
             </div>
             {review.isVerifiedPurchase && (
-              <span className="flex items-center gap-1 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full font-bold">
-                <Shield size={11}/> Verified
+              <span className="flex items-center gap-1.5 text-[13px] text-[#00C48C] bg-[#00C48C]/10 border border-[#00C48C]/20 px-3 py-1.5 rounded-full font-bold mt-3">
+                <Shield size={14} /> Verified
               </span>
             )}
           </div>
-          {review.title && <p className="font-bold text-gray-900">"{review.title}"</p>}
-          <div className="bg-gray-50 rounded-2xl p-4">
-            <p className="text-sm text-gray-700 leading-relaxed">
-              {review.description || <span className="italic text-gray-400">No text provided.</span>}
+          {review.title && <p className="text-xl font-bold font-serif text-[#141225]">"{review.title}"</p>}
+          <div className="bg-[#F8F9FA] rounded-[20px] p-5">
+            <p className="text-[15px] text-gray-500 italic leading-relaxed">
+              {review.description || "No text provided."}
             </p>
           </div>
 
@@ -204,35 +206,30 @@ function ReviewDetailModal({ review, onClose, onStatusChange, onDelete, canEdit,
           )}
 
           {review.adminReply?.text && (
-            <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4">
-              <p className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-1">Admin Reply</p>
-              <p className="text-sm text-indigo-700">{review.adminReply.text}</p>
+            <div className="bg-[#F8F9FA] border border-gray-100 rounded-[20px] p-5">
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Admin Reply</p>
+              <p className="text-[15px] text-gray-700">{review.adminReply.text}</p>
             </div>
           )}
 
           <div>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Admin Note</p>
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Admin Note</p>
             <textarea value={note} onChange={e => setNote(e.target.value)} rows={2}
               placeholder="Add a private note..."
-              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+              className="w-full text-[15px] border border-gray-200 rounded-2xl px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-colors placeholder:text-gray-400" />
           </div>
-          <div className="flex gap-3 pt-2">
+
+          <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
             {canEdit && review.status !== 'approved' && (
               <button onClick={() => onStatusChange(review._id, "approved")}
-                className="flex items-center gap-1.5 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-sm font-semibold transition">
-                <Check size={14}/> Approve
+                className="flex items-center gap-2 px-8 py-3 border border-green-200 rounded-full text-[15px] font-bold text-green-600 bg-white hover:bg-green-50 transition-colors shadow-sm uppercase tracking-wide">
+                <Check size={18} /> Approve
               </button>
             )}
             {canEdit && review.status !== 'rejected' && (
               <button onClick={() => onStatusChange(review._id, "rejected")}
-                className="flex items-center gap-1.5 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-sm font-semibold transition">
-                <X size={14}/> Reject
-              </button>
-            )}
-            {canDelete && (
-              <button onClick={() => onDelete(review._id)}
-                className="flex items-center gap-1.5 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-semibold transition ml-auto">
-                <Trash size={14}/> Delete
+                className="flex items-center gap-2 px-8 py-3 border border-red-200 rounded-full text-[15px] font-bold text-red-600 bg-white hover:bg-red-50 transition-colors shadow-sm uppercase tracking-wide">
+                <X size={18} /> Reject
               </button>
             )}
           </div>
@@ -246,8 +243,8 @@ function ReviewDetailModal({ review, onClose, onStatusChange, onDelete, canEdit,
    MAIN PAGE
 ══════════════════════════════════════════════════ */
 export default function ReviewManagementPage({ canEdit = true, canDelete = true }) {
-  const [reviews,   setReviews]   = useState([]);
-  const [stats,     setStats]     = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [stats, setStats] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
 
   const toggleSelectAll = (checked) => {
@@ -257,17 +254,17 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
   const toggleSelectOne = (id, checked) => {
     setSelectedIds(prev => checked ? [...prev, id] : prev.filter(i => i !== id));
   };
-  const [loading,   setLoading]   = useState(true);
+  const [loading, setLoading] = useState(true);
   const [statsLoad, setStatsLoad] = useState(true);
-  const [search,    setSearch]    = useState("");
-  const [rating,    setRating]    = useState("");
-  const [status,    setStatus]    = useState("");
-  const [sortBy,    setSortBy]    = useState("newest");
-  const [page,      setPage]      = useState(1);
-  const [limit,     setLimit]     = useState(10);
-  const [total,     setTotal]     = useState(0);
-  const [detailReview, setDetail]  = useState(null);
-  const [confirm,      setConfirm] = useState(null);
+  const [search, setSearch] = useState("");
+  const [rating, setRating] = useState("");
+  const [status, setStatus] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [total, setTotal] = useState(0);
+  const [detailReview, setDetail] = useState(null);
+  const [confirm, setConfirm] = useState(null);
 
   const fetchReviews = useCallback(async () => {
     setLoading(true);
@@ -296,7 +293,7 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
   }, []);
 
   useEffect(() => { fetchReviews(); }, [fetchReviews]);
-  useEffect(() => { fetchStats();   }, [fetchStats]);
+  useEffect(() => { fetchStats(); }, [fetchStats]);
 
   const handleStatusChange = async (id, newStatus) => {
     try {
@@ -331,6 +328,31 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
     } catch (err) { toast.error(err.response?.data?.message || "Delete failed"); }
   };
 
+  const handleBulkStatus = async (newStatus) => {
+    if (!selectedIds.length) return;
+    try {
+      await Promise.all(selectedIds.map(id =>
+        axios.patch(`${API}/reviews/admin/${id}/status`, { status: newStatus }, { headers: authHeader() })
+      ));
+      toast.success(`Updated ${selectedIds.length} reviews`);
+      setSelectedIds([]);
+      fetchReviews(); fetchStats();
+    } catch (err) { toast.error("Bulk action failed"); }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!selectedIds.length) return;
+    if (!window.confirm(`Delete ${selectedIds.length} selected reviews?`)) return;
+    try {
+      await Promise.all(selectedIds.map(id =>
+        axios.delete(`${API}/reviews/${id}`, { headers: authHeader() })
+      ));
+      toast.success(`Deleted ${selectedIds.length} reviews`);
+      setSelectedIds([]);
+      fetchReviews(); fetchStats();
+    } catch (err) { toast.error("Bulk delete failed"); }
+  };
+
   const resetFilters = () => { setSearch(""); setRating(""); setStatus(""); setSortBy("newest"); setPage(1); };
 
   const monthlyData = useMemo(() => {
@@ -345,7 +367,7 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
   const distData = useMemo(() => {
     if (!stats?.dist) return [];
     const t = stats.dist.reduce((s, d) => s + d.count, 0);
-    return [5,4,3,2,1].map(star => {
+    return [5, 4, 3, 2, 1].map(star => {
       const found = stats.dist.find(d => d._id === star);
       return { name: `${star}★`, value: found?.count || 0, pct: t ? Math.round(((found?.count || 0) / t) * 100) : 0 };
     });
@@ -354,17 +376,19 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
   const pages = Math.ceil(total / limit);
 
   return (
-    <div className="bg-[#F8F7F5] min-h-screen">
-      <div className="max-w-[1400px] mx-auto px-6 py-8 space-y-6">
+    <div className="min-h-full overflow-y-auto flex-1">
+      <div className="px-6 py-8 space-y-6">
 
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <Star size={24} className="text-amber-400 fill-amber-400" />
+            <p className="text-[13px] md:text-sm font-serif text-white mb-1">
+              Dashboard &rsaquo; <span className="font-semibold text-[#8B5E3C]">Rating &amp; Review Management</span>
+            </p>
+            <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] flex items-center gap-3 leading-tight tracking-tight mt-1">
               Rating &amp; Review Management
             </h1>
-            <p className="text-sm text-gray-500 mt-0.5">Moderate, approve, and analyze customer reviews</p>
+
           </div>
           <div className="flex items-center gap-3">
             <button onClick={() => { fetchReviews(); fetchStats(); }} className="admin-secondary-btn">
@@ -414,16 +438,16 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
         {stats?.topProducts?.length > 0 && (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <div className="flex items-center gap-2 mb-4">
-              <Award size={16} className="text-amber-500"/>
+              <Award size={16} className="text-amber-500" />
               <h3 className="font-bold text-gray-800 text-sm">Most Reviewed Products</h3>
             </div>
             <ResponsiveContainer width="100%" height={140}>
               <BarChart data={stats.topProducts} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0"/>
-                <XAxis type="text" inputMode="numeric" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false}/>
-                <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 11, fill: "#374151" }} axisLine={false} tickLine={false}/>
-                <Tooltip contentStyle={{ borderRadius: 10, fontSize: 12 }}/>
-                <Bar dataKey="reviewCount" fill="#6366f1" radius={[0,6,6,0]} name="Reviews"/>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
+                <XAxis type="text" inputMode="numeric" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
+                <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 11, fill: "#374151" }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={{ borderRadius: 10, fontSize: 12 }} />
+                <Bar dataKey="reviewCount" fill="#6366f1" radius={[0, 6, 6, 0]} name="Reviews" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -433,17 +457,17 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
         {monthlyData.length > 0 && (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <div className="flex items-center gap-2 mb-4">
-              <TrendingUp size={16} className="text-indigo-500"/>
+              <TrendingUp size={16} className="text-indigo-500" />
               <h3 className="font-bold text-gray-800 text-sm">Monthly Review Trend</h3>
             </div>
             <ResponsiveContainer width="100%" height={160}>
               <LineChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0"/>
-                <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false}/>
-                <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false}/>
-                <Tooltip contentStyle={{ borderRadius: 10, fontSize: 12 }}/>
-                <Line type="monotone" dataKey="reviews" stroke="#6366f1" strokeWidth={2} dot={{ r: 3, fill: "#6366f1" }} name="Reviews"/>
-                <Line type="monotone" dataKey="rating" stroke="#f59e0b" strokeWidth={2} dot={{ r: 3, fill: "#f59e0b" }} name="Avg Rating"/>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={{ borderRadius: 10, fontSize: 12 }} />
+                <Line type="monotone" dataKey="reviews" stroke="#6366f1" strokeWidth={2} dot={{ r: 3, fill: "#6366f1" }} name="Reviews" />
+                <Line type="monotone" dataKey="rating" stroke="#f59e0b" strokeWidth={2} dot={{ r: 3, fill: "#f59e0b" }} name="Avg Rating" />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -453,7 +477,7 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
           <div className="flex flex-wrap gap-3 items-center">
             <div className="flex-1 min-w-[220px] relative">
-              <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"/>
+              <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
               <input type="text" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
                 placeholder="Search reviews, customers, products..."
                 className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 transition" />
@@ -461,7 +485,7 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
             <select value={rating} onChange={e => { setRating(e.target.value); setPage(1); }}
               className="px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none cursor-pointer">
               <option value="">All Ratings</option>
-              {[5,4,3,2,1].map(r => <option key={r} value={r}>{"★".repeat(r)}{"☆".repeat(5-r)}</option>)}
+              {[5, 4, 3, 2, 1].map(r => <option key={r} value={r}>{"★".repeat(r)}{"☆".repeat(5 - r)}</option>)}
             </select>
             <select value={status} onChange={e => { setStatus(e.target.value); setPage(1); }}
               className="px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none cursor-pointer">
@@ -479,52 +503,55 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
             </select>
             <button onClick={resetFilters}
               className="flex items-center gap-1.5 px-3 py-2.5 text-gray-500 hover:text-gray-700 text-sm rounded-xl border border-gray-200 hover:bg-gray-50 transition">
-              <RotateCcw size={13}/> Reset
+              <RotateCcw size={13} /> Reset
             </button>
-            <div className="ml-auto text-sm text-gray-400 font-medium">
-              {total.toLocaleString()} review{total !== 1 ? "s" : ""} found
-            </div>
           </div>
         </div>
 
         {/* Bulk Actions */}
-      {selectedIds.length > 0 && (
-        <div className="bg-[#F8F4EC] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3 flex-wrap">
-          <span className="text-sm font-semibold text-[#8B5E3C]">{selectedIds.length} selected</span>
-          <div className="flex gap-2 ml-auto flex-wrap">
-             {typeof handleBulkDelete !== 'undefined' && (
+        {selectedIds.length > 0 && (
+          <div className="bg-[#F8F4EC] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3 flex-wrap">
+            <span className="text-sm font-semibold text-[#8B5E3C]">{selectedIds.length} selected</span>
+            <div className="flex gap-2 ml-auto flex-wrap">
+              {canEdit && (
+                <>
+                  <button onClick={() => handleBulkStatus('approved')} className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">Set Active</button>
+                  <button onClick={() => handleBulkStatus('rejected')} className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">Set Inactive</button>
+                </>
+              )}
+              {canDelete && (
                 <button onClick={handleBulkDelete} className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">Delete Selected</button>
-             )}
-            <button onClick={() => setSelectedIds([])} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-white transition-colors text-gray-500">Clear</button>
+              )}
+              <button onClick={() => setSelectedIds([])} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-white transition-colors text-gray-500">Clear</button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Table */}
+        {/* Table */}
         <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
-                <tr className="bg-gray-50 border-b border-gray-100">
-                                <th className="px-4 py-3.5 w-10">
-                                    <input
-                                        type="checkbox"
-                                        checked={reviews.length > 0 && selectedIds.length === reviews.length}
-                                        onChange={e => toggleSelectAll(e.target.checked)}
-                                        className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
-                                    />
-                                </th>
-                  {["Customer","Product","Rating","Review","Date","Status","Actions"].map(h => (
-                    <th key={h} className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">{h}</th>
+                <tr>
+                  <th className="px-4 py-3.5 w-10">
+                    <input
+                      type="checkbox"
+                      checked={reviews.length > 0 && selectedIds.length === reviews.length}
+                      onChange={e => toggleSelectAll(e.target.checked)}
+                      className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                    />
+                  </th>
+                  {["Customer", "Product", "Rating", "Review", "Date", "Status", "Actions"].map(h => (
+                    <th key={h} className={`px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap ${h === 'Actions' ? 'text-right pr-8' : 'text-left'}`}>{h}</th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody>
                 {loading ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <tr key={i} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${typeof idx !== "undefined" ? (idx % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : typeof index !== "undefined" ? (index % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : "bg-white"}`}>
                       {Array.from({ length: 7 }).map((__, j) => (
-                        <td key={j} className="px-5 py-4"><Skeleton className="h-5 w-full"/></td>
+                        <td key={j} className="px-5 py-4"><Skeleton className="h-5 w-full" /></td>
                       ))}
                     </tr>
                   ))
@@ -533,18 +560,26 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
                     <td colSpan={8} className="px-5 py-20 text-center">
                       <div className="flex flex-col items-center gap-3">
                         <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center">
-                          <MessageCircle size={28} className="text-gray-300"/>
+                          <MessageCircle size={28} className="text-gray-300" />
                         </div>
                         <p className="text-gray-400 font-medium">No reviews found</p>
                         <button onClick={resetFilters} className="p-1.5 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded transition-colors">Clear filters</button>
                       </div>
                     </td>
                   </tr>
-                ) : reviews.map(r => {
+                ) : reviews.map((r, idx) => {
                   const u = r.user || {};
                   const p = r.product || {};
                   return (
-                    <tr key={r._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${typeof idx !== "undefined" ? (idx % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : typeof index !== "undefined" ? (index % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : "bg-white"}`}>
+                    <tr key={r._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
+                      <td className="px-4 py-3.5">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(r._id)}
+                          onChange={e => toggleSelectOne(r._id, e.target.checked)}
+                          className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                        />
+                      </td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
                           <Avatar name={u.name || "?"} size={36} />
@@ -557,10 +592,10 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2.5">
                           {p.images?.[0] ? (
-                            <img src={p.images[0]} alt={p.name} className="w-9 h-9 rounded-xl object-cover border border-gray-100 shrink-0"/>
+                            <img src={p.images[0]} alt={p.name} className="w-9 h-9 rounded-xl object-cover border border-gray-100 shrink-0" />
                           ) : (
                             <div className="w-9 h-9 bg-gray-100 rounded-xl flex items-center justify-center shrink-0">
-                              <Package size={14} className="text-gray-300"/>
+                              <Package size={14} className="text-gray-300" />
                             </div>
                           )}
                           <p className="text-sm font-semibold text-gray-700 max-w-[130px] truncate">{p.name || "—"}</p>
@@ -580,38 +615,38 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
                       </td>
                       <td className="px-5 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                          <Calendar size={11}/>
-                          {new Date(r.createdAt).toLocaleDateString("en-IN", { day:"2-digit", month:"short", year:"numeric" })}
+                          <Calendar size={11} />
+                          {new Date(r.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
                         </div>
                         {r.isVerifiedPurchase && (
                           <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 font-bold mt-0.5">
-                            <Shield size={9}/> Verified
+                            <Shield size={9} /> Verified
                           </span>
                         )}
                       </td>
                       <td className="px-5 py-4 whitespace-nowrap"><StatusBadge status={r.status} /></td>
-                      <td className="px-5 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-1.5">
+                      <td className="px-5 py-4 whitespace-nowrap text-right">
+                        <div className="flex items-center justify-end gap-1.5 pr-4">
                           <button onClick={() => setDetail(r)} title="View"
-                            className="p-1.5 text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors">
-                            <Eye size={14}/>
+                            className="p-1.5 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors">
+                            <Eye size={14} />
                           </button>
                           {canEdit && r.status !== "approved" && (
                             <button onClick={() => handleStatusChange(r._id, "approved")} title="Approve"
                               className="p-1.5 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors">
-                              <Check size={14}/>
+                              <Check size={14} />
                             </button>
                           )}
                           {canEdit && r.status !== "rejected" && (
                             <button onClick={() => handleStatusChange(r._id, "rejected")} title="Reject"
-                              className="p-1.5 text-amber-500 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-colors">
-                              <X size={14}/>
+                              className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors">
+                              <X size={14} />
                             </button>
                           )}
                           {canDelete && (
                             <button onClick={() => setConfirm({ id: r._id })} title="Delete"
                               className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                              <Trash size={14}/>
+                              <Trash size={14} />
                             </button>
                           )}
                         </div>
@@ -623,34 +658,8 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
             </table>
           </div>
           {!loading && reviews.length > 0 && (
-            <div className="px-5 py-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <span>Rows per page:</span>
-                <select value={limit} onChange={e => { setLimit(Number(e.target.value)); setPage(1); }}
-                  className="border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-300">
-                  {[10,25,50,100].map(n => <option key={n}>{n}</option>)}
-                </select>
-                <span className="text-gray-400">{((page-1)*limit)+1}–{Math.min(page*limit,total)} of {total}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <button onClick={() => setPage(pg => Math.max(1, pg-1))} disabled={page===1}
-                  className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center disabled:opacity-40 hover:bg-gray-50 transition">
-                  <ChevronLeft size={14}/>
-                </button>
-                {Array.from({ length: Math.min(5, pages) }, (_, i) => {
-                  const pg = Math.max(1, Math.min(pages-4, page-2)) + i;
-                  return (
-                    <button key={pg} onClick={() => setPage(pg)}
-                      className={`w-8 h-8 rounded-lg text-sm font-semibold transition border ${pg===page ? "bg-indigo-600 text-white border-indigo-600" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}>
-                      {pg}
-                    </button>
-                  );
-                })}
-                <button onClick={() => setPage(pg => Math.min(pages, pg+1))} disabled={page===pages || pages===0}
-                  className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center disabled:opacity-40 hover:bg-gray-50 transition">
-                  <ChevronRight size={14}/>
-                </button>
-              </div>
+            <div className="px-5 py-6 border-t border-gray-100 flex justify-center">
+              <Pagination currentPage={page} totalPages={pages} onPageChange={setPage} />
             </div>
           )}
         </div>
@@ -659,22 +668,22 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
         <div className="grid grid-cols-1 gap-5">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <div className="flex items-center gap-2 mb-4">
-              <Zap size={15} className="text-amber-500"/>
+              <Zap size={15} className="text-amber-500" />
               <h3 className="font-bold text-gray-800 text-sm">Recent Reviews</h3>
             </div>
             <div className="space-y-3">
-              {loading ? Array.from({length:4}).map((_,i) => <Skeleton key={i} className="h-12"/>) :
+              {loading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12" />) :
                 reviews.slice(0, 5).map(r => (
                   <div key={r._id} className="flex items-start gap-3 p-3 rounded-xl hover:bg-gray-50 transition cursor-pointer" onClick={() => setDetail(r)}>
-                    <Avatar name={r.user?.name || "?"} size={34}/>
+                    <Avatar name={r.user?.name || "?"} size={34} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-bold text-gray-800 truncate">{r.user?.name || "Unknown"}</p>
-                        <StarRating rating={r.rating} size={11}/>
+                        <StarRating rating={r.rating} size={11} />
                       </div>
                       <p className="text-xs text-gray-500 truncate">{r.description || r.product?.name || "—"}</p>
                     </div>
-                    <StatusBadge status={r.status}/>
+                    <StatusBadge status={r.status} />
                   </div>
                 ))
               }
@@ -696,15 +705,13 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full">
             <div className="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Trash size={22} className="text-red-500"/>
+              <Trash size={22} className="text-red-500" />
             </div>
             <h3 className="text-center font-bold text-gray-900 text-lg mb-1">Delete Review?</h3>
             <p className="text-center text-sm text-gray-500 mb-6">This action cannot be undone.</p>
             <div className="flex gap-3">
               <button onClick={() => setConfirm(null)}
-                className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-xl font-semibold text-sm hover:bg-gray-50 transition">
-                Cancel
-              </button>
+                className="admin-cancel-btn">CANCEL</button>
               <button onClick={() => handleDelete(confirm.id)}
                 className="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold text-sm transition">
                 Delete

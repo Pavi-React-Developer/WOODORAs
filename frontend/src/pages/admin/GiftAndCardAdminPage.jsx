@@ -6,6 +6,7 @@ import { Eye, X, Edit2, ToggleLeft, ToggleRight, Trash2, SquarePen, Trash, Refre
 import { getImageSrc } from '../../utils/imageUtils';
 import { formatDeliveryDate, getDeliveryDate } from '../../utils/deliveryDate';
 import EditGiftBoxRulePage from './fees/EditGiftBoxRulePage';
+import Pagination from '../../components/common/Pagination';
 import OrderPricingSummary from '../../components/OrderPricingSummary';
 
 const formatDate = formatDeliveryDate;
@@ -67,7 +68,7 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
     }
     return pages;
   };
-  
+
   const [editingRuleId, setEditingRuleId] = useState(null);
   const [formData, setFormData] = useState({
     minVolume: '',
@@ -83,7 +84,7 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
 
   const fetchData = async () => {
     setLoading(true);
-    
+
     try {
       const conf = await adminService.getGiftCardConfig();
       if (conf) setConfig(conf);
@@ -111,7 +112,7 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
     } catch (err) {
       console.error('Failed to load Gift Box Rules:', err);
     }
-    
+
     setLoading(false);
   };
 
@@ -194,7 +195,7 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
     <div className="flex-1 overflow-y-auto p-8">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
         <div>
-          <p className="text-[13px] md:text-sm font-serif text-[#94A3B8] mb-1">
+          <p className="text-[13px] md:text-sm font-serif text-white mb-1">
             Dashboard &rsaquo; Gift &amp; Card &rsaquo; <span className="font-semibold text-[#8B5E3C]">{pageTitle}</span>
           </p>
           <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">{pageTitle}</h1>
@@ -230,203 +231,193 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
       {activeTab === 'gift-fee' && (
         <div className="max-w-5xl">
           {editingRuleId ? (
-            <EditGiftBoxRulePage 
-              ruleId={editingRuleId} 
+            <EditGiftBoxRulePage
+              ruleId={editingRuleId}
               onBack={() => {
                 setEditingRuleId(null);
                 fetchGiftBoxRules();
-              }} 
+              }}
             />
           ) : (
             <>
               <h2 className="text-lg font-medium text-gray-900 mb-4">Dynamic Gift Box Rules</h2>
-              <p className="text-sm text-gray-500 mb-6">Configure dynamic volume ranges (Min Volume and Max Volume in cm³) to determine Box Size and Fee.</p>
-              
+
               {canCreate && (
-              <div className="bg-gray-50 p-4 rounded border border-gray-200 mb-6">
-                <h3 className="text-sm font-semibold text-gray-700 mb-4">Add New Rule</h3>
-            <form onSubmit={async (e) => {
-              e.preventDefault();
-              if (formData.minVolume === '' || formData.maxVolume === '' || formData.fee === '') {
-                toast.error('Please fill all required numeric fields properly');
-                return;
-              }
-              try {
-                if (editingRuleId) {
-                  await adminService.updateGiftBoxRule(editingRuleId, formData);
-                  toast.success(`Rule updated successfully!`);
-                } else {
-                  await adminService.createGiftBoxRule(formData);
-                  toast.success(`Rule added successfully!`);
-                }
-                setFormData({ minVolume: '', maxVolume: '', boxSize: 'XS', fee: '', isActive: true });
-                fetchGiftBoxRules();
-              } catch (error) {
-                toast.error(error.message || 'Failed to save rule');
-              }
-            }}>
-              <div className="grid grid-cols-2 md:grid-cols-6 gap-4 items-end">
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Min Volume (cm³)</label>
-                  <input type="text" inputMode="numeric" name="minVolume" value={formData.minVolume} onChange={(e) => setFormData({...formData, minVolume: e.target.value ? Number(e.target.value) : ''})} required className="w-full p-2 border rounded text-sm focus:ring-[#B0611C]" placeholder="e.g. 0" />
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#E6DFD4] mb-8">
+                  <h3 className="text-xl font-serif font-bold text-gray-900 mb-6">Add New Rule</h3>
+                  <form onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (formData.minVolume === '' || formData.maxVolume === '' || formData.fee === '') {
+                      toast.error('Please fill all required numeric fields properly');
+                      return;
+                    }
+                    try {
+                      if (editingRuleId) {
+                        await adminService.updateGiftBoxRule(editingRuleId, formData);
+                        toast.success(`Rule updated successfully!`);
+                      } else {
+                        await adminService.createGiftBoxRule(formData);
+                        toast.success(`Rule added successfully!`);
+                      }
+                      setFormData({ minVolume: '', maxVolume: '', boxSize: 'XS', fee: '', isActive: true });
+                      fetchGiftBoxRules();
+                    } catch (error) {
+                      toast.error(error.message || 'Failed to save rule');
+                    }
+                  }}>
+                    <div className="grid grid-cols-2 md:grid-cols-6 gap-4 items-end">
+                      <div>
+                        <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Min Volume (cm³)</label>
+                        <input type="text" inputMode="numeric" name="minVolume" value={formData.minVolume} onChange={(e) => setFormData({ ...formData, minVolume: e.target.value ? Number(e.target.value) : '' })} required className="w-full px-4 py-2.5 text-sm border border-[#E6DFD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-colors" placeholder="e.g. 0" />
+                      </div>
+                      <div>
+                        <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Max Volume (cm³)</label>
+                        <input type="text" inputMode="numeric" name="maxVolume" value={formData.maxVolume} onChange={(e) => setFormData({ ...formData, maxVolume: e.target.value ? Number(e.target.value) : '' })} required className="w-full px-4 py-2.5 text-sm border border-[#E6DFD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-colors" placeholder="e.g. 500" />
+                      </div>
+                      <div>
+                        <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Box Size</label>
+                        <input type="text" name="boxSize" value={formData.boxSize} onChange={(e) => setFormData({ ...formData, boxSize: e.target.value })} required className="w-full px-4 py-2.5 text-sm border border-[#E6DFD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-colors" placeholder="e.g. XS" />
+                      </div>
+                      <div>
+                        <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Fee (₹)</label>
+                        <input type="text" inputMode="numeric" name="fee" value={formData.fee} onChange={(e) => setFormData({ ...formData, fee: e.target.value ? Number(e.target.value) : '' })} required className="w-full px-4 py-2.5 text-sm border border-[#E6DFD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-colors" placeholder="e.g. 30" />
+                      </div>
+                      <div>
+                        <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Status</label>
+                        <select name="isActive" value={formData.isActive} onChange={(e) => setFormData({ ...formData, isActive: e.target.value === 'true' })} className="w-full px-4 py-2.5 text-sm border border-[#E6DFD4] rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-colors">
+                          <option value="true">Active</option>
+                          <option value="false">Inactive</option>
+                        </select>
+                      </div>
+                      <div>
+                        <button type="submit" className="flex items-center gap-2 bg-[#8B5E3C] hover:bg-[#7a5234] disabled:opacity-60 text-white px-8 py-3 rounded-full text-[15px] font-bold transition-colors shadow-sm uppercase tracking-wide">
+                          ADD RULE
+                        </button>
+                      </div>
+                    </div>
+                  </form>
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Max Volume (cm³)</label>
-                  <input type="text" inputMode="numeric" name="maxVolume" value={formData.maxVolume} onChange={(e) => setFormData({...formData, maxVolume: e.target.value ? Number(e.target.value) : ''})} required className="w-full p-2 border rounded text-sm focus:ring-[#B0611C]" placeholder="e.g. 500" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Box Size</label>
-                  <input type="text" name="boxSize" value={formData.boxSize} onChange={(e) => setFormData({...formData, boxSize: e.target.value})} required className="w-full p-2 border rounded text-sm focus:ring-[#B0611C]" placeholder="e.g. XS" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Fee (₹)</label>
-                  <input type="text" inputMode="numeric" name="fee" value={formData.fee} onChange={(e) => setFormData({...formData, fee: e.target.value ? Number(e.target.value) : ''})} required className="w-full p-2 border rounded text-sm focus:ring-[#B0611C]" placeholder="e.g. 30" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
-                  <select name="isActive" value={formData.isActive} onChange={(e) => setFormData({...formData, isActive: e.target.value === 'true'})} className="w-full p-2 border rounded text-sm focus:ring-[#B0611C]">
-                    <option value="true">Active</option>
-                    <option value="false">Inactive</option>
-                  </select>
-                </div>
-                <div>
-                  <button type="submit" className="w-full bg-[#B0611C] text-white p-2.5 rounded font-bold hover:bg-[#8B5E3C] transition-colors shadow-sm">
-                    Add Rule
-                  </button>
-                </div>
-              </div>
-            </form>
-          </div>
-          )}
+              )}
 
-          {selectedIds.length > 0 && (
-            <div className="bg-[#F8F4EC] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3 flex-wrap">
-              <span className="text-sm font-semibold text-[#8B5E3C]">{selectedIds.length} selected</span>
-              <div className="flex gap-2 ml-auto flex-wrap">
-                {canEdit && (
-                  <>
-                    <button onClick={() => toast.success('Status updated')} className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">Set Active</button>
-                    <button onClick={() => toast.success('Status updated')} className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">Set Inactive</button>
-                  </>
-                )}
-                {canDelete && (
-                  <button onClick={() => { toast.success('Rules deleted'); setSelectedIds([]); }} className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">Delete Selected</button>
-                )}
-                <button onClick={() => setSelectedIds([])} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-white transition-colors text-gray-500">Clear</button>
-              </div>
-            </div>
-          )}
-
-          <div className="bg-white rounded-3xl shadow-sm border border-[#E6DFD4] overflow-hidden">
-            <table className="w-full text-sm">
-            <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
-              <tr>
-                <th className="px-4 py-3.5 w-10">
-                  <input
-                    type="checkbox"
-                    checked={paginatedRules.length > 0 && paginatedRules.every(r => selectedIds.includes(r._id))}
-                    onChange={e => setSelectedIds(e.target.checked ? [...new Set([...selectedIds, ...paginatedRules.map(r => r._id)])] : selectedIds.filter(id => !paginatedRules.map(r => r._id).includes(id)))}
-                    className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
-                  />
-                </th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Min Vol (cm³)</th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Max Vol (cm³)</th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Box Size</th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Fee (₹)</th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Status</th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Action</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {paginatedRules.map((rule, idx) => (
-                <tr key={rule._id || idx} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
-                  <td className="px-4 py-3">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.includes(rule._id)}
-                      onChange={e => setSelectedIds(prev => e.target.checked ? [...prev, rule._id] : prev.filter(i => i !== rule._id))}
-                      className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
-                    />
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{rule.minVolume}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{rule.maxVolume}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{rule.boxSize}</td>
-                  <td className="px-4 py-3 text-sm font-medium text-green-600">₹{rule.fee}</td>
-                  <td className="px-4 py-3 text-center">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${rule.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
-                      {rule.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-center flex justify-center gap-3">
+              {selectedIds.length > 0 && (
+                <div className="bg-[#F8F4EC] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3 flex-wrap">
+                  <span className="text-sm font-semibold text-[#8B5E3C]">{selectedIds.length} selected</span>
+                  <div className="flex gap-2 ml-auto flex-wrap">
                     {canEdit && (
                       <>
-                        <button onClick={() => {
-                          setEditingRuleId(rule._id);
-                          setFormData({
-                            minVolume: rule.minVolume,
-                            maxVolume: rule.maxVolume,
-                            boxSize: rule.boxSize,
-                            fee: rule.fee,
-                            isActive: rule.isActive
-                          });
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }} className="text-blue-600 hover:text-blue-700 transition-colors" title="Edit Rule">
-                          <SquarePen className="w-4 h-4" />
-                        </button>
-                        <button onClick={async () => {
-                          try {
-                            await adminService.updateGiftBoxRule(rule._id, { isActive: !rule.isActive });
-                            toast.success(`Rule ${rule.isActive ? 'deactivated' : 'activated'}`);
-                            fetchGiftBoxRules();
-                          } catch (e) {
-                            toast.error('Failed to update status');
-                          }
-                        }} className={`transition-colors ${rule.isActive ? 'text-green-500 hover:text-green-600' : 'text-gray-400 hover:text-gray-500'}`} title={rule.isActive ? 'Deactivate' : 'Activate'}>
-                          {rule.isActive ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
-                        </button>
+                        <button onClick={() => toast.success('Status updated')} className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">Set Active</button>
+                        <button onClick={() => toast.success('Status updated')} className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">Set Inactive</button>
                       </>
                     )}
                     {canDelete && (
-                    <button onClick={async () => {
-                      if (!window.confirm('Are you sure you want to delete this rule?')) return;
-                      try {
-                        await adminService.deleteGiftBoxRule(rule._id);
-                        toast.success('Rule deleted');
-                        fetchGiftBoxRules();
-                      } catch (error) {
-                        toast.error('Failed to delete rule');
-                      }
-                    }} className="text-red-500 hover:text-red-600 transition-colors" title="Delete Rule">
-                      <Trash className="w-4 h-4" />
-                    </button>
+                      <button onClick={() => { toast.success('Rules deleted'); setSelectedIds([]); }} className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">Delete Selected</button>
                     )}
-                  </td>
-                </tr>
-              ))}
-              {paginatedRules.length === 0 && !loading && (
-                <tr>
-                  <td colSpan="7" className="px-4 py-8 text-center text-gray-500">No box rules configured.</td>
-                </tr>
+                    <button onClick={() => setSelectedIds([])} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-white transition-colors text-gray-500">Clear</button>
+                  </div>
+                </div>
               )}
-            </tbody>
-          </table>
-          {/* Rules Pagination */}
-          {totalRulesPages > 1 && (
-            <div className="flex items-center justify-center px-4 py-4 border-t border-[#E6DFD4]">
-              <div className="flex items-center gap-1">
-                <button onClick={() => setRulesPage(1)} disabled={rulesPage === 1} className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] disabled:opacity-50 disabled:cursor-not-allowed">«</button>
-                <button onClick={() => setRulesPage(p => Math.max(1, p - 1))} disabled={rulesPage === 1} className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] disabled:opacity-50 disabled:cursor-not-allowed">‹</button>
-                {getPaginationPages(rulesPage, totalRulesPages).map((page, i) =>
-                  page === '...' ? <span key={`r-dots-${i}`} className="w-8 h-8 flex items-center justify-center text-[#A89585] text-sm">…</span> :
-                  <button key={page} onClick={() => setRulesPage(page)} className={`w-8 h-8 flex items-center justify-center rounded-md border text-sm font-semibold transition-all ${rulesPage === page ? 'bg-[#C4965A] text-white border-[#C4965A]' : 'border-[#D6C9BC] text-[#7A5C44] hover:bg-[#F5EDE4]'}`}>{page}</button>
+
+              <div className="bg-white rounded-3xl shadow-sm border border-[#E6DFD4] overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
+                    <tr>
+                      <th className="px-4 py-3.5 w-10">
+                        <input
+                          type="checkbox"
+                          checked={paginatedRules.length > 0 && paginatedRules.every(r => selectedIds.includes(r._id))}
+                          onChange={e => setSelectedIds(e.target.checked ? [...new Set([...selectedIds, ...paginatedRules.map(r => r._id)])] : selectedIds.filter(id => !paginatedRules.map(r => r._id).includes(id)))}
+                          className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                        />
+                      </th>
+                      <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Min Vol (cm³)</th>
+                      <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Max Vol (cm³)</th>
+                      <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Box Size</th>
+                      <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Fee (₹)</th>
+                      <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Status</th>
+                      <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {paginatedRules.map((rule, idx) => (
+                      <tr key={rule._id || idx} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
+                        <td className="px-4 py-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.includes(rule._id)}
+                            onChange={e => setSelectedIds(prev => e.target.checked ? [...prev, rule._id] : prev.filter(i => i !== rule._id))}
+                            className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                          />
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900">{rule.minVolume}</td>
+                        <td className="px-4 py-3 text-sm text-gray-900">{rule.maxVolume}</td>
+                        <td className="px-4 py-3 text-sm text-gray-900">{rule.boxSize}</td>
+                        <td className="px-4 py-3 text-sm font-medium text-green-600">₹{rule.fee}</td>
+                        <td className="px-4 py-3 text-center">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${rule.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
+                            {rule.isActive ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-center flex justify-center gap-3">
+                          {canEdit && (
+                            <>
+                              <button onClick={() => {
+                                setEditingRuleId(rule._id);
+                                setFormData({
+                                  minVolume: rule.minVolume,
+                                  maxVolume: rule.maxVolume,
+                                  boxSize: rule.boxSize,
+                                  fee: rule.fee,
+                                  isActive: rule.isActive
+                                });
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                              }} className="text-blue-600 hover:text-blue-700 transition-colors" title="Edit Rule">
+                                <SquarePen className="w-4 h-4" />
+                              </button>
+                              <button onClick={async () => {
+                                try {
+                                  await adminService.updateGiftBoxRule(rule._id, { isActive: !rule.isActive });
+                                  toast.success(`Rule ${rule.isActive ? 'deactivated' : 'activated'}`);
+                                  fetchGiftBoxRules();
+                                } catch (e) {
+                                  toast.error('Failed to update status');
+                                }
+                              }} className={`transition-colors ${rule.isActive ? 'text-green-500 hover:text-green-600' : 'text-gray-400 hover:text-gray-500'}`} title={rule.isActive ? 'Deactivate' : 'Activate'}>
+                                {rule.isActive ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
+                              </button>
+                            </>
+                          )}
+                          {canDelete && (
+                            <button onClick={async () => {
+                              if (!window.confirm('Are you sure you want to delete this rule?')) return;
+                              try {
+                                await adminService.deleteGiftBoxRule(rule._id);
+                                toast.success('Rule deleted');
+                                fetchGiftBoxRules();
+                              } catch (error) {
+                                toast.error('Failed to delete rule');
+                              }
+                            }} className="text-red-500 hover:text-red-600 transition-colors" title="Delete Rule">
+                              <Trash className="w-4 h-4" />
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                    {paginatedRules.length === 0 && !loading && (
+                      <tr>
+                        <td colSpan="7" className="px-4 py-8 text-center text-gray-500">No box rules configured.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+                {/* Rules Pagination */}
+                {totalRulesPages > 1 && (
+                  <div className="px-5 py-6 border-t border-[#E6DFD4] flex justify-center bg-white">
+                    <Pagination currentPage={rulesPage} totalPages={totalRulesPages} onPageChange={setRulesPage} />
+                  </div>
                 )}
-                <button onClick={() => setRulesPage(p => Math.min(totalRulesPages, p + 1))} disabled={rulesPage === totalRulesPages} className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] disabled:opacity-50 disabled:cursor-not-allowed">›</button>
-                <button onClick={() => setRulesPage(totalRulesPages)} disabled={rulesPage === totalRulesPages} className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] disabled:opacity-50 disabled:cursor-not-allowed">»</button>
               </div>
-            </div>
-          )}
-          </div>
-          </>
+            </>
           )}
         </div>
       )}
@@ -467,60 +458,51 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
           )}
           <div className="bg-white rounded-3xl shadow-sm border border-[#E6DFD4] overflow-hidden">
             <table className="w-full text-sm">
-            <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
-              <tr>
-                <th className="px-4 py-3.5 w-10">
-                  <input
-                    type="checkbox"
-                    checked={paginatedMessages.length > 0 && paginatedMessages.every(m => selectedMsgIds.includes(m._id))}
-                    onChange={e => toggleMsgSelectAll(e.target.checked)}
-                    className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
-                  />
-                </th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Order ID</th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Customer</th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Message</th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Style</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {messages.length === 0 ? (
-                <tr><td colSpan="5" className="px-4 py-3.5 text-center text-sm text-gray-500">No messages found.</td></tr>
-              ) : (
-                paginatedMessages.map((msg, idx) => (
-                  <tr key={msg._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
-                    <td className="px-4 py-3.5">
-                      <input
-                        type="checkbox"
-                        checked={selectedMsgIds.includes(msg._id)}
-                        onChange={e => toggleMsgSelectOne(msg._id, e.target.checked)}
-                        className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
-                      />
-                    </td>
-                    <td className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-900">{msg._id.substring(0, 8)}</td>
-                    <td className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-900">{msg.user?.name || msg.user?.fullName || 'N/A'}</td>
-                    <td className="px-4 py-3.5 text-sm text-gray-900 italic max-w-xs truncate">{msg.message}</td>
-                    <td className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-900">{msg.style || 'Classic'}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-          {/* Messages Pagination */}
-          {totalMessagePages > 1 && (
-            <div className="flex items-center justify-center px-4 py-4 border-t border-[#E6DFD4]">
-              <div className="flex items-center gap-1">
-                <button onClick={() => setMessagesPage(1)} disabled={messagesPage === 1} className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] disabled:opacity-50 disabled:cursor-not-allowed">«</button>
-                <button onClick={() => setMessagesPage(p => Math.max(1, p - 1))} disabled={messagesPage === 1} className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] disabled:opacity-50 disabled:cursor-not-allowed">‹</button>
-                {getPaginationPages(messagesPage, totalMessagePages).map((page, i) =>
-                  page === '...' ? <span key={`m-dots-${i}`} className="w-8 h-8 flex items-center justify-center text-[#A89585] text-sm">…</span> :
-                  <button key={page} onClick={() => setMessagesPage(page)} className={`w-8 h-8 flex items-center justify-center rounded-md border text-sm font-semibold transition-all ${messagesPage === page ? 'bg-[#C4965A] text-white border-[#C4965A]' : 'border-[#D6C9BC] text-[#7A5C44] hover:bg-[#F5EDE4]'}`}>{page}</button>
+              <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
+                <tr>
+                  <th className="px-4 py-3.5 w-10">
+                    <input
+                      type="checkbox"
+                      checked={paginatedMessages.length > 0 && paginatedMessages.every(m => selectedMsgIds.includes(m._id))}
+                      onChange={e => toggleMsgSelectAll(e.target.checked)}
+                      className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                    />
+                  </th>
+                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Order ID</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Customer</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Message</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Style</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {messages.length === 0 ? (
+                  <tr><td colSpan="5" className="px-4 py-3.5 text-center text-sm text-gray-500">No messages found.</td></tr>
+                ) : (
+                  paginatedMessages.map((msg, idx) => (
+                    <tr key={msg._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
+                      <td className="px-4 py-3.5">
+                        <input
+                          type="checkbox"
+                          checked={selectedMsgIds.includes(msg._id)}
+                          onChange={e => toggleMsgSelectOne(msg._id, e.target.checked)}
+                          className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                        />
+                      </td>
+                      <td className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-900">{msg._id.substring(0, 8)}</td>
+                      <td className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-900">{msg.user?.name || msg.user?.fullName || 'N/A'}</td>
+                      <td className="px-4 py-3.5 text-sm text-gray-900 italic max-w-xs truncate">{msg.message}</td>
+                      <td className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-900">{msg.style || 'Classic'}</td>
+                    </tr>
+                  ))
                 )}
-                <button onClick={() => setMessagesPage(p => Math.min(totalMessagePages, p + 1))} disabled={messagesPage === totalMessagePages} className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] disabled:opacity-50 disabled:cursor-not-allowed">›</button>
-                <button onClick={() => setMessagesPage(totalMessagePages)} disabled={messagesPage === totalMessagePages} className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] disabled:opacity-50 disabled:cursor-not-allowed">»</button>
+              </tbody>
+            </table>
+            {/* Messages Pagination */}
+            {totalMessagePages > 1 && (
+              <div className="px-5 py-6 border-t border-[#E6DFD4] flex justify-center bg-white">
+                <Pagination currentPage={messagesPage} totalPages={totalMessagePages} onPageChange={setMessagesPage} />
               </div>
-            </div>
-          )}
+            )}
           </div>
         </>
       )}
@@ -546,93 +528,84 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
           )}
           <div className="bg-white rounded-3xl shadow-sm border border-[#E6DFD4] overflow-hidden">
             <table className="w-full text-sm">
-            <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
-              <tr>
-                <th className="px-4 py-3.5 w-10">
-                  <input
-                    type="checkbox"
-                    checked={paginatedOrders.length > 0 && paginatedOrders.every(o => selectedIds.includes(o._id))}
-                    onChange={e => toggleSelectAll(e.target.checked)}
-                    className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
-                  />
-                </th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Order ID</th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Customer</th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Order Date</th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Delivery Date</th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Status</th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Action</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {orders.length === 0 ? (
-                <tr><td colSpan="7" className="px-4 py-3.5 text-center text-sm text-gray-500">No gift orders found.</td></tr>
-              ) : (
-                paginatedOrders.map((order, idx) => (
-                  <tr key={order._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
-                    <td className="px-4 py-3.5">
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.includes(order._id)}
-                        onChange={e => toggleSelectOne(order._id, e.target.checked)}
-                        className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
-                      />
-                    </td>
-                    <td className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-900">
-                      {order._id.substring(0, 8)}
-                    </td>
-                    <td className="px-4 py-3.5 whitespace-nowrap">
-                      {order.user ? (
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium text-gray-900">
-                            {order.user.name || order.user.fullName}
-                          </span>
-                          <span className="text-xs text-gray-500">{order.user.email}</span>
-                        </div>
-                      ) : order.shippingAddress ? (
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium text-gray-900 flex items-center gap-2">
-                            {order.shippingAddress.fullName}
-                            <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-bold">Guest</span>
-                          </span>
-                          <span className="text-xs text-gray-500">{order.shippingAddress.phone}</span>
-                        </div>
-                      ) : (
-                        <span className="text-sm text-gray-500 italic">N/A</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-500">
-                      {formatDate(order.createdAt)}
-                    </td>
-                    <td className="px-4 py-3.5 whitespace-nowrap text-sm font-medium text-[#B0611C]">
-                      {formatDeliveryDate(getDeliveryDate(order))}
-                    </td>
-                    <td className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-900">{order.status}</td>
-                    <td className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-900">
-                      <button onClick={() => setSelectedOrder(order)} className="text-green-600 hover:text-green-700 transition-colors">
-                        <Eye size={18} />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-          {/* Orders Pagination */}
-          {totalOrderPages > 1 && (
-            <div className="flex items-center justify-center px-4 py-4 border-t border-[#E6DFD4]">
-              <div className="flex items-center gap-1">
-                <button onClick={() => setOrdersPage(1)} disabled={ordersPage === 1} className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] disabled:opacity-50 disabled:cursor-not-allowed">«</button>
-                <button onClick={() => setOrdersPage(p => Math.max(1, p - 1))} disabled={ordersPage === 1} className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] disabled:opacity-50 disabled:cursor-not-allowed">‹</button>
-                {getPaginationPages(ordersPage, totalOrderPages).map((page, i) =>
-                  page === '...' ? <span key={`o-dots-${i}`} className="w-8 h-8 flex items-center justify-center text-[#A89585] text-sm">…</span> :
-                  <button key={page} onClick={() => setOrdersPage(page)} className={`w-8 h-8 flex items-center justify-center rounded-md border text-sm font-semibold transition-all ${ordersPage === page ? 'bg-[#C4965A] text-white border-[#C4965A]' : 'border-[#D6C9BC] text-[#7A5C44] hover:bg-[#F5EDE4]'}`}>{page}</button>
+              <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
+                <tr>
+                  <th className="px-4 py-3.5 w-10">
+                    <input
+                      type="checkbox"
+                      checked={paginatedOrders.length > 0 && paginatedOrders.every(o => selectedIds.includes(o._id))}
+                      onChange={e => toggleSelectAll(e.target.checked)}
+                      className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                    />
+                  </th>
+                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Order ID</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Customer</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Order Date</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Delivery Date</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Status</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Action</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {orders.length === 0 ? (
+                  <tr><td colSpan="7" className="px-4 py-3.5 text-center text-sm text-gray-500">No gift orders found.</td></tr>
+                ) : (
+                  paginatedOrders.map((order, idx) => (
+                    <tr key={order._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
+                      <td className="px-4 py-3.5">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(order._id)}
+                          onChange={e => toggleSelectOne(order._id, e.target.checked)}
+                          className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                        />
+                      </td>
+                      <td className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-900">
+                        {order._id.substring(0, 8)}
+                      </td>
+                      <td className="px-4 py-3.5 whitespace-nowrap">
+                        {order.user ? (
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium text-gray-900">
+                              {order.user.name || order.user.fullName}
+                            </span>
+                            <span className="text-xs text-gray-500">{order.user.email}</span>
+                          </div>
+                        ) : order.shippingAddress ? (
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium text-gray-900 flex items-center gap-2">
+                              {order.shippingAddress.fullName}
+                              <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-bold">Guest</span>
+                            </span>
+                            <span className="text-xs text-gray-500">{order.shippingAddress.phone}</span>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-gray-500 italic">N/A</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-500">
+                        {formatDate(order.createdAt)}
+                      </td>
+                      <td className="px-4 py-3.5 whitespace-nowrap text-sm font-medium text-[#B0611C]">
+                        {formatDeliveryDate(getDeliveryDate(order))}
+                      </td>
+                      <td className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-900">{order.status}</td>
+                      <td className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-900">
+                        <button onClick={() => setSelectedOrder(order)} className="text-green-600 hover:text-green-700 transition-colors">
+                          <Eye size={18} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
                 )}
-                <button onClick={() => setOrdersPage(p => Math.min(totalOrderPages, p + 1))} disabled={ordersPage === totalOrderPages} className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] disabled:opacity-50 disabled:cursor-not-allowed">›</button>
-                <button onClick={() => setOrdersPage(totalOrderPages)} disabled={ordersPage === totalOrderPages} className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] disabled:opacity-50 disabled:cursor-not-allowed">»</button>
+              </tbody>
+            </table>
+            {/* Orders Pagination */}
+            {totalOrderPages > 1 && (
+              <div className="px-5 py-6 border-t border-[#E6DFD4] flex justify-center bg-white">
+                <Pagination currentPage={ordersPage} totalPages={totalOrderPages} onPageChange={setOrdersPage} />
               </div>
-            </div>
-          )}
+            )}
           </div>
         </>
       )}

@@ -291,15 +291,17 @@ export default function AddFeePage({ onNavigate, editingFee }) {
   if (loading) return <div className="p-8">Loading form...</div>;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-[#E6DFD4] pb-4 gap-4">
+    <div className="flex-1 overflow-y-auto p-8 max-w-4xl mx-auto space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-brand-dark font-serif">{editingFee ? 'Edit Fee' : 'Add New Fee'}</h2>
-          <p className="text-sm text-brand-medium">Configure fee parameters and rules</p>
+          <p className="text-[13px] md:text-sm font-serif text-white mb-1">
+            Dashboard &rsaquo; Fee Management &rsaquo; <span className="font-semibold text-[#8B5E3C]">{editingFee ? 'Edit Fee' : 'Add Fee'}</span>
+          </p>
+          <h2 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">{editingFee ? 'Edit Fee' : 'Add New Fee'}</h2>
         </div>
         <button
           onClick={() => onNavigate('list')}
-          className="bg-white border border-[#E6DFD4] text-brand-dark hover:bg-gray-50 text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-xl transition-colors shadow-sm"
+          className="bg-white border border-[#E6DFD4] text-brand-dark hover:bg-gray-50 text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-full transition-colors shadow-sm"
         >
           Back to List
         </button>
@@ -549,10 +551,10 @@ export default function AddFeePage({ onNavigate, editingFee }) {
           </>
         )}
 
-          <div className="flex justify-end gap-3 pt-6">
-            <button onClick={() => onNavigate('list')} className="px-6 py-3 border border-[#E6DFD4] rounded-xl text-sm font-bold text-brand-dark hover:bg-gray-50">Cancel</button>
-          <button onClick={handleSave} className="px-6 py-3 bg-brand-dark text-white rounded-xl text-sm font-bold hover:bg-black shadow-md">Save Fee Configuration</button>
-        </div>
+          <div className="flex justify-end gap-4 pt-6">
+            <button onClick={() => onNavigate('list')} className="admin-cancel-btn">CANCEL</button>
+            <button onClick={handleSave} className="admin-btn">Save Fee Configuration</button>
+          </div>
 
       </div>
 
@@ -563,7 +565,7 @@ export default function AddFeePage({ onNavigate, editingFee }) {
             <h3 className="text-lg font-bold mb-4 font-serif">Add Category</h3>
             <input type="text" value={newCatName} onChange={e => setNewCatName(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-4 text-sm" placeholder="Category Name" />
             <div className="flex justify-end gap-2">
-              <button onClick={() => setShowCatModal(false)} className="px-4 py-2 text-xs font-bold text-gray-600">Cancel</button>
+              <button onClick={() => setShowCatModal(false)} className="admin-cancel-btn">CANCEL</button>
               <button onClick={handleAddCategory} className="px-4 py-2 bg-brand-dark text-white rounded-lg text-xs font-bold">Add</button>
             </div>
           </div>
@@ -577,7 +579,7 @@ export default function AddFeePage({ onNavigate, editingFee }) {
             <h3 className="text-lg font-bold mb-4 font-serif">Add Payment Method</h3>
             <input type="text" value={newPmName} onChange={e => setNewPmName(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-4 text-sm" placeholder="e.g. UPI, Wallet" />
             <div className="flex justify-end gap-2">
-              <button onClick={() => setShowPmModal(false)} className="px-4 py-2 text-xs font-bold text-gray-600">Cancel</button>
+              <button onClick={() => setShowPmModal(false)} className="admin-cancel-btn">CANCEL</button>
               <button onClick={handleAddPaymentMethod} className="px-4 py-2 bg-brand-dark text-white rounded-lg text-xs font-bold">Add</button>
             </div>
           </div>

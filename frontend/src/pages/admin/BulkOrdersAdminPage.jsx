@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Package, Search, Clock, Eye, X, RefreshCw, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import Pagination from '../../components/common/Pagination';
 import toast from 'react-hot-toast';
 import { bulkOrderService } from '../../api/bulkOrderService';
 
@@ -167,242 +168,201 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
 
   return (
     <div className="flex-1 overflow-y-auto p-8">
-        {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-4">
-          <div>
-            <p className="text-[13px] md:text-sm font-serif text-[#94A3B8] mb-1">
-              Dashboard &rsaquo; Order Management &rsaquo; <span className="font-semibold text-[#8B5E3C]">Bulk Orders</span>
-            </p>
-            <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Bulk Orders Requests</h1>
-          </div>
-          <button onClick={fetchOrders} disabled={loading} className="admin-secondary-btn flex items-center gap-2">
-            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Refresh
-          </button>
+      {/* Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-4">
+        <div>
+          <p className="text-[13px] md:text-sm font-serif text-white mb-1">
+            Dashboard &rsaquo; Bulk Orders &rsaquo; <span className="font-semibold text-[#8B5E3C]">Bulk Orders</span>
+          </p>
+          <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Bulk Orders Requests</h1>
         </div>
+        <button onClick={fetchOrders} disabled={loading} className="admin-secondary-btn flex items-center gap-2">
+          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Refresh
+        </button>
+      </div>
 
-        {/* Search & Filter — outside the card */}
-        <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm p-4 mb-5 flex flex-wrap gap-3 items-center">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A817C]" />
-            <input
-              type="text"
-              placeholder="Search custom fields..."
-              value={searchTerm}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 bg-white border border-[#E9DED3] rounded-[10px] text-sm focus:outline-none focus:border-[#9A6031] focus:ring-1 focus:ring-[#9A6031] transition-all"
-            />
-          </div>
-          <select
-            value={statusFilter}
-            onChange={(e) => handleStatusFilter(e.target.value)}
-            className="bg-white border border-[#E9DED3] rounded-[10px] px-4 py-2.5 text-sm text-[#4A403B] font-semibold outline-none focus:border-[#9A6031]"
-          >
-            <option value="All">All Statuses</option>
-            <option value="Pending">Pending</option>
-            <option value="Approved">Approved</option>
-            <option value="Rejected">Rejected</option>
-          </select>
+      {/* Search & Filter — outside the card */}
+      <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm p-4 mb-5 flex flex-wrap gap-3 items-center">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A817C]" />
+          <input
+            type="text"
+            placeholder="Search custom fields..."
+            value={searchTerm}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="w-full pl-9 pr-4 py-2.5 bg-white border border-[#E9DED3] rounded-[10px] text-sm focus:outline-none focus:border-[#9A6031] focus:ring-1 focus:ring-[#9A6031] transition-all"
+          />
         </div>
+        <select
+          value={statusFilter}
+          onChange={(e) => handleStatusFilter(e.target.value)}
+          className="bg-white border border-[#E9DED3] rounded-[10px] px-4 py-2.5 text-sm text-[#4A403B] font-semibold outline-none focus:border-[#9A6031]"
+        >
+          <option value="All">All Statuses</option>
+          <option value="Pending">Pending</option>
+          <option value="Approved">Approved</option>
+          <option value="Rejected">Rejected</option>
+        </select>
+      </div>
 
-        {/* Selection bar */}
-        {selectedIds.length > 0 && (
-          <div className="bg-[#F8F4EC] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3 flex-wrap">
-            <span className="text-sm font-semibold text-[#8B5E3C]">{selectedIds.length} selected</span>
-            <div className="flex gap-2 ml-auto flex-wrap">
-              <button onClick={() => handleBulkStatus('Approved')} className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">Set Active</button>
-              <button onClick={() => handleBulkStatus('Rejected')} className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">Set Inactive</button>
-              <button onClick={handleBulkDelete} className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">Delete Selected</button>
-              <button onClick={() => setSelectedIds([])} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-white transition-colors text-gray-500">Clear</button>
+      {/* Selection bar */}
+      {selectedIds.length > 0 && (
+        <div className="bg-[#F8F4EC] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3 flex-wrap">
+          <span className="text-sm font-semibold text-[#8B5E3C]">{selectedIds.length} selected</span>
+          <div className="flex gap-2 ml-auto flex-wrap">
+            <button onClick={() => handleBulkStatus('Approved')} className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">Set Active</button>
+            <button onClick={() => handleBulkStatus('Rejected')} className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">Set Inactive</button>
+            <button onClick={handleBulkDelete} className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">Delete Selected</button>
+            <button onClick={() => setSelectedIds([])} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-white transition-colors text-gray-500">Clear</button>
+          </div>
+        </div>
+      )}
+
+      {/* Table Card */}
+      <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          {loading ? (
+            <div className="p-8 text-center text-[#6D625C] flex items-center justify-center gap-2">
+              <RefreshCw className="w-4 h-4 animate-spin" /> Loading bulk orders…
             </div>
-          </div>
-        )}
-
-        {/* Table Card */}
-        <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            {loading ? (
-              <div className="p-8 text-center text-[#6D625C] flex items-center justify-center gap-2">
-                <RefreshCw className="w-4 h-4 animate-spin" /> Loading bulk orders…
+          ) : filteredOrders.length === 0 ? (
+            <div className="p-12 text-center">
+              <div className="w-16 h-16 bg-[#FAF8F5] rounded-full flex items-center justify-center mx-auto mb-4 border border-dashed border-[#E9DED3]">
+                <Package className="w-8 h-8 text-[#C4B9B0]" />
               </div>
-            ) : filteredOrders.length === 0 ? (
-              <div className="p-12 text-center">
-                <div className="w-16 h-16 bg-[#FAF8F5] rounded-full flex items-center justify-center mx-auto mb-4 border border-dashed border-[#E9DED3]">
-                  <Package className="w-8 h-8 text-[#C4B9B0]" />
-                </div>
-                <h3 className="text-[#141225] font-bold">No requests found</h3>
-                <p className="text-[#6D625C] text-sm mt-1">There are no bulk order requests matching your criteria.</p>
-              </div>
-            ) : (
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-[#FAF4EF] text-[#8A817C] text-xs uppercase tracking-wider">
-                    <th className="p-4 font-bold border-b border-[#E6DFD4] w-10">
+              <h3 className="text-[#141225] font-bold">No requests found</h3>
+              <p className="text-[#6D625C] text-sm mt-1">There are no bulk order requests matching your criteria.</p>
+            </div>
+          ) : (
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-[#FAF4EF] text-[#8A817C] text-xs uppercase tracking-wider">
+                  <th className="p-4 font-bold border-b border-[#E6DFD4] w-10">
+                    <input
+                      type="checkbox"
+                      checked={allChecked}
+                      onChange={toggleAll}
+                      className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer"
+                    />
+                  </th>
+                  <th className="p-4 font-bold border-b border-[#E6DFD4] whitespace-nowrap">Date &amp; ID</th>
+                  <th className="p-4 font-bold border-b border-[#E6DFD4] whitespace-nowrap">Selected Product</th>
+                  <th className="p-4 font-bold border-b border-[#E6DFD4] whitespace-nowrap">Custom Fields Preview</th>
+                  <th className="p-4 font-bold border-b border-[#E6DFD4] whitespace-nowrap">Status</th>
+                  <th className="p-4 font-bold border-b border-[#E6DFD4] whitespace-nowrap">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedOrders.map((order) => (
+                  <tr
+                    key={order._id}
+                    className="bg-white transition-colors"
+                  >
+                    <td className="p-4 border-b border-[#E6DFD4]">
                       <input
                         type="checkbox"
-                        checked={allChecked}
-                        onChange={toggleAll}
+                        checked={selectedIds.includes(order._id)}
+                        onChange={() => toggleOne(order._id)}
                         className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer"
                       />
-                    </th>
-                    <th className="p-4 font-bold border-b border-[#E6DFD4] whitespace-nowrap">Date &amp; ID</th>
-                    <th className="p-4 font-bold border-b border-[#E6DFD4] whitespace-nowrap">Selected Product</th>
-                    <th className="p-4 font-bold border-b border-[#E6DFD4] whitespace-nowrap">Custom Fields Preview</th>
-                    <th className="p-4 font-bold border-b border-[#E6DFD4] whitespace-nowrap">Status</th>
-                    <th className="p-4 font-bold border-b border-[#E6DFD4] whitespace-nowrap">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedOrders.map((order) => (
-                    <tr
-                      key={order._id}
-                      className="bg-white transition-colors"
-                    >
-                      <td className="p-4 border-b border-[#E6DFD4]">
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.includes(order._id)}
-                          onChange={() => toggleOne(order._id)}
-                          className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer"
-                        />
-                      </td>
-                      <td className="p-4 border-b border-[#E6DFD4]">
-                        <p className="font-bold text-[#141225]">
-                          Order #{order._id.substring(order._id.length - 6).toUpperCase()}
-                        </p>
-                        <p className="text-xs text-[#6D625C] mt-0.5">
-                          {new Date(order.createdAt).toLocaleDateString()}
-                        </p>
-                      </td>
-                      <td className="p-4 border-b border-[#E6DFD4]">
-                        {order.product ? (
-                          <>
-                            <p className="font-bold text-[#4A3326] max-w-[150px] truncate" title={order.product?.name}>
-                              {order.product?.name}
+                    </td>
+                    <td className="p-4 border-b border-[#E6DFD4]">
+                      <p className="font-bold text-[#141225]">
+                        Order #{order._id.substring(order._id.length - 6).toUpperCase()}
+                      </p>
+                      <p className="text-xs text-[#6D625C] mt-0.5">
+                        {new Date(order.createdAt).toLocaleDateString()}
+                      </p>
+                    </td>
+                    <td className="p-4 border-b border-[#E6DFD4]">
+                      {order.product ? (
+                        <>
+                          <p className="font-bold text-[#4A3326] max-w-[150px] truncate" title={order.product?.name}>
+                            {order.product?.name}
+                          </p>
+                          <p className="text-xs text-[#8A817C]">{order.category?.name || 'N/A'}</p>
+                        </>
+                      ) : (
+                        <span className="text-xs text-[#8A817C]">Not Specified</span>
+                      )}
+                    </td>
+                    <td className="p-4 border-b border-[#E6DFD4] whitespace-normal min-w-[200px]">
+                      <div className="space-y-1">
+                        {order.customFields &&
+                          order.customFields.slice(0, 2).map((cf, idx) => (
+                            <p key={idx} className="text-xs text-[#6D625C] truncate max-w-[250px]">
+                              <span className="font-semibold">{cf.label}:</span>{' '}
+                              {typeof cf.value === 'boolean' ? (cf.value ? 'Yes' : 'No') : cf.value}
                             </p>
-                            <p className="text-xs text-[#8A817C]">{order.category?.name || 'N/A'}</p>
-                          </>
-                        ) : (
-                          <span className="text-xs text-[#8A817C]">Not Specified</span>
-                        )}
-                      </td>
-                      <td className="p-4 border-b border-[#E6DFD4] whitespace-normal min-w-[200px]">
-                        <div className="space-y-1">
-                          {order.customFields &&
-                            order.customFields.slice(0, 2).map((cf, idx) => (
-                              <p key={idx} className="text-xs text-[#6D625C] truncate max-w-[250px]">
-                                <span className="font-semibold">{cf.label}:</span>{' '}
-                                {typeof cf.value === 'boolean' ? (cf.value ? 'Yes' : 'No') : cf.value}
-                              </p>
-                            ))}
-                          {order.customFields && order.customFields.length > 2 && (
-                            <p className="text-[10px] text-[#9A6031] font-bold">
-                              + {order.customFields.length - 2} more fields
-                            </p>
-                          )}
-                        </div>
-                      </td>
-                      <td className="p-4 border-b border-[#E6DFD4]">
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                            order.status === 'Approved'
-                              ? 'bg-emerald-100 text-emerald-700'
-                              : order.status === 'Rejected'
-                              ? 'bg-red-100 text-red-700'
-                              : 'bg-amber-100 text-amber-700'
-                          }`}
-                        >
-                          {order.status === 'Approved' && <Check className="w-3 h-3" />}
-                          {order.status === 'Rejected' && <X className="w-3 h-3" />}
-                          {(!order.status || order.status === 'Pending') && <Clock className="w-3 h-3" />}
-                          {order.status || 'Pending'}
-                        </span>
-                        {order.status === 'Rejected' && order.rejectionReason && (
-                          <p className="text-[10px] text-red-600 mt-1 max-w-[150px] truncate" title={order.rejectionReason}>
-                            {order.rejectionReason}
+                          ))}
+                        {order.customFields && order.customFields.length > 2 && (
+                          <p className="text-[10px] text-[#9A6031] font-bold">
+                            + {order.customFields.length - 2} more fields
                           </p>
                         )}
-                      </td>
-                      <td className="p-4 border-b border-[#E6DFD4]">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleViewClick(order)}
-                            className="text-green-600 hover:text-green-700 transition-colors"
-                            title="View Details"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          {(!order.status || order.status === 'Pending') && canEdit && (
-                            <>
-                              <button
-                                onClick={() => handleApprove(order._id)}
-                                className="px-3 py-1.5 bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 rounded font-bold text-xs transition-colors"
-                              >
-                                Approve
-                              </button>
-                              <button
-                                onClick={() => handleRejectClick(order)}
-                                className="px-3 py-1.5 bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 rounded font-bold text-xs transition-colors"
-                              >
-                                Reject
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center px-4 py-4 border-t border-[#E9DED3]">
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setCurrentPage(1)}
-                  disabled={currentPage === 1}
-                  className={navCls(currentPage === 1)}
-                  title="First page"
-                >«</button>
-                <button
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className={navCls(currentPage === 1)}
-                  title="Previous page"
-                >‹</button>
-                {getPaginationPages().map((page, i) =>
-                  page === '...' ? (
-                    <span key={`dots-${i}`} className="w-8 h-8 flex items-center justify-center text-[#A89585] text-sm select-none">…</span>
-                  ) : (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={`w-8 h-8 flex items-center justify-center rounded-md border text-sm font-semibold transition-all ${
-                        currentPage === page
-                          ? 'bg-[#C4965A] text-white border-[#C4965A] shadow-sm'
-                          : 'border-[#D6C9BC] text-[#7A5C44] hover:bg-[#F5EDE4] hover:border-[#C4A98B]'
-                      }`}
-                    >{page}</button>
-                  )
-                )}
-                <button
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className={navCls(currentPage === totalPages)}
-                  title="Next page"
-                >›</button>
-                <button
-                  onClick={() => setCurrentPage(totalPages)}
-                  disabled={currentPage === totalPages}
-                  className={navCls(currentPage === totalPages)}
-                  title="Last page"
-                >»</button>
-              </div>
-            </div>
+                      </div>
+                    </td>
+                    <td className="p-4 border-b border-[#E6DFD4]">
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${order.status === 'Approved'
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : order.status === 'Rejected'
+                            ? 'bg-red-100 text-red-700'
+                            : 'bg-amber-100 text-amber-700'
+                          }`}
+                      >
+                        {order.status === 'Approved' && <Check className="w-3 h-3" />}
+                        {order.status === 'Rejected' && <X className="w-3 h-3" />}
+                        {(!order.status || order.status === 'Pending') && <Clock className="w-3 h-3" />}
+                        {order.status || 'Pending'}
+                      </span>
+                      {order.status === 'Rejected' && order.rejectionReason && (
+                        <p className="text-[10px] text-red-600 mt-1 max-w-[150px] truncate" title={order.rejectionReason}>
+                          {order.rejectionReason}
+                        </p>
+                      )}
+                    </td>
+                    <td className="p-4 border-b border-[#E6DFD4]">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleViewClick(order)}
+                          className="text-green-600 hover:text-green-700 transition-colors"
+                          title="View Details"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        {(!order.status || order.status === 'Pending') && canEdit && (
+                          <>
+                            <button
+                              onClick={() => handleApprove(order._id)}
+                              className="px-3 py-1.5 bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 rounded font-bold text-xs transition-colors"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleRejectClick(order)}
+                              className="px-3 py-1.5 bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 rounded font-bold text-xs transition-colors"
+                            >
+                              Reject
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="px-5 py-6 border-t border-[#E6DFD4] flex justify-center bg-white">
+            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+          </div>
+        )}
+      </div>
 
       {/* ── Reject Modal ───────────────────────────────────────────────── */}
       {isRejectModalOpen && (
@@ -428,10 +388,8 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
               <div className="mt-5 flex gap-3 justify-end">
                 <button
                   onClick={() => setIsRejectModalOpen(false)}
-                  className="px-4 py-2 border border-[#E9DED3] text-[#6D625C] font-bold text-sm rounded-lg hover:bg-[#FAF8F5]"
-                >
-                  Cancel
-                </button>
+                  className="admin-cancel-btn"
+                >CANCEL</button>
                 <button
                   onClick={confirmReject}
                   className="px-4 py-2 bg-red-600 text-white font-bold text-sm rounded-lg hover:bg-red-700"
@@ -476,13 +434,12 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                       <p>
                         <span className="text-[#6D625C] w-28 inline-block">Status:</span>
                         <span
-                          className={`ml-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                            viewingOrder.status === 'Approved'
-                              ? 'bg-emerald-100 text-emerald-700'
-                              : viewingOrder.status === 'Rejected'
+                          className={`ml-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${viewingOrder.status === 'Approved'
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : viewingOrder.status === 'Rejected'
                               ? 'bg-red-100 text-red-700'
                               : 'bg-amber-100 text-amber-700'
-                          }`}
+                            }`}
                         >
                           {viewingOrder.status || 'Pending'}
                         </span>
@@ -503,8 +460,8 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                     <div className="space-y-3">
                       <div className="w-full aspect-video bg-[#FAF8F5] rounded-lg overflow-hidden border border-[#E9DED3] flex items-center justify-center">
                         {(viewingOrder.product.images && viewingOrder.product.images.length > 0) ||
-                        viewingOrder.category?.image ||
-                        viewingOrder.subCategory?.image ? (
+                          viewingOrder.category?.image ||
+                          viewingOrder.subCategory?.image ? (
                           <img
                             src={
                               viewingOrder.product.images && viewingOrder.product.images.length > 0
@@ -564,7 +521,7 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
             <div className="p-5 border-t border-[#E9DED3] bg-[#FAF8F5] flex justify-end">
               <button
                 onClick={() => setIsViewModalOpen(false)}
-                className="px-6 py-2 bg-white border border-[#E9DED3] text-[#141225] font-bold text-sm rounded-lg hover:bg-gray-50 transition-colors"
+                className="admin-btn"
               >
                 Close Details
               </button>

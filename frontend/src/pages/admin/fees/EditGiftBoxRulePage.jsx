@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft } from 'lucide-react';
 import { adminService } from '../../../api/adminService';
 import toast from 'react-hot-toast';
 
@@ -57,28 +56,29 @@ export default function EditGiftBoxRulePage({ ruleId, onBack }) {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in">
-      <div className="flex items-center gap-4">
-        <button onClick={onBack} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-          <ArrowLeft className="w-5 h-5 text-gray-600" />
-        </button>
-        <h2 className="text-2xl font-serif font-bold text-gray-900">Edit Gift Box Rule</h2>
-      </div>
+    <div className="animate-in fade-in flex justify-center">
+      <div className="bg-white rounded-[20px] shadow-sm border border-[#E6DFD4] w-full max-w-4xl overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 md:px-8 border-b border-[#E6DFD4] bg-[#F8F4EC]">
+          <div>
+            <h2 className="text-[28px] font-serif font-bold text-[#141225] tracking-tight">Edit Gift Box Rule</h2>
+          </div>
+        </div>
 
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#E6DFD4]">
-        <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Content */}
+        <form onSubmit={handleSubmit} className="p-8 space-y-8 bg-white">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">Min Volume (cm³)</label>
-              <input type="text" inputMode="numeric" value={formData.minVolume} onChange={(e) => setFormData({...formData, minVolume: e.target.value ? Number(e.target.value) : ''})} required className="w-full px-4 py-3 border border-[#E6DFD4] rounded-xl text-sm focus:outline-none focus:border-[#8B5E3C]" />
+              <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Min Volume (cm³)</label>
+              <input type="text" inputMode="numeric" value={formData.minVolume} onChange={(e) => setFormData({...formData, minVolume: e.target.value ? Number(e.target.value) : ''})} required className="w-full px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all" />
             </div>
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">Max Volume (cm³)</label>
-              <input type="text" inputMode="numeric" value={formData.maxVolume} onChange={(e) => setFormData({...formData, maxVolume: e.target.value ? Number(e.target.value) : ''})} required className="w-full px-4 py-3 border border-[#E6DFD4] rounded-xl text-sm focus:outline-none focus:border-[#8B5E3C]" />
+              <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Max Volume (cm³)</label>
+              <input type="text" inputMode="numeric" value={formData.maxVolume} onChange={(e) => setFormData({...formData, maxVolume: e.target.value ? Number(e.target.value) : ''})} required className="w-full px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all" />
             </div>
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">Box Size</label>
-              <select value={formData.boxSize} onChange={(e) => setFormData({...formData, boxSize: e.target.value})} className="w-full px-4 py-3 border border-[#E6DFD4] rounded-xl text-sm bg-white focus:outline-none focus:border-[#8B5E3C]">
+              <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Box Size</label>
+              <select value={formData.boxSize} onChange={(e) => setFormData({...formData, boxSize: e.target.value})} className="w-full px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all appearance-none">
                 <option value="XS">XS</option>
                 <option value="S">S</option>
                 <option value="M">M</option>
@@ -88,24 +88,29 @@ export default function EditGiftBoxRulePage({ ruleId, onBack }) {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">Fee (₹)</label>
-              <input type="text" inputMode="numeric" value={formData.fee} onChange={(e) => setFormData({...formData, fee: e.target.value ? Number(e.target.value) : ''})} required className="w-full px-4 py-3 border border-[#E6DFD4] rounded-xl text-sm focus:outline-none focus:border-[#8B5E3C]" />
+              <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Fee (₹)</label>
+              <input type="text" inputMode="numeric" value={formData.fee} onChange={(e) => setFormData({...formData, fee: e.target.value ? Number(e.target.value) : ''})} required className="w-full px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all" />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-bold text-gray-700 mb-1">Status</label>
-              <select value={formData.isActive} onChange={(e) => setFormData({...formData, isActive: e.target.value === 'true'})} className="w-full px-4 py-3 border border-[#E6DFD4] rounded-xl text-sm bg-white focus:outline-none focus:border-[#8B5E3C]">
+              <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Status</label>
+              <select value={formData.isActive} onChange={(e) => setFormData({...formData, isActive: e.target.value === 'true'})} className="w-full px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all appearance-none">
                 <option value="true">Active</option>
                 <option value="false">Inactive</option>
               </select>
             </div>
           </div>
-          
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-            <button type="button" onClick={onBack} className="px-6 py-2.5 bg-white border border-[#E6DFD4] text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors">
-              Cancel
-            </button>
-            <button type="submit" className="px-6 py-2.5 bg-[#8B5E3C] text-white font-bold rounded-xl hover:bg-[#7A5234] transition-colors">
-              Save Changes
+
+          <div className="pt-6 mt-6 border-t border-[#E6DFD4] flex items-center justify-center gap-4">
+            <button
+              type="button"
+              onClick={onBack}
+              className="admin-cancel-btn"
+            >CANCEL</button>
+            <button
+              type="submit"
+              className="flex items-center justify-center gap-2 bg-[#8B5E3C] hover:bg-[#7a5234] text-white px-8 py-3 rounded-full text-[15px] font-bold shadow-sm transition-all uppercase tracking-wide"
+            >
+              SAVE CHANGES
             </button>
           </div>
         </form>

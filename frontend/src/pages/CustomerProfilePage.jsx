@@ -925,7 +925,6 @@ export default function CustomerProfilePage({
             <div>
               <p className="text-sm font-semibold text-[#5E5A68]">Account Member Since</p>
               <p className="mt-1 font-bold text-[#141225]">{formatDate(profile.createdAt, 'June 2024')}</p>
-              <p className="mt-1 text-sm text-[#6D625C]">{profile.loyalty?.tier || 'Premium Member'}</p>
             </div>
           </div>
         </aside>
@@ -2618,15 +2617,6 @@ export default function CustomerProfilePage({
                 {points}
                 <span className="text-base font-semibold text-[#D9B382]">pts</span>
               </h2>
-            </div>
-            <div className="flex items-center gap-3 rounded-[12px] bg-white/10 p-3 backdrop-blur-md">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#D9B382] text-white">
-                <Star className="h-5 w-5" fill="currentColor" />
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-white/80">Current Tier</p>
-                <p className="font-bold">{tier} Member</p>
-              </div>
             </div>
           </div>
 

@@ -83,7 +83,7 @@ export default function CustomizeBannerAdmin() {
           <button
             type="submit"
             disabled={saving}
-            className="bg-[#8C6B52] text-white px-8 py-3 rounded-xl font-semibold hover:bg-[#6A503C] transition disabled:opacity-50"
+            className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60"
           >
             {saving ? 'Saving...' : 'Save Changes'}
           </button>

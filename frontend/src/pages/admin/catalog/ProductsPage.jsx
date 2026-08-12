@@ -565,8 +565,8 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
                 <div>
-                    <p className="text-[13px] md:text-sm font-serif text-[#94A3B8] mb-1">
-                        Dashboard &rsaquo; Catalog Management &rsaquo; <span className="font-semibold text-[#8B5E3C]">Products</span>
+                    <p className="text-[13px] md:text-sm font-serif text-white mb-1">
+                        Dashboard &rsaquo; Products Management &rsaquo; <span className="font-semibold text-[#8B5E3C]">Products</span>
                     </p>
                     <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Products</h1>
                 </div>
@@ -586,13 +586,17 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
             </div>
 
             {/* Filter Panel */}
-            <Card className="p-4 flex flex-col md:flex-row gap-4 items-center">
-                <SearchBar
-                    value={search}
-                    onChange={setSearch}
-                    placeholder="Search products SKU, name..."
-                    className="w-full md:max-w-xs"
-                />
+            <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm p-4 flex flex-wrap gap-3 items-center">
+                <div className="relative flex-1 min-w-[180px]">
+                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    <input
+                        type="text"
+                        placeholder="Search products SKU, name..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="w-full pl-9 pr-4 py-2.5 text-sm border border-[#E6DFD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30"
+                    />
+                </div>
 
                 <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
                     <select
@@ -602,7 +606,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                             setSubCategoryFilter(''); // clear child filter
                             setAttributeFilters({});
                         }}
-                        className="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        className="py-2.5 px-3 text-sm border border-[#E6DFD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 bg-white"
                     >
                         <option value="">All Categories</option>
                         {categories.map(c => (
@@ -617,7 +621,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                             setAttributeFilters({});
                         }}
                         disabled={!categoryFilter}
-                        className="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:opacity-50"
+                        className="py-2.5 px-3 text-sm border border-[#E6DFD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 bg-white disabled:opacity-50"
                     >
                         <option value="">All Sub-Categories</option>
                         {subCategories
@@ -642,7 +646,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                     }));
                                     setPage(1);
                                 }}
-                                className="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                className="py-2.5 px-3 text-sm border border-[#E6DFD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 bg-white"
                             >
                                 <option value="">{attr.name}</option>
                                 {options.map(option => (
@@ -652,7 +656,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                         );
                     })}
                 </div>
-            </Card>
+            </div>
 
             <BulkActions
                 selectedIds={selectedIds}
@@ -782,12 +786,11 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                 </div>
 
                 {/* Paging */}
-                <div className="px-5 py-3 border-t border-[#E6DFD4] flex flex-col sm:flex-row justify-center items-center bg-[#FAFAFA] gap-4">
+                <div className="px-5 py-6 border-t border-[#E6DFD4] flex justify-center bg-white">
                     <Pagination
                         currentPage={page}
                         totalPages={totalPages}
                         onPageChange={setPage}
-                        className="flex items-center justify-center gap-2 flex-wrap"
                     />
                 </div>
             </div>
@@ -1038,9 +1041,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
 
                             {/* Form Actions */}
                             <div className="flex items-center justify-center gap-4 pt-6 pb-2">
-                                <button type="button" onClick={handleCloseForm} className="px-8 py-3 border border-[#E6DFD4] rounded-full text-[15px] font-bold text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm">
-                                    CANCEL
-                                </button>
+                                <button type="button" onClick={handleCloseForm} className="admin-cancel-btn">CANCEL</button>
                                 <button type="submit" disabled={formLoading} className="flex items-center gap-2 bg-[#8B5E3C] hover:bg-[#7a5234] disabled:opacity-60 text-white px-8 py-3 rounded-full text-[15px] font-bold transition-colors shadow-sm uppercase tracking-wide">
                                     {formLoading ? 'Saving...' : 'SAVE PRODUCT'}
                                 </button>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { cmsService } from '../../../api/cmsService';
-import { Pencil, Trash2, Plus, Eye, EyeOff, Upload, X , SquarePen , Trash } from 'lucide-react';
+import { Pencil, Trash2, Plus, Eye, EyeOff, Upload, X, SquarePen, Trash } from 'lucide-react';
 
 function MultiImageUploader({ label, images, onChange }) {
   const [uploading, setUploading] = useState(false);
@@ -124,7 +124,7 @@ export default function ThirdBannerAdmin() {
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-bold text-brand-dark">Third Banner (Dual Slider)</h3>
         <button onClick={() => { window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowForm(true); setEditId(null); setForm(emptyForm); }}
-          className="flex items-center gap-2 bg-brand-dark text-white text-sm px-4 py-2 rounded-xl hover:bg-black transition-colors">
+          className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60">
           <Plus className="w-4 h-4" /> Add Dual Banner
         </button>
       </div>
@@ -223,9 +223,9 @@ export default function ThirdBannerAdmin() {
             </div>
             <div className="flex gap-3 justify-end pt-2 border-t border-[#E6DFD4]">
               <button type="button" onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setShowForm(false))}
-                className="px-4 py-2 text-sm border border-[#E6DFD4] rounded-lg text-brand-medium hover:bg-gray-50">Cancel</button>
+                className="admin-cancel-btn">CANCEL</button>
               <button type="submit" disabled={saving}
-                className="p-1.5 text-[#6D625C] hover:text-[#9A6031] hover:bg-[#F2E3D1] rounded transition-colors">
+                className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-6">
                 {saving ? 'Saving...' : 'Save Banner'}
               </button>
             </div>
@@ -235,7 +235,7 @@ export default function ThirdBannerAdmin() {
 
       <div className="space-y-3">
         {loading ? (
-          [1,2].map(i => <div key={i} className="h-28 bg-gray-100 rounded-2xl animate-pulse" />)
+          [1, 2].map(i => <div key={i} className="h-28 bg-gray-100 rounded-2xl animate-pulse" />)
         ) : items.length === 0 ? (
           <div className="p-8 text-center text-brand-medium text-sm bg-white rounded-2xl border border-[#E6DFD4]">
             No dual banners yet.
@@ -243,9 +243,9 @@ export default function ThirdBannerAdmin() {
         ) : items.map((item) => (
           <div key={item._id} className="bg-white rounded-2xl border border-[#E6DFD4] p-4 shadow-sm flex items-center gap-4">
             <div className="flex gap-2 flex-shrink-0">
-              {item.leftImages?.slice(0,2).map((u, i) => <img key={i} src={u.url || u} alt="" className="w-16 h-16 rounded-lg object-cover" />)}
+              {item.leftImages?.slice(0, 2).map((u, i) => <img key={i} src={u.url || u} alt="" className="w-16 h-16 rounded-lg object-cover" />)}
               <div className="w-0.5 h-16 bg-[#E6DFD4]" />
-              {item.rightImages?.slice(0,2).map((u, i) => <img key={i} src={u.url || u} alt="" className="w-16 h-16 rounded-lg object-cover" />)}
+              {item.rightImages?.slice(0, 2).map((u, i) => <img key={i} src={u.url || u} alt="" className="w-16 h-16 rounded-lg object-cover" />)}
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-medium text-brand-dark text-sm truncate">{item.title || 'Dual Banner'}</p>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { orderService } from '../../api/orderService';
 import { Package, Search, Calendar, MapPin, Eye, X, Download, RefreshCw, Gift, SquarePen, Trash, Save, Printer, FileText } from 'lucide-react';
+import Pagination from '../../components/common/Pagination';
 import { useReactToPrint } from 'react-to-print';
 import { PackingSlip } from '../../components/admin/PackingSlip';
 import { downloadExcelFile } from '../../utils/exportUtils';
@@ -377,7 +378,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
         <>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
             <div>
-              <p className="text-[13px] md:text-sm font-serif text-[#94A3B8] mb-1">
+              <p className="text-[13px] md:text-sm font-serif text-white mb-1">
                 Dashboard &rsaquo; Order Management &rsaquo; <span className="font-semibold text-[#8B5E3C]">Orders</span>
               </p>
               <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Orders Management</h1>
@@ -601,52 +602,8 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-center px-4 py-4 border-t border-[#E6DFD4]">
-                <div className="flex items-center gap-1">
-                  {/* First page */}
-                  <button
-                    onClick={() => setCurrentPage(1)}
-                    disabled={currentPage === 1}
-                    className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] hover:border-[#C4A98B] disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="First page"
-                  >«</button>
-                  {/* Prev */}
-                  <button
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] hover:border-[#C4A98B] disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="Previous page"
-                  >‹</button>
-                  {/* Page numbers */}
-                  {getPaginationPages(currentPage, totalPages).map((page, i) =>
-                    page === '...' ? (
-                      <span key={`dots-${i}`} className="w-8 h-8 flex items-center justify-center text-[#A89585] text-sm select-none">…</span>
-                    ) : (
-                      <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        className={`w-8 h-8 flex items-center justify-center rounded-md border text-sm font-semibold transition-all ${currentPage === page
-                          ? 'bg-[#C4965A] text-white border-[#C4965A] shadow-sm'
-                          : 'border-[#D6C9BC] text-[#7A5C44] hover:bg-[#F5EDE4] hover:border-[#C4A98B]'
-                          }`}
-                      >{page}</button>
-                    )
-                  )}
-                  {/* Next */}
-                  <button
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                    className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] hover:border-[#C4A98B] disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="Next page"
-                  >›</button>
-                  {/* Last page */}
-                  <button
-                    onClick={() => setCurrentPage(totalPages)}
-                    disabled={currentPage === totalPages}
-                    className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] hover:border-[#C4A98B] disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="Last page"
-                  >»</button>
-                </div>
+              <div className="px-5 py-6 border-t border-[#E6DFD4] flex justify-center bg-white">
+                <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
               </div>
             )}
 
@@ -699,7 +656,10 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
         <div>
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-3xl font-serif font-bold text-[#1C1F2A]">Order Details</h1>
+              <p className="text-[13px] md:text-sm font-serif text-white mb-1">
+                Dashboard &rsaquo; Order Management &rsaquo; <span className="font-semibold text-[#8B5E3C]">Details</span>
+              </p>
+              <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Order Details</h1>
               <p className="text-sm text-gray-500 mt-1">View information for order #{selectedOrder.orderId || (selectedOrder._id || '').substring((selectedOrder._id || '').length - 8)}</p>
             </div>
             <button onClick={closeViewModal} className="admin-btn flex items-center gap-2 text-[#6D625C] hover:text-gray-900 transition-colors text-sm font-medium">
@@ -880,7 +840,10 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
         <div className="flex flex-col min-h-[calc(100vh-8rem)]">
           <div className="flex items-center justify-between mb-6 shrink-0">
             <div>
-              <h1 className="text-3xl font-serif font-bold text-[#1C1F2A]">Edit Order Details</h1>
+              <p className="text-[13px] md:text-sm font-serif text-white mb-1">
+                Dashboard &rsaquo; Order Management &rsaquo; <span className="font-semibold text-[#8B5E3C]">Edit</span>
+              </p>
+              <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Edit Order Details</h1>
               <p className="text-sm text-gray-500 mt-1">Update information for order #{selectedOrder.orderId || (selectedOrder._id || '').substring((selectedOrder._id || '').length - 8)}</p>
             </div>
             <button onClick={closeEditModal} className="admin-btn flex items-center gap-2 text-[#6D625C] hover:text-gray-900 transition-colors text-sm font-medium">
@@ -1101,14 +1064,12 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
             <div className="border-t border-[#E6DFD4] p-6 flex justify-end gap-3 bg-gray-50 shrink-0">
               <button
                 onClick={closeEditModal}
-                className="px-6 py-2 rounded-xl font-bold text-gray-700 bg-white border border-[#E6DFD4] hover:bg-gray-50 transition-colors"
+                className="admin-cancel-btn"
                 disabled={saving}
-              >
-                Cancel
-              </button>
+              >CANCEL</button>
               <button
                 onClick={handleSaveOrderDetails}
-                className="px-6 py-2 rounded-xl font-bold text-white bg-[#8B5E3C] hover:bg-[#7a5234] transition-colors flex items-center gap-2"
+                className="admin-btn"
                 disabled={saving}
               >
                 {saving ? 'Saving...' : <><Save className="w-4 h-4" /> Save Changes</>}
@@ -1166,9 +1127,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                       />
                     </div>
                     <div className="flex justify-end gap-2 mt-1">
-                      <button onClick={() => { setShowNewCourierInput(false); setNewCourierName(''); setNewCourierTrackingUrl(''); }} className="px-3 py-1.5 border border-gray-200 text-gray-500 text-xs font-bold rounded-lg hover:bg-gray-50">
-                        Cancel
-                      </button>
+                      <button onClick={() => { setShowNewCourierInput(false); setNewCourierName(''); setNewCourierTrackingUrl(''); }} className="admin-cancel-btn">CANCEL</button>
                       <button onClick={handleAddCourier} className="px-3 py-1.5 bg-[#8B5E3C] text-white text-xs font-bold rounded-lg hover:bg-[#7a5234] flex items-center gap-1">
                         <Save className="w-3 h-3" /> Save
                       </button>
@@ -1273,9 +1232,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                 onClick={() => setShowShippingModal(false)}
                 className="px-6 py-2 rounded-xl font-bold text-gray-700 bg-white border border-[#E6DFD4] hover:bg-gray-50 transition-colors"
                 disabled={saving}
-              >
-                Cancel
-              </button>
+              >CANCEL</button>
               <button
                 onClick={submitShippingDetails}
                 className="px-6 py-2 rounded-xl font-bold text-white bg-[#8B5E3C] hover:bg-[#7a5234] transition-colors flex items-center gap-2"

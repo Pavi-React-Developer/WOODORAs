@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { cmsService } from '../../../api/cmsService';
-import { Pencil, Trash2, Plus, Eye, EyeOff, Upload, X , SquarePen , Trash } from 'lucide-react';
+import { Pencil, Trash2, Plus, Eye, EyeOff, Upload, X, SquarePen, Trash } from 'lucide-react';
 
 const emptyForm = {
   title: '', subtitle: '', description: '', buttonText: 'Shop Now',
@@ -133,7 +133,7 @@ export default function HeroBannerAdmin() {
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-bold text-brand-dark">Hero Banners</h3>
         <button onClick={() => { window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowForm(true); setEditId(null); setForm(emptyForm); }}
-          className="flex items-center gap-2 bg-brand-dark text-white text-sm px-4 py-2 rounded-xl hover:bg-black transition-colors">
+          className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60">
           <Plus className="w-4 h-4" /> Add Banner
         </button>
       </div>
@@ -182,7 +182,7 @@ export default function HeroBannerAdmin() {
               <div className="flex items-center justify-between mb-3">
                 <label className="text-sm font-semibold text-brand-dark uppercase tracking-wider block">Media Items (Multi-Image / Multi-Video)</label>
                 <button type="button" onClick={() => setForm(f => ({ ...f, items: [...(f.items || []), { mediaType: 'image', desktopUrl: '', mobileUrl: '' }] }))}
-                  className="text-xs flex items-center gap-1 bg-[#F7F3EE] px-3 py-1.5 rounded-lg font-semibold text-brand-dark hover:bg-[#E6DFD4]">
+                  className="px-4 py-1.5 border border-[#8B5E3C] text-[#8B5E3C] rounded-full text-xs font-bold flex items-center gap-1 hover:bg-[#F8F4EC] transition-colors bg-white">
                   <Plus className="w-3 h-3" /> Add Item
                 </button>
               </div>
@@ -233,9 +233,9 @@ export default function HeroBannerAdmin() {
             </div>
             <div className="flex gap-3 justify-end pt-2 border-t border-[#E6DFD4]">
               <button type="button" onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setShowForm(false))}
-                className="px-4 py-2 text-sm border border-[#E6DFD4] rounded-lg text-brand-medium hover:bg-gray-50">Cancel</button>
+                className="admin-cancel-btn">CANCEL</button>
               <button type="submit" disabled={saving}
-                className="p-1.5 text-[#6D625C] hover:text-[#9A6031] hover:bg-[#F2E3D1] rounded transition-colors">
+                className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60">
                 {saving ? 'Saving...' : 'Save Banner'}
               </button>
             </div>
@@ -245,7 +245,7 @@ export default function HeroBannerAdmin() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {loading ? (
-          [1,2,3].map(i => <div key={i} className="h-48 bg-gray-100 rounded-2xl animate-pulse" />)
+          [1, 2, 3].map(i => <div key={i} className="h-48 bg-gray-100 rounded-2xl animate-pulse" />)
         ) : items.length === 0 ? (
           <div className="col-span-3 p-8 text-center text-brand-medium text-sm bg-white rounded-2xl border border-[#E6DFD4]">
             No banners yet. Add your first hero banner!

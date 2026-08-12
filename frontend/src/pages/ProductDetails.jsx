@@ -867,22 +867,24 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
               </div>
 
               {/* Title & Starting From */}
-              <div className="pr-24 sm:pr-32">
-                <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-2">{product.category?.name || 'EDUCATIONAL TOYS'}</p>
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-[#141225] mb-4 leading-tight">{product.name}</h1>
+              <div>
+                <div className="pr-24 sm:pr-32">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-2">{product.category?.name || 'EDUCATIONAL TOYS'}</p>
+                  <h1 className="text-4xl sm:text-5xl lg:text-5xl font-serif font-bold text-[#141225] mb-4 leading-tight">{product.name}</h1>
 
-                {/* Reviews */}
-                <div className="flex items-center gap-2 text-sm text-[#141225] font-medium mb-6">
-                  <div className="flex text-[#F5C518]">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <svg key={star} className={`w-4 h-4 ${star <= (product.averageRating || 0) ? 'text-[#F5C518]' : 'text-slate-300'}`} fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    ))}
+                  {/* Reviews */}
+                  <div className="flex items-center gap-2 text-sm text-[#141225] font-medium mb-6">
+                    <div className="flex text-[#F5C518]">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <svg key={star} className={`w-4 h-4 ${star <= (product.averageRating || 0) ? 'text-[#F5C518]' : 'text-slate-300'}`} fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                      ))}
+                    </div>
+                    <span>({product.reviewCount || 0} Reviews)</span>
+                    <span className="text-slate-300">|</span>
+                    <span>{product.soldCount > 1000 ? (product.soldCount / 1000).toFixed(1) + 'k+' : (product.soldCount || 0)} Sold</span>
                   </div>
-                  <span>({product.reviewCount || 0} Reviews)</span>
-                  <span className="text-slate-300">|</span>
-                  <span>{product.soldCount > 1000 ? (product.soldCount / 1000).toFixed(1) + 'k+' : (product.soldCount || 0)} Sold</span>
                 </div>
 
                 <div className="flex flex-col gap-2 mb-8">
@@ -892,7 +894,7 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
 
                     return (
                       <>
-                        <div className="flex flex-wrap items-center gap-3 sm:gap-4 mt-1">
+                        <div className="flex flex-wrap items-baseline gap-3 sm:gap-4 mt-1">
                           {pricing.hasDiscount && (
                             <span className="text-2xl sm:text-3xl text-[#5C2E0E] line-through shrink-0 font-medium tracking-tight opacity-70">
                               ₹{(pricing.listPrice * quantity).toFixed(0)}
@@ -1298,7 +1300,7 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
           href={`https://wa.me/919789660115?text=${encodeURIComponent(`Hi, I'm inquiring about ${product.name}: ${window.location.href}`)}`}
           target="_blank" 
           rel="noopener noreferrer"
-          className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[60] bg-[#25D366] text-white p-3 md:p-4 rounded-full shadow-lg hover:scale-110 transition-transform duration-300 flex items-center justify-center cursor-pointer"
+          className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-[60] bg-[#25D366] text-white p-3 md:p-4 rounded-full shadow-lg hover:scale-110 transition-transform duration-300 flex items-center justify-center cursor-pointer"
           aria-label="WhatsApp Enquiry"
         >
           <FaWhatsapp className="w-6 h-6 md:w-8 md:h-8" />

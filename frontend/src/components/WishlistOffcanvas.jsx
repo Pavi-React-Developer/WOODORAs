@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Minus, Plus, ShoppingCart, Trash2, Gift, X } from 'lucide-react';
+import { Minus, Plus, Trash2, Gift, X } from 'lucide-react';
+import { BsBagHeartFill } from "react-icons/bs";
 import { RiHeartAdd2Line } from "react-icons/ri";
 import useWishlistStore from '../store/useWishlistStore';
 
@@ -197,7 +198,7 @@ export default function WishlistOffcanvas({ isOpen, onClose, wishlistItems, onRe
                             onClick={() => onMoveToCart(item, index)}
                             className="flex items-center gap-1.5 bg-[#b1621d] hover:bg-[#8f4e17] text-white px-4 py-2 rounded-lg transition-colors shadow-sm"
                           >
-                            <ShoppingCart className="w-4 h-4" />
+                            <BsBagHeartFill className="w-3.5 h-3.5" />
                             <span className="text-xs font-bold tracking-wide">Move to Cart</span>
                           </button>
                         </div>

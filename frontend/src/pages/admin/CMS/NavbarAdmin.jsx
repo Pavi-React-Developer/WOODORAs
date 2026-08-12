@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { cmsService } from '../../../api/cmsService';
 import { productV2API, categoryV2API } from '../../../api/catalogV2Service';
-import { Pencil, Trash2, Plus, GripVertical, Eye, EyeOff, Loader2, Upload, X, ChevronDown , SquarePen , Trash } from 'lucide-react';
+import { Pencil, Trash2, Plus, GripVertical, Eye, EyeOff, Loader2, Upload, X, ChevronDown, SquarePen, Trash } from 'lucide-react';
 
 function LogoUploader({ value, onChange }) {
   const [uploading, setUploading] = useState(false);
@@ -39,9 +39,9 @@ function LogoUploader({ value, onChange }) {
           <button type="button" onClick={() => inputRef.current.click()}
             className="flex items-center justify-center w-full min-h-[100px] gap-2 border-2 border-dashed border-[#E6DFD4] rounded-lg px-4 py-4 text-sm text-brand-medium hover:bg-[#F7F3EE] hover:border-brand-dark transition-all">
             <div className="text-center flex flex-col items-center">
-                <Upload className="w-5 h-5 mb-2 text-brand-medium" /> 
-                <span className="font-medium text-brand-dark">{uploading ? 'Uploading...' : 'Click to Upload Logo'}</span>
-                <span className="text-[10px] mt-1 text-brand-medium block">PNG/SVG recommended</span>
+              <Upload className="w-5 h-5 mb-2 text-brand-medium" />
+              <span className="font-medium text-brand-dark">{uploading ? 'Uploading...' : 'Click to Upload Logo'}</span>
+              <span className="text-[10px] mt-1 text-brand-medium block">PNG/SVG recommended</span>
             </div>
           </button>
         )}
@@ -56,7 +56,7 @@ const emptyItem = { title: '', url: '', icon: '', textColor: '', backgroundColor
 export default function NavbarAdmin() {
   const [config, setConfig] = useState(null);
   const [loading, setLoading] = useState(true);
-  
+
   const [showItemForm, setShowItemForm] = useState(false);
   const [currentItem, setCurrentItem] = useState(emptyItem);
   const [editIndex, setEditIndex] = useState(null);
@@ -160,20 +160,20 @@ export default function NavbarAdmin() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div>
             <label className="text-xs font-semibold text-brand-medium uppercase tracking-wider block mb-2">Navbar Logo</label>
-            <LogoUploader 
-              value={config?.logo} 
-              onChange={(val) => setConfig(prev => ({ ...prev, logo: val }))} 
+            <LogoUploader
+              value={config?.logo}
+              onChange={(val) => setConfig(prev => ({ ...prev, logo: val }))}
             />
           </div>
           <div className="space-y-4">
             <div>
               <label className="text-xs font-semibold text-brand-medium uppercase tracking-wider block mb-1">Logo CTA URL</label>
-              <input 
+              <input
                 type="text"
-                value={config?.logoUrl || ''} 
+                value={config?.logoUrl || ''}
                 onChange={e => handleGlobalChange('logoUrl', e.target.value)}
-                className="w-full border border-[#E6DFD4] rounded-lg px-3 py-2 text-sm" 
-                placeholder="e.g. / (Home Page)" 
+                className="w-full border border-[#E6DFD4] rounded-lg px-3 py-2 text-sm"
+                placeholder="e.g. / (Home Page)"
               />
               <p className="text-[10px] text-brand-medium mt-1">Where the logo redirects when clicked.</p>
             </div>
@@ -218,7 +218,7 @@ export default function NavbarAdmin() {
 
       {/* Add/Edit Item Form */}
       {showItemForm && (
-        <div className="bg-white rounded-2xl border border-brand-dark/20 p-6 shadow-md border-l-4 border-l-brand-dark">
+        <div className="bg-white rounded-2xl border border-[#E6DFD4] p-6 shadow-sm">
           <h4 className="font-semibold text-brand-dark mb-4">{editIndex !== null ? 'Edit Menu Item' : 'Add New Menu Item'}</h4>
           <form onSubmit={handleItemSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
@@ -242,7 +242,7 @@ export default function NavbarAdmin() {
             </div>
             <div className="relative">
               <label className="text-xs font-semibold text-brand-medium uppercase tracking-wider block mb-1">Auto-fill from Catalog</label>
-              <button 
+              <button
                 type="button"
                 onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
                 className="w-full border border-[#E6DFD4] rounded-lg px-3 py-2 text-sm bg-white text-left flex justify-between items-center"
@@ -250,7 +250,7 @@ export default function NavbarAdmin() {
                 Select Categories...
                 <ChevronDown className="w-4 h-4 text-gray-500" />
               </button>
-              
+
               {showCategoryDropdown && (
                 <div className="absolute top-full left-0 right-0 bg-white border border-[#E6DFD4] rounded-lg mt-1 z-50 max-h-60 overflow-y-auto p-2 shadow-lg">
                   <div className="text-xs font-bold text-brand-medium uppercase mb-2 px-1">Categories</div>
@@ -258,18 +258,18 @@ export default function NavbarAdmin() {
                     const isChecked = currentItem.subItems?.some(sub => sub.url === `/products?category=${cat._id}`);
                     return (
                       <label key={cat._id} className="flex items-center gap-2 p-1.5 hover:bg-gray-50 cursor-pointer text-sm rounded">
-                        <input 
-                          type="checkbox" 
-                          checked={isChecked} 
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
                           onChange={(e) => {
                             let newSubItems = [...(currentItem.subItems || [])];
                             if (e.target.checked) {
-                               newSubItems.push({ title: cat.name, url: `/products?category=${cat._id}` });
+                              newSubItems.push({ title: cat.name, url: `/products?category=${cat._id}` });
                             } else {
-                               newSubItems = newSubItems.filter(sub => sub.url !== `/products?category=${cat._id}`);
+                              newSubItems = newSubItems.filter(sub => sub.url !== `/products?category=${cat._id}`);
                             }
                             setCurrentItem({ ...currentItem, subItems: newSubItems, isDropdown: newSubItems.length > 0 || currentItem.isDropdown });
-                          }} 
+                          }}
                         />
                         {cat.name}
                       </label>
@@ -296,7 +296,7 @@ export default function NavbarAdmin() {
               <input type="checkbox" id="navbar-status" checked={currentItem.status} onChange={e => setCurrentItem({ ...currentItem, status: e.target.checked })} />
               <label htmlFor="navbar-status" className="text-sm text-brand-dark cursor-pointer">Active</label>
             </div>
-            
+
             {currentItem.isDropdown && (
               <div className="sm:col-span-2 lg:col-span-3 border border-[#E6DFD4] p-4 rounded-lg bg-gray-50 mt-2">
                 <div className="flex justify-between items-center mb-4">
@@ -322,10 +322,10 @@ export default function NavbarAdmin() {
                         newSubItems[sIdx].url = e.target.value;
                         setCurrentItem({ ...currentItem, subItems: newSubItems });
                       }} className="flex-1 border border-[#E6DFD4] rounded px-3 py-1 text-sm" />
-                      
-                      <select 
+
+                      <select
                         className="w-40 border border-[#E6DFD4] rounded px-2 py-1 text-xs bg-white text-brand-medium"
-                        value="" 
+                        value=""
                         onChange={e => {
                           if (!e.target.value) return;
                           const [type, id] = e.target.value.split('|');
@@ -366,9 +366,9 @@ export default function NavbarAdmin() {
             )}
             <div className="sm:col-span-2 lg:col-span-3 flex gap-3 justify-end mt-2">
               <button type="button" onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setShowItemForm(false))}
-                className="px-4 py-2 text-sm border border-[#E6DFD4] rounded-lg text-brand-medium hover:bg-gray-50">Cancel</button>
+                className="admin-cancel-btn">CANCEL</button>
               <button type="submit"
-                className="p-1.5 text-[#6D625C] hover:text-[#9A6031] hover:bg-[#F2E3D1] rounded transition-colors">
+                className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60">
                 {editIndex !== null ? 'Update Item' : 'Add Item'}
               </button>
             </div>
@@ -439,7 +439,7 @@ export default function NavbarAdmin() {
         <button
           onClick={handleSaveAll}
           disabled={saving}
-          className="px-8 py-3 bg-brand-dark text-white rounded-xl hover:bg-black disabled:opacity-50 transition-colors font-bold shadow-sm"
+          className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity"
         >
           {saving ? 'Saving...' : 'Save All Changes'}
         </button>

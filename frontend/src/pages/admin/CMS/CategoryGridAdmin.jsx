@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Plus, Pencil, Trash2, Eye, EyeOff, X, Search , SquarePen , Trash } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, EyeOff, X, Search, SquarePen, Trash } from 'lucide-react';
 import { cmsService } from '../../../api/cmsService';
 import { categoryV2API, productV2API } from '../../../api/catalogV2Service';
 import { catalogService } from '../../../api/catalogService';
@@ -223,7 +223,7 @@ export default function CategoryGridAdmin() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-bold text-brand-dark">Category Grid Sections</h3>
-        <button onClick={() => { window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowForm(true); setEditId(null); setForm(emptyForm); }} className="flex items-center gap-2 bg-brand-dark text-white text-sm px-4 py-2 rounded-xl hover:bg-black transition-colors">
+        <button onClick={() => { window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowForm(true); setEditId(null); setForm(emptyForm); }} className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60">
           <Plus className="w-4 h-4" /> Add Category Grid
         </button>
       </div>
@@ -302,8 +302,8 @@ export default function CategoryGridAdmin() {
             </div>
 
             <div className="flex gap-3 justify-end pt-4 border-t border-[#E6DFD4]">
-              <button type="button" onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setShowForm(false))} className="px-4 py-2 text-sm border border-[#E6DFD4] rounded-lg text-brand-medium">Cancel</button>
-              <button type="submit" disabled={saving} className="px-5 py-2 text-sm font-semibold bg-brand-dark text-white rounded-xl hover:bg-black transition-colors disabled:opacity-50">
+              <button type="button" onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setShowForm(false))} className="admin-cancel-btn">CANCEL</button>
+              <button type="submit" disabled={saving} className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60">
                 {saving ? 'Saving...' : editId ? 'Update Grid' : 'Save Grid'}
               </button>
             </div>
@@ -317,7 +317,7 @@ export default function CategoryGridAdmin() {
         ) : items.map((item) => (
           <div key={item._id} className="bg-white rounded-2xl border border-[#E6DFD4] p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 shadow-sm">
             <div className="flex gap-2 flex-shrink-0">
-              {item.images?.slice(0,2).map((img, i) => (
+              {item.images?.slice(0, 2).map((img, i) => (
                 <img key={i} src={img.url || img} alt="" className="w-12 h-12 rounded-lg object-cover border border-[#E6DFD4] bg-[#F7F3EE]" />
               ))}
               {!item.images?.length && <div className="w-12 h-12 rounded-lg border border-[#E6DFD4] bg-[#F7F3EE]" />}

@@ -508,7 +508,7 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
           </div>
 
           {/* Pagination */}
-          <div className="px-4 py-3.5 border-t border-[#E9DED3] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="px-5 py-6 border-t border-[#E6DFD4] flex flex-col sm:flex-row sm:items-center justify-between bg-white gap-4">
             <span className="text-xs text-[#8A817C] font-medium text-center sm:text-left">
               Showing {filteredRefunds.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredRefunds.length)} of {filteredRefunds.length} results
             </span>
@@ -516,7 +516,6 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
               currentPage={currentPage} 
               totalPages={totalPages} 
               onPageChange={setCurrentPage} 
-              className="flex items-center justify-center gap-2 flex-wrap"
             />
           </div>
         </div>
@@ -552,9 +551,7 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
               </p>
               <div className="flex gap-3">
                 <button onClick={() => setApproveRefund(null)} disabled={approveLoading}
-                  className="flex-1 py-3 bg-white border border-[#E9DED3] text-[#4A403B] rounded-xl font-bold text-sm shadow-sm hover:bg-gray-50 transition-colors">
-                  Cancel
-                </button>
+                  className="admin-cancel-btn">CANCEL</button>
                 <button onClick={handleApprove} disabled={approveLoading}
                   className="flex-[1.5] py-3 bg-[#8B5E3C] text-white rounded-xl font-bold text-sm shadow-sm hover:bg-[#7a5235] transition-colors disabled:opacity-50">
                   {approveLoading ? 'Approving...' : 'Approve Request'}
@@ -616,9 +613,7 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
               </p>
               <div className="flex gap-3">
                 <button onClick={() => setProcessRefund(null)} disabled={processLoading}
-                  className="flex-1 py-3 bg-white border border-[#E9DED3] text-[#4A403B] rounded-xl font-bold text-sm shadow-sm hover:bg-gray-50 transition-colors">
-                  Cancel
-                </button>
+                  className="admin-cancel-btn">CANCEL</button>
                 <button onClick={handleProcessRefund} disabled={processLoading}
                   className="flex-[1.5] py-3 bg-[#647C5E] text-white rounded-xl font-bold text-sm shadow-sm hover:bg-[#52664d] transition-colors disabled:opacity-50">
                   {processLoading ? 'Processing...' : `Refund via ${refundMethod}`}

@@ -198,11 +198,10 @@ export default function BulkOrderFieldsAdminPage({ canCreate = true, canEdit = t
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-4">
         <div>
-          <p className="text-[13px] md:text-sm font-serif text-[#94A3B8] mb-1">
-            Dashboard &rsaquo; Order Management &rsaquo; <span className="font-semibold text-[#8B5E3C]">Bulk Order Fields</span>
+          <p className="text-[13px] md:text-sm font-serif text-white mb-1">
+            Dashboard &rsaquo; Bulk Orders &rsaquo; <span className="font-semibold text-[#8B5E3C]">Bulk Order Fields</span>
           </p>
           <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Bulk Order Form Fields</h1>
-          <p className="text-sm text-[#8A817C] mt-2">Manage dynamic fields that appear on the bulk order submission form.</p>
         </div>
         {canCreate && (
           <button
@@ -239,15 +238,15 @@ export default function BulkOrderFieldsAdminPage({ canCreate = true, canEdit = t
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-[#FAF4EF] text-[#8A817C] text-xs uppercase tracking-wider">
-              <th className="p-4 font-bold border-b border-[#E6DFD4] w-10">
-                <input
-                  type="checkbox"
-                  checked={allChecked}
-                  onChange={toggleAll}
-                  className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer"
-                />
-              </th>
-              <th className="p-4 font-bold border-b border-[#E6DFD4]">Label</th>
+                <th className="p-4 font-bold border-b border-[#E6DFD4] w-10">
+                  <input
+                    type="checkbox"
+                    checked={allChecked}
+                    onChange={toggleAll}
+                    className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer"
+                  />
+                </th>
+                <th className="p-4 font-bold border-b border-[#E6DFD4]">Label</th>
                 <th className="p-4 font-bold border-b border-[#E6DFD4]">Type</th>
                 <th className="p-4 font-bold border-b border-[#E6DFD4]">Required</th>
                 <th className="p-4 font-bold border-b border-[#E6DFD4]">Status</th>
@@ -264,15 +263,15 @@ export default function BulkOrderFieldsAdminPage({ canCreate = true, canEdit = t
               ) : (
                 paginatedFields.map(field => (
                   <tr key={field._id} className="hover:bg-[#FAF4EF]/30 transition-colors">
-                  <td className="p-4">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.includes(field._id)}
-                      onChange={() => toggleOne(field._id)}
-                      className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer"
-                    />
-                  </td>
-                  <td className="p-4 font-medium text-[#4A3326]">{field.label}</td>
+                    <td className="p-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(field._id)}
+                        onChange={() => toggleOne(field._id)}
+                        className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer"
+                      />
+                    </td>
+                    <td className="p-4 font-medium text-[#4A3326]">{field.label}</td>
                     <td className="p-4">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#EBF3F8] text-[#1D4E89] uppercase tracking-wide">
                         {field.type}
@@ -373,19 +372,19 @@ export default function BulkOrderFieldsAdminPage({ canCreate = true, canEdit = t
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-            <div className="p-5 border-b border-[#E6DFD4] flex justify-between items-center bg-[#FAF4EF]/50">
-              <h3 className="font-serif font-bold text-lg text-[#4A3326]">
+          <div className="bg-white rounded-[20px] shadow-2xl w-full max-w-md overflow-hidden">
+            <div className="p-6 md:px-8 border-b border-[#E6DFD4] flex justify-between items-center bg-[#F8F4EC]">
+              <h3 className="font-serif font-bold text-[28px] text-[#141225] tracking-tight">
                 {formData._id ? 'Edit Field' : 'Add New Field'}
               </h3>
-              <button onClick={handleCloseModal} className="text-red-500 hover:text-red-600 transition-colors">
-                <X className="w-5 h-5" />
+              <button onClick={handleCloseModal} className="text-gray-400 hover:text-red-500 transition-colors">
+                <X className="w-6 h-6" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="p-8 space-y-6 bg-white">
               <div>
-                <label className="block text-xs font-bold text-[#8A817C] uppercase tracking-wider mb-1.5">Field Label</label>
+                <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Field Label</label>
                 <input
                   type="text"
                   name="label"
@@ -393,42 +392,47 @@ export default function BulkOrderFieldsAdminPage({ canCreate = true, canEdit = t
                   onChange={handleChange}
                   required
                   placeholder="e.g. Expected Delivery Date"
-                  className="w-full px-3 py-2 rounded-lg border border-[#E6DFD4] focus:ring-2 focus:ring-[#9C755A] focus:border-[#9C755A] outline-none transition-all bg-[#FAF4EF]/30"
+                  className="w-full px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#8A817C] uppercase tracking-wider mb-1.5">Field Type</label>
-                <select
-                  name="type"
-                  value={formData.type}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 rounded-lg border border-[#E6DFD4] focus:ring-2 focus:ring-[#9C755A] focus:border-[#9C755A] outline-none transition-all bg-[#FAF4EF]/30 appearance-none"
-                >
-                  <option value="text">Short Text</option>
-                  <option value="dropdown">Dropdown Options</option>
-                  <option value="checkbox">Checkbox (Yes/No)</option>
-                </select>
+                <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Field Type</label>
+                <div className="relative">
+                  <select
+                    name="type"
+                    value={formData.type}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all appearance-none pr-10"
+                  >
+                    <option value="text">Short Text</option>
+                    <option value="dropdown">Dropdown Options</option>
+                    <option value="checkbox">Checkbox (Yes/No)</option>
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none">
+                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                  </div>
+                </div>
               </div>
 
               {formData.type === 'text' && (
                 <div>
-                  <label className="block text-xs font-bold text-[#8A817C] uppercase tracking-wider mb-1.5">Placeholder</label>
+                  <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Placeholder</label>
                   <input
                     type="text"
                     name="placeholder"
                     value={formData.placeholder}
                     onChange={handleChange}
                     placeholder="e.g. Enter your company name"
-                    className="w-full px-3 py-2 rounded-lg border border-[#E6DFD4] focus:ring-2 focus:ring-[#9C755A] focus:border-[#9C755A] outline-none transition-all bg-[#FAF4EF]/30"
+                    className="w-full px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all"
                   />
-                  <p className="text-[10px] text-[#8A817C] mt-1">Optional hint text for the input field</p>
+                  <p className="text-xs text-gray-500 mt-2">Optional hint text for the input field</p>
                 </div>
               )}
 
               {formData.type === 'dropdown' && (
                 <div>
-                  <label className="block text-xs font-bold text-[#8A817C] uppercase tracking-wider mb-1.5">Dropdown Options</label>
+                  <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Dropdown Options</label>
                   <input
                     type="text"
                     name="options"
@@ -436,49 +440,53 @@ export default function BulkOrderFieldsAdminPage({ canCreate = true, canEdit = t
                     onChange={handleChange}
                     required={formData.type === 'dropdown'}
                     placeholder="e.g. Option 1, Option 2, Option 3"
-                    className="w-full px-3 py-2 rounded-lg border border-[#E6DFD4] focus:ring-2 focus:ring-[#9C755A] focus:border-[#9C755A] outline-none transition-all bg-[#FAF4EF]/30"
+                    className="w-full px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all"
                   />
-                  <p className="text-[10px] text-[#8A817C] mt-1">Separate multiple options with commas (,)</p>
+                  <p className="text-xs text-gray-500 mt-2">Separate multiple options with commas (,)</p>
                 </div>
               )}
 
-              <div className="flex items-center justify-between pt-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="isRequired"
-                    checked={formData.isRequired}
-                    onChange={handleChange}
-                    className="w-4 h-4 text-[#4A3326] border-[#E6DFD4] rounded focus:ring-[#4A3326]"
-                  />
-                  <span className="text-sm text-[#4A3326] font-medium">Is Required?</span>
+              <div className="flex items-center gap-8 pt-2">
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <div className="relative flex items-center justify-center">
+                    <input
+                      type="checkbox"
+                      name="isRequired"
+                      checked={formData.isRequired}
+                      onChange={handleChange}
+                      className="peer appearance-none w-5 h-5 border-2 border-[#E6DFD4] rounded-md checked:bg-[#8B5E3C] checked:border-[#8B5E3C] transition-colors cursor-pointer"
+                    />
+                    <svg className="absolute w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 pointer-events-none" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 5L4.5 8.5L13 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  </div>
+                  <span className="text-[15px] text-[#3E2723] group-hover:text-[#8B5E3C] transition-colors font-medium">Is Required?</span>
                 </label>
 
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="isActive"
-                    checked={formData.isActive}
-                    onChange={handleChange}
-                    className="w-4 h-4 text-[#4A3326] border-[#E6DFD4] rounded focus:ring-[#4A3326]"
-                  />
-                  <span className="text-sm text-[#4A3326] font-medium">Is Active?</span>
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <div className="relative flex items-center justify-center">
+                    <input
+                      type="checkbox"
+                      name="isActive"
+                      checked={formData.isActive}
+                      onChange={handleChange}
+                      className="peer appearance-none w-5 h-5 border-2 border-[#E6DFD4] rounded-md checked:bg-[#8B5E3C] checked:border-[#8B5E3C] transition-colors cursor-pointer"
+                    />
+                    <svg className="absolute w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 pointer-events-none" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 5L4.5 8.5L13 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  </div>
+                  <span className="text-[15px] text-[#3E2723] group-hover:text-[#8B5E3C] transition-colors font-medium">Is Active?</span>
                 </label>
               </div>
 
-              <div className="pt-4 mt-4 border-t border-[#E6DFD4] flex gap-3">
+              <div className="pt-6 mt-6 flex items-center gap-4">
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="flex-1 px-4 py-2 text-sm font-bold text-[#4A3326] bg-[#E6DFD4]/50 hover:bg-[#E6DFD4] rounded-xl transition-colors"
-                >
-                  Cancel
-                </button>
+                  className="admin-cancel-btn"
+                >CANCEL</button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 text-sm font-bold text-white bg-[#4A3326] hover:bg-[#3A281E] rounded-xl transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 bg-[#8B5E3C] hover:bg-[#7a5234] text-white px-8 py-3 rounded-full text-[15px] font-bold shadow-sm transition-all uppercase tracking-wide"
                 >
-                  {formData._id ? 'Update Field' : 'Create Field'}
+                  {formData._id ? 'SAVE CHANGES' : 'CREATE FIELD'}
                 </button>
               </div>
             </form>

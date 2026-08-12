@@ -105,28 +105,89 @@ export default function ProductFeeRulesPage() {
 
   if (loading) return <div className="p-8 text-center text-gray-500">Loading...</div>;
 
-  return (
-    <div className="bg-[#fcfbf9] min-h-screen">
-      <div className="max-w-5xl mx-auto p-8">
-        <div className="mb-6 flex justify-between items-end">
-          <div>
-            <h2 className="text-2xl font-serif font-bold text-gray-900 mb-2">Dynamic Product Fee Rules</h2>
-            <p className="text-sm text-gray-500">
-              Configure dynamic volume ranges (Min Volume and Max Volume in cm³) to determine Box Size and Product Fee.
-            </p>
-          </div>
+  if (editingRuleId) {
+    return (
+      <div className="flex-1 overflow-y-auto p-8 space-y-6">
+        <div className="mb-6">
+          <p className="text-[13px] md:text-sm font-serif text-white mb-1">
+            Dashboard &rsaquo; Fee Management &rsaquo; <span className="font-semibold text-[#8B5E3C]">Product Fee</span>
+          </p>
+          <h2 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Edit Product Fee Rule</h2>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 mb-8">
+        <div className="animate-in fade-in flex justify-center">
+          <div className="bg-white rounded-[20px] shadow-sm border border-[#E6DFD4] w-full max-w-4xl overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 md:px-8 border-b border-[#E6DFD4] bg-[#F8F4EC]">
+              <div>
+                <h2 className="text-[28px] font-serif font-bold text-[#141225] tracking-tight">Edit Product Fee Rule</h2>
+              </div>
+            </div>
+
+            {/* Content */}
+            <form onSubmit={handleSubmit} className="p-8 space-y-8 bg-white">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Min Volume (cm³)</label>
+                  <input type="text" inputMode="numeric" value={formData.minVolume} onChange={(e) => setFormData({...formData, minVolume: e.target.value ? Number(e.target.value) : ''})} required className="w-full px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all" />
+                </div>
+                <div>
+                  <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Max Volume (cm³)</label>
+                  <input type="text" inputMode="numeric" value={formData.maxVolume} onChange={(e) => setFormData({...formData, maxVolume: e.target.value ? Number(e.target.value) : ''})} required className="w-full px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all" />
+                </div>
+                <div>
+                  <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Box Size</label>
+                  <input type="text" value={formData.boxSize} onChange={(e) => setFormData({...formData, boxSize: e.target.value})} required className="w-full px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all" />
+                </div>
+                <div>
+                  <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Product Fee (₹)</label>
+                  <input type="text" inputMode="numeric" value={formData.productFee} onChange={(e) => setFormData({...formData, productFee: e.target.value ? Number(e.target.value) : ''})} required className="w-full px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Status</label>
+                  <select value={formData.isActive} onChange={(e) => setFormData({...formData, isActive: e.target.value === 'true'})} className="w-full px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all appearance-none">
+                    <option value="true">Active</option>
+                    <option value="false">Inactive</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="pt-6 mt-6 border-t border-[#E6DFD4] flex items-center justify-center gap-4">
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  className="admin-cancel-btn"
+                >CANCEL</button>
+                <button
+                  type="submit"
+                  className="flex items-center justify-center gap-2 bg-[#8B5E3C] hover:bg-[#7a5234] text-white px-8 py-3 rounded-full text-[15px] font-bold shadow-sm transition-all uppercase tracking-wide"
+                >
+                  SAVE CHANGES
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex-1 overflow-y-auto p-8 space-y-6">
+      <div className="mb-6 flex justify-between items-end">
+        <div>
+          <p className="text-[13px] md:text-sm font-serif text-white mb-1">
+            Dashboard &rsaquo; Fee Management &rsaquo; <span className="font-semibold text-[#8B5E3C]">Product Fee</span>
+          </p>
+          <h2 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Dynamic Product Fee Rules</h2>
+        </div>
+      </div>
+
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#E6DFD4] mb-8">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-md font-semibold text-gray-800">
-              {editingRuleId ? 'Edit Product Fee Rule' : 'Add New Rule'}
+            <h3 className="text-[18px] font-serif font-bold text-[#3E2723]">
+              Add New Rule
             </h3>
-            {editingRuleId && (
-              <button onClick={handleCancelEdit} className="text-gray-400 hover:text-red-500 transition-colors">
-                <X size={20} />
-              </button>
-            )}
           </div>
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
@@ -196,9 +257,9 @@ export default function ProductFeeRulesPage() {
               <div>
                 <button 
                   type="submit" 
-                  className="w-full bg-[#B0611C] hover:bg-[#8e4d15] text-white p-2.5 rounded font-semibold transition-colors shadow-sm"
+                  className="admin-btn w-full"
                 >
-                  {editingRuleId ? 'Update Rule' : 'Add Rule'}
+                  Add Rule
                 </button>
               </div>
             </div>
@@ -263,6 +324,5 @@ export default function ProductFeeRulesPage() {
           </table>
         </div>
       </div>
-    </div>
   );
 }

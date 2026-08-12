@@ -116,11 +116,11 @@ export default function FooterAdmin() {
         <div className="bg-white rounded-2xl border border-[#E6DFD4] p-6 shadow-sm space-y-4">
           <div className="flex justify-between items-center">
             <h4 className="font-semibold text-brand-dark">Footer Columns</h4>
-            <button type="button" onClick={() => setForm(f => ({ ...f, columns: [...(f.columns || []), { title: '', links: [] }] }))} className="text-xs font-semibold text-brand-dark bg-[#F7F3EE] px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-[#E6DFD4]">
+            <button type="button" onClick={() => setForm(f => ({ ...f, columns: [...(f.columns || []), { title: '', links: [] }] }))} className="px-4 py-1.5 border border-[#8B5E3C] text-[#8B5E3C] rounded-full text-xs font-bold flex items-center gap-1 hover:bg-[#F8F4EC] transition-colors bg-white">
               <Plus className="w-3 h-3" /> Add Column
             </button>
           </div>
-          
+
           <div className="space-y-6">
             {form.columns?.map((col, cIdx) => (
               <div key={cIdx} className="border border-[#E6DFD4] p-4 rounded-xl space-y-4 bg-gray-50">
@@ -140,7 +140,7 @@ export default function FooterAdmin() {
                     <Trash className="w-4 h-4" />
                   </button>
                 </div>
-                
+
                 <div className="pl-4 border-l-2 border-[#E6DFD4] space-y-3">
                   <label className="text-xs font-semibold text-brand-medium uppercase tracking-wider block mb-1">Links</label>
                   {col.links.map((link, lIdx) => (
@@ -180,7 +180,7 @@ export default function FooterAdmin() {
 
         <div className="flex justify-end">
           <button type="submit" disabled={saving}
-            className="px-8 py-3 bg-brand-dark text-white text-sm font-semibold rounded-xl hover:bg-black disabled:opacity-50 transition-colors">
+            className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60">
             {saving ? 'Saving...' : 'Save Footer Settings'}
           </button>
         </div>

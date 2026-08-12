@@ -94,6 +94,41 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
     }
   };
 
+  const handleBulkStatusChange = async (activeStatus) => {
+    if (window.confirm(`Are you sure you want to set ${selectedIds.length} fees to ${activeStatus ? 'Active' : 'Inactive'}?`)) {
+      try {
+        await Promise.all(selectedIds.map(async id => {
+          const fee = fees.find(f => f._id === id);
+          if (fee) {
+            const payload = { active: activeStatus };
+            if (fee.feeCategory && typeof fee.feeCategory === 'object') {
+              payload.feeCategory = fee.feeCategory._id;
+            } else if (fee.feeCategory) {
+              payload.feeCategory = fee.feeCategory;
+            }
+            await feeAPI.updateFee(id, payload);
+          }
+        }));
+        setFees(fees.map(f => selectedIds.includes(f._id) ? { ...f, active: activeStatus } : f));
+        setSelectedIds([]);
+      } catch (err) {
+        alert('Failed to update status for some fees');
+      }
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (window.confirm(`Are you sure you want to delete ${selectedIds.length} fees?`)) {
+      try {
+        await Promise.all(selectedIds.map(id => feeAPI.deleteFee(id)));
+        setFees(fees.filter(f => !selectedIds.includes(f._id)));
+        setSelectedIds([]);
+      } catch (err) {
+        alert('Failed to delete some fees');
+      }
+    }
+  };
+
   const filteredFees = useMemo(() => {
     let result = fees;
     if (search.trim()) {
@@ -124,10 +159,10 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
 
   return (
     <div className="flex-1 overflow-y-auto p-8 space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-[#E6DFD4] pb-4 gap-4 mb-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-4 gap-4 mb-4">
         <div>
-          <p className="text-[13px] md:text-sm font-serif text-[#94A3B8] mb-1">
-            Dashboard &rsaquo; Setup &rsaquo; <span className="font-semibold text-[#8B5E3C]">Fee List</span>
+          <p className="text-[13px] md:text-sm font-serif text-white mb-1">
+            Dashboard &rsaquo; Fee Management &rsaquo; <span className="font-semibold text-[#8B5E3C]">Fee List</span>
           </p>
           <h2 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Fee List</h2>
         </div>
@@ -138,7 +173,7 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
           {canEdit && (
             <button
               onClick={() => setShowGlobalFees(true)}
-              className="flex items-center gap-2 bg-[#8B5E3C] text-white px-4 py-2 rounded-xl font-bold hover:bg-[#7a5234]"
+              className="admin-btn"
             >
               <Package size={16} /> Global Fees
             </button>
@@ -168,10 +203,9 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
       </div>
 
 
-      <div className="bg-white border border-[#E6DFD4] rounded-2xl p-6 shadow-sm">
-        {/* Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <input
+      {/* Filters */}
+      <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm p-4 mb-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <input
             type="text"
             placeholder="Search by Fee Name..."
             value={search}
@@ -196,26 +230,33 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
             <option value="CashFree">CashFree</option>
             <option value="Both (COD & CashFree)">Both (COD & CashFree)</option>
           </select>
-        </div>
+      </div>
 
-        {/* Bulk Actions */}
+      {/* Bulk Actions */}
       {selectedIds.length > 0 && (
-        <div className="bg-[#F8F4EC] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3 flex-wrap">
-          <span className="text-sm font-semibold text-[#8B5E3C]">{selectedIds.length} selected</span>
-          <div className="flex gap-2 ml-auto flex-wrap">
-             {typeof handleBulkDelete !== 'undefined' && (
+          <div className="bg-[#FDF9F5] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3 flex-wrap">
+            <span className="text-sm font-semibold text-[#8B5E3C]">{selectedIds.length} selected</span>
+            <div className="flex gap-2 ml-auto flex-wrap">
+              {canEdit && (
+                <>
+                  <button onClick={() => handleBulkStatusChange(true)} className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">Set Active</button>
+                  <button onClick={() => handleBulkStatusChange(false)} className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">Set Inactive</button>
+                </>
+              )}
+              {canDelete && (
                 <button onClick={handleBulkDelete} className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">Delete Selected</button>
-             )}
-            <button onClick={() => setSelectedIds([])} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-white transition-colors text-gray-500">Clear</button>
-          </div>
+              )}
+              <button onClick={() => setSelectedIds([])} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] bg-white rounded-lg hover:bg-gray-50 transition-colors text-gray-500">Clear</button>
+            </div>
         </div>
       )}
 
-      {/* Table */}
+      {/* Table Card */}
+      <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
-              <tr className="bg-brand-light/50 border-b border-[#E6DFD4] text-brand-medium text-[10px] font-bold tracking-widest uppercase">
+          <table className="w-full text-sm text-left border-collapse">
+            <thead className="sticky top-0">
+              <tr className="bg-[#FAF4EF] text-[#8A817C] text-xs font-bold tracking-widest uppercase border-b border-[#E6DFD4]">
                                 <th className="px-4 py-3.5 w-10">
                                     <input
                                         type="checkbox"
@@ -235,7 +276,7 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
                 <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#E6DFD4]/55 text-sm text-brand-dark">
+            <tbody className="divide-y divide-[#E6DFD4] text-sm text-brand-dark">
               {paginatedFees.length === 0 ? (
                 <tr>
                   <td colSpan="9" className="py-12 text-center text-gray-500 font-medium">
@@ -244,7 +285,15 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
                 </tr>
               ) : (
                 paginatedFees.map((fee, idx) => (
-                  <tr key={fee._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${typeof idx !== "undefined" ? (idx % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : typeof index !== "undefined" ? (index % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : "bg-white"}`}>
+                  <tr key={fee._id} className="transition-colors hover:bg-[#FDF9F5] bg-white">
+                    <td className="py-4 px-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(fee._id)}
+                        onChange={(e) => toggleSelectOne(fee._id, e.target.checked)}
+                        className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                      />
+                    </td>
                     <td className="py-4 px-4 font-medium">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
                     <td className="py-4 px-4 font-bold">{fee.feeName}</td>
                     <td className="py-4 px-4">{fee.feeCategory?.name}</td>
@@ -301,15 +350,15 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
         </div>
 
         {/* Pagination */}
-        <div className="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm">
-          <span className="text-brand-medium">Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredFees.length)} of {filteredFees.length} entries</span>
-          <Pagination 
-            currentPage={currentPage} 
-            totalPages={totalPages} 
-            onPageChange={setCurrentPage} 
-            className="flex items-center justify-center gap-2 flex-wrap"
-          />
-        </div>
+        {totalPages > 1 && (
+          <div className="p-6 border-t border-[#E6DFD4] bg-white rounded-b-2xl flex justify-center">
+            <Pagination 
+              currentPage={currentPage} 
+              totalPages={totalPages} 
+              onPageChange={setCurrentPage} 
+            />
+          </div>
+        )}
       </div>
     </div>
   );

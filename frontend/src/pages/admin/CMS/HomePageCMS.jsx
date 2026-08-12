@@ -54,7 +54,7 @@ export default function HomePageCMS() {
     <div className="flex-1 overflow-y-auto p-8 flex flex-col gap-6">
       <div className="w-full flex items-center justify-between mb-4">
         <div>
-          <p className="text-[13px] md:text-sm font-serif text-[#94A3B8] mb-1">
+          <p className="text-[13px] md:text-sm font-serif text-white mb-1">
             Dashboard &rsaquo; <span className="font-semibold text-[#8B5E3C]">Home Page CMS</span>
           </p>
           <h2 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Home Page CMS</h2>
@@ -70,10 +70,10 @@ export default function HomePageCMS() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-5 py-2.5 text-sm font-semibold rounded-xl transition-all ${
+            className={`px-5 py-2.5 text-sm font-semibold rounded-full transition-all ${
               activeTab === tab.id
-                ? 'bg-[#4A403B] text-white shadow-md'
-                : 'bg-white text-[#8A817C] border border-[#E6DFD4] hover:bg-[#F8F4EC] hover:text-[#4A403B]'
+                ? 'bg-[#8B5E3C] text-white shadow-md'
+                : 'bg-white text-[#8A817C] border border-[#E6DFD4] hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
             }`}
           >
             {tab.label}

@@ -7,27 +7,27 @@ import { SearchBar, Button, Badge, Card } from '../../../components/admin/Common
 import ConfirmDialog from '../../../components/admin/ConfirmDialog';
 
 const Field = ({ label, required, children }) => (
-  <div>
-    <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">
-      {label} {required && <span className="text-red-500 text-lg ml-1">*</span>}
-    </label>
-    {children}
-  </div>
+    <div>
+        <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">
+            {label} {required && <span className="text-red-500 text-lg ml-1">*</span>}
+        </label>
+        {children}
+    </div>
 );
 
 const inputCls = 'w-full px-4 py-2.5 text-sm border border-[#E6DFD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-colors';
 
 export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = true }) => {
     const [attributes, setAttributes] = useState([]);
-  const [selectedIds, setSelectedIds] = useState([]);
+    const [selectedIds, setSelectedIds] = useState([]);
 
-  const toggleSelectAll = (checked) => {
-    setSelectedIds(checked ? attributes.map(item => item._id) : []);
-  };
+    const toggleSelectAll = (checked) => {
+        setSelectedIds(checked ? attributes.map(item => item._id) : []);
+    };
 
-  const toggleSelectOne = (id, checked) => {
-    setSelectedIds(prev => checked ? [...prev, id] : prev.filter(i => i !== id));
-  };
+    const toggleSelectOne = (id, checked) => {
+        setSelectedIds(prev => checked ? [...prev, id] : prev.filter(i => i !== id));
+    };
     const [categories, setCategories] = useState([]);
     const [subCategories, setSubCategories] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -323,7 +323,10 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
         <div className="p-6 max-w-7xl mx-auto space-y-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Attributes</h1>
+                    <p className="text-[13px] md:text-sm font-serif text-white mb-1">
+                        Dashboard &rsaquo; Catalog Management &rsaquo; <span className="font-semibold text-[#8B5E3C]">Attributes</span>
+                    </p>
+                    <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Attributes</h1>
                 </div>
                 <div className="flex items-center gap-3">
                     <button onClick={fetchAttributes} className="admin-secondary-btn">
@@ -333,21 +336,25 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                         <Download size={16} /> Export Excel
                     </button>
                     {canCreate && (
-                    <button onClick={() => handleOpenForm()} className="admin-btn">
-                        <Plus size={16} /> Add Attribute
-                    </button>
+                        <button onClick={() => handleOpenForm()} className="admin-btn">
+                            <Plus size={16} /> Add Attribute
+                        </button>
                     )}
                 </div>
             </div>
 
             {/* Filter */}
-            <Card className="p-4 flex flex-col sm:flex-row gap-4 items-center">
-                <SearchBar
-                    value={search}
-                    onChange={setSearch}
-                    placeholder="Search attributes..."
-                    className="w-full sm:max-w-xs"
-                />
+            <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm p-4 flex flex-wrap gap-3 items-center">
+                <div className="relative flex-1 min-w-[180px]">
+                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    <input
+                        type="text"
+                        placeholder="Search attributes..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="w-full pl-9 pr-4 py-2.5 text-sm border border-[#E6DFD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30"
+                    />
+                </div>
                 <select
                     value={categoryFilter}
                     onChange={(e) => {
@@ -355,7 +362,7 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                         setSubCategoryFilter('');
                         setPage(1);
                     }}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="py-2.5 px-3 text-sm border border-[#E6DFD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 bg-white"
                 >
                     <option value="">All Categories</option>
                     {categories.map(c => (
@@ -368,36 +375,36 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                         setSubCategoryFilter(e.target.value);
                         setPage(1);
                     }}
+                    className="py-2.5 px-3 text-sm border border-[#E6DFD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 bg-white"
                     disabled={!categoryFilter}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:opacity-50"
                 >
-                    <option value="">All Sub Categories</option>
+                    <option value="">All Sub-Categories</option>
                     {filterSubCategories.map(s => (
                         <option key={s._id} value={s._id}>{s.name}</option>
                     ))}
                 </select>
-            </Card>
+            </div>
 
             {/* Bulk Actions */}
-      {selectedIds.length > 0 && (
-        <div className="bg-[#F8F4EC] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3 flex-wrap">
-          <span className="text-sm font-semibold text-[#8B5E3C]">{selectedIds.length} selected</span>
-          <div className="flex gap-2 ml-auto flex-wrap">
-            {canEdit && (
-              <>
-                <button onClick={() => handleBulkStatus(true)} className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">Set Active</button>
-                <button onClick={() => handleBulkStatus(false)} className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">Set Inactive</button>
-              </>
+            {selectedIds.length > 0 && (
+                <div className="bg-[#F8F4EC] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3 flex-wrap">
+                    <span className="text-sm font-semibold text-[#8B5E3C]">{selectedIds.length} selected</span>
+                    <div className="flex gap-2 ml-auto flex-wrap">
+                        {canEdit && (
+                            <>
+                                <button onClick={() => handleBulkStatus(true)} className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">Set Active</button>
+                                <button onClick={() => handleBulkStatus(false)} className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">Set Inactive</button>
+                            </>
+                        )}
+                        {canDelete && (
+                            <button onClick={handleBulkDelete} className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">Delete Selected</button>
+                        )}
+                        <button onClick={() => setSelectedIds([])} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-white transition-colors text-gray-500">Clear</button>
+                    </div>
+                </div>
             )}
-            {canDelete && (
-              <button onClick={handleBulkDelete} className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">Delete Selected</button>
-            )}
-            <button onClick={() => setSelectedIds([])} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-white transition-colors text-gray-500">Clear</button>
-          </div>
-        </div>
-      )}
 
-      {/* Table */}
+            {/* Table */}
             <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
@@ -517,12 +524,11 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                 </div>
 
                 {/* Pagination */}
-                <div className="px-5 py-3 border-t border-[#E6DFD4] flex flex-col sm:flex-row justify-center items-center bg-[#FAFAFA] gap-4">
+                <div className="px-5 py-6 border-t border-[#E6DFD4] flex justify-center bg-white">
                     <Pagination
                         currentPage={page}
                         totalPages={totalPages}
                         onPageChange={setPage}
-                        className="flex items-center justify-center gap-2 flex-wrap"
                     />
                 </div>
             </div>
@@ -635,7 +641,7 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                                         <span className="w-6 h-6 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center text-xs">📋</span>
                                         Value Options / Picklist
                                     </h3>
-                                    
+
                                     <div className="flex gap-2 items-center">
                                         <input
                                             type="text"
@@ -678,7 +684,7 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                             )}
 
                             <div className="flex items-center justify-center gap-4 pt-6 pb-2">
-                                <button type="button" onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setIsFormOpen(false))} className="px-8 py-3 border border-[#E6DFD4] rounded-full text-[15px] font-bold text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm">
+                                <button type="button" onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setIsFormOpen(false))} className="admin-cancel-btn">
                                     CANCEL
                                 </button>
                                 <button type="submit" disabled={formLoading} className="flex items-center gap-2 bg-[#8B5E3C] hover:bg-[#7a5234] disabled:opacity-60 text-white px-8 py-3 rounded-full text-[15px] font-bold transition-colors shadow-sm uppercase tracking-wide">

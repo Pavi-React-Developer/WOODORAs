@@ -213,7 +213,7 @@ export default function CartOffcanvas({ isOpen, onClose }) {
                         )}
                         
                         {Boolean(item.weight) && Number(item.weight) > 0 && (
-                          <p className="text-[11px] font-medium text-[#7C6A5A] mt-0.5">
+                          <p className="text-sm font-semibold text-[#7C6A5A] mt-0.5">
                             Weight: {item.weight} kg
                           </p>
                         )}

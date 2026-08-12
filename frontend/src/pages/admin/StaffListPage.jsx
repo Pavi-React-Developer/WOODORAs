@@ -260,12 +260,13 @@ export default function StaffListPage({ onAddStaff, onEditStaff, onRoleAssign, c
         </div>
 
         {/* Pagination */}
-        <Pagination 
-          currentPage={page} 
-          totalPages={pagination.pages} 
-          onPageChange={setPage} 
-          className="px-4 py-4 border-t border-[#E6DFD4] flex items-center justify-center gap-2"
-        />
+        <div className="px-5 py-6 border-t border-[#E6DFD4] flex justify-center bg-white">
+          <Pagination 
+            currentPage={page} 
+            totalPages={pagination.pages} 
+            onPageChange={setPage} 
+          />
+        </div>
       </div>
 
       {/* Delete Confirm Modal */}
@@ -278,7 +279,7 @@ export default function StaffListPage({ onAddStaff, onEditStaff, onRoleAssign, c
             <h3 className="text-lg font-bold text-gray-800 text-center mb-2">Delete Staff Member</h3>
             <p className="text-sm text-gray-500 text-center mb-6">This action cannot be undone. Are you sure?</p>
             <div className="flex gap-3">
-              <button onClick={() => setDeleteId(null)} className="flex-1 py-2.5 border border-[#E6DFD4] rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50">Cancel</button>
+              <button onClick={() => setDeleteId(null)} className="admin-cancel-btn">CANCEL</button>
               <button onClick={handleDelete} className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-semibold transition-colors">Delete</button>
             </div>
           </div>

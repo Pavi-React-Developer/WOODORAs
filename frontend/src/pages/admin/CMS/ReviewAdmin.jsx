@@ -128,7 +128,7 @@ export default function ReviewAdmin() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 bg-[#514332] text-white px-5 py-2.5 rounded-lg hover:bg-[#3d3225] transition-colors disabled:opacity-60"
+          className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60"
         >
           <Save className="w-4 h-4" />
           {saving ? 'Saving...' : 'Save All'}
@@ -265,7 +265,7 @@ export default function ReviewAdmin() {
           </div>
           <button
             onClick={fetchData}
-            className="flex items-center gap-1.5 text-xs text-brand-medium hover:text-brand-dark border border-[#E6DFD4] px-3 py-1.5 rounded-lg transition-colors"
+            className="admin-secondary-btn flex items-center gap-2"
           >
             <RefreshCw className="w-3.5 h-3.5" /> Refresh
           </button>
@@ -289,16 +289,14 @@ export default function ReviewAdmin() {
                 <div
                   key={review._id}
                   onClick={() => toggleReview(review._id)}
-                  className={`relative cursor-pointer rounded-xl border-2 p-4 transition-all select-none ${
-                    isChecked
-                      ? 'border-[#514332] bg-[#FDF9F1] shadow-md'
-                      : 'border-[#E6DFD4] bg-white hover:border-[#C8B9A5] hover:bg-[#FDFCF9]'
-                  }`}
+                  className={`relative cursor-pointer rounded-xl border-2 p-4 transition-all select-none ${isChecked
+                    ? 'border-[#514332] bg-[#FDF9F1] shadow-md'
+                    : 'border-[#E6DFD4] bg-white hover:border-[#C8B9A5] hover:bg-[#FDFCF9]'
+                    }`}
                 >
                   {/* Checkbox indicator */}
-                  <div className={`absolute top-3 right-3 w-5 h-5 rounded flex items-center justify-center transition-colors ${
-                    isChecked ? 'bg-[#514332]' : 'bg-white border border-[#C8B9A5]'
-                  }`}>
+                  <div className={`absolute top-3 right-3 w-5 h-5 rounded flex items-center justify-center transition-colors ${isChecked ? 'bg-[#514332]' : 'bg-white border border-[#C8B9A5]'
+                    }`}>
                     {isChecked && <CheckSquare className="w-3.5 h-3.5 text-white" />}
                   </div>
 

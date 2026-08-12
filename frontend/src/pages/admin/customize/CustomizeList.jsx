@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { Eye, X, Download, Image as ImageIcon, RefreshCw, Check, Trash2 } from 'lucide-react';
+import { Search, Filter, Eye, RefreshCw, X, Check, Download, Image as ImageIcon, Trash2 } from 'lucide-react';
+import Pagination from '../../../components/common/Pagination';
 import { customizeService } from '../../../api/customizeService';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
@@ -150,8 +151,8 @@ export default function CustomizeList() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
         <div>
-          <p className="text-[13px] md:text-sm font-serif text-[#94A3B8] mb-1">
-            Dashboard &rsaquo; Order Management &rsaquo; <span className="font-semibold text-[#8B5E3C]">Customize Requests</span>
+          <p className="text-[13px] md:text-sm font-serif text-white mb-1">
+            Dashboard &rsaquo; Customize Order &rsaquo; <span className="font-semibold text-[#8B5E3C]">Customize Requests</span>
           </p>
           <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Customize Requests</h1>
         </div>
@@ -239,11 +240,10 @@ export default function CustomizeList() {
                   </td>
                   <td className="p-4 text-sm text-gray-700">{getProductName(req.productDetails)}</td>
                   <td className="p-4">
-                    <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${
-                      req.status === 'Approved' ? 'bg-green-100 text-green-800' :
-                      req.status === 'Rejected' ? 'bg-red-100 text-red-800' :
-                      'bg-yellow-100 text-yellow-800'
-                    }`}>
+                    <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${req.status === 'Approved' ? 'bg-green-100 text-green-800' :
+                        req.status === 'Rejected' ? 'bg-red-100 text-red-800' :
+                          'bg-yellow-100 text-yellow-800'
+                      }`}>
                       {req.status}
                     </span>
                   </td>
@@ -293,28 +293,8 @@ export default function CustomizeList() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-center px-4 py-4 border-t border-[#E6DFD4]">
-            <div className="flex items-center gap-1">
-              <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] hover:border-[#C4A98B] disabled:opacity-50 disabled:cursor-not-allowed">«</button>
-              <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] hover:border-[#C4A98B] disabled:opacity-50 disabled:cursor-not-allowed">‹</button>
-              {getPaginationPages(currentPage, totalPages).map((page, i) =>
-                page === '...' ? (
-                  <span key={`dots-${i}`} className="w-8 h-8 flex items-center justify-center text-[#A89585] text-sm select-none">…</span>
-                ) : (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`w-8 h-8 flex items-center justify-center rounded-md border text-sm font-semibold transition-all ${
-                      currentPage === page
-                        ? 'bg-[#C4965A] text-white border-[#C4965A] shadow-sm'
-                        : 'border-[#D6C9BC] text-[#7A5C44] hover:bg-[#F5EDE4] hover:border-[#C4A98B]'
-                    }`}
-                  >{page}</button>
-                )
-              )}
-              <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] hover:border-[#C4A98B] disabled:opacity-50 disabled:cursor-not-allowed">›</button>
-              <button onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} className="w-8 h-8 flex items-center justify-center rounded-md border border-[#D6C9BC] text-[#7A5C44] text-sm font-medium transition-all hover:bg-[#F5EDE4] hover:border-[#C4A98B] disabled:opacity-50 disabled:cursor-not-allowed">»</button>
-            </div>
+          <div className="px-5 py-6 border-t border-[#E6DFD4] flex justify-center bg-white">
+            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
           </div>
         )}
       </div>
@@ -334,11 +314,10 @@ export default function CustomizeList() {
             </div>
             <div className="p-6 overflow-y-auto space-y-6">
               <div className="flex justify-between items-center">
-                <span className={`px-3 py-1 text-sm font-medium rounded-full ${
-                  selectedRequest.status === 'Approved' ? 'bg-green-100 text-green-800' :
-                  selectedRequest.status === 'Rejected' ? 'bg-red-100 text-red-800' :
-                  'bg-yellow-100 text-yellow-800'
-                }`}>
+                <span className={`px-3 py-1 text-sm font-medium rounded-full ${selectedRequest.status === 'Approved' ? 'bg-green-100 text-green-800' :
+                    selectedRequest.status === 'Rejected' ? 'bg-red-100 text-red-800' :
+                      'bg-yellow-100 text-yellow-800'
+                  }`}>
                   Status: {selectedRequest.status}
                 </span>
               </div>
@@ -396,14 +375,23 @@ export default function CustomizeList() {
                 </div>
               )}
             </div>
-            <div className="p-4 border-t border-[#E6DFD4] bg-gray-50 flex justify-end gap-3 rounded-b-2xl">
+            <div className="p-6 border-t border-[#E6DFD4] bg-white flex justify-end gap-4 rounded-b-[20px] items-center">
               {selectedRequest.status === 'Pending' && (
                 <>
-                  <button onClick={() => openRejectModal(selectedRequest)} className="px-6 py-2 bg-white border border-red-200 text-red-600 hover:bg-red-50 rounded-xl font-medium transition-colors">Reject</button>
-                  <button onClick={() => handleUpdateStatus(selectedRequest._id, 'Approved')} className="px-6 py-2 bg-green-600 text-white hover:bg-green-700 rounded-xl font-medium transition-colors">Approve</button>
+                  <button
+                    onClick={() => openRejectModal(selectedRequest)}
+                    className="admin-cancel-btn"
+                  >
+                    REJECT
+                  </button>
+                  <button
+                    onClick={() => handleUpdateStatus(selectedRequest._id, 'Approved')}
+                    className="px-8 py-3 border border-green-200 rounded-full text-[15px] font-bold text-green-600 bg-white hover:bg-green-50 transition-colors shadow-sm uppercase tracking-wide"
+                  >
+                    APPROVE
+                  </button>
                 </>
               )}
-              <button onClick={() => setSelectedRequest(null)} className="px-6 py-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition-colors ml-auto">Close</button>
             </div>
           </div>
         </div>
@@ -429,14 +417,19 @@ export default function CustomizeList() {
                 placeholder="E.g., Requested quantity cannot be fulfilled currently..."
               ></textarea>
             </div>
-            <div className="p-4 border-t border-[#E6DFD4] bg-gray-50 flex justify-end gap-3 rounded-b-2xl">
-              <button onClick={() => setRejectModalOpen(false)} className="px-5 py-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition-colors">Cancel</button>
+            <div className="p-6 border-t border-[#E6DFD4] bg-white flex justify-end gap-4 rounded-b-[20px]">
+              <button
+                onClick={() => setRejectModalOpen(false)}
+                className="admin-cancel-btn"
+              >
+                CANCEL
+              </button>
               <button
                 onClick={() => handleUpdateStatus(requestToReject._id, 'Rejected', rejectionReason)}
                 disabled={!rejectionReason.trim()}
-                className="px-5 py-2 bg-[#E30000] text-white hover:bg-[#CC0000] disabled:bg-red-400 disabled:cursor-not-allowed rounded-xl font-medium transition-colors"
+                className="px-8 py-3 bg-[#8B5E3C] hover:bg-[#7a5234] disabled:bg-gray-400 text-white rounded-full text-[15px] font-bold shadow-sm transition-colors uppercase tracking-wide"
               >
-                Confirm Reject
+                CONFIRM REJECT
               </button>
             </div>
           </div>

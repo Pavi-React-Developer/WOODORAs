@@ -2,38 +2,42 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { adminService } from '../../../api/adminService';
 import { downloadExcelFile } from '../../../utils/exportUtils';
 import toast from 'react-hot-toast';
+import Pagination from '../../../components/common/Pagination';
 import {
   Users, ShoppingBag, TrendingUp, IndianRupee, Search, Download,
   ChevronDown, ChevronUp, Eye, Package, RefreshCw, Calendar, Phone, Mail,
   ArrowUpDown, ArrowLeft, Star
 } from 'lucide-react';
+import { BsBagHeart } from "react-icons/bs";
 
 /* ── helpers ─────────────────────────────────── */
-const fmt  = (n) => `₹${Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+const fmt = (n) => `₹${Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '–';
 const avatar = (name = '') => {
   const c = name.trim()[0]?.toUpperCase() || '?';
-  const colors = ['#9A6031','#C78B4A','#7E4B25','#5C6BC0','#42A5F5','#26A69A','#66BB6A','#EC407A'];
+  const colors = ['#9A6031', '#C78B4A', '#7E4B25', '#5C6BC0', '#42A5F5', '#26A69A', '#66BB6A', '#EC407A'];
   const idx = name.charCodeAt(0) % colors.length;
   return { char: c, bg: colors[idx] };
 };
 
 const STATUS_COLORS = {
-  Delivered:         'bg-emerald-100 text-emerald-700',
-  Cancelled:         'bg-red-100 text-red-700',
-  Placed:            'bg-amber-100 text-amber-700',
-  Pending:           'bg-amber-100 text-amber-700',
-  Packed:            'bg-blue-100 text-blue-700',
-  Shipping:          'bg-indigo-100 text-indigo-700',
-  'Out for delivery':'bg-purple-100 text-purple-700',
+  Delivered: 'bg-emerald-100 text-emerald-700',
+  Cancelled: 'bg-red-100 text-red-700',
+  Placed: 'bg-amber-100 text-amber-700',
+  Pending: 'bg-amber-100 text-amber-700',
+  Packed: 'bg-blue-100 text-blue-700',
+  Shipping: 'bg-indigo-100 text-indigo-700',
+  'Out for delivery': 'bg-purple-100 text-purple-700',
 };
 
 /* ══════════════════════════════════════════════
    CUSTOMER DETAIL PAGE
 ══════════════════════════════════════════════ */
 function CustomerDetailPage({ customer, onBack }) {
-  const [orders, setOrders]     = useState([]);
-  const [loading, setLoading]   = useState(true);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [orderPage, setOrderPage] = useState(1);
+  const orderLimit = 10;
   const av = avatar(customer.name || '');
 
   useEffect(() => {
@@ -43,22 +47,27 @@ function CustomerDetailPage({ customer, onBack }) {
       .finally(() => setLoading(false));
   }, [customer._id]);
 
-  const delivered  = orders.filter(o => o.status === 'Delivered').length;
-  const cancelled  = orders.filter(o => o.status === 'Cancelled').length;
-  const avgOrder   = fmt((customer.totalSpend || 0) / Math.max(1, customer.totalOrders || 1));
+  const delivered = orders.filter(o => o.status === 'Delivered').length;
+  const cancelled = orders.filter(o => o.status === 'Cancelled').length;
+  const avgOrder = fmt((customer.totalSpend || 0) / Math.max(1, customer.totalOrders || 1));
+  const paginatedOrders = orders.slice((orderPage - 1) * orderLimit, orderPage * orderLimit);
 
   return (
-    <div className="bg-[#FAF8F5] min-h-screen">
+    <div className="bg-transparent min-h-screen">
       {/* ── Top Bar ── */}
-      <div className="px-6 py-3 flex items-center gap-3 text-sm text-[#334155]">
-        <button
-          onClick={onBack}
-          className="p-1.5 text-[#6D625C] hover:text-[#9A6031] hover:bg-[#F2E3D1] rounded transition-colors"
-        >
-          <ArrowLeft size={16} /> Back to Customers
-        </button>
-        <span className="text-[#CBD5E1]">|</span>
-        <span className="font-bold text-[#0f172a]">{customer.name}</span>
+      <div className="max-w-5xl mx-auto px-6 py-4 flex flex-col gap-4">
+        <div className="text-sm font-medium text-white mb-2">
+          Dashboard &nbsp;&rsaquo;&nbsp; Customer Management &nbsp;&rsaquo;&nbsp; <span className="font-semibold text-[#8B5E3C] ml-1">Details</span>
+        </div>
+        <div className="flex items-center justify-between text-sm text-[#334155] w-full mt-2">
+          <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Customer Details</h1>
+          <button
+            onClick={onBack}
+            className="bg-white border border-[#E9DED3] text-[#141225] hover:bg-[#FAF8F5] px-4 py-2 rounded-full transition-colors shadow-sm flex items-center justify-center gap-2 font-medium"
+          >
+            <ArrowLeft size={16} /> Back to Customers
+          </button>
+        </div>
       </div>
 
       <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
@@ -77,13 +86,8 @@ function CustomerDetailPage({ customer, onBack }) {
             <div className="flex-1">
               <div className="flex items-center gap-3 flex-wrap">
                 <h1 className="text-2xl font-bold text-[#141225]">{customer.name}</h1>
-                {customer.loyalty?.tier && (
-                  <span className="flex items-center gap-1 text-xs font-bold text-[#9A6031] bg-[#F8F4EC] px-2.5 py-1 rounded-full">
-                    <Star size={10} fill="#9A6031" /> {customer.loyalty.tier}
-                  </span>
-                )}
               </div>
-              <p className="text-sm text-[#8A817C] mt-1">Customer since {fmtDate(customer.createdAt)}</p>
+              <p className="text-sm text-[#6D625C] mt-1">Customer since {fmtDate(customer.createdAt)}</p>
               <div className="flex flex-wrap gap-4 mt-3">
                 <span className="flex items-center gap-1.5 text-sm text-[#141225]">
                   <Mail size={13} className="text-[#9A6031]" /> {customer.email}
@@ -114,9 +118,9 @@ function CustomerDetailPage({ customer, onBack }) {
         {/* ── Analytics Cards ── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: 'Avg Order Value',  value: avgOrder,    icon: <TrendingUp size={18} />, color: 'text-indigo-600',  bg: 'bg-indigo-50' },
-            { label: 'Delivered',         value: delivered,   icon: <Package size={18} />,   color: 'text-emerald-600', bg: 'bg-emerald-50' },
-            { label: 'Cancelled',         value: cancelled,   icon: <ShoppingBag size={18} />,color: 'text-red-600',    bg: 'bg-red-50' },
+            { label: 'Avg Order Value', value: avgOrder, icon: <TrendingUp size={18} />, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+            { label: 'Delivered', value: delivered, icon: <Package size={18} />, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+            { label: 'Cancelled', value: cancelled, icon: <BsBagHeart size={18} />, color: 'text-red-600', bg: 'bg-red-50' },
             { label: 'Preferred Payment', value: orders[0]?.paymentMethod || '–', icon: <IndianRupee size={18} />, color: 'text-[#9A6031]', bg: 'bg-[#F8F4EC]' },
           ].map(a => (
             <div key={a.label} className="bg-white rounded-2xl border border-[#E9DED3] p-4 shadow-sm flex flex-col gap-3">
@@ -134,7 +138,7 @@ function CustomerDetailPage({ customer, onBack }) {
         {/* ── Order History Table ── */}
         <div className="bg-white rounded-2xl border border-[#E9DED3] shadow-sm overflow-hidden">
           <div className="px-6 py-5 border-b border-[#E9DED3] flex items-center gap-2">
-            <ShoppingBag size={16} className="text-[#9A6031]" />
+            <BsBagHeart size={16} className="text-[#9A6031]" />
             <h2 className="text-base font-bold text-[#141225]">Order History</h2>
             <span className="ml-auto text-xs text-[#8A817C] font-semibold">{orders.length} order(s)</span>
           </div>
@@ -154,7 +158,7 @@ function CustomerDetailPage({ customer, onBack }) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#F2EBE4]">
-                  {orders.map(order => (
+                  {paginatedOrders.map(order => (
                     <tr key={order._id} className="hover:bg-[#FAF8F5] transition-colors">
                       {/* Order ID */}
                       <td className="px-5 py-4 whitespace-nowrap">
@@ -207,6 +211,16 @@ function CustomerDetailPage({ customer, onBack }) {
               </table>
             </div>
           )}
+
+          {!loading && orders.length > 0 && (
+            <div className="px-5 py-6 border-t border-[#E6DFD4] flex justify-center bg-white">
+              <Pagination 
+                currentPage={orderPage}
+                totalPages={Math.ceil(orders.length / orderLimit)}
+                onPageChange={setOrderPage}
+              />
+            </div>
+          )}
         </div>
 
       </div>
@@ -218,12 +232,14 @@ function CustomerDetailPage({ customer, onBack }) {
    CUSTOMER LIST PAGE
 ══════════════════════════════════════════════ */
 export default function CustomerManagementPage() {
-  const [customers, setCustomers]       = useState([]);
-  const [loading, setLoading]           = useState(true);
-  const [search, setSearch]             = useState('');
-  const [sortKey, setSortKey]           = useState('totalSpend');
-  const [sortDir, setSortDir]           = useState('desc');
-  const [detailCustomer, setDetail]     = useState(null); // null = list view
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [sortKey, setSortKey] = useState('totalSpend');
+  const [sortDir, setSortDir] = useState('desc');
+  const [detailCustomer, setDetail] = useState(null); // null = list view
+  const [currentPage, setCurrentPage] = useState(1);
+  const limit = 10;
 
   /* ── fetch ───────────────────────────────── */
   const load = async () => {
@@ -242,8 +258,8 @@ export default function CustomerManagementPage() {
   /* ── stats ───────────────────────────────── */
   const stats = useMemo(() => {
     const totalRevenue = customers.reduce((s, c) => s + (c.totalSpend || 0), 0);
-    const totalOrders  = customers.reduce((s, c) => s + (c.totalOrders || 0), 0);
-    const active       = customers.filter(c => (c.totalOrders || 0) > 0).length;
+    const totalOrders = customers.reduce((s, c) => s + (c.totalOrders || 0), 0);
+    const active = customers.filter(c => (c.totalOrders || 0) > 0).length;
     return { totalRevenue, totalOrders, active, total: customers.length };
   }, [customers]);
 
@@ -264,6 +280,11 @@ export default function CustomerManagementPage() {
       return 0;
     });
   }, [customers, search, sortKey, sortDir]);
+
+  // Reset pagination when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
 
   const toggleSort = (key) => {
     if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
@@ -301,14 +322,16 @@ export default function CustomerManagementPage() {
 
   /* ── List View ──────────────────────────── */
   return (
-    <div className="bg-[#FAF8F5] min-h-screen">
+    <div className="bg-transparent min-h-screen">
       <div className="max-w-7xl mx-auto px-6 py-10">
 
         {/* Header */}
+        <div className="mb-4 text-sm font-medium text-white">
+          Dashboard &nbsp;&rsaquo;&nbsp; <span className="font-semibold text-[#8B5E3C] ml-1">Customer Management</span>
+        </div>
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-[#141225] font-serif">Customer Management</h1>
-            <p className="text-[#6D625C] mt-1 text-sm">View customer details, order history, and purchase analytics.</p>
+            <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Customer Management</h1>
           </div>
           <div className="flex flex-wrap gap-3">
             <button
@@ -329,10 +352,10 @@ export default function CustomerManagementPage() {
         {/* Stat Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
-            { label: 'Total Customers',  value: stats.total,           icon: <Users size={20} />,       color: 'text-indigo-600',  bg: 'bg-indigo-50' },
-            { label: 'Active Customers', value: stats.active,          icon: <Users size={20} />,       color: 'text-emerald-600', bg: 'bg-emerald-50' },
-            { label: 'Total Orders',     value: stats.totalOrders,     icon: <Package size={20} />,     color: 'text-amber-600',   bg: 'bg-amber-50' },
-            { label: 'Delivered Revenue', value: fmt(stats.totalRevenue),icon: <IndianRupee size={20} />,color: 'text-[#9A6031]',  bg: 'bg-[#F8F4EC]', big: true },
+            { label: 'Total Customers', value: stats.total, icon: <Users size={20} />, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+            { label: 'Active Customers', value: stats.active, icon: <Users size={20} />, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+            { label: 'Total Orders', value: stats.totalOrders, icon: <Package size={20} />, color: 'text-amber-600', bg: 'bg-amber-50' },
+            { label: 'Delivered Revenue', value: fmt(stats.totalRevenue), icon: <IndianRupee size={20} />, color: 'text-[#9A6031]', bg: 'bg-[#F8F4EC]', big: true },
           ].map(s => (
             <div key={s.label} className="bg-white rounded-2xl border border-[#E9DED3] p-5 shadow-sm flex flex-col gap-3">
               <div className={`w-10 h-10 rounded-xl ${s.bg} ${s.color} flex items-center justify-center`}>{s.icon}</div>
@@ -369,11 +392,11 @@ export default function CustomerManagementPage() {
                 <tr className="bg-[#FAF8F5] border-b border-[#E9DED3]">
                   {[
                     { label: 'Customer Name', key: 'name' },
-                    { label: 'Contact',       key: null },
-                    { label: 'Joined Date',   key: 'createdAt' },
-                    { label: 'Total Orders',  key: 'totalOrders' },
+                    { label: 'Contact', key: null },
+                    { label: 'Joined Date', key: 'createdAt' },
+                    { label: 'Total Orders', key: 'totalOrders' },
                     { label: 'Delivered Spend', key: 'totalSpend' },
-                    { label: 'Actions',       key: null },
+                    { label: 'Actions', key: null },
                   ].map(col => (
                     <th
                       key={col.label}
@@ -393,7 +416,7 @@ export default function CustomerManagementPage() {
                   <tr><td colSpan={6} className="px-5 py-16 text-center text-[#8A817C] text-sm">Loading customers…</td></tr>
                 ) : displayed.length === 0 ? (
                   <tr><td colSpan={6} className="px-5 py-16 text-center text-[#8A817C] text-sm">No customers found.</td></tr>
-                ) : displayed.map(c => {
+                ) : displayed.slice((currentPage - 1) * limit, currentPage * limit).map(c => {
                   const av = avatar(c.name || '');
                   return (
                     <tr key={c._id} className="hover:bg-[#FAF8F5] transition-colors">
@@ -405,9 +428,6 @@ export default function CustomerManagementPage() {
                           </div>
                           <div>
                             <p className="text-sm font-bold text-[#141225]">{c.name}</p>
-                            {c.loyalty?.tier && (
-                              <span className="text-[10px] font-semibold text-[#9A6031] bg-[#F8F4EC] px-1.5 py-0.5 rounded-full">{c.loyalty.tier}</span>
-                            )}
                           </div>
                         </div>
                       </td>
@@ -443,8 +463,12 @@ export default function CustomerManagementPage() {
             </table>
           </div>
           {!loading && displayed.length > 0 && (
-            <div className="px-5 py-3 border-t border-[#E9DED3] text-xs text-[#8A817C]">
-              Showing {displayed.length} of {customers.length} customers
+            <div className="px-5 py-6 border-t border-[#E6DFD4] flex justify-center bg-white">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={Math.ceil(displayed.length / limit)}
+                onPageChange={setCurrentPage}
+              />
             </div>
           )}
         </div>

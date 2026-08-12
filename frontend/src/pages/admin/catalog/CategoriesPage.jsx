@@ -253,7 +253,7 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <p className="text-[13px] md:text-sm font-serif text-[#94A3B8] mb-1">
+          <p className="text-[13px] md:text-sm font-serif text-white mb-1">
             Dashboard &rsaquo; Catalog Management &rsaquo; <span className="font-semibold text-[#8B5E3C]">Categories</span>
           </p>
           <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Categories</h1>
@@ -428,13 +428,11 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
         </div>
 
         {/* Pagination */}
-        <div className="px-5 py-3 border-t border-[#E6DFD4] flex flex-col sm:flex-row justify-center items-center bg-[#FAFAFA] gap-4">
-
+        <div className="px-5 py-6 border-t border-[#E6DFD4] flex justify-center bg-white">
           <Pagination
             currentPage={page}
             totalPages={totalPages}
             onPageChange={setPage}
-            className="flex items-center justify-center gap-2 flex-wrap"
           />
         </div>
       </div>
@@ -562,9 +560,7 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
               </div>
               {/* Form Actions */}
               <div className="flex items-center justify-center gap-4 pt-6 pb-2">
-                <button type="button" onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setIsFormOpen(false))} className="px-8 py-3 border border-[#E6DFD4] rounded-full text-[15px] font-bold text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm">
-                  Cancel
-                </button>
+                <button type="button" onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setIsFormOpen(false))} className="admin-cancel-btn">CANCEL</button>
                 <button
                   type="submit"
                   disabled={formLoading}
@@ -589,7 +585,7 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
             <h3 className="text-lg font-bold text-gray-800 text-center mb-2">Delete Category</h3>
             <p className="text-sm text-gray-500 text-center mb-6">This will soft-delete the category. Are you sure?</p>
             <div className="flex gap-3">
-              <button onClick={() => setDeleteTarget(null)} className="flex-1 py-2.5 border border-[#E6DFD4] rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50">Cancel</button>
+              <button onClick={() => setDeleteTarget(null)} className="admin-cancel-btn">CANCEL</button>
               <button onClick={handleDelete} className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-semibold transition-colors">Delete</button>
             </div>
           </div>

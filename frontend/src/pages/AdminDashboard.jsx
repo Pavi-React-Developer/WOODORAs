@@ -45,17 +45,27 @@ const adminRouteState = {
   '/admin/inventory': { tab: 'inventory', inventoryMenuOpen: true },
   '/admin/customers': { tab: 'customers', customerMenuOpen: true },
   '/admin/cms': { tab: 'cms' },
+  '/admin/cms/add': { tab: 'cms' },
+  '/admin/cms/edit': { tab: 'cms' },
   '/admin/coupons': { tab: 'coupons' },
+  '/admin/coupons/add': { tab: 'coupons' },
+  '/admin/coupons/edit': { tab: 'coupons' },
   '/admin/reviews': { tab: 'reviews' },
   '/admin/fees': { tab: 'fees', feeSubTab: 'list', feeMenuOpen: true },
   '/admin/fees/add': { tab: 'fees', feeSubTab: 'add', feeMenuOpen: true },
   '/admin/fees/global': { tab: 'fees', feeSubTab: 'global', feeMenuOpen: true },
   '/admin/cancellations': { tab: 'cancellation' },
+  '/admin/cancellations/add': { tab: 'cancellation' },
+  '/admin/cancellations/edit': { tab: 'cancellation' },
   '/admin/refunds': { tab: 'refund', refundSubTab: 'list', refundMenuOpen: true },
   '/admin/bulk-orders': { tab: 'bulk-orders', bulkOrderSubTab: 'list', bulkOrderMenuOpen: true },
   '/admin/bulk-orders/fields': { tab: 'bulk-orders', bulkOrderSubTab: 'fields', bulkOrderMenuOpen: true },
+  '/admin/bulk-orders/fields/add': { tab: 'bulk-orders', bulkOrderSubTab: 'fields', bulkOrderMenuOpen: true },
+  '/admin/bulk-orders/fields/edit': { tab: 'bulk-orders', bulkOrderSubTab: 'fields', bulkOrderMenuOpen: true },
   '/admin/gift-and-card': { tab: 'gift_and_card', giftAndCardSubTab: 'rules', giftAndCardMenuOpen: true },
   '/admin/gift-and-card/rules': { tab: 'gift_and_card', giftAndCardSubTab: 'rules', giftAndCardMenuOpen: true },
+  '/admin/gift-and-card/rules/add': { tab: 'gift_and_card', giftAndCardSubTab: 'rules', giftAndCardMenuOpen: true },
+  '/admin/gift-and-card/rules/edit': { tab: 'gift_and_card', giftAndCardSubTab: 'rules', giftAndCardMenuOpen: true },
   '/admin/gift-and-card/messages': { tab: 'gift_and_card', giftAndCardSubTab: 'messages', giftAndCardMenuOpen: true },
   '/admin/gift-and-card/orders': { tab: 'gift_and_card', giftAndCardSubTab: 'orders', giftAndCardMenuOpen: true },
   '/admin/gift-and-card/gift-fee': { tab: 'gift_and_card', giftAndCardSubTab: 'gift-fee', giftAndCardMenuOpen: true },
@@ -245,7 +255,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
             if (data) setProducts(data);
           })
           .catch(err => console.error("Failed to load products in admin", err)),
-        
+
         catalogService.getCategories()
           .then(data => {
             if (data) {
@@ -257,7 +267,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
             }
           })
           .catch(err => console.error("Failed to load categories in admin", err)),
-        
+
         catalogService.getSubCategories()
           .then(data => {
             if (Array.isArray(data)) {
@@ -267,7 +277,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
             }
           })
           .catch(err => console.error("Failed to load subcategories in admin", err)),
-        
+
         adminService.getDashboardStats(daysFilter)
           .then(data => {
             if (data) {
@@ -379,7 +389,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
   const movePhoto = (index, direction) => {
     const newPhotos = [...photos];
     const targetIndex = direction === 'left' ? index - 1 : index + 1;
-    
+
     if (targetIndex >= 0 && targetIndex < photos.length) {
       const temp = newPhotos[index];
       newPhotos[index] = newPhotos[targetIndex];
@@ -437,7 +447,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
       // Reload categories list
       const cats = await catalogService.getCategories();
       setCategories(cats);
-      
+
       // Reset form and switch tab
       setCatName('');
       setCatDescription('');
@@ -447,7 +457,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
       setCatSeoTitle('');
       setCatSeoDescription('');
       setEditCategoryId(null);
-      
+
       setTimeout(() => {
         setCategorySubTab('list');
         setSuccessMsg('');
@@ -499,7 +509,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
 
     try {
       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
-      
+
       // 1. Create the Product with new classification fields
       const productPayload = {
         name,
@@ -529,7 +539,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
       await catalogService.createInventory(inventoryPayload);
 
       setSuccessMsg('Product and inventory created successfully!');
-      
+
       // Reset form fields
       setName('');
       setDescription('');
@@ -545,7 +555,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
 
       // Reload products list
       loadData();
-      
+
       // Switch back to list view
       setTimeout(() => {
         setProductSubTab('list');
@@ -619,7 +629,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
 
   return (
     <div className="flex h-screen bg-brand-light font-sans text-brand-dark overflow-hidden">
-      
+
       {/* ── SIDEBAR ── */}
       <aside className="w-[260px] bg-white border-r border-[#E6DFD4] flex flex-col justify-between shrink-0 h-full overflow-y-auto">
         <div>
@@ -633,7 +643,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
           <nav className="px-4 space-y-1 mt-4">
             {canAccessDashboard && (
               <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
-                <button 
+                <button
                   onClick={() => openAdminTab('dashboard')}
                   className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-xl transition-colors text-left ${currentTab === 'dashboard' ? 'bg-[#E6DFD4] text-brand-dark' : 'text-brand-medium hover:bg-brand-light hover:text-brand-dark'}`}
                 >
@@ -648,9 +658,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
               <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
                 <button
                   onClick={() => setStaffMenuOpen(o => !o)}
-                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${
-                    currentTab === 'staff' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
-                  }`}
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${currentTab === 'staff' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                    }`}
                 >
                   <span className="flex items-center gap-2.5">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
@@ -662,32 +671,29 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                   <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
                     <button
                       onClick={() => openAdminTab('staff', { staffSubTab: 'list', staffMenuOpen: true, path: '/admin/staff' })}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
-                        currentTab === 'staff' && staffSubTab === 'list' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
-                      }`}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${currentTab === 'staff' && staffSubTab === 'list' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                        }`}
                     >
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
                       Staff List
                     </button>
-                    
+
                     {hasPermission('staff_management', 'create') && (
                       <button
                         onClick={() => openAdminTab('staff', { staffSubTab: 'add', staffMenuOpen: true, editingStaff: null, path: '/admin/staff/add' })}
-                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
-                          currentTab === 'staff' && staffSubTab === 'add' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
-                        }`}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${currentTab === 'staff' && staffSubTab === 'add' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                          }`}
                       >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
                         Add Staff
                       </button>
                     )}
-                    
+
                     {hasPermission('staff_management', 'edit') && (
                       <button
                         onClick={() => openAdminTab('staff', { staffSubTab: 'role-assign', staffMenuOpen: true, roleAssignStaff: null, path: '/admin/staff/roles' })}
-                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
-                          currentTab === 'staff' && staffSubTab === 'role-assign' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
-                        }`}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${currentTab === 'staff' && staffSubTab === 'role-assign' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                          }`}
                       >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
                         Role Assign
@@ -703,9 +709,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
               <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
                 <button
                   onClick={() => setCatalogMenuOpen(o => !o)}
-                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors text-left ${
-                    currentTab.startsWith('v2-') ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
-                  }`}
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors text-left ${currentTab.startsWith('v2-') ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                    }`}
                 >
                   <span className="flex items-center gap-2.5">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
@@ -719,9 +724,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                     {canAccessCatalog && (
                       <button
                         onClick={() => openAdminTab('v2-categories', { catalogMenuOpen: true })}
-                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
-                          currentTab === 'v2-categories' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
-                        }`}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${currentTab === 'v2-categories' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                          }`}
                       >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>
                         Categories
@@ -730,9 +734,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                     {canAccessCatalog && (
                       <button
                         onClick={() => openAdminTab('v2-subcategories', { catalogMenuOpen: true })}
-                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
-                          currentTab === 'v2-subcategories' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
-                        }`}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${currentTab === 'v2-subcategories' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                          }`}
                       >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
                         Sub Categories
@@ -741,9 +744,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                     {canAccessCatalog && (
                       <button
                         onClick={() => openAdminTab('v2-attributes', { catalogMenuOpen: true })}
-                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
-                          currentTab === 'v2-attributes' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
-                        }`}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${currentTab === 'v2-attributes' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                          }`}
                       >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
                         Attributes
@@ -764,9 +766,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                     openAdminTab('v2-products', { productSubTab: newProductMenuOpen ? 'list' : productSubTab, productMenuOpen: newProductMenuOpen, path: '/admin/products' });
                     if (newProductMenuOpen) setProductSubTab('list');
                   }}
-                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${
-                    currentTab === 'v2-products' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
-                  }`}
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${currentTab === 'v2-products' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                    }`}
                 >
                   <span className="flex items-center gap-2.5">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
@@ -778,37 +779,34 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                   <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
                     <button
                       onClick={() => openAdminTab('v2-products', { productSubTab: 'list', productMenuOpen: true, path: '/admin/products' })}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
-                        currentTab === 'v2-products' && productSubTab === 'list' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
-                      }`}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${currentTab === 'v2-products' && productSubTab === 'list' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                        }`}
                     >
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
                       Product List
                     </button>
                     {(isAdmin || hasPermission('products', 'create') || hasPermission('catalog', 'create')) && (
-                    <button
-                      onClick={() => openAdminTab('v2-products', { productSubTab: 'add', productMenuOpen: true, path: '/admin/products/add' })}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
-                        currentTab === 'v2-products' && productSubTab === 'add' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
-                      }`}
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                      Add Product
-                    </button>
+                      <button
+                        onClick={() => openAdminTab('v2-products', { productSubTab: 'add', productMenuOpen: true, path: '/admin/products/add' })}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${currentTab === 'v2-products' && productSubTab === 'add' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                          }`}
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                        Add Product
+                      </button>
                     )}
                   </div>
                 )}
               </div>
             )}
 
-                {/* Orders Management */}
+            {/* Orders Management */}
             {(isAdmin || canView('orders')) && (
               <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
                 <button
                   onClick={() => openAdminTab('orders')}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${
-                    currentTab === 'orders' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
-                  }`}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${currentTab === 'orders' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                    }`}
                 >
                   <span className="flex items-center gap-2.5">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
@@ -823,9 +821,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
               <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
                 <button
                   onClick={() => setBulkOrderMenuOpen(o => !o)}
-                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${
-                    currentTab === 'bulk-orders' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
-                  }`}
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${currentTab === 'bulk-orders' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                    }`}
                 >
                   <span className="flex items-center gap-2.5">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
@@ -837,18 +834,16 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                   <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
                     <button
                       onClick={() => openAdminTab('bulk-orders', { bulkOrderSubTab: 'list', bulkOrderMenuOpen: true, path: '/admin/bulk-orders' })}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
-                        currentTab === 'bulk-orders' && bulkOrderSubTab === 'list' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
-                      }`}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${currentTab === 'bulk-orders' && bulkOrderSubTab === 'list' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                        }`}
                     >
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
                       Bulk Order List
                     </button>
                     <button
                       onClick={() => openAdminTab('bulk-orders', { bulkOrderSubTab: 'fields', bulkOrderMenuOpen: true, path: '/admin/bulk-orders/fields' })}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
-                        currentTab === 'bulk-orders' && bulkOrderSubTab === 'fields' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
-                      }`}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${currentTab === 'bulk-orders' && bulkOrderSubTab === 'fields' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                        }`}
                     >
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                       Add Bulkorder Fields
@@ -863,9 +858,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
               <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
                 <button
                   onClick={() => setGiftAndCardMenuOpen(o => !o)}
-                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${
-                    currentTab === 'gift_and_card' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
-                  }`}
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${currentTab === 'gift_and_card' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                    }`}
                 >
                   <span className="flex items-center gap-2.5">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -877,36 +871,32 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                   <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
                     <button
                       onClick={() => openAdminTab('gift_and_card', { giftAndCardSubTab: 'rules', giftAndCardMenuOpen: true, path: '/admin/gift-and-card/rules' })}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
-                        currentTab === 'gift_and_card' && giftAndCardSubTab === 'rules' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
-                      }`}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${currentTab === 'gift_and_card' && giftAndCardSubTab === 'rules' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                        }`}
                     >
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                       Delivery Rules
                     </button>
                     <button
                       onClick={() => openAdminTab('gift_and_card', { giftAndCardSubTab: 'messages', giftAndCardMenuOpen: true, path: '/admin/gift-and-card/messages' })}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
-                        currentTab === 'gift_and_card' && giftAndCardSubTab === 'messages' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
-                      }`}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${currentTab === 'gift_and_card' && giftAndCardSubTab === 'messages' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                        }`}
                     >
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                       Personalized Messages
                     </button>
                     <button
                       onClick={() => openAdminTab('gift_and_card', { giftAndCardSubTab: 'orders', giftAndCardMenuOpen: true, path: '/admin/gift-and-card/orders' })}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
-                        currentTab === 'gift_and_card' && giftAndCardSubTab === 'orders' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
-                      }`}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${currentTab === 'gift_and_card' && giftAndCardSubTab === 'orders' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                        }`}
                     >
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
                       Gift Orders
                     </button>
                     <button
                       onClick={() => openAdminTab('gift_and_card', { giftAndCardSubTab: 'gift-fee', giftAndCardMenuOpen: true, path: '/admin/gift-and-card/gift-fee' })}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
-                        currentTab === 'gift_and_card' && giftAndCardSubTab === 'gift-fee' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
-                      }`}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${currentTab === 'gift_and_card' && giftAndCardSubTab === 'gift-fee' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                        }`}
                     >
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                       Gift Fee
@@ -921,9 +911,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
               <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
                 <button
                   onClick={() => setCustomizeMenuOpen(o => !o)}
-                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${
-                    currentTab === 'customize_order' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
-                  }`}
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${currentTab === 'customize_order' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                    }`}
                 >
                   <span className="flex items-center gap-2.5">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
@@ -935,18 +924,16 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                   <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
                     <button
                       onClick={() => openAdminTab('customize_order', { customizeSubTab: 'list', customizeMenuOpen: true, path: '/admin/customize' })}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
-                        currentTab === 'customize_order' && customizeSubTab === 'list' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
-                      }`}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${currentTab === 'customize_order' && customizeSubTab === 'list' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                        }`}
                     >
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
                       Customize List
                     </button>
                     <button
                       onClick={() => openAdminTab('customize_order', { customizeSubTab: 'form-fields', customizeMenuOpen: true, path: '/admin/customize/form-fields' })}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
-                        currentTab === 'customize_order' && customizeSubTab === 'form-fields' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
-                      }`}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${currentTab === 'customize_order' && customizeSubTab === 'form-fields' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                        }`}
                     >
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                       Form Fields Builder
@@ -961,9 +948,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
               <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
                 <button
                   onClick={() => setInventoryMenuOpen(o => !o)}
-                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${
-                    currentTab === 'inventory' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
-                  }`}
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${currentTab === 'inventory' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                    }`}
                 >
                   <span className="flex items-center gap-2.5">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
@@ -975,9 +961,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                   <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
                     <button
                       onClick={() => openAdminTab('inventory', { inventoryMenuOpen: true })}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
-                        currentTab === 'inventory' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
-                      }`}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${currentTab === 'inventory' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                        }`}
                     >
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
                       Inventory List
@@ -992,9 +977,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
               <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
                 <button
                   onClick={() => setCustomerMenuOpen(o => !o)}
-                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${
-                    currentTab === 'customers' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
-                  }`}
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${currentTab === 'customers' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                    }`}
                 >
                   <span className="flex items-center gap-2.5">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
@@ -1006,9 +990,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                   <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
                     <button
                       onClick={() => openAdminTab('customers', { customerMenuOpen: true })}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
-                        currentTab === 'customers' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
-                      }`}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${currentTab === 'customers' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                        }`}
                     >
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
                       Customer List
@@ -1023,9 +1006,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
               <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
                 <button
                   onClick={() => openAdminTab('cms')}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${
-                    currentTab === 'cms' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
-                  }`}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${currentTab === 'cms' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                    }`}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg>
                   CMS Management
@@ -1038,9 +1020,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
               <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
                 <button
                   onClick={() => openAdminTab('coupons')}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${
-                    currentTab === 'coupons' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
-                  }`}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${currentTab === 'coupons' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                    }`}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2H5zm0 10a2 2 0 00-2 2v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 00-2-2H5z" /></svg>
                   Coupons & Offers
@@ -1053,9 +1034,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
               <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
                 <button
                   onClick={() => openAdminTab('reviews')}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${
-                    currentTab === 'reviews' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
-                  }`}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${currentTab === 'reviews' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                    }`}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
                   Rating Management
@@ -1068,9 +1048,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
               <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
                 <button
                   onClick={() => setFeeMenuOpen(o => !o)}
-                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${
-                    currentTab === 'fees' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
-                  }`}
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${currentTab === 'fees' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                    }`}
                 >
                   <span className="flex items-center gap-2.5">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0a9 9 0 0118 0z" /></svg>
@@ -1082,23 +1061,21 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                   <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
                     <button
                       onClick={() => openAdminTab('fees', { feeSubTab: 'list', feeMenuOpen: true, path: '/admin/fees' })}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
-                        currentTab === 'fees' && feeSubTab === 'list' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
-                      }`}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${currentTab === 'fees' && feeSubTab === 'list' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                        }`}
                     >
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
                       Fee List
                     </button>
                     {(isAdmin || hasPermission('fees', 'create')) && (
-                    <button
-                      onClick={() => openAdminTab('fees', { feeSubTab: 'add', feeMenuOpen: true, editingFee: null, path: '/admin/fees/add' })}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
-                        currentTab === 'fees' && feeSubTab === 'add' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
-                      }`}
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                      Add New Fee
-                    </button>
+                      <button
+                        onClick={() => openAdminTab('fees', { feeSubTab: 'add', feeMenuOpen: true, editingFee: null, path: '/admin/fees/add' })}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${currentTab === 'fees' && feeSubTab === 'add' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                          }`}
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                        Add New Fee
+                      </button>
                     )}
                   </div>
                 )}
@@ -1110,9 +1087,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
               <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
                 <button
                   onClick={() => openAdminTab('cancellation')}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${
-                    currentTab === 'cancellation' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
-                  }`}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${currentTab === 'cancellation' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                    }`}
                 >
                   <span className="flex items-center gap-2.5">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
@@ -1127,9 +1103,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
               <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
                 <button
                   onClick={() => setRefundMenuOpen(o => !o)}
-                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${
-                    currentTab === 'refund' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
-                  }`}
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${currentTab === 'refund' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                    }`}
                 >
                   <span className="flex items-center gap-2.5">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
@@ -1141,9 +1116,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                   <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
                     <button
                       onClick={() => openAdminTab('refund', { refundSubTab: 'list', refundMenuOpen: true })}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${
-                        currentTab === 'refund' && refundSubTab === 'list' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
-                      }`}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${currentTab === 'refund' && refundSubTab === 'list' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                        }`}
                     >
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
                       Refund List
@@ -1165,16 +1139,16 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
               <p className="text-[10px] text-brand-medium capitalize">{user?.role || 'Admin'}</p>
             </div>
           </div>
-          
-          <button 
+
+          <button
             onClick={() => onNavigate('/')}
             className="flex items-center gap-3 w-full px-4 py-2.5 text-xs font-medium text-brand-medium hover:text-brand-dark transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
             View Storefront
           </button>
-          
-          <button 
+
+          <button
             onClick={() => {
               if (onLogout) {
                 onLogout();
@@ -1196,14 +1170,14 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
       {/* ── MAIN CONTENT ── */}
       <main className="flex-1 overflow-y-auto p-8">
         <div className="max-w-6xl mx-auto">
-          
+
           {/* TAB 1: DASHBOARD OVERVIEW */}
           {canAccessDashboard && currentTab === 'dashboard' && (
-            <>
+            <div className="flex-1 overflow-y-auto p-8">
               {/* Header Row */}
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                 <div>
-                  <p className="text-[13px] md:text-sm font-serif text-[#94A3B8] mb-1">
+                  <p className="text-[13px] md:text-sm font-serif text-white mb-1">
                     Dashboard &rsaquo; <span className="font-semibold text-[#8B5E3C]">Overview</span>
                   </p>
                   <h2 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Dashboard Overview</h2>
@@ -1212,7 +1186,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                   <button onClick={() => loadData()} disabled={isRefreshing} className="admin-secondary-btn flex items-center gap-2 disabled:opacity-60">
                     <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} /> {isRefreshing ? 'Refreshing...' : 'Refresh'}
                   </button>
-                  <select 
+                  <select
                     value={daysFilter}
                     onChange={(e) => setDaysFilter(e.target.value)}
                     className="bg-white border border-[#E6DFD4] text-brand-dark text-sm rounded-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-brand-medium cursor-pointer shadow-sm"
@@ -1229,7 +1203,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
               </div>
 
               {/* Stats Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-5">
                 <div className="bg-white rounded-2xl p-5 border border-[#E6DFD4] shadow-sm">
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="text-xs font-semibold text-brand-medium uppercase tracking-widest">Total Revenue</h3>
@@ -1293,13 +1267,13 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                       <AreaChart data={revenueAnalytics} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                         <defs>
                           <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#8B5E3C" stopOpacity={0.3}/>
-                            <stop offset="95%" stopColor="#8B5E3C" stopOpacity={0}/>
+                            <stop offset="5%" stopColor="#8B5E3C" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="#8B5E3C" stopOpacity={0} />
                           </linearGradient>
                         </defs>
-                        <XAxis dataKey="date" tick={{fontSize: 10, fill: '#8A817C'}} tickLine={false} axisLine={false} minTickGap={20} />
-                        <YAxis tick={{fontSize: 10, fill: '#8A817C'}} tickLine={false} axisLine={false} tickFormatter={(value) => `₹${value}`} />
-                        <RechartsTooltip 
+                        <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#8A817C' }} tickLine={false} axisLine={false} minTickGap={20} />
+                        <YAxis tick={{ fontSize: 10, fill: '#8A817C' }} tickLine={false} axisLine={false} tickFormatter={(value) => `₹${value}`} />
+                        <RechartsTooltip
                           contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                           formatter={(value) => [`₹${value.toFixed(2)}`, 'Revenue']}
                           labelStyle={{ color: '#8A817C', fontSize: '12px', marginBottom: '4px' }}
@@ -1318,9 +1292,9 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                   <div className="flex-1 w-full h-full min-h-[220px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={orderVolume} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                        <XAxis dataKey="name" tick={{fontSize: 10, fill: '#8A817C'}} tickLine={false} axisLine={false} />
-                        <YAxis tick={{fontSize: 10, fill: '#8A817C'}} tickLine={false} axisLine={false} />
-                        <RechartsTooltip 
+                        <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#8A817C' }} tickLine={false} axisLine={false} />
+                        <YAxis tick={{ fontSize: 10, fill: '#8A817C' }} tickLine={false} axisLine={false} />
+                        <RechartsTooltip
                           contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                           cursor={{ fill: '#f3f4f6' }}
                         />
@@ -1330,7 +1304,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                   </div>
                 </div>
               </div>
-            </>
+            </div>
           )}
 
           {/* TAB: CATALOG MANAGEMENT (CATEGORIES) */}
@@ -1342,15 +1316,15 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                   <h2 className="text-2xl font-bold text-brand-dark font-serif">Category Management</h2>
                   <p className="text-sm text-brand-medium">Manage top-level categories and their classification metadata.</p>
                 </div>
-                
+
                 <div className="flex gap-2">
-                  <button 
+                  <button
                     onClick={() => setCategorySubTab('list')}
                     className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all ${categorySubTab === 'list' ? 'bg-brand-dark text-white shadow-md' : 'bg-white border border-[#E6DFD4] text-brand-medium hover:text-brand-dark'}`}
                   >
                     View Categories
                   </button>
-                  <button 
+                  <button
                     onClick={() => {
                       setEditCategoryId(null);
                       setCatName('');
@@ -1412,13 +1386,13 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                               {cat.createdAt ? new Date(cat.createdAt).toLocaleDateString() : 'Today'}
                             </td>
                             <td className="py-4 px-6 text-right space-x-3">
-                              <button 
+                              <button
                                 onClick={() => handleEditCategoryClick(cat)}
                                 className="text-brand-dark hover:text-black font-bold text-xs"
                               >
                                 Edit
                               </button>
-                              <button 
+                              <button
                                 onClick={() => handleDeleteCategory(cat._id)}
                                 className="text-red-600 hover:text-red-800 font-bold text-xs"
                               >
@@ -1437,7 +1411,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
               {(categorySubTab === 'add' || categorySubTab === 'edit') && (
                 <div className="space-y-4">
                   <div className="flex justify-end">
-                    <button 
+                    <button
                       type="button"
                       onClick={() => setShowAddCategoryModal(true)}
                       className="bg-brand-dark text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider shadow-md hover:bg-black transition-colors"
@@ -1453,10 +1427,10 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                           <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium block">Category Name *</label>
-                          <select 
-                            required 
-                            value={catName} 
-                            onChange={(e) => setCatName(e.target.value)} 
+                          <select
+                            required
+                            value={catName}
+                            onChange={(e) => setCatName(e.target.value)}
                             className="w-full border border-[#E6DFD4] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-medium bg-white"
                           >
                             <option value="">Select Category</option>
@@ -1467,10 +1441,10 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                         </div>
                         <div className="space-y-2">
                           <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium block">Sub Category Name</label>
-                          <input 
-                            type="text" 
-                            value={catSubCategoryName} 
-                            onChange={(e) => setCatSubCategoryName(e.target.value)} 
+                          <input
+                            type="text"
+                            value={catSubCategoryName}
+                            onChange={(e) => setCatSubCategoryName(e.target.value)}
                             className="w-full border border-[#E6DFD4] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-medium"
                             placeholder="e.g. Educational"
                           />
@@ -1479,119 +1453,119 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
 
                       <div className="space-y-2">
                         <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium block">Attribute</label>
-                        <input 
-                          type="text" 
-                          value={catAttribute} 
-                          onChange={(e) => setCatAttribute(e.target.value)} 
+                        <input
+                          type="text"
+                          value={catAttribute}
+                          onChange={(e) => setCatAttribute(e.target.value)}
                           className="w-full border border-[#E6DFD4] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-medium"
                           placeholder="e.g. Material, Color"
                         />
                       </div>
 
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium block">Category Slug</label>
-                      <input 
-                        type="text" 
-                        disabled 
-                        value={catName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')} 
-                        className="w-full bg-brand-light border border-[#E6DFD4] rounded-xl px-4 py-2.5 text-sm font-mono text-brand-medium outline-none"
-                        placeholder="Auto Generated"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium block">Category Image (URL)</label>
-                      <input 
-                        type="text" 
-                        value={catImage} 
-                        onChange={(e) => setCatImage(e.target.value)} 
-                        className="w-full border border-[#E6DFD4] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-medium"
-                        placeholder="https://example.com/image.jpg"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium block">Description</label>
-                      <textarea 
-                        rows="3" 
-                        value={catDescription} 
-                        onChange={(e) => setCatDescription(e.target.value)} 
-                        className="w-full border border-[#E6DFD4] rounded-xl p-4 text-sm focus:outline-none focus:border-brand-medium"
-                        placeholder="Category description..."
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium block">Display Order</label>
-                        <input 
-                          type="text" inputMode="numeric" 
-                          value={catDisplayOrder} 
-                          onChange={(e) => setCatDisplayOrder(e.target.value)} 
-                          className="w-full border border-[#E6DFD4] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-medium"
-                          placeholder="1"
+                        <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium block">Category Slug</label>
+                        <input
+                          type="text"
+                          disabled
+                          value={catName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')}
+                          className="w-full bg-brand-light border border-[#E6DFD4] rounded-xl px-4 py-2.5 text-sm font-mono text-brand-medium outline-none"
+                          placeholder="Auto Generated"
                         />
                       </div>
+
                       <div className="space-y-2">
-                        <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium block">Status</label>
-                        <div className="flex items-center gap-6 pt-2">
-                          <label className="flex items-center gap-2 text-sm cursor-pointer">
-                            <input 
-                              type="radio" 
-                              checked={catIsActive === true} 
-                              onChange={() => setCatIsActive(true)}
-                              className="w-4 h-4 text-brand-dark focus:ring-brand-medium"
-                            />
-                            <span className="font-medium text-brand-dark">Active</span>
-                          </label>
-                          <label className="flex items-center gap-2 text-sm cursor-pointer">
-                            <input 
-                              type="radio" 
-                              checked={catIsActive === false} 
-                              onChange={() => setCatIsActive(false)}
-                              className="w-4 h-4 text-brand-dark focus:ring-brand-medium"
-                            />
-                            <span className="font-medium text-brand-medium">Inactive</span>
-                          </label>
+                        <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium block">Category Image (URL)</label>
+                        <input
+                          type="text"
+                          value={catImage}
+                          onChange={(e) => setCatImage(e.target.value)}
+                          className="w-full border border-[#E6DFD4] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-medium"
+                          placeholder="https://example.com/image.jpg"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium block">Description</label>
+                        <textarea
+                          rows="3"
+                          value={catDescription}
+                          onChange={(e) => setCatDescription(e.target.value)}
+                          className="w-full border border-[#E6DFD4] rounded-xl p-4 text-sm focus:outline-none focus:border-brand-medium"
+                          placeholder="Category description..."
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium block">Display Order</label>
+                          <input
+                            type="text" inputMode="numeric"
+                            value={catDisplayOrder}
+                            onChange={(e) => setCatDisplayOrder(e.target.value)}
+                            className="w-full border border-[#E6DFD4] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-medium"
+                            placeholder="1"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium block">Status</label>
+                          <div className="flex items-center gap-6 pt-2">
+                            <label className="flex items-center gap-2 text-sm cursor-pointer">
+                              <input
+                                type="radio"
+                                checked={catIsActive === true}
+                                onChange={() => setCatIsActive(true)}
+                                className="w-4 h-4 text-brand-dark focus:ring-brand-medium"
+                              />
+                              <span className="font-medium text-brand-dark">Active</span>
+                            </label>
+                            <label className="flex items-center gap-2 text-sm cursor-pointer">
+                              <input
+                                type="radio"
+                                checked={catIsActive === false}
+                                onChange={() => setCatIsActive(false)}
+                                className="w-4 h-4 text-brand-dark focus:ring-brand-medium"
+                              />
+                              <span className="font-medium text-brand-medium">Inactive</span>
+                            </label>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="border-t border-[#E6DFD4] pt-6 space-y-4">
-                      <h3 className="font-serif font-bold text-sm text-brand-dark">SEO Information</h3>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium block">SEO Title</label>
-                        <input 
-                          type="text" 
-                          value={catSeoTitle} 
-                          onChange={(e) => setCatSeoTitle(e.target.value)} 
-                          className="w-full border border-[#E6DFD4] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-medium"
-                          placeholder="e.g. Buy Wooden Puzzles Online"
-                        />
+                      <div className="border-t border-[#E6DFD4] pt-6 space-y-4">
+                        <h3 className="font-serif font-bold text-sm text-brand-dark">SEO Information</h3>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium block">SEO Title</label>
+                          <input
+                            type="text"
+                            value={catSeoTitle}
+                            onChange={(e) => setCatSeoTitle(e.target.value)}
+                            className="w-full border border-[#E6DFD4] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-medium"
+                            placeholder="e.g. Buy Wooden Puzzles Online"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium block">SEO Description</label>
+                          <textarea
+                            rows="2"
+                            value={catSeoDescription}
+                            onChange={(e) => setCatSeoDescription(e.target.value)}
+                            className="w-full border border-[#E6DFD4] rounded-xl p-4 text-sm focus:outline-none focus:border-brand-medium"
+                            placeholder="Meta description for search engines"
+                          />
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium block">SEO Description</label>
-                        <textarea 
-                          rows="2" 
-                          value={catSeoDescription} 
-                          onChange={(e) => setCatSeoDescription(e.target.value)} 
-                          className="w-full border border-[#E6DFD4] rounded-xl p-4 text-sm focus:outline-none focus:border-brand-medium"
-                          placeholder="Meta description for search engines"
-                        />
-                      </div>
-                    </div>
 
-                    <div className="border-t border-[#E6DFD4] pt-6 flex justify-end gap-3">
-                      <button 
-                        type="submit" 
-                        disabled={isLoading}
-                        className="bg-brand-dark hover:bg-black text-white text-xs font-bold uppercase tracking-wider px-8 py-3.5 rounded-xl shadow-md transition-colors disabled:opacity-60"
-                      >
-                        {isLoading ? 'Saving...' : 'Save Category'}
-                      </button>
-                    </div>
-                  </form>
-                </div>
+                      <div className="border-t border-[#E6DFD4] pt-6 flex justify-end gap-3">
+                        <button
+                          type="submit"
+                          disabled={isLoading}
+                          className="bg-brand-dark hover:bg-black text-white text-xs font-bold uppercase tracking-wider px-8 py-3.5 rounded-xl shadow-md transition-colors disabled:opacity-60"
+                        >
+                          {isLoading ? 'Saving...' : 'Save Category'}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
                 </div>
               )}
             </div>
@@ -1605,21 +1579,21 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                   <h2 className="text-2xl font-bold text-brand-dark font-serif">Sub Categories</h2>
                   <p className="text-sm text-brand-medium">Manage subcategories under primary categories.</p>
                 </div>
-                
+
                 <div className="flex gap-2">
-                  <button 
+                  <button
                     onClick={() => setSubCategorySubTab('list')}
                     className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all ${subCategorySubTab === 'list' ? 'bg-brand-dark text-white shadow-md' : 'bg-white border border-[#E6DFD4] text-brand-medium hover:text-brand-dark'}`}
                   >
                     View Sub Categories
                   </button>
                   {hasPermission('catalog', 'create') && (
-                  <button 
-                    onClick={() => setSubCategorySubTab('add')}
-                    className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all ${subCategorySubTab === 'add' ? 'bg-brand-dark text-white shadow-md' : 'bg-white border border-[#E6DFD4] text-brand-medium hover:text-brand-dark'}`}
-                  >
-                    + Add Sub Category
-                  </button>
+                    <button
+                      onClick={() => setSubCategorySubTab('add')}
+                      className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all ${subCategorySubTab === 'add' ? 'bg-brand-dark text-white shadow-md' : 'bg-white border border-[#E6DFD4] text-brand-medium hover:text-brand-dark'}`}
+                    >
+                      + Add Sub Category
+                    </button>
                   )}
                 </div>
               </div>
@@ -1655,10 +1629,10 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                               </td>
                               <td className="py-4 px-6 text-right space-x-3">
                                 {hasPermission('catalog', 'edit') && (
-                                <button className="text-brand-dark hover:text-black font-bold text-xs">Edit</button>
+                                  <button className="text-brand-dark hover:text-black font-bold text-xs">Edit</button>
                                 )}
                                 {hasPermission('catalog', 'delete') && (
-                                <button className="text-red-600 hover:text-red-800 font-bold text-xs">Delete</button>
+                                  <button className="text-red-600 hover:text-red-800 font-bold text-xs">Delete</button>
                                 )}
                               </td>
                             </tr>
@@ -1676,25 +1650,25 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium block">Name *</label>
-                        <input 
-                          type="text" 
-                          required 
+                        <input
+                          type="text"
+                          required
                           className="w-full border border-[#E6DFD4] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-medium"
                           placeholder="Subcategory Name"
                         />
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium block">Property</label>
-                        <input 
-                          type="text" 
+                        <input
+                          type="text"
                           className="w-full border border-[#E6DFD4] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-medium"
                           placeholder="Property/Type"
                         />
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium block">Parent Category *</label>
-                        <select 
-                          required 
+                        <select
+                          required
                           className="w-full border border-[#E6DFD4] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-medium bg-white"
                         >
                           <option value="">Select Category</option>
@@ -1705,17 +1679,17 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium block">Code (SKU) *</label>
-                        <input 
-                          type="text" 
-                          required 
+                        <input
+                          type="text"
+                          required
                           className="w-full border border-[#E6DFD4] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-medium"
                           placeholder="SUB-CAT-001"
                         />
                       </div>
                     </div>
                     <div className="border-t border-[#E6DFD4] pt-6 flex justify-end gap-3">
-                      <button 
-                        type="submit" 
+                      <button
+                        type="submit"
                         className="bg-brand-dark hover:bg-black text-white text-xs font-bold uppercase tracking-wider px-8 py-3.5 rounded-xl shadow-md transition-colors"
                       >
                         Save
@@ -1731,7 +1705,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
           {showAddCategoryModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
               <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl relative">
-                <button 
+                <button
                   onClick={() => setShowAddCategoryModal(false)}
                   className="absolute top-4 right-4 text-brand-medium hover:text-brand-dark"
                 >
@@ -1741,18 +1715,18 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                 <form onSubmit={handleQuickCreateCategory} className="space-y-4">
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-widest text-brand-medium">Category Name</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       autoFocus
-                      required 
-                      value={quickCategoryName} 
-                      onChange={(e) => setQuickCategoryName(e.target.value)} 
+                      required
+                      value={quickCategoryName}
+                      onChange={(e) => setQuickCategoryName(e.target.value)}
                       className="w-full border border-[#E6DFD4] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-medium"
                       placeholder="Enter brand or category name"
                     />
                   </div>
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     disabled={isLoading}
                     className="w-full bg-brand-dark hover:bg-black text-white text-xs font-bold uppercase tracking-wider py-3.5 rounded-xl shadow-md transition-colors disabled:opacity-60"
                   >
@@ -1772,21 +1746,21 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                   <h2 className="text-2xl font-bold text-brand-dark font-serif">Product Management</h2>
                   <p className="text-sm text-brand-medium">Manage store items, pricing, inventory, and media assets.</p>
                 </div>
-                
+
                 <div className="flex gap-2">
-                  <button 
+                  <button
                     onClick={() => setProductSubTab('list')}
                     className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all ${productSubTab === 'list' ? 'bg-brand-dark text-white shadow-md' : 'bg-white border border-[#E6DFD4] text-brand-medium hover:text-brand-dark'}`}
                   >
                     Product List
                   </button>
                   {(hasPermission('products', 'create') || hasPermission('catalog', 'create')) && (
-                  <button 
-                    onClick={() => setProductSubTab('add')}
-                    className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all ${productSubTab === 'add' ? 'bg-brand-dark text-white shadow-md' : 'bg-white border border-[#E6DFD4] text-brand-medium hover:text-brand-dark'}`}
-                  >
-                    + Add Product
-                  </button>
+                    <button
+                      onClick={() => setProductSubTab('add')}
+                      className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all ${productSubTab === 'add' ? 'bg-brand-dark text-white shadow-md' : 'bg-white border border-[#E6DFD4] text-brand-medium hover:text-brand-dark'}`}
+                    >
+                      + Add Product
+                    </button>
                   )}
                 </div>
               </div>
@@ -1800,12 +1774,12 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                       <h4 className="font-serif text-lg font-bold text-brand-dark">No Products Found</h4>
                       <p className="text-xs text-brand-medium mt-1">Get started by creating your first wooden toy.</p>
                       {(hasPermission('products', 'create') || hasPermission('catalog', 'create')) && (
-                      <button 
-                        onClick={() => setProductSubTab('add')}
-                        className="bg-brand-dark text-white text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-xl mt-4 hover:bg-black transition-colors"
-                      >
-                        Create Product
-                      </button>
+                        <button
+                          onClick={() => setProductSubTab('add')}
+                          className="bg-brand-dark text-white text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-xl mt-4 hover:bg-black transition-colors"
+                        >
+                          Create Product
+                        </button>
                       )}
                     </div>
                   ) : (
@@ -1858,12 +1832,12 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                               </td>
                               <td className="py-4 px-6 text-right">
                                 {(hasPermission('products', 'delete') || hasPermission('catalog', 'delete')) && (
-                                <button 
-                                  onClick={() => handleDeleteProduct(prod._id)}
-                                  className="text-red-600 hover:text-red-800 font-bold text-xs"
-                                >
-                                  Delete
-                                </button>
+                                  <button
+                                    onClick={() => handleDeleteProduct(prod._id)}
+                                    className="text-red-600 hover:text-red-800 font-bold text-xs"
+                                  >
+                                    Delete
+                                  </button>
                                 )}
                               </td>
                             </tr>
@@ -1878,22 +1852,22 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
               {/* SUB TAB 2: ADD PRODUCT */}
               {productSubTab === 'add' && (
                 <div className="bg-white border border-[#E6DFD4] rounded-2xl p-8 shadow-sm">
-                  
+
                   {/* Banner Messages */}
                   {successMsg && <div className="mb-6 bg-green-50 border-l-4 border-green-500 text-green-700 p-4 text-xs font-bold rounded-r">{successMsg}</div>}
                   {errorMsg && <div className="mb-6 bg-red-50 border-l-4 border-red-500 text-red-700 p-4 text-xs font-bold rounded-r">{errorMsg}</div>}
 
                   <form onSubmit={handleAddProductSubmit} className="space-y-6">
-                    
+
                     {/* Basic Info Row */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium block">Product Name *</label>
-                        <input 
-                          type="text" 
-                          required 
-                          value={name} 
-                          onChange={(e) => setName(e.target.value)} 
+                        <input
+                          type="text"
+                          required
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
                           className="w-full border border-[#E6DFD4] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-medium"
                           placeholder="e.g. Handmade Oak Blocks"
                         />
@@ -1901,11 +1875,11 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
 
                       <div className="space-y-2">
                         <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium block">SKU Code *</label>
-                        <input 
-                          type="text" 
-                          required 
-                          value={sku} 
-                          onChange={(e) => setSku(e.target.value)} 
+                        <input
+                          type="text"
+                          required
+                          value={sku}
+                          onChange={(e) => setSku(e.target.value)}
                           className="w-full border border-[#E6DFD4] rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-brand-medium"
                           placeholder="e.g. TOY-OAK-BLOCKS"
                         />
@@ -1914,25 +1888,25 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium block">Price ($) *</label>
-                          <input 
-                            type="text" inputMode="numeric" 
-                            step="0.01" 
-                            min="0" 
-                            required 
-                            value={price} 
-                            onChange={(e) => setPrice(e.target.value)} 
+                          <input
+                            type="text" inputMode="numeric"
+                            step="0.01"
+                            min="0"
+                            required
+                            value={price}
+                            onChange={(e) => setPrice(e.target.value)}
                             className="w-full border border-[#E6DFD4] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-medium"
                             placeholder="e.g. 29.99"
                           />
                         </div>
                         <div className="space-y-2">
                           <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium block">Initial Stock *</label>
-                          <input 
-                            type="text" inputMode="numeric" 
-                            min="0" 
-                            required 
-                            value={stock} 
-                            onChange={(e) => setStock(e.target.value)} 
+                          <input
+                            type="text" inputMode="numeric"
+                            min="0"
+                            required
+                            value={stock}
+                            onChange={(e) => setStock(e.target.value)}
                             className="w-full border border-[#E6DFD4] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-medium"
                             placeholder="e.g. 10"
                           />
@@ -1941,11 +1915,11 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
 
                       <div className="space-y-2">
                         <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium block">Product Description *</label>
-                        <textarea 
-                          rows="2" 
-                          required 
-                          value={description} 
-                          onChange={(e) => setDescription(e.target.value)} 
+                        <textarea
+                          rows="2"
+                          required
+                          value={description}
+                          onChange={(e) => setDescription(e.target.value)}
                           className="w-full border border-[#E6DFD4] rounded-xl p-4 text-sm focus:outline-none focus:border-brand-medium"
                           placeholder="Provide detailed description of materials, safety information, etc."
                         />
@@ -1968,10 +1942,10 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                           <div className="flex justify-between items-center">
                             <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium">Category *</label>
                           </div>
-                          <select 
-                            required 
-                            value={selectedCategory} 
-                            onChange={(e) => setSelectedCategory(e.target.value)} 
+                          <select
+                            required
+                            value={selectedCategory}
+                            onChange={(e) => setSelectedCategory(e.target.value)}
                             className="w-full border border-[#E6DFD4] rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:border-brand-medium"
                           >
                             <option value="" disabled>Select Category</option>
@@ -1986,9 +1960,9 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                           <div className="flex justify-between items-center">
                             <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium">Sub Category</label>
                           </div>
-                          <select 
-                            value={selectedSubCategory} 
-                            onChange={(e) => setSelectedSubCategory(e.target.value)} 
+                          <select
+                            value={selectedSubCategory}
+                            onChange={(e) => setSelectedSubCategory(e.target.value)}
                             className="w-full border border-[#E6DFD4] rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:border-brand-medium disabled:opacity-60"
                             disabled={!selectedCategory || currentSubCategories.length === 0}
                           >
@@ -2005,8 +1979,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                           <div className="flex flex-wrap gap-4 pt-1">
                             {ageGroupOptions.map(option => (
                               <label key={option} className="flex items-center space-x-2 text-xs text-brand-dark font-medium cursor-pointer">
-                                <input 
-                                  type="checkbox" 
+                                <input
+                                  type="checkbox"
                                   checked={selectedAgeGroups.includes(option)}
                                   onChange={() => toggleSelection(option, selectedAgeGroups, setSelectedAgeGroups)}
                                   className="w-4 h-4 rounded text-brand-dark focus:ring-brand-medium"
@@ -2023,8 +1997,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                           <div className="flex flex-wrap gap-4 pt-1">
                             {toyTypeOptions.map(option => (
                               <label key={option} className="flex items-center space-x-2 text-xs text-brand-dark font-medium cursor-pointer">
-                                <input 
-                                  type="checkbox" 
+                                <input
+                                  type="checkbox"
                                   checked={selectedToyTypes.includes(option)}
                                   onChange={() => toggleSelection(option, selectedToyTypes, setSelectedToyTypes)}
                                   className="w-4 h-4 rounded text-brand-dark focus:ring-brand-medium"
@@ -2038,7 +2012,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                         {/* Wood Type Dropdown */}
                         <div className="space-y-2">
                           <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium block">Wood Type *</label>
-                          <select 
+                          <select
                             value={selectedWoodType}
                             onChange={(e) => setSelectedWoodType(e.target.value)}
                             className="w-full border border-[#E6DFD4] rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:border-brand-medium"
@@ -2055,8 +2029,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                           <div className="flex flex-wrap gap-4 pt-1">
                             {themeOptions.map(option => (
                               <label key={option} className="flex items-center space-x-2 text-xs text-brand-dark font-medium cursor-pointer">
-                                <input 
-                                  type="checkbox" 
+                                <input
+                                  type="checkbox"
                                   checked={selectedThemes.includes(option)}
                                   onChange={() => toggleSelection(option, selectedThemes, setSelectedThemes)}
                                   className="w-4 h-4 rounded text-brand-dark focus:ring-brand-medium"
@@ -2075,8 +2049,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                         <div className="flex flex-wrap gap-4 pt-1">
                           {skillDevelopmentOptions.map(option => (
                             <label key={option} className="flex items-center space-x-2 text-xs text-brand-dark font-medium cursor-pointer">
-                              <input 
-                                type="checkbox" 
+                              <input
+                                type="checkbox"
                                 checked={selectedSkills.includes(option)}
                                 onChange={() => toggleSelection(option, selectedSkills, setSelectedSkills)}
                                 className="w-4 h-4 rounded text-brand-dark focus:ring-brand-medium"
@@ -2101,15 +2075,15 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                         <div className="md:col-span-2 space-y-2">
                           <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium block">Add Photo via URL</label>
                           <div className="flex gap-2">
-                            <input 
-                              type="text" 
-                              value={tempPhotoUrl} 
-                              onChange={(e) => setTempPhotoUrl(e.target.value)} 
+                            <input
+                              type="text"
+                              value={tempPhotoUrl}
+                              onChange={(e) => setTempPhotoUrl(e.target.value)}
                               className="w-full border border-[#E6DFD4] rounded-xl px-4 py-2.5 text-sm focus:outline-none"
                               placeholder="https://images.unsplash.com/photo-..."
                             />
-                            <button 
-                              type="button" 
+                            <button
+                              type="button"
                               onClick={handleAddPhotoUrl}
                               className="bg-brand-dark hover:bg-black text-white text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-xl whitespace-nowrap"
                             >
@@ -2122,12 +2096,12 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                           <label className="text-[10px] font-bold tracking-widest uppercase text-brand-medium block">Upload Files</label>
                           <label className="w-full border border-dashed border-[#E6DFD4] hover:bg-brand-light/30 rounded-xl px-4 py-2.5 text-xs text-center font-bold text-brand-dark cursor-pointer block border-brand-medium/40 transition-colors">
                             Choose Files
-                            <input 
-                              type="file" 
-                              multiple 
-                              accept="image/*" 
-                              onChange={handleFileUpload} 
-                              className="hidden" 
+                            <input
+                              type="file"
+                              multiple
+                              accept="image/*"
+                              onChange={handleFileUpload}
+                              className="hidden"
                             />
                           </label>
                         </div>
@@ -2147,8 +2121,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
 
                               <div className="p-2 flex items-center justify-between gap-1 bg-[#FDFCF7]">
                                 <div className="flex gap-1">
-                                  <button 
-                                    type="button" 
+                                  <button
+                                    type="button"
                                     disabled={idx === 0}
                                     onClick={() => movePhoto(idx, 'left')}
                                     className="bg-white border border-[#E6DFD4] text-[#807058] hover:bg-brand-light disabled:opacity-30 rounded p-1 text-[10px] font-bold transition-all cursor-pointer"
@@ -2156,8 +2130,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                                   >
                                     ΓåÉ
                                   </button>
-                                  <button 
-                                    type="button" 
+                                  <button
+                                    type="button"
                                     disabled={idx === photos.length - 1}
                                     onClick={() => movePhoto(idx, 'right')}
                                     className="bg-white border border-[#E6DFD4] text-[#807058] hover:bg-brand-light disabled:opacity-30 rounded p-1 text-[10px] font-bold transition-all cursor-pointer"
@@ -2166,8 +2140,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                                     ΓåÆ
                                   </button>
                                 </div>
-                                <button 
-                                  type="button" 
+                                <button
+                                  type="button"
                                   onClick={() => deletePhoto(idx)}
                                   className="text-red-500 hover:text-red-700 p-1 text-[10px] font-bold transition-all cursor-pointer"
                                   title="Delete Photo"
@@ -2187,15 +2161,15 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
 
                     {/* Submit Button */}
                     <div className="border-t border-[#E6DFD4] pt-6 flex justify-end gap-3">
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={() => setProductSubTab('list')}
                         className="bg-white border border-[#E6DFD4] hover:bg-brand-light/50 text-brand-dark text-xs font-bold uppercase tracking-wider px-6 py-3.5 rounded-xl"
                       >
                         Cancel
                       </button>
-                      <button 
-                        type="submit" 
+                      <button
+                        type="submit"
                         disabled={isLoading}
                         className="bg-brand-dark hover:bg-black text-white text-xs font-bold uppercase tracking-wider px-8 py-3.5 rounded-xl shadow-md transition-colors disabled:opacity-60"
                       >
@@ -2247,7 +2221,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
 
           {/* ── INVENTORY MANAGEMENT ── */}
           {(isAdmin || canView('inventory')) && currentTab === 'inventory' && (
-            <InventoryManagement 
+            <InventoryManagement
               canEdit={hasPermission('inventory', 'edit')}
               canDelete={hasPermission('inventory', 'delete')}
             />
@@ -2264,21 +2238,21 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
 
           {/* ── FEE MANAGEMENT ── */}
           {(isAdmin || canView('fees')) && currentTab === 'fees' && feeSubTab === 'list' && (
-            <FeeListPage 
+            <FeeListPage
               canCreate={hasPermission('fees', 'create')}
               canEdit={hasPermission('fees', 'edit')}
               canDelete={hasPermission('fees', 'delete')}
               onNavigate={(tab, fee) => {
                 setEditingFee(fee || null);
                 setFeeSubTab(tab);
-              }} 
-              onEditFee={(fee) => { setEditingFee(fee); setFeeSubTab('add'); }} 
+              }}
+              onEditFee={(fee) => { setEditingFee(fee); setFeeSubTab('add'); }}
             />
           )}
           {(isAdmin || canView('fees')) && currentTab === 'fees' && feeSubTab === 'add' && (
-            <AddFeePage 
-              onNavigate={(tab) => setFeeSubTab(tab)} 
-              editingFee={editingFee} 
+            <AddFeePage
+              onNavigate={(tab) => setFeeSubTab(tab)}
+              editingFee={editingFee}
             />
           )}
           {(isAdmin || canView('fees')) && currentTab === 'fees' && feeSubTab === 'global' && (
@@ -2287,7 +2261,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
 
           {/* ── CANCELLATION MANAGEMENT ── */}
           {(isAdmin || canView('cancellation')) && currentTab === 'cancellation' && (
-            <CancellationManagementPage 
+            <CancellationManagementPage
               canCreate={hasPermission('cancellation', 'create')}
               canEdit={hasPermission('cancellation', 'edit')}
               canDelete={hasPermission('cancellation', 'delete')}
@@ -2296,7 +2270,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
 
           {/* ── REFUND MANAGEMENT ── */}
           {(isAdmin || canView('refund')) && currentTab === 'refund' && (
-            <RefundManagementPage 
+            <RefundManagementPage
               canEdit={hasPermission('refund', 'edit')}
               canDelete={hasPermission('refund', 'delete')}
             />
@@ -2337,7 +2311,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
             <BulkOrdersAdminPage canEdit={isAdmin || hasPermission('bulk_orders', 'edit')} />
           )}
           {(isAdmin || canView('bulk_orders')) && currentTab === 'bulk-orders' && bulkOrderSubTab === 'fields' && (
-            <BulkOrderFieldsAdminPage 
+            <BulkOrderFieldsAdminPage
               canCreate={isAdmin || hasPermission('bulk_orders', 'create')}
               canEdit={isAdmin || hasPermission('bulk_orders', 'edit')}
               canDelete={isAdmin || hasPermission('bulk_orders', 'delete')}
@@ -2346,7 +2320,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
 
           {/* ── GIFT & CARD MANAGEMENT ── */}
           {(isAdmin || canView('gift_and_card')) && currentTab === 'gift_and_card' && (
-            <GiftAndCardAdminPage 
+            <GiftAndCardAdminPage
               activeSubTab={giftAndCardSubTab}
               canCreate={isAdmin || hasPermission('gift_and_card', 'create')}
               canEdit={isAdmin || hasPermission('gift_and_card', 'edit')}
@@ -2356,8 +2330,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
 
           {/* ── CUSTOMIZE ORDER MANAGEMENT ── */}
           {(isAdmin || canView('customize_order')) && currentTab === 'customize_order' && (
-            <CustomizeAdminPage 
-              activeSubTab={customizeSubTab} 
+            <CustomizeAdminPage
+              activeSubTab={customizeSubTab}
               canCreate={isAdmin || hasPermission('customize_order', 'create')}
               canEdit={isAdmin || hasPermission('customize_order', 'edit')}
               canDelete={isAdmin || hasPermission('customize_order', 'delete')}

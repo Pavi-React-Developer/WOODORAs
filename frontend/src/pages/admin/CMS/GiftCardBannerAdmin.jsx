@@ -14,7 +14,7 @@ function MultiImageUploader({ label, images, onChange }) {
     setUploading(true);
     try {
       const res = await cmsService.uploadImages(files);
-      onChange([...images, ...res.data]); 
+      onChange([...images, ...res.data]);
     } catch (err) { alert(err.message); }
     finally { setUploading(false); }
   };
@@ -127,7 +127,7 @@ export default function GiftCardBannerAdmin() {
         <h3 className="text-sm font-bold text-brand-dark uppercase tracking-widest">Gift & Card Banner (Dual Slider)</h3>
         {!showForm && (
           <button onClick={() => { setForm(initialForm); setEditingId(null); window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowForm(true); }}
-            className="flex items-center gap-1 bg-[#4A403B] hover:bg-[#342D2A] text-white px-4 py-2 rounded-xl text-sm font-semibold transition">
+            className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60">
             <Plus className="w-4 h-4" /> Add Gift & Card Banner
           </button>
         )}
@@ -246,9 +246,9 @@ export default function GiftCardBannerAdmin() {
             </div>
             <div className="flex gap-3 justify-end pt-2 border-t border-[#E6DFD4]">
               <button type="button" onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setShowForm(false))}
-                className="px-4 py-2 text-sm border border-[#E6DFD4] rounded-lg text-brand-medium hover:bg-gray-50">Cancel</button>
+                className="admin-cancel-btn">CANCEL</button>
               <button type="submit" disabled={saving}
-                className="p-1.5 text-[#6D625C] hover:text-[#9A6031] hover:bg-[#F2E3D1] rounded transition-colors">
+                className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60">
                 {saving ? 'Saving...' : 'Save Banner'}
               </button>
             </div>
@@ -258,7 +258,7 @@ export default function GiftCardBannerAdmin() {
 
       <div className="space-y-3">
         {loading ? (
-          [1,2].map(i => <div key={i} className="h-28 bg-gray-100 rounded-2xl animate-pulse" />)
+          [1, 2].map(i => <div key={i} className="h-28 bg-gray-100 rounded-2xl animate-pulse" />)
         ) : items.length === 0 ? (
           <div className="p-8 text-center text-brand-medium text-sm bg-white rounded-2xl border border-[#E6DFD4]">
             No dual banners yet.
@@ -266,9 +266,9 @@ export default function GiftCardBannerAdmin() {
         ) : items.map((item) => (
           <div key={item._id} className="bg-white rounded-2xl border border-[#E6DFD4] p-4 shadow-sm flex items-center gap-4">
             <div className="flex gap-2 flex-shrink-0">
-              {item.leftImages?.slice(0,2).map((u, i) => <img key={i} src={u.url || u} alt="" className="w-16 h-16 rounded-lg object-cover" />)}
+              {item.leftImages?.slice(0, 2).map((u, i) => <img key={i} src={u.url || u} alt="" className="w-16 h-16 rounded-lg object-cover" />)}
               <div className="w-0.5 h-16 bg-[#E6DFD4]" />
-              {item.rightImages?.slice(0,2).map((u, i) => <img key={i} src={u.url || u} alt="" className="w-16 h-16 rounded-lg object-cover" />)}
+              {item.rightImages?.slice(0, 2).map((u, i) => <img key={i} src={u.url || u} alt="" className="w-16 h-16 rounded-lg object-cover" />)}
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-medium text-brand-dark text-sm truncate">{item.title || 'Dual Banner'}</p>
