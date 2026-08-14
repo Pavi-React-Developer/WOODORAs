@@ -113,10 +113,20 @@ const verifyPayment = async (req, res) => {
     const isPaid = cfOrder.order_status === 'PAID';
 
     if (isPaid) {
+      // CRITICAL SECURITY FIX: Ensure the receipt actually belongs to the requested order
+      if (String(cfOrder.order_id) !== String(orderId)) {
+        return res.status(403).json({ message: 'Security validation failed: Order mismatch.' });
+      }
+
       // Update our order record
       const order = await Order.findById(orderId);
       if (!order) {
         return res.status(404).json({ message: 'Order not found' });
+      }
+
+      // CRITICAL SECURITY FIX: Ensure the user actually owns this order
+      if (req.user && order.user && order.user.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ message: 'Not authorized to verify this order' });
       }
 
       const totalAmount = Number(order.total_amount || order.totalPrice || 0);

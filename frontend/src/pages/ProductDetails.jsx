@@ -15,6 +15,9 @@ import { FaWhatsapp } from 'react-icons/fa';
 import { BsBagHeartFill } from "react-icons/bs";
 import { RiHeartAdd2Line } from "react-icons/ri";
 import AdvancedBookingModal from '../components/AdvancedBookingModal';
+import ProductGallery from '../components/ProductGallery';
+import ProductPricing from '../components/ProductPricing';
+import ShareModal from '../components/ShareModal';
 
 const finishOptions = ['Natural Maple', 'Oak Tint'];
 const featureBullets = [
@@ -24,90 +27,6 @@ const featureBullets = [
   'Designed for lasting open-ended play',
 ];
 
-const ProductImageZoom = ({ src, alt }) => {
-  const [showZoom, setShowZoom] = useState(false);
-  const [lensState, setLensState] = useState({ x: 0, y: 0, w: 0, h: 0 });
-  const [bgState, setBgState] = useState({ x: 0, y: 0, w: 0, h: 0 });
-  const imgRef = useRef(null);
-
-  const ZOOM_LEVEL = 2.5;
-
-  const handleMouseMove = (e) => {
-    if (!imgRef.current) return;
-    const { left, top, width, height } = imgRef.current.getBoundingClientRect();
-
-    const zoomWinW = 500;
-    const zoomWinH = 500;
-
-    const bgW = width * ZOOM_LEVEL;
-    const bgH = height * ZOOM_LEVEL;
-
-    const lensW = Math.min(zoomWinW / ZOOM_LEVEL, width);
-    const lensH = Math.min(zoomWinH / ZOOM_LEVEL, height);
-
-    let x = e.clientX - left;
-    let y = e.clientY - top;
-
-    let lensX = x - lensW / 2;
-    let lensY = y - lensH / 2;
-
-    if (lensX < 0) lensX = 0;
-    if (lensY < 0) lensY = 0;
-    if (lensX > width - lensW) lensX = width - lensW;
-    if (lensY > height - lensH) lensY = height - lensH;
-
-    setLensState({ x: lensX, y: lensY, w: lensW, h: lensH });
-    setBgState({
-      x: -(lensX * ZOOM_LEVEL),
-      y: -(lensY * ZOOM_LEVEL),
-      w: bgW,
-      h: bgH
-    });
-  };
-
-  return (
-    <div className="relative w-full h-full flex items-center justify-center bg-white rounded-[2rem]">
-      {/* Mobile view (no zoom) */}
-      <img src={src} alt={alt} className="w-full h-auto max-h-[500px] object-cover md:hidden rounded-none sm:rounded-[2rem]" onError={(e) => { e.target.style.display = 'none'; }} />
-
-      {/* Desktop view (with zoom) */}
-      <div
-        className="hidden md:block relative w-full h-full cursor-crosshair group rounded-[2rem] overflow-hidden"
-        onMouseEnter={() => setShowZoom(true)}
-        onMouseLeave={() => setShowZoom(false)}
-        onMouseMove={handleMouseMove}
-      >
-        <img ref={imgRef} src={src} alt={alt} className="w-full h-auto max-h-[600px] object-cover rounded-[2rem]" onError={(e) => { e.target.style.display = 'none'; }} />
-
-        {showZoom && (
-          <div
-            className="absolute bg-white/30 border border-[#AA7327]/50 pointer-events-none"
-            style={{
-              left: lensState.x,
-              top: lensState.y,
-              width: lensState.w,
-              height: lensState.h,
-              boxShadow: '0 0 0 9999px rgba(0,0,0,0.15)'
-            }}
-          />
-        )}
-      </div>
-
-      {/* Zoomed Result Window */}
-      {showZoom && (
-        <div
-          className="hidden lg:block absolute top-0 left-[calc(100%+40px)] w-[500px] h-[500px] bg-white z-[9999] border border-gray-200 shadow-2xl overflow-hidden rounded-2xl pointer-events-none"
-          style={{
-            backgroundImage: `url(${src})`,
-            backgroundPosition: `${bgState.x}px ${bgState.y}px`,
-            backgroundSize: `${bgState.w}px ${bgState.h}px`,
-            backgroundRepeat: 'no-repeat'
-          }}
-        />
-      )}
-    </div>
-  );
-};
 const certifications = ['EN71 Certified', 'ASTM F963', 'CPSC Compliant'];
 const relatedProducts = [
   { title: 'Building Blocks', price: '₹42.00' },
@@ -796,43 +715,13 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
           <div className="grid gap-10 lg:grid-cols-[1.35fr_0.9fr] items-start">
 
             {/* LEFT COLUMN: IMAGES */}
-            <div className="space-y-6 min-w-0 w-full relative">
-              {pricing.hasDiscount && (
-                <div className="absolute top-4 left-0 sm:top-8 sm:left-8 hexagon-badge scale-[1.3] sm:scale-[2.2] origin-top-left z-20 shadow-md font-serif">
-                  <span className="text-[15px] leading-tight font-bold">{pricing.discountPercent}%</span>
-                  <span className="text-[11px] leading-tight font-bold tracking-wide">OFF</span>
-                </div>
-              )}
-              <div className="-mx-4 sm:mx-0 w-[calc(100%+2rem)] sm:w-full rounded-none sm:rounded-[2rem] bg-white shadow-sm flex items-center justify-center relative">
-                {selectedImage && selectedImage.trim() !== '' ? (
-                  <ProductImageZoom src={selectedImage} alt={product.name} />
-                ) : (
-                  <div className="h-[460px] flex items-center justify-center text-slate-500 overflow-hidden rounded-[2rem]">No image available</div>
-                )}
-              </div>
-
-              <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 scrollbar-hide snap-x">
-                {images.slice(0, 4).map((src, index) => {
-                  const isSelected = selectedImage === src;
-                  return (
-                    <button
-                      key={`${src}-${index}`}
-                      type="button"
-                      onClick={() => setSelectedImage(src)}
-                      className={`cursor-pointer overflow-hidden rounded-[16px] border-[3px] transition shrink-0 w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 bg-white snap-start ${isSelected ? 'border-[#AA7327]' : 'border-transparent hover:border-[#AA7327] shadow-sm'
-                        }`}
-                    >
-                      <img
-                        src={src}
-                        alt={`${product.name} view ${index + 1}`}
-                        className="w-full h-full object-cover rounded-[14px]"
-                        onError={(e) => { e.target.style.display = 'none'; }}
-                      />
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            <ProductGallery
+              images={images}
+              productName={product.name}
+              pricing={pricing}
+              selectedImage={selectedImage}
+              setSelectedImage={setSelectedImage}
+            />
 
             {/* RIGHT COLUMN: CONTENT */}
             <div className="relative h-fit min-w-0 w-full sm:pt-2">
@@ -898,21 +787,7 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-2 mb-8">
-                  <>
-                    <div className="flex flex-wrap items-baseline gap-3 sm:gap-4 mt-1">
-                      {pricing.hasDiscount && (
-                        <span className="text-[2.5rem] sm:text-[3rem] text-[#5C2E0E] line-through shrink-0 font-medium tracking-tight opacity-70 leading-none">
-                          ₹{(pricing.listPrice * quantity).toFixed(0)}
-                        </span>
-                      )}
-                      <p className="text-[2.5rem] sm:text-[3rem] font-medium tracking-tight text-[#141225] leading-none">
-                        ₹{(pricing.salePrice * quantity).toFixed(0)}
-                      </p>
-                    </div>
-                    <p className="text-sm text-[#141225] mt-1 font-medium">Inclusive of all taxes</p>
-                  </>
-                </div>
+                <ProductPricing pricing={pricing} quantity={quantity} />
               </div>
 
               <div className="space-y-6">
@@ -1207,36 +1082,10 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
         </div>
 
         {/* SHARE MODAL */}
-        {showSharePopup && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onClick={() => setShowSharePopup(false)}>
-            <div className="w-full max-w-md rounded-[2rem] bg-white p-6 md:p-8 shadow-2xl" onClick={e => e.stopPropagation()}>
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-[#B0611C] font-serif">Share this product</h3>
-                <button onClick={() => setShowSharePopup(false)} className="text-slate-400 hover:text-slate-900 p-2 rounded-full hover:bg-slate-100 transition-colors">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
-              </div>
-              <div className="flex gap-3 bg-slate-50 border border-slate-200 rounded-xl p-2 items-center">
-                <input
-                  type="text"
-                  readOnly
-                  value={window.location.href}
-                  className="flex-1 bg-transparent px-3 py-1 text-sm text-slate-600 outline-none truncate"
-                />
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(window.location.href);
-                    alert('Link copied to clipboard!');
-                    setShowSharePopup(false);
-                  }}
-                  className="admin-btn shrink-0"
-                >
-                  Copy Link
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <ShareModal
+          showSharePopup={showSharePopup}
+          setShowSharePopup={setShowSharePopup}
+        />
       </section>
 
       <div className="bg-[#FDF9F1]">
@@ -1316,7 +1165,7 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
       {/* Floating WhatsApp Enquiry Button */}
       {product && (
         <a
-          href={`https://wa.me/919789660115?text=${encodeURIComponent(`Hi, I'm inquiring about ${product.name}: ${window.location.href}`)}`}
+          href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER || '919789660115'}?text=${encodeURIComponent(`Hi, I'm inquiring about ${product.name}: ${typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}` : ''}`)}`}
           target="_blank"
           rel="noopener noreferrer"
           className="fixed bottom-28 right-4 md:bottom-6 md:right-6 z-[60] bg-[#25D366] text-white p-3 md:p-4 rounded-full shadow-lg hover:scale-110 transition-transform duration-300 flex items-center justify-center cursor-pointer"
