@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { cmsService } from '../../../api/cmsService';
 import { productV2API, categoryV2API } from '../../../api/catalogV2Service';
 import { Pencil, Trash2, Plus, GripVertical, Eye, EyeOff, Loader2, Upload, X, ChevronDown, SquarePen, Trash } from 'lucide-react';
+import { Reorder } from 'framer-motion';
 
 function LogoUploader({ value, onChange }) {
   const [uploading, setUploading] = useState(false);
@@ -53,7 +54,7 @@ function LogoUploader({ value, onChange }) {
 
 const emptyItem = { title: '', url: '', icon: '', textColor: '', backgroundColor: '', isDropdown: false, order: 0, status: true, position: 'left' };
 
-export default function NavbarAdmin() {
+export default function NavbarAdmin({ canCreate, canEdit, canDelete }) {
   const [config, setConfig] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -205,15 +206,16 @@ export default function NavbarAdmin() {
         </div>
       </div>
 
-      {/* Menu Items Section */}
       <div className="flex items-center justify-between mt-8">
         <h3 className="text-lg font-bold text-brand-dark">Menu Items</h3>
-        <button
-          onClick={() => { window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowItemForm(true); setEditIndex(null); setCurrentItem(emptyItem); }}
-          className="admin-btn flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" /> Add Item
-        </button>
+        {canCreate && (
+          <button
+            onClick={() => { window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowItemForm(true); setEditIndex(null); setCurrentItem(emptyItem); }}
+            className="admin-btn flex items-center gap-2"
+          >
+            <Plus size={15} /> Add Item
+          </button>
+        )}
       </div>
 
       {/* Add/Edit Item Form */}
@@ -357,7 +359,7 @@ export default function NavbarAdmin() {
                         const newSubItems = currentItem.subItems.filter((_, i) => i !== sIdx);
                         setCurrentItem({ ...currentItem, subItems: newSubItems });
                       }} className="text-red-500 hover:text-red-600 transition-colors">
-                        <Trash className="w-4 h-4" />
+                        <Trash2 size={15} />
                       </button>
                     </div>
                   ))}
@@ -381,69 +383,90 @@ export default function NavbarAdmin() {
         {(!config?.items || config.items.length === 0) ? (
           <div className="p-8 text-center text-brand-medium text-sm">No menu items yet. Add your first one!</div>
         ) : (
-          <table className="w-full text-sm">
+          <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-[#E6DFD4] bg-[#F7F3EE]">
-                <th className="px-4 py-3 text-left text-xs font-bold text-brand-medium uppercase tracking-wider w-10">Order</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-brand-medium uppercase tracking-wider">Title</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-brand-medium uppercase tracking-wider">URL</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-brand-medium uppercase tracking-wider">Style</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-brand-medium uppercase tracking-wider">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-brand-medium uppercase tracking-wider text-right">Actions</th>
+              <tr className="bg-[#FAF8F5] text-[#8A817C] text-[11px] uppercase tracking-widest text-center border-b border-[#E9DED3]">
+                <th className="py-4 px-2 font-bold whitespace-nowrap text-center text-gray-500 border-b border-[#E6DFD4] w-16">ORDER</th>
+                <th className="py-4 px-2 font-bold whitespace-nowrap text-center text-gray-500 border-b border-[#E6DFD4]">TITLE</th>
+                <th className="py-4 px-2 font-bold whitespace-nowrap text-center text-gray-500 border-b border-[#E6DFD4]">URL</th>
+                <th className="py-4 px-2 font-bold whitespace-nowrap text-center text-gray-500 border-b border-[#E6DFD4]">STYLE</th>
+                <th className="py-4 px-2 font-bold whitespace-nowrap text-center text-gray-500 border-b border-[#E6DFD4]">STATUS</th>
+                <th className="py-4 px-2 font-bold whitespace-nowrap text-center text-gray-500 border-b border-[#E6DFD4]">ACTIONS</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#E6DFD4]">
+            <Reorder.Group
+              as="tbody"
+              axis="y"
+              values={config.items}
+              onReorder={(newOrder) => setConfig({ ...config, items: newOrder })}
+              className="divide-y divide-[#E6DFD4]"
+            >
               {config.items.map((item, idx) => (
-                <tr key={idx} className="hover:bg-[#F7F3EE] transition-colors">
-                  <td className="px-4 py-3 text-brand-medium"><GripVertical className="w-4 h-4" /></td>
-                  <td className="px-4 py-3 font-medium text-brand-dark flex items-center gap-2">
-                    {item.title}
-                    {item.isDropdown && <span className="text-[10px] bg-brand-light px-2 py-0.5 rounded-full text-brand-dark">Dropdown</span>}
+                <Reorder.Item
+                  key={item._id || item.title + idx}
+                  value={item}
+                  as="tr"
+                  className="hover:bg-[#F7F3EE] transition-colors"
+                >
+                  <td className="p-4 text-center cursor-grab active:cursor-grabbing text-[#8A817C]"><GripVertical size={15} /></td>
+                  <td className="p-4 text-center font-bold text-sm text-[#141225]">
+                    <div className="flex items-center justify-center gap-2">
+                      {item.title}
+                      {item.isDropdown && <span className="text-[10px] bg-brand-light px-2 py-0.5 rounded-full text-brand-dark font-semibold">Dropdown</span>}
+                    </div>
                   </td>
-                  <td className="px-4 py-3 text-brand-medium font-mono text-xs">{item.url}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-1">
+                  <td className="p-4 text-center font-semibold text-xs text-[#6D625C]">{item.url}</td>
+                  <td className="p-4 text-center">
+                    <div className="flex gap-1 justify-center">
                       {item.textColor && <div className="w-4 h-4 rounded-full border border-gray-200" style={{ backgroundColor: item.textColor }} title="Text Color"></div>}
                       {item.backgroundColor && <div className="w-4 h-4 rounded-full border border-gray-200" style={{ backgroundColor: item.backgroundColor }} title="Background Color"></div>}
                     </div>
                   </td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${item.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+                  <td className="p-4 text-center">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${item.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
                       {item.status ? 'Active' : 'Inactive'}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button onClick={() => handleToggleItemStatus(idx)} title="Toggle status"
-                        className="text-green-600 hover:text-green-700 transition-colors">
-                        {item.status ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                      <button onClick={() => handleEditItem(item, idx)} title="Edit item"
-                        className="text-blue-600 hover:text-blue-700 transition-colors">
-                        <SquarePen className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => handleDeleteItem(idx)} title="Delete item"
-                        className="text-red-500 hover:text-red-600 transition-colors">
-                        <Trash className="w-4 h-4" />
-                      </button>
+                  <td className="p-4 text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      {canEdit && (
+                        <>
+                          <button onClick={() => handleToggleItemStatus(idx)} title="Toggle status"
+                            className="text-green-600 hover:text-green-700 transition-colors">
+                            {item.status ? <EyeOff size={15} /> : <Eye size={15} />}
+                          </button>
+                          <button onClick={() => handleEditItem(item, idx)} title="Edit item"
+                            className="text-blue-600 hover:text-blue-700 transition-colors">
+                            <SquarePen size={15} />
+                          </button>
+                        </>
+                      )}
+                      {canDelete && (
+                        <button onClick={() => handleDeleteItem(idx)} title="Delete item"
+                          className="text-red-500 hover:text-red-600 transition-colors">
+                          <Trash2 size={15} />
+                        </button>
+                      )}
                     </div>
                   </td>
-                </tr>
+                </Reorder.Item>
               ))}
-            </tbody>
+            </Reorder.Group>
           </table>
         )}
       </div>
 
-      <div className="flex justify-end pt-4 pb-8 border-t border-[#E6DFD4]">
-        <button
-          onClick={handleSaveAll}
-          disabled={saving}
-          className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity"
-        >
-          {saving ? 'Saving...' : 'Save All Changes'}
-        </button>
-      </div>
+      {canEdit && (
+        <div className="flex justify-end pt-4 pb-8 border-t border-[#E6DFD4]">
+          <button
+            onClick={handleSaveAll}
+            disabled={saving}
+            className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity"
+          >
+            {saving ? 'Saving...' : 'Save All Changes'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

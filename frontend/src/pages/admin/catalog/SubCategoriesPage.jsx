@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Settings, ToggleLeft, ToggleRight, List, Columns, ShieldAlert, Download, RefreshCw, SquarePen, Trash } from 'lucide-react';
 import { subCategoryV2API, categoryV2API, attributeV2API } from '../../../api/catalogV2Service';
 import { downloadExcelFile } from '../../../utils/exportUtils';
@@ -19,6 +20,8 @@ const Field = ({ label, required, children }) => (
 const inputCls = 'w-full px-4 py-2.5 text-sm border border-[#E6DFD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-colors';
 
 export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete = true }) => {
+    const location = useLocation();
+    const navigate = useNavigate();
     // Lists
     const [subCategories, setSubCategories] = useState([]);
     const [categories, setCategories] = useState([]);
@@ -64,6 +67,34 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
         fetchCategories();
         fetchAttributes();
     }, [search, categoryFilter, page]);
+
+    useEffect(() => {
+        const checkRoute = async () => {
+            const path = location.pathname;
+            if (path === '/admin/catalog/sub-categories/add') {
+                if (!isFormOpen || editId) {
+                    handleOpenForm(null, true);
+                }
+            } else if (path.startsWith('/admin/catalog/sub-categories/edit/')) {
+                const id = path.split('/').pop();
+                if (!isFormOpen || editId !== id) {
+                    try {
+                        const res = await subCategoryV2API.getById(id);
+                        if (res.success && res.subCategory) {
+                            handleOpenForm(res.subCategory, true);
+                        }
+                    } catch (err) {
+                        console.error("Failed to fetch subcategory for edit", err);
+                        navigate('/admin/catalog/sub-categories');
+                    }
+                }
+            } else {
+                setIsFormOpen(false);
+                setEditId(null);
+            }
+        };
+        checkRoute();
+    }, [location.pathname, categories]); // categories needed so it can pick default category in add mode
 
     const fetchSubCategories = async () => {
         setLoading(true);
@@ -123,7 +154,7 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
         }
     };
 
-    const handleOpenForm = (subCategory = null) => {
+    const handleOpenForm = (subCategory = null, isFromRoute = false) => {
         if (subCategory) {
             setEditId(subCategory._id);
             setFormData({
@@ -153,6 +184,13 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
         }
         setErrorMsg('');
         setIsFormOpen(true);
+        if (!isFromRoute) {
+            if (subCategory) {
+                navigate(`/admin/catalog/sub-categories/edit/${subCategory._id}`);
+            } else {
+                navigate('/admin/catalog/sub-categories/add');
+            }
+        }
     };
 
     const handleSave = async (e) => {
@@ -172,8 +210,8 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
             } else {
                 await subCategoryV2API.create(payload);
             }
-            setIsFormOpen(false);
             fetchSubCategories();
+            navigate('/admin/catalog/sub-categories');
         } catch (err) {
             setErrorMsg(err.message || 'Failed to save subcategory');
         } finally {
@@ -320,7 +358,7 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                         <Download size={16} /> Export Excel
                     </button>
                     {canCreate && (
-                        <button onClick={() => handleOpenForm()} className="admin-btn">
+                        <button onClick={() => navigate('/admin/catalog/sub-categories/add')} className="admin-btn">
                             <Plus size={16} /> Add Sub-Category
                         </button>
                     )}
@@ -375,7 +413,7 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                                     />
                                 </th>
                                 {['Sub-Category Name', 'Parent Category', 'Slug', 'Status', 'Actions'].map(h => (
-                                    <th key={h} className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">{h}</th>
+                                    <th key={h} className={`px-4 py-3.5 text-[11px] font-bold uppercase tracking-widest text-gray-500 whitespace-nowrap ${['Sub-Category Name', 'Parent Category', 'Slug', 'Status', 'Actions'].includes(h) ? 'text-center' : 'text-left'}`}>{h}</th>
                                 ))}
                             </tr>
                         </thead>
@@ -409,16 +447,18 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                                             />
                                         </td>
                                         <td className="px-4 py-3.5">
-                                            <div className="flex items-center gap-2.5">
-                                                <div className="w-8 h-8 rounded-lg bg-[#F8F4EC] border border-[#E6DFD4] flex items-center justify-center text-base">🗂️</div>
-                                                <span className="font-semibold text-gray-800">{sub.name}</span>
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 rounded-lg bg-[#F8F4EC] border border-[#E6DFD4] flex items-center justify-center text-xl overflow-hidden flex-shrink-0">🗂️</div>
+                                                <span className="font-bold text-sm text-gray-800">{sub.name}</span>
                                             </div>
                                         </td>
-                                        <td className="px-4 py-3.5 font-semibold text-[#8B5E3C]">{sub.category?.name || 'Unknown'}</td>
-                                        <td className="px-4 py-3.5">
-                                            <code className="text-xs bg-[#F8F4EC] text-[#8B5E3C] px-2 py-1 rounded-md font-mono">{sub.slug}</code>
+                                        <td className="px-4 py-3.5 font-bold text-sm text-[#8B5E3C]">{sub.category?.name || 'Unknown'}</td>
+                                        <td className="px-4 py-3.5 text-center">
+                                            <span className="inline-block whitespace-nowrap bg-[#F8F4EC] text-[#8B5E3C] text-[11px] uppercase tracking-wider font-bold px-3 py-1.5 rounded-lg border border-[#E6DFD4] shadow-sm">
+                                                {sub.slug}
+                                            </span>
                                         </td>
-                                        <td className="px-4 py-3.5">
+                                        <td className="px-4 py-3.5 text-center">
                                             {canEdit ? (
                                                 <button onClick={() => handleToggleStatus(sub)} title="Click to toggle">
                                                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${sub.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
@@ -434,23 +474,23 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                                             )}
                                         </td>
                                         <td className="px-4 py-3.5">
-                                            <div className="flex gap-2 justify-end">
+                                            <div className="flex items-center justify-center gap-2">
                                                 {canEdit && (
                                                     <button
                                                         onClick={() => handleOpenMapping(sub)}
                                                         className="p-1.5 rounded-lg text-amber-700 hover:bg-amber-50 transition-colors"
                                                         title="Map Fields/Attributes"
                                                     >
-                                                        <Settings size={16} />
+                                                        <Settings size={15} />
                                                     </button>
                                                 )}
                                                 {canEdit && (
                                                     <button
-                                                        onClick={() => handleOpenForm(sub)}
+                                                        onClick={() => navigate(`/admin/catalog/sub-categories/edit/${sub._id}`)}
                                                         className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
                                                         title="Edit"
                                                     >
-                                                        <SquarePen size={16} />
+                                                        <SquarePen size={15} />
                                                     </button>
                                                 )}
                                                 {canDelete && (
@@ -459,7 +499,7 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                                                         className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
                                                         title="Delete"
                                                     >
-                                                        <Trash size={16} />
+                                                        <Trash2 size={15} />
                                                     </button>
                                                 )}
                                             </div>
@@ -490,7 +530,7 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                             <div>
                                 <h2 className="text-3xl font-serif font-bold text-[#141225] tracking-tight">{editId ? 'Edit Sub-Category' : 'Create Sub-Category'}</h2>
                             </div>
-                            <button onClick={() => setIsFormOpen(false)} className="p-2 rounded-full hover:bg-[#E6DFD4] text-gray-400 hover:text-gray-700 transition-colors">
+                            <button onClick={() => navigate('/admin/catalog/sub-categories')} className="p-2 text-gray-400 hover:text-red-700 transition-colors">
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
                         </div>
@@ -563,7 +603,7 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
 
                             {/* Form Actions */}
                             <div className="flex items-center justify-center gap-4 pt-6 pb-2">
-                                <button type="button" onClick={() => setIsFormOpen(false)} className="admin-cancel-btn">CANCEL</button>
+                                <button type="button" onClick={() => navigate('/admin/catalog/sub-categories')} className="admin-cancel-btn">CANCEL</button>
                                 <button type="submit" disabled={formLoading} className="flex items-center gap-2 bg-[#8B5E3C] hover:bg-[#7a5234] disabled:opacity-60 text-white px-8 py-3 rounded-full text-[15px] font-bold transition-colors shadow-sm">
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                                     {formLoading ? 'Saving...' : editId ? 'Save Changes' : 'Create Sub-Category'}
@@ -659,7 +699,7 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                         </div>
 
                         <div className="flex justify-end gap-3 p-6 border-t border-gray-100 bg-gray-50">
-                            <Button variant="secondary" onClick={() => setIsMapOpen(false)}>
+                            <Button variant="secondary" onClick={() => navigate('/admin/catalog/sub-categories')}>
                                 Cancel
                             </Button>
                             <Button variant="primary" onClick={handleSaveMapping} loading={mapLoading}>

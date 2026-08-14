@@ -55,7 +55,7 @@ const Avatar = ({ name = "", size = 36 }) => {
   const colors = ["#6366f1", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#3b82f6", "#ef4444", "#06b6d4"];
   const bg = colors[(name.charCodeAt(0) || 0) % colors.length];
   return (
-    <div className="rounded-xl flex items-center justify-center text-white font-bold shrink-0"
+    <div className="rounded-full flex items-center justify-center text-white font-bold shrink-0"
       style={{ width: size, height: size, background: bg, fontSize: size * 0.38 }}>
       {name[0]?.toUpperCase() || "?"}
     </div>
@@ -542,7 +542,7 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
                     />
                   </th>
                   {["Customer", "Product", "Rating", "Review", "Date", "Status", "Actions"].map(h => (
-                    <th key={h} className={`px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap ${h === 'Actions' ? 'text-right pr-8' : 'text-left'}`}>{h}</th>
+                    <th key={h} className={`px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap ${h === 'Actions' ? 'text-center' : 'text-left'}`}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -572,7 +572,7 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
                   const p = r.product || {};
                   return (
                     <tr key={r._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
-                      <td className="px-4 py-3.5">
+                      <td className="px-4 py-6">
                         <input
                           type="checkbox"
                           checked={selectedIds.includes(r._id)}
@@ -580,7 +580,7 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
                           className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
                         />
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="px-5 py-6">
                         <div className="flex items-center gap-3">
                           <Avatar name={u.name || "?"} size={36} />
                           <div>
@@ -589,21 +589,21 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
                           </div>
                         </div>
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="px-5 py-6">
                         <div className="flex items-center gap-2.5">
                           {p.images?.[0] ? (
-                            <img src={p.images[0]} alt={p.name} className="w-9 h-9 rounded-xl object-cover border border-gray-100 shrink-0" />
+                            <img src={p.images[0]} alt={p.name} className="w-12 h-12 rounded-lg object-cover border border-[#E6DFD4] shrink-0" />
                           ) : (
-                            <div className="w-9 h-9 bg-gray-100 rounded-xl flex items-center justify-center shrink-0">
-                              <Package size={14} className="text-gray-300" />
+                            <div className="w-12 h-12 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center shrink-0">
+                              <Package size={14} className="text-[#8B5E3C]" />
                             </div>
                           )}
-                          <p className="text-sm font-semibold text-gray-700 max-w-[130px] truncate">{p.name || "—"}</p>
+                          <p className="text-sm font-bold text-gray-700 max-w-[130px] truncate">{p.name || "—"}</p>
                         </div>
                       </td>
-                      <td className="px-5 py-4 whitespace-nowrap"><StarRating rating={r.rating} /></td>
-                      <td className="px-5 py-4 max-w-[200px]">
-                        {r.title && <p className="text-xs font-bold text-gray-700 truncate">{r.title}</p>}
+                      <td className="px-5 py-6 whitespace-nowrap"><StarRating rating={r.rating} /></td>
+                      <td className="px-5 py-6 max-w-[200px]">
+                        {r.title && <p className="text-xs font-semibold text-gray-900 truncate mb-0.5">{r.title}</p>}
                         <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
                           {r.description || <span className="italic">No text</span>}
                         </p>
@@ -613,9 +613,9 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
                           </span>
                         )}
                       </td>
-                      <td className="px-5 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                          <Calendar size={11} />
+                      <td className="px-5 py-6 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                          <Calendar size={14} />
                           {new Date(r.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
                         </div>
                         {r.isVerifiedPurchase && (
@@ -624,29 +624,29 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
                           </span>
                         )}
                       </td>
-                      <td className="px-5 py-4 whitespace-nowrap"><StatusBadge status={r.status} /></td>
-                      <td className="px-5 py-4 whitespace-nowrap text-right">
-                        <div className="flex items-center justify-end gap-1.5 pr-4">
+                      <td className="px-5 py-6 whitespace-nowrap"><StatusBadge status={r.status} /></td>
+                      <td className="px-5 py-6 whitespace-nowrap text-center">
+                        <div className="flex items-center justify-center gap-2">
                           <button onClick={() => setDetail(r)} title="View"
                             className="p-1.5 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors">
-                            <Eye size={14} />
+                            <Eye size={15} />
                           </button>
                           {canEdit && r.status !== "approved" && (
                             <button onClick={() => handleStatusChange(r._id, "approved")} title="Approve"
                               className="p-1.5 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors">
-                              <Check size={14} />
+                              <Check size={15} />
                             </button>
                           )}
                           {canEdit && r.status !== "rejected" && (
                             <button onClick={() => handleStatusChange(r._id, "rejected")} title="Reject"
                               className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors">
-                              <X size={14} />
+                              <X size={15} />
                             </button>
                           )}
                           {canDelete && (
                             <button onClick={() => setConfirm({ id: r._id })} title="Delete"
                               className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                              <Trash size={14} />
+                              <Trash2 size={15} />
                             </button>
                           )}
                         </div>

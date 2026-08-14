@@ -237,20 +237,20 @@ export default function BulkOrderFieldsAdminPage({ canCreate = true, canEdit = t
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-[#FAF4EF] text-[#8A817C] text-xs uppercase tracking-wider">
-                <th className="p-4 font-bold border-b border-[#E6DFD4] w-10">
+              <tr className="bg-[#FAF4EF] text-[#8A817C] text-[11px] uppercase tracking-widest text-center">
+                <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] w-10 text-center">
                   <input
                     type="checkbox"
                     checked={allChecked}
                     onChange={toggleAll}
-                    className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer"
+                    className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer mx-auto block"
                   />
                 </th>
-                <th className="p-4 font-bold border-b border-[#E6DFD4]">Label</th>
-                <th className="p-4 font-bold border-b border-[#E6DFD4]">Type</th>
-                <th className="p-4 font-bold border-b border-[#E6DFD4]">Required</th>
-                <th className="p-4 font-bold border-b border-[#E6DFD4]">Status</th>
-                <th className="p-4 font-bold border-b border-[#E6DFD4] text-right">Actions</th>
+                <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] text-center whitespace-nowrap">Label</th>
+                <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] text-center whitespace-nowrap">Type</th>
+                <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] text-center whitespace-nowrap">Required</th>
+                <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] text-center whitespace-nowrap">Status</th>
+                <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] text-center whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E6DFD4]">
@@ -263,7 +263,7 @@ export default function BulkOrderFieldsAdminPage({ canCreate = true, canEdit = t
               ) : (
                 paginatedFields.map(field => (
                   <tr key={field._id} className="hover:bg-[#FAF4EF]/30 transition-colors">
-                    <td className="p-4">
+                    <td className="p-4 text-left">
                       <input
                         type="checkbox"
                         checked={selectedIds.includes(field._id)}
@@ -271,8 +271,10 @@ export default function BulkOrderFieldsAdminPage({ canCreate = true, canEdit = t
                         className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer"
                       />
                     </td>
-                    <td className="p-4 font-medium text-[#4A3326]">{field.label}</td>
-                    <td className="p-4">
+                    <td className="p-4 text-left">
+                      <p className="text-sm font-bold text-[#141225]">{field.label}</p>
+                    </td>
+                    <td className="p-4 text-left">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#EBF3F8] text-[#1D4E89] uppercase tracking-wide">
                         {field.type}
                       </span>
@@ -282,37 +284,39 @@ export default function BulkOrderFieldsAdminPage({ canCreate = true, canEdit = t
                         </div>
                       )}
                     </td>
-                    <td className="p-4">
+                    <td className="p-4 text-left">
                       {field.isRequired ? (
                         <span className="flex items-center gap-1 text-[#2E7D32] text-xs font-bold"><Check className="w-3.5 h-3.5" /> Yes</span>
                       ) : (
                         <span className="flex items-center gap-1 text-[#8A817C] text-xs"><X className="w-3.5 h-3.5" /> No</span>
                       )}
                     </td>
-                    <td className="p-4">
+                    <td className="p-4 text-left">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${field.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
                         {field.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </td>
-                    <td className="p-4 flex justify-end gap-2">
-                      {canEdit && (
-                        <button
-                          onClick={() => handleOpenModal(field)}
-                          className="text-blue-600 hover:text-blue-700 transition-colors"
-                          title="Edit"
-                        >
-                          <SquarePen className="w-4 h-4" />
-                        </button>
-                      )}
-                      {canDelete && (
-                        <button
-                          onClick={() => handleDelete(field._id)}
-                          className="text-red-500 hover:text-red-600 transition-colors"
-                          title="Delete"
-                        >
-                          <Trash className="w-4 h-4" />
-                        </button>
-                      )}
+                    <td className="p-4 text-center">
+                      <div className="flex items-center justify-center gap-3">
+                        {canEdit && (
+                          <button
+                            onClick={() => handleOpenModal(field)}
+                            className="text-blue-600 hover:text-blue-700 transition-colors flex items-center justify-center"
+                            title="Edit"
+                          >
+                            <SquarePen className="w-[15px] h-[15px]" />
+                          </button>
+                        )}
+                        {canDelete && (
+                          <button
+                            onClick={() => handleDelete(field._id)}
+                            className="text-red-500 hover:text-red-600 transition-colors flex items-center justify-center"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-[15px] h-[15px]" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Settings, ToggleLeft, ToggleRight, List, Columns, ShieldAlert, Download, RefreshCw, Sparkles, Layers, Globe, SquarePen, Trash, X, GripVertical, Image as ImageIcon } from 'lucide-react';
 import Pagination from '../../../components/common/Pagination';
 import { productV2API, categoryV2API, subCategoryV2API } from '../../../api/catalogV2Service';
@@ -12,17 +13,19 @@ import DynamicFormBuilder from '../../../components/admin/DynamicFormBuilder';
 import VariantManagement from '../../../components/admin/VariantManagement';
 
 const Field = ({ label, required, children }) => (
-  <div>
-    <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">
-      {label} {required && <span className="text-red-500 text-lg ml-1">*</span>}
-    </label>
-    {children}
-  </div>
+    <div>
+        <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">
+            {label} {required && <span className="text-red-500 text-lg ml-1">*</span>}
+        </label>
+        {children}
+    </div>
 );
 
 const inputCls = 'w-full px-4 py-2.5 text-sm border border-[#E6DFD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-colors';
 
 export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = true, isAddMode = false, onCancelAdd = null }) => {
+    const location = useLocation();
+    const navigate = useNavigate();
     // List/Table state
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -36,66 +39,6 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
 
     // Form/Modal state
     const [isFormOpen, setIsFormOpen] = useState(isAddMode);
-
-    useEffect(() => {
-        if (isAddMode) {
-            setIsFormOpen(true);
-            setEditId(null);
-            setFormData({
-                name: '',
-                description: '',
-                category: '',
-                subCategory: '',
-                price: 0,
-                stock: 0,
-                sku: '',
-                images: [],
-                isActive: true,
-                displayOrder: 1,
-                seoTitle: '',
-                seoDescription: '',
-                attributeValues: {},
-                additionalInfo: [],
-                variants: [],
-            });
-        }
-    }, [isAddMode]);
-
-    const handleCloseForm = () => {
-        window.history.pushState({}, '', '/admin/products');
-        setIsFormOpen(false);
-        setEditId(null);
-        setFormData({
-            name: '',
-            description: '',
-            category: categories[0]?._id || '',
-            subCategory: '',
-            price: 0,
-            compareAtPrice: 0,
-            sku: '',
-            barcode: '',
-            shortDescription: '',
-            costPrice: 0,
-            taxPercent: 0,
-            hsnCode: '',
-            shippingWeight: 0,
-            shippingClass: '',
-            dimensions: { length: 0, width: 0, height: 0 },
-            lowStockAlert: 5,
-            isActive: true,
-            seoTitle: '',
-            seoDescription: '',
-            metaKeywords: '',
-            tags: '',
-            additionalInfo: [],
-            images: [],
-            variants: [],
-            attributeValues: {},
-        });
-        setFormErrors({});
-        setMappedAttributes([]);
-        if (onCancelAdd) onCancelAdd();
-    };
 
     const [editId, setEditId] = useState(null);
     const [formData, setFormData] = useState({
@@ -141,6 +84,71 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [confirmAction, setConfirmAction] = useState(null);
     const [confirmMessage, setConfirmMessage] = useState('');
+
+    useEffect(() => {
+        const checkRoute = async () => {
+            const path = location.pathname;
+            if (path === '/admin/products/add') {
+                if (!isFormOpen || editId) {
+                    handleOpenForm(null, true);
+                }
+            } else if (path.startsWith('/admin/products/edit/')) {
+                const id = path.split('/').pop();
+                if (!isFormOpen || editId !== id) {
+                    try {
+                        const res = await productV2API.getById(id);
+                        if (res.success && res.product) {
+                            handleOpenForm(res.product, true);
+                        }
+                    } catch (err) {
+                        console.error("Failed to fetch product for edit", err);
+                        navigate('/admin/products');
+                        fetchProducts();
+                    }
+                }
+            } else {
+                setIsFormOpen(false);
+                setEditId(null);
+            }
+        };
+        checkRoute();
+    }, [location.pathname, categories]);
+
+    const handleCloseForm = () => {
+        navigate('/admin/products');
+        setIsFormOpen(false);
+        setEditId(null);
+        setFormData({
+            name: '',
+            description: '',
+            category: categories[0]?._id || '',
+            subCategory: '',
+            price: 0,
+            compareAtPrice: 0,
+            sku: '',
+            barcode: '',
+            shortDescription: '',
+            costPrice: 0,
+            taxPercent: 0,
+            hsnCode: '',
+            shippingWeight: 0,
+            shippingClass: '',
+            dimensions: { length: 0, width: 0, height: 0 },
+            lowStockAlert: 5,
+            isActive: true,
+            seoTitle: '',
+            seoDescription: '',
+            metaKeywords: '',
+            tags: '',
+            additionalInfo: [],
+            images: [],
+            variants: [],
+            attributeValues: {},
+        });
+        setFormErrors({});
+        setMappedAttributes([]);
+        if (onCancelAdd) onCancelAdd();
+    };
 
     useEffect(() => {
         fetchProducts();
@@ -271,10 +279,9 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
         }
     };
 
-    const handleOpenForm = async (product = null) => {
+    const handleOpenForm = async (product = null, isFromRoute = false) => {
         setMappedAttributes([]);
         if (product) {
-            window.history.pushState({}, '', '/admin/products/edit');
             setEditId(product._id);
             setFormLoading(true);
             setIsFormOpen(true);
@@ -344,8 +351,11 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                 setFormLoading(false);
             }
         } else {
-            window.history.pushState({}, '', '/admin/products/add');
             setEditId(null);
+            setIsFormOpen(true);
+            if (!isFromRoute) {
+                navigate('/admin/products/add');
+            }
             setFormData({
                 name: '',
                 description: '',
@@ -578,7 +588,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                         <Download size={16} /> Export Excel
                     </button>
                     {canCreate && (
-                        <button onClick={() => handleOpenForm()} className="admin-btn">
+                        <button onClick={() => navigate('/admin/products/add')} className="admin-btn shadow-sm">
                             <Plus size={16} /> Add Product
                         </button>
                     )}
@@ -680,7 +690,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                     />
                                 </th>
                                 {['Product', 'Category', 'Price', 'Total Stock', 'Status', 'Actions'].map(h => (
-                                    <th key={h} className={`px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap ${h === 'Actions' ? 'text-right pr-8' : 'text-left'}`}>{h}</th>
+                                    <th key={h} className="px-4 py-3.5 text-[11px] font-bold uppercase tracking-widest text-gray-500 whitespace-nowrap text-center">{h}</th>
                                 ))}
                             </tr>
                         </thead>
@@ -725,20 +735,20 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                                         </div>
                                                     )}
                                                     <div>
-                                                        <p className="font-semibold text-gray-800">{prod.name}</p>
-                                                        <p className="text-xs text-gray-400 font-mono mt-0.5">{prod.sku || 'No SKU'}</p>
+                                                        <p className="font-bold text-sm text-gray-800">{prod.name}</p>
+                                                        <p className="font-bold text-sm text-gray-400 font-mono mt-0.5">{prod.sku || 'No SKU'}</p>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-4 py-3.5 font-semibold text-[#8B5E3C]">{prod.category?.name || 'Unknown'}</td>
-                                            <td className="px-4 py-3.5 font-semibold text-amber-900">₹{(prod.price || 0).toFixed(2)}</td>
-                                            <td className="px-4 py-3.5">
+                                            <td className="px-4 py-3.5 text-xs font-semibold text-[#8B5E3C] text-center">{prod.category?.name || 'Unknown'}</td>
+                                            <td className="px-4 py-3.5 text-xs font-semibold text-amber-900 text-center">₹{(prod.price || 0).toFixed(2)}</td>
+                                            <td className="px-4 py-3.5 text-center">
                                                 <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${prod.isLowStock ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
                                                     }`}>
                                                     {prod.totalStock} {prod.isLowStock ? 'low' : 'in stock'}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-3.5">
+                                            <td className="px-4 py-3.5 text-center">
                                                 {canEdit ? (
                                                     <button onClick={() => handleToggleStatus(prod)} title="Click to toggle">
                                                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${prod.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
@@ -755,15 +765,11 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                                     </span>
                                                 )}
                                             </td>
-                                            <td className="px-4 py-3.5 pr-8">
-                                                <div className="flex gap-2 justify-end">
+                                            <td className="px-4 py-3.5">
+                                                <div className="flex gap-2 justify-center">
                                                     {canEdit && (
-                                                        <button
-                                                            onClick={() => handleOpenForm(prod)}
-                                                            className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
-                                                            title="Edit"
-                                                        >
-                                                            <SquarePen size={16} />
+                                                        <button onClick={() => navigate(`/admin/products/edit/${prod._id}`)} className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors" title="Edit">
+                                                            <SquarePen size={15} />
                                                         </button>
                                                     )}
                                                     {canDelete && (
@@ -772,7 +778,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                                             className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
                                                             title="Delete"
                                                         >
-                                                            <Trash size={16} />
+                                                            <Trash2 size={15} />
                                                         </button>
                                                     )}
                                                 </div>
@@ -804,7 +810,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                             <div>
                                 <h2 className="text-3xl font-serif font-bold text-[#141225] tracking-tight">{editId ? 'Edit Product Catalog Item' : 'New Product Catalog Item'}</h2>
                             </div>
-                            <button onClick={handleCloseForm} className="p-2 rounded-full hover:bg-[#E6DFD4] text-gray-400 hover:text-gray-700 transition-colors">
+                            <button onClick={handleCloseForm} className="p-2 text-gray-400 hover:text-red-700 transition-colors">
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
                         </div>

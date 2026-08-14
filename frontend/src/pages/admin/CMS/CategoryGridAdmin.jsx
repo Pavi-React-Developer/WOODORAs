@@ -89,7 +89,7 @@ function ProductPicker({ selected, onChange, productsList, selectedCategory }) {
   );
 }
 
-export default function CategoryGridAdmin() {
+export default function CategoryGridAdmin({ canCreate, canEdit, canDelete }) {
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
@@ -223,9 +223,11 @@ export default function CategoryGridAdmin() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-bold text-brand-dark">Category Grid Sections</h3>
-        <button onClick={() => { window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowForm(true); setEditId(null); setForm(emptyForm); }} className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60">
-          <Plus className="w-4 h-4" /> Add Category Grid
-        </button>
+        {canCreate && (
+          <button onClick={() => { window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowForm(true); setEditId(null); setForm(emptyForm); }} className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60">
+            <Plus size={15} /> Add Category Grid
+          </button>
+        )}
       </div>
 
       {showForm && (
@@ -332,15 +334,21 @@ export default function CategoryGridAdmin() {
             </div>
             <div className="flex items-center gap-3 w-full sm:w-auto justify-end mt-2 sm:mt-0">
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${item.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>{item.status ? 'Active' : 'Off'}</span>
-              <button onClick={() => handleToggle(item)} className="text-green-600 hover:text-green-700 transition-colors">
-                {item.status ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-              <button onClick={() => handleEdit(item)} className="text-blue-600 hover:text-blue-700 transition-colors">
-                <SquarePen className="w-4 h-4" />
-              </button>
-              <button onClick={() => handleDelete(item._id)} className="text-red-500 hover:text-red-600 transition-colors">
-                <Trash className="w-4 h-4" />
-              </button>
+              {canEdit && (
+                <>
+                  <button onClick={() => handleToggle(item)} className="text-green-600 hover:text-green-700 transition-colors">
+                    {item.status ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+                  <button onClick={() => handleEdit(item)} className="text-blue-600 hover:text-blue-700 transition-colors">
+                    <SquarePen size={15} />
+                  </button>
+                </>
+              )}
+              {canDelete && (
+                <button onClick={() => handleDelete(item._id)} className="text-red-500 hover:text-red-600 transition-colors">
+                  <Trash2 size={15} />
+                </button>
+              )}
             </div>
           </div>
         ))}

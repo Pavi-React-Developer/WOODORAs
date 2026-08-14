@@ -96,9 +96,23 @@ export const adminService = {
     );
   },
 
-  getDashboardStats: async () => {
+  updateRefundStatus: async (id, status) => {
     return withAuthRetry(
-      (config) => axios.get(`${API_URL}/orders/dashboard-stats`, config),
+      (config) => axios.put(`${API_URL}/refunds/${id}/status`, { status }, config),
+      'Failed to update refund status'
+    );
+  },
+
+  deleteRefund: async (id) => {
+    return withAuthRetry(
+      (config) => axios.delete(`${API_URL}/refunds/${id}`, config),
+      'Failed to delete refund'
+    );
+  },
+
+  getDashboardStats: async (days) => {
+    return withAuthRetry(
+      (config) => axios.get(`${API_URL}/orders/dashboard-stats`, { ...config, params: { days } }),
       'Failed to fetch dashboard stats'
     );
   },

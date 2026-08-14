@@ -189,21 +189,21 @@ export default function CustomizeList() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-[#FAF4EF] text-[#8A817C] text-xs uppercase tracking-wider">
-                <th className="p-4 font-bold border-b border-[#E6DFD4] w-10">
+              <tr className="bg-[#FAF4EF] text-[#8A817C] text-[11px] uppercase tracking-widest text-center">
+                <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] w-10 text-center">
                   <input
                     type="checkbox"
                     checked={allChecked}
                     onChange={toggleAll}
-                    className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer"
+                    className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer mx-auto block"
                   />
                 </th>
-                <th className="p-4 font-bold border-b border-[#E6DFD4]">Date</th>
-                <th className="p-4 font-bold border-b border-[#E6DFD4]">Customer</th>
-                <th className="p-4 font-bold border-b border-[#E6DFD4]">Image</th>
-                <th className="p-4 font-bold border-b border-[#E6DFD4]">Product Name</th>
-                <th className="p-4 font-bold border-b border-[#E6DFD4]">Status</th>
-                <th className="p-4 font-bold border-b border-[#E6DFD4] text-right">Actions</th>
+                <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] text-center">Date</th>
+                <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] text-center">Customer</th>
+                <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] text-center">Image</th>
+                <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] text-center">Product Name</th>
+                <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] text-center">Status</th>
+                <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E6DFD4]">
@@ -213,33 +213,33 @@ export default function CustomizeList() {
                 </tr>
               ) : paginatedRequests.map((req, idx) => (
                 <tr key={req._id} className={`hover:bg-[#FAF4EF]/30 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
-                  <td className="p-4">
+                  <td className="p-4 text-center">
                     <input
                       type="checkbox"
                       checked={selectedIds.includes(req._id)}
                       onChange={() => toggleOne(req._id)}
-                      className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer"
+                      className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer mx-auto block"
                     />
                   </td>
-                  <td className="p-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="p-4 text-left whitespace-nowrap text-sm font-bold text-gray-900">
                     {new Date(req.createdAt).toLocaleDateString()}
                   </td>
-                  <td className="p-4">
-                    <div className="font-medium text-[#4A3326]">{req.customerInfo.fullName}</div>
-                    <div className="text-xs text-gray-400">{req.customerInfo.email}</div>
+                  <td className="p-4 text-left">
+                    <div className="text-xs font-semibold text-gray-900">{req.customerInfo.fullName}</div>
+                    <div className="text-[11px] text-gray-500">{req.customerInfo.email}</div>
                   </td>
-                  <td className="p-4">
+                  <td className="p-4 text-center">
                     {req.images && req.images.length > 0 ? (
-                      <div className="flex items-center gap-1 text-[#8B5E3C]">
-                        <ImageIcon className="w-4 h-4" />
+                      <div className="flex items-center justify-center gap-1 text-[#8B5E3C]">
+                        <ImageIcon size={15} />
                         <span className="text-xs font-medium">{req.images.length}</span>
                       </div>
                     ) : (
                       <span className="text-gray-400 text-xs">None</span>
                     )}
                   </td>
-                  <td className="p-4 text-sm text-gray-700">{getProductName(req.productDetails)}</td>
-                  <td className="p-4">
+                  <td className="p-4 text-left text-xs font-semibold text-gray-900">{getProductName(req.productDetails)}</td>
+                  <td className="p-4 text-center">
                     <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${req.status === 'Approved' ? 'bg-green-100 text-green-800' :
                         req.status === 'Rejected' ? 'bg-red-100 text-red-800' :
                           'bg-yellow-100 text-yellow-800'
@@ -247,14 +247,14 @@ export default function CustomizeList() {
                       {req.status}
                     </span>
                   </td>
-                  <td className="p-4">
-                    <div className="flex items-center justify-end gap-2">
+                  <td className="p-4 text-center">
+                    <div className="flex items-center justify-center gap-3">
                       <button
                         onClick={() => setSelectedRequest(req)}
                         className="text-green-600 hover:text-green-700 transition-colors"
                         title="View Details"
                       >
-                        <Eye className="w-5 h-5" />
+                        <Eye size={15} />
                       </button>
                       {req.images && req.images.length > 0 && (
                         <button
@@ -262,7 +262,7 @@ export default function CustomizeList() {
                           className="p-1.5 text-[#8B5E3C] hover:bg-[#F8F4EC] rounded-lg transition-colors"
                           title="Export Images"
                         >
-                          <Download className="w-5 h-5" />
+                          <Download size={15} />
                         </button>
                       )}
                       {req.status === 'Pending' && (
@@ -272,14 +272,14 @@ export default function CustomizeList() {
                             className="text-green-600 hover:text-green-700 transition-colors"
                             title="Approve"
                           >
-                            <Check className="w-5 h-5" />
+                            <Check size={15} />
                           </button>
                           <button
                             onClick={() => openRejectModal(req)}
                             className="text-red-500 hover:text-red-600 transition-colors"
                             title="Reject"
                           >
-                            <X className="w-5 h-5" />
+                            <X size={15} />
                           </button>
                         </>
                       )}

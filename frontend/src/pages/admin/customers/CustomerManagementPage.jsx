@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { adminService } from '../../../api/adminService';
 import { downloadExcelFile } from '../../../utils/exportUtils';
 import toast from 'react-hot-toast';
@@ -151,9 +152,9 @@ function CustomerDetailPage({ customer, onBack }) {
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
-                  <tr className="bg-[#FAF8F5] border-b border-[#E9DED3]">
+                  <tr className="bg-[#FAF8F5] text-[#8A817C] text-[11px] uppercase tracking-widest text-center border-b border-[#E9DED3]">
                     {['Order ID', 'Date', 'Products', 'Status', 'Payment', 'Amount'].map(h => (
-                      <th key={h} className="px-5 py-3 text-[10px] font-bold text-[#6D625C] uppercase tracking-wider whitespace-nowrap">{h}</th>
+                      <th key={h} className="py-4 px-2 font-bold whitespace-nowrap text-center text-gray-500 border-b border-[#E6DFD4]">{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -161,49 +162,49 @@ function CustomerDetailPage({ customer, onBack }) {
                   {paginatedOrders.map(order => (
                     <tr key={order._id} className="hover:bg-[#FAF8F5] transition-colors">
                       {/* Order ID */}
-                      <td className="px-5 py-4 whitespace-nowrap">
-                        <p className="text-xs font-bold text-[#141225]">#{(order.orderId || String(order._id).slice(-8)).toUpperCase()}</p>
+                      <td className="p-4 text-center whitespace-nowrap">
+                        <p className="text-sm font-bold text-[#141225]">#{(order.orderId || String(order._id).slice(-8)).toUpperCase()}</p>
                       </td>
                       {/* Date */}
-                      <td className="px-5 py-4 whitespace-nowrap text-xs text-[#6D625C]">
+                      <td className="p-4 text-center whitespace-nowrap text-sm text-[#6D625C]">
                         {fmtDate(order.createdAt)}
                       </td>
                       {/* Products */}
-                      <td className="px-5 py-4">
-                        <div className="space-y-1.5">
+                      <td className="p-4 text-center">
+                        <div className="space-y-1.5 inline-block text-left">
                           {(order.orderItems || []).slice(0, 2).map((item, i) => (
-                            <div key={i} className="flex items-center gap-2">
+                            <div key={i} className="flex items-center gap-3">
                               {item.image ? (
-                                <img src={item.image} alt={item.name} className="w-8 h-8 rounded-lg object-cover border border-[#E9DED3] shrink-0" />
+                                <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded-lg border border-[#E6DFD4] shrink-0" />
                               ) : (
-                                <div className="w-8 h-8 rounded-lg bg-[#F2EBE4] flex items-center justify-center shrink-0">
-                                  <Package size={11} className="text-[#9A6031]" />
+                                <div className="w-12 h-12 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center text-[#8B5E3C] font-bold text-xs shrink-0">
+                                  TOY
                                 </div>
                               )}
                               <div>
-                                <p className="text-xs text-[#141225] leading-tight max-w-[160px] truncate">{item.name}</p>
-                                <p className="text-[10px] text-[#8A817C]">Qty: {item.qty}</p>
+                                <p className="text-sm font-bold text-[#141225] leading-tight max-w-[160px] truncate">{item.name}</p>
+                                <p className="text-[10px] font-semibold text-[#8A817C] mt-1">Qty: {item.qty}</p>
                               </div>
                             </div>
                           ))}
                           {(order.orderItems || []).length > 2 && (
-                            <p className="text-[10px] text-[#8A817C] pl-10">+{order.orderItems.length - 2} more</p>
+                            <p className="text-[10px] text-[#8A817C] pl-[60px]">+{order.orderItems.length - 2} more</p>
                           )}
                         </div>
                       </td>
                       {/* Status */}
-                      <td className="px-5 py-4 whitespace-nowrap">
+                      <td className="p-4 text-center whitespace-nowrap">
                         <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-600'}`}>
                           {order.status || 'Pending'}
                         </span>
                       </td>
                       {/* Payment */}
-                      <td className="px-5 py-4 whitespace-nowrap text-xs text-[#6D625C]">
+                      <td className="p-4 text-center whitespace-nowrap text-xs font-semibold text-[#6D625C]">
                         {order.paymentMethod || '–'}
                       </td>
                       {/* Amount */}
-                      <td className="px-5 py-4 whitespace-nowrap">
-                        <span className="text-sm font-bold text-[#9A6031]">{fmt(order.totalPrice)}</span>
+                      <td className="p-4 text-center whitespace-nowrap">
+                        <span className="text-xs font-semibold text-[#9A6031]">{fmt(order.totalPrice)}</span>
                       </td>
                     </tr>
                   ))}
@@ -231,7 +232,7 @@ function CustomerDetailPage({ customer, onBack }) {
 /* ══════════════════════════════════════════════
    CUSTOMER LIST PAGE
 ══════════════════════════════════════════════ */
-export default function CustomerManagementPage() {
+export default function CustomerManagementPage({ canEdit = true, canDelete = true, customerEditId }) {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -240,6 +241,19 @@ export default function CustomerManagementPage() {
   const [detailCustomer, setDetail] = useState(null); // null = list view
   const [currentPage, setCurrentPage] = useState(1);
   const limit = 10;
+  const navigate = useNavigate();
+
+  // Handle direct navigation to a customer details view
+  useEffect(() => {
+    if (customerEditId && customers.length > 0) {
+      const c = customers.find(x => x._id === customerEditId);
+      if (c) {
+        setDetail(c);
+      }
+    } else if (!customerEditId) {
+      setDetail(null);
+    }
+  }, [customerEditId, customers]);
 
   /* ── fetch ───────────────────────────────── */
   const load = async () => {
@@ -310,14 +324,9 @@ export default function CustomerManagementPage() {
       ? (sortDir === 'asc' ? <ChevronUp size={13} /> : <ChevronDown size={13} />)
       : <ArrowUpDown size={12} className="opacity-40" />;
 
-  /* ── If detail view ───────────────────────── */
+  /* ── render ──────────────────────────────── */
   if (detailCustomer) {
-    return (
-      <CustomerDetailPage
-        customer={detailCustomer}
-        onBack={() => setDetail(null)}
-      />
-    );
+    return <CustomerDetailPage customer={detailCustomer} onBack={() => navigate('/admin/customers')} />;
   }
 
   /* ── List View ──────────────────────────── */
@@ -389,7 +398,7 @@ export default function CustomerManagementPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="bg-[#FAF8F5] border-b border-[#E9DED3]">
+                <tr className="bg-[#FAF8F5] text-[#8A817C] text-[11px] uppercase tracking-widest text-center border-b border-[#E9DED3]">
                   {[
                     { label: 'Customer Name', key: 'name' },
                     { label: 'Contact', key: null },
@@ -401,12 +410,9 @@ export default function CustomerManagementPage() {
                     <th
                       key={col.label}
                       onClick={() => col.key && toggleSort(col.key)}
-                      className={`px-5 py-3.5 text-[10px] font-bold text-[#6D625C] uppercase tracking-wider whitespace-nowrap ${col.key ? 'cursor-pointer hover:text-[#9A6031] select-none' : ''}`}
+                      className={`py-4 px-2 font-bold whitespace-nowrap text-center text-gray-500 ${col.key ? 'cursor-pointer hover:text-[#9A6031] select-none' : ''}`}
                     >
-                      <span className="flex items-center gap-1.5">
-                        {col.label}
-                        {col.key && <SortIcon col={col.key} />}
-                      </span>
+                      {col.label}
                     </th>
                   ))}
                 </tr>
@@ -421,7 +427,7 @@ export default function CustomerManagementPage() {
                   return (
                     <tr key={c._id} className="hover:bg-[#FAF8F5] transition-colors">
                       {/* Name + Avatar */}
-                      <td className="px-5 py-4 whitespace-nowrap">
+                      <td className="p-4 text-left whitespace-nowrap">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0" style={{ background: av.bg }}>
                             {av.char}
@@ -432,29 +438,31 @@ export default function CustomerManagementPage() {
                         </div>
                       </td>
                       {/* Contact */}
-                      <td className="px-5 py-4">
-                        <p className="text-xs text-[#141225]">{c.email}</p>
-                        <p className="text-xs text-[#8A817C] mt-0.5">{c.phone || 'No mobile'}</p>
+                      <td className="p-4 text-center">
+                        <p className="text-xs font-semibold text-[#141225]">{c.email}</p>
+                        <p className="text-[11px] font-semibold text-[#8A817C] mt-0.5">{c.phone || 'No mobile'}</p>
                       </td>
                       {/* Joined */}
-                      <td className="px-5 py-4 whitespace-nowrap text-xs text-[#6D625C]">{fmtDate(c.createdAt)}</td>
+                      <td className="p-4 text-center whitespace-nowrap text-sm text-[#6D625C]">{fmtDate(c.createdAt)}</td>
                       {/* Orders */}
-                      <td className="px-5 py-4 whitespace-nowrap">
-                        <span className="text-sm font-bold text-[#141225]">{c.totalOrders || 0}</span>
+                      <td className="p-4 text-center whitespace-nowrap">
+                        <span className="text-xs font-semibold text-[#141225]">{c.totalOrders || 0}</span>
                       </td>
                       {/* Spend */}
-                      <td className="px-5 py-4 whitespace-nowrap">
-                        <span className="text-sm font-bold text-[#9A6031]">{fmt(c.totalSpend)}</span>
+                      <td className="p-4 text-center whitespace-nowrap">
+                        <span className="text-xs font-semibold text-[#9A6031]">{fmt(c.totalSpend)}</span>
                       </td>
                       {/* View Button */}
-                      <td className="px-5 py-4 whitespace-nowrap">
-                        <button
-                          onClick={() => setDetail(c)}
-                          className="text-green-600 hover:text-green-700 transition-colors"
-                          title="View"
-                        >
-                          <Eye size={16} />
-                        </button>
+                      <td className="p-4 text-center whitespace-nowrap">
+                        <div className="flex items-center justify-center">
+                          <button
+                            onClick={() => navigate(`/admin/customers/details/${c._id}`)}
+                            className="text-green-600 hover:text-green-700 transition-colors"
+                            title="View"
+                          >
+                            <Eye size={15} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );

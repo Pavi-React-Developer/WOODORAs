@@ -236,20 +236,20 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
           ) : (
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-[#FAF4EF] text-[#8A817C] text-xs uppercase tracking-wider">
-                  <th className="p-4 font-bold border-b border-[#E6DFD4] w-10">
+                <tr className="bg-[#FAF4EF] text-[#8A817C] text-[11px] uppercase tracking-widest text-center">
+                  <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] w-10 text-center">
                     <input
                       type="checkbox"
                       checked={allChecked}
                       onChange={toggleAll}
-                      className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer"
+                      className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer mx-auto block"
                     />
                   </th>
-                  <th className="p-4 font-bold border-b border-[#E6DFD4] whitespace-nowrap">Date &amp; ID</th>
-                  <th className="p-4 font-bold border-b border-[#E6DFD4] whitespace-nowrap">Selected Product</th>
-                  <th className="p-4 font-bold border-b border-[#E6DFD4] whitespace-nowrap">Custom Fields Preview</th>
-                  <th className="p-4 font-bold border-b border-[#E6DFD4] whitespace-nowrap">Status</th>
-                  <th className="p-4 font-bold border-b border-[#E6DFD4] whitespace-nowrap">Actions</th>
+                  <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] whitespace-nowrap text-center">Date &amp; ID</th>
+                  <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] whitespace-nowrap text-center">Selected Product</th>
+                  <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] whitespace-nowrap text-center">Custom Fields Preview</th>
+                  <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] whitespace-nowrap text-center">Status</th>
+                  <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] whitespace-nowrap text-center">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -258,7 +258,7 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                     key={order._id}
                     className="bg-white transition-colors"
                   >
-                    <td className="p-4 border-b border-[#E6DFD4]">
+                    <td className="p-4 border-b border-[#E6DFD4] text-left">
                       <input
                         type="checkbox"
                         checked={selectedIds.includes(order._id)}
@@ -266,18 +266,18 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                         className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer"
                       />
                     </td>
-                    <td className="p-4 border-b border-[#E6DFD4]">
-                      <p className="font-bold text-[#141225]">
+                    <td className="p-4 border-b border-[#E6DFD4] text-left">
+                      <p className="text-sm font-bold text-[#141225]">
                         Order #{order._id.substring(order._id.length - 6).toUpperCase()}
                       </p>
                       <p className="text-xs text-[#6D625C] mt-0.5">
                         {new Date(order.createdAt).toLocaleDateString()}
                       </p>
                     </td>
-                    <td className="p-4 border-b border-[#E6DFD4]">
+                    <td className="p-4 border-b border-[#E6DFD4] text-left">
                       {order.product ? (
                         <>
-                          <p className="font-bold text-[#4A3326] max-w-[150px] truncate" title={order.product?.name}>
+                          <p className="text-sm font-bold text-[#4A3326] max-w-[150px] truncate" title={order.product?.name}>
                             {order.product?.name}
                           </p>
                           <p className="text-xs text-[#8A817C]">{order.category?.name || 'N/A'}</p>
@@ -286,12 +286,12 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                         <span className="text-xs text-[#8A817C]">Not Specified</span>
                       )}
                     </td>
-                    <td className="p-4 border-b border-[#E6DFD4] whitespace-normal min-w-[200px]">
+                    <td className="p-4 border-b border-[#E6DFD4] whitespace-normal min-w-[200px] text-left">
                       <div className="space-y-1">
                         {order.customFields &&
                           order.customFields.slice(0, 2).map((cf, idx) => (
-                            <p key={idx} className="text-xs text-[#6D625C] truncate max-w-[250px]">
-                              <span className="font-semibold">{cf.label}:</span>{' '}
+                            <p key={idx} className="text-xs font-semibold text-[#6D625C] truncate max-w-[250px]">
+                              <span className="font-bold text-[#4A403B]">{cf.label}:</span>{' '}
                               {typeof cf.value === 'boolean' ? (cf.value ? 'Yes' : 'No') : cf.value}
                             </p>
                           ))}
@@ -302,7 +302,7 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                         )}
                       </div>
                     </td>
-                    <td className="p-4 border-b border-[#E6DFD4]">
+                    <td className="p-4 border-b border-[#E6DFD4] text-left">
                       <span
                         className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${order.status === 'Approved'
                           ? 'bg-emerald-100 text-emerald-700'
@@ -322,28 +322,30 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                         </p>
                       )}
                     </td>
-                    <td className="p-4 border-b border-[#E6DFD4]">
-                      <div className="flex items-center gap-2">
+                    <td className="p-4 border-b border-[#E6DFD4] text-left">
+                      <div className="flex items-center gap-4">
                         <button
                           onClick={() => handleViewClick(order)}
-                          className="text-green-600 hover:text-green-700 transition-colors"
+                          className="text-emerald-600 hover:text-emerald-700 transition-colors flex items-center justify-center"
                           title="View Details"
                         >
-                          <Eye className="w-4 h-4" />
+                          <Eye className="w-[15px] h-[15px]" />
                         </button>
                         {(!order.status || order.status === 'Pending') && canEdit && (
                           <>
                             <button
                               onClick={() => handleApprove(order._id)}
-                              className="px-3 py-1.5 bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 rounded font-bold text-xs transition-colors"
+                              className="text-emerald-500 hover:text-emerald-700 transition-colors flex items-center justify-center"
+                              title="Approve"
                             >
-                              Approve
+                              <Check className="w-[15px] h-[15px] stroke-[3]" />
                             </button>
                             <button
                               onClick={() => handleRejectClick(order)}
-                              className="px-3 py-1.5 bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 rounded font-bold text-xs transition-colors"
+                              className="text-red-500 hover:text-red-700 transition-colors flex items-center justify-center"
+                              title="Reject"
                             >
-                              Reject
+                              <X className="w-[15px] h-[15px] stroke-[3]" />
                             </button>
                           </>
                         )}
@@ -366,15 +368,15 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
 
       {/* ── Reject Modal ───────────────────────────────────────────────── */}
       {isRejectModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-[400px] border border-[#E9DED3] overflow-hidden">
-            <div className="p-5 border-b border-[#E9DED3] flex justify-between items-center bg-[#FAF8F5]">
-              <h2 className="font-bold text-[#141225]">Reject Order Request</h2>
-              <button onClick={() => setIsRejectModalOpen(false)} className="text-red-500 hover:text-red-600 transition-colors">
-                <X className="w-5 h-5" />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-[20px] shadow-2xl w-full max-w-md overflow-hidden">
+            <div className="p-6 md:px-8 border-b border-[#E6DFD4] flex justify-between items-center bg-[#F8F4EC]">
+              <h3 className="font-serif font-bold text-[28px] text-[#141225] tracking-tight">Reject Order Request</h3>
+              <button onClick={() => setIsRejectModalOpen(false)} className="text-gray-400 hover:text-red-500 transition-colors">
+                <X className="w-6 h-6" />
               </button>
             </div>
-            <div className="p-5">
+            <div className="p-6 md:px-8 py-8 bg-white">
               <p className="text-sm text-[#4A403B] mb-4">
                 Please provide a reason for rejecting the bulk order{' '}
                 <strong>#{rejectingOrder?._id.substring(rejectingOrder._id.length - 6).toUpperCase()}</strong>.
@@ -385,14 +387,14 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                 placeholder="E.g., Requested quantity cannot be fulfilled currently..."
                 className="w-full px-4 py-3 border border-[#E9DED3] rounded-lg bg-[#FAF8F5] focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400 text-sm resize-none h-24"
               />
-              <div className="mt-5 flex gap-3 justify-end">
+              <div className="mt-8 flex gap-3 justify-end">
                 <button
                   onClick={() => setIsRejectModalOpen(false)}
-                  className="admin-cancel-btn"
+                  className="admin-cancel-btn !rounded-full px-6"
                 >CANCEL</button>
                 <button
                   onClick={confirmReject}
-                  className="px-4 py-2 bg-red-600 text-white font-bold text-sm rounded-lg hover:bg-red-700"
+                  className="px-6 py-2 bg-[#d11010] text-white font-bold text-sm rounded-full hover:bg-red-700 transition-colors"
                 >
                   Confirm Reject
                 </button>

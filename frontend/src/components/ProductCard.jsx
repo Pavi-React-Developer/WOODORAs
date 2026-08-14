@@ -99,6 +99,12 @@ export default function ProductCard({ product, viewMode = 'grid', onNavigate, on
       className={`group cursor-pointer bg-white rounded-2xl overflow-hidden border border-[#E6DFD4] shadow-sm hover:shadow-md transition-shadow flex ${viewMode === 'list' ? 'flex-row h-auto' : 'flex-col h-auto w-full max-w-[420px] mx-auto'}`}
     >
       <div className={`relative overflow-hidden shrink-0 ${viewMode === 'list' ? 'w-[140px] sm:w-[320px] aspect-square sm:aspect-[4/3]' : 'aspect-[4/5] md:aspect-[4/3]'}`}>
+        {pricing.hasDiscount && (
+          <div className="absolute top-2 left-2 sm:top-3 sm:left-3 hexagon-badge scale-90 sm:scale-110 origin-top-left z-20 shadow-md font-serif">
+            <span className="text-[15px] leading-tight font-bold">{pricing.discountPercent}%</span>
+            <span className="text-[11px] leading-tight font-bold tracking-wide">OFF</span>
+          </div>
+        )}
         {imgSrc ? (
           <motion.img
             src={imgSrc}
@@ -153,12 +159,7 @@ export default function ProductCard({ product, viewMode = 'grid', onNavigate, on
         <div className={`flex items-center flex-wrap ${viewMode === 'list' ? 'gap-2 sm:gap-3 mb-2 sm:mb-4' : 'gap-1.5 sm:gap-2 mb-1.5 sm:mb-3'}`}>
           <span className={`font-bold text-[#333333] ${viewMode === 'list' ? 'text-lg sm:text-3xl' : 'text-sm'}`}>₹{pricing.salePrice.toLocaleString()}</span>
           {pricing.hasDiscount && (
-            <>
-              <span className={`text-[#999999] line-through ${viewMode === 'list' ? 'text-xs sm:text-lg' : 'text-[11px]'}`}>₹{pricing.listPrice.toLocaleString()}</span>
-              <span className={`inline-flex items-center self-start rounded-full bg-[#B1621F]/15 font-semibold text-[#B1621F] ${viewMode === 'list' ? 'px-2 py-0.5 text-xs sm:px-3 sm:py-1 sm:text-sm' : 'px-2 py-0.5 text-[10px]'}`}>
-                -{pricing.discountPercent}%
-              </span>
-            </>
+            <span className={`text-[#999999] line-through ${viewMode === 'list' ? 'text-xs sm:text-lg' : 'text-[11px]'}`}>₹{pricing.listPrice.toLocaleString()}</span>
           )}
         </div>
         {hideRating ? null : (

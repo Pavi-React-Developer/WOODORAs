@@ -20,6 +20,10 @@ const footerSchema = new mongoose.Schema({
   youtube: String,
   twitter: String,
   copyright: String,
+  mapIframe: String,
+  mapLatitude: String,
+  mapLongitude: String,
+  mapLink: String,
   columns: {
     type: [footerColumnSchema],
     default: [],

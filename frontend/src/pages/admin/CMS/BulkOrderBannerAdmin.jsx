@@ -3,7 +3,7 @@ import { cmsService } from '../../../api/cmsService';
 import { ImageUploader } from '../../../components/admin/ImageUploader';
 import toast from 'react-hot-toast';
 
-export default function BulkOrderBannerAdmin() {
+export default function BulkOrderBannerAdmin({ canCreate, canEdit, canDelete }) {
   const [data, setData] = useState({ title: '', description: '', image: '' });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -77,15 +77,17 @@ export default function BulkOrderBannerAdmin() {
           />
         </div>
 
-        <div className="flex justify-end pt-4 border-t border-[#F2EAE1]">
-          <button
-            type="submit"
-            disabled={saving}
-            className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60"
-          >
-            {saving ? 'Saving...' : 'Save Changes'}
-          </button>
-        </div>
+        {canEdit && (
+          <div className="flex justify-end pt-4 border-t border-[#F2EAE1]">
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60"
+            >
+              {saving ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        )}
       </form>
     </div>
   );

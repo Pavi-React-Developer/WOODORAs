@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { cmsService } from '../../../api/cmsService';
-import { Upload, X, Plus, Trash } from 'lucide-react';
+import {  Upload, X, Plus, Trash , Trash2 } from 'lucide-react';
 
 function LogoUploader({ value, onChange }) {
   const [uploading, setUploading] = useState(false);
@@ -28,7 +28,7 @@ function LogoUploader({ value, onChange }) {
   return (
     <div>
       <label className="text-xs font-semibold text-brand-medium uppercase tracking-wider block mb-1">Footer Logo</label>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center justify-center gap-3">
         {url ? (
           <div className="relative">
             <img src={url} alt="logo" className="h-12 object-contain rounded" />
@@ -47,17 +47,26 @@ function LogoUploader({ value, onChange }) {
   );
 }
 
-export default function FooterAdmin() {
+export default function FooterAdmin({ canCreate, canEdit, canDelete }) {
   const [form, setForm] = useState({
     logo: '', description: '', email: '', phone: '',
     facebook: '', instagram: '', youtube: '', twitter: '', copyright: '', columns: [],
+    mapIframe: '', mapLatitude: '', mapLongitude: '', mapLink: ''
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     cmsService.getFooter().then(res => {
-      if (res.data) setForm({ logo: res.data.logo || '', description: res.data.description || '', email: res.data.email || '', phone: res.data.phone || '', facebook: res.data.facebook || '', instagram: res.data.instagram || '', youtube: res.data.youtube || '', twitter: res.data.twitter || '', copyright: res.data.copyright || '', columns: res.data.columns || [] });
+      if (res.data) setForm({ 
+        logo: res.data.logo || '', description: res.data.description || '', 
+        email: res.data.email || '', phone: res.data.phone || '', 
+        facebook: res.data.facebook || '', instagram: res.data.instagram || '', 
+        youtube: res.data.youtube || '', twitter: res.data.twitter || '', 
+        copyright: res.data.copyright || '', columns: res.data.columns || [],
+        mapIframe: res.data.mapIframe || '', mapLatitude: res.data.mapLatitude || '',
+        mapLongitude: res.data.mapLongitude || '', mapLink: res.data.mapLink || ''
+      });
     }).catch(console.error).finally(() => setLoading(false));
   }, []);
 
@@ -104,6 +113,41 @@ export default function FooterAdmin() {
         </div>
 
         <div className="bg-white rounded-2xl border border-[#E6DFD4] p-6 shadow-sm space-y-4">
+          <h4 className="font-semibold text-brand-dark">Google Map Integration</h4>
+          <div className="grid grid-cols-1 gap-4">
+            {field('Google Maps Iframe', 'mapIframe', '<iframe src="..."></iframe>')}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {field('Latitude', 'mapLatitude', 'e.g. 13.0827')}
+              {field('Longitude', 'mapLongitude', 'e.g. 80.2707')}
+            </div>
+            {field('Google Maps Link', 'mapLink', 'https://maps.google.com/...')}
+            
+            {(form.mapIframe || (form.mapLatitude && form.mapLongitude) || form.mapLink) && (
+              <div className="mt-2">
+                <label className="text-xs font-semibold text-brand-medium uppercase tracking-wider block mb-2">Live Map Preview</label>
+                {form.mapIframe ? (
+                  <div 
+                    className="w-full h-48 rounded-xl overflow-hidden border border-[#E6DFD4] [&>iframe]:w-full [&>iframe]:h-full shadow-inner"
+                    dangerouslySetInnerHTML={{ __html: form.mapIframe }}
+                  />
+                ) : (form.mapLatitude && form.mapLongitude) ? (
+                  <iframe 
+                    src={`https://maps.google.com/maps?q=${form.mapLatitude},${form.mapLongitude}&t=&z=15&ie=UTF8&iwloc=&output=embed`} 
+                    className="w-full h-48 rounded-xl overflow-hidden border border-[#E6DFD4] shadow-inner" 
+                    title="Live Map Preview"
+                  />
+                ) : (
+                  <div className="w-full h-48 rounded-xl flex flex-col items-center justify-center border border-[#E6DFD4] bg-[#F7F3EE] text-[#8C6B52] text-sm text-center px-6">
+                    <p className="font-medium">Live Map Unavailable</p>
+                    <p className="text-xs mt-1 text-[#8C6B52]/70">Please provide Latitude and Longitude (or an Iframe) to enable the live map preview.</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-[#E6DFD4] p-6 shadow-sm space-y-4">
           <h4 className="font-semibold text-brand-dark">Social Media Links</h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {field('Facebook URL', 'facebook', 'https://facebook.com/')}
@@ -116,9 +160,11 @@ export default function FooterAdmin() {
         <div className="bg-white rounded-2xl border border-[#E6DFD4] p-6 shadow-sm space-y-4">
           <div className="flex justify-between items-center">
             <h4 className="font-semibold text-brand-dark">Footer Columns</h4>
-            <button type="button" onClick={() => setForm(f => ({ ...f, columns: [...(f.columns || []), { title: '', links: [] }] }))} className="px-4 py-1.5 border border-[#8B5E3C] text-[#8B5E3C] rounded-full text-xs font-bold flex items-center gap-1 hover:bg-[#F8F4EC] transition-colors bg-white">
-              <Plus className="w-3 h-3" /> Add Column
-            </button>
+            {canCreate && (
+              <button type="button" onClick={() => setForm(f => ({ ...f, columns: [...(f.columns || []), { title: '', links: [] }] }))} className="px-4 py-1.5 border border-[#8B5E3C] text-[#8B5E3C] rounded-full text-xs font-bold flex items-center gap-1 hover:bg-[#F8F4EC] transition-colors bg-white">
+                <Plus size={15} /> Add Column
+              </button>
+            )}
           </div>
 
           <div className="space-y-6">
@@ -133,12 +179,14 @@ export default function FooterAdmin() {
                       setForm(f => ({ ...f, columns: newCols }));
                     }} placeholder="e.g. Shop, Support, Policies" className="w-full border border-[#E6DFD4] rounded-lg px-3 py-2 text-sm bg-white" />
                   </div>
-                  <button type="button" onClick={() => {
-                    const newCols = form.columns.filter((_, i) => i !== cIdx);
-                    setForm(f => ({ ...f, columns: newCols }));
-                  }} className="text-red-500 hover:text-red-600 transition-colors">
-                    <Trash className="w-4 h-4" />
-                  </button>
+                  {canDelete && (
+                    <button type="button" onClick={() => {
+                      const newCols = form.columns.filter((_, i) => i !== cIdx);
+                      setForm(f => ({ ...f, columns: newCols }));
+                    }} className="text-red-500 hover:text-red-600 transition-colors">
+                      <Trash2 size={15} />
+                    </button>
+                  )}
                 </div>
 
                 <div className="pl-4 border-l-2 border-[#E6DFD4] space-y-3">
@@ -155,22 +203,26 @@ export default function FooterAdmin() {
                         newCols[cIdx].links[lIdx].url = e.target.value;
                         setForm(f => ({ ...f, columns: newCols }));
                       }} placeholder="URL (e.g. /shop?sort=newest)" className="flex-1 border border-[#E6DFD4] rounded-lg px-3 py-1.5 text-sm bg-white" />
-                      <button type="button" onClick={() => {
-                        const newCols = [...form.columns];
-                        newCols[cIdx].links = newCols[cIdx].links.filter((_, i) => i !== lIdx);
-                        setForm(f => ({ ...f, columns: newCols }));
-                      }} className="text-red-500 hover:text-red-600 transition-colors">
-                        <X className="w-4 h-4" />
-                      </button>
+                      {canDelete && (
+                        <button type="button" onClick={() => {
+                          const newCols = [...form.columns];
+                          newCols[cIdx].links = newCols[cIdx].links.filter((_, i) => i !== lIdx);
+                          setForm(f => ({ ...f, columns: newCols }));
+                        }} className="text-red-500 hover:text-red-600 transition-colors">
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   ))}
-                  <button type="button" onClick={() => {
-                    const newCols = [...form.columns];
-                    newCols[cIdx].links.push({ label: '', url: '' });
-                    setForm(f => ({ ...f, columns: newCols }));
-                  }} className="text-xs font-semibold text-brand-medium flex items-center gap-1 hover:text-brand-dark">
-                    <Plus className="w-3 h-3" /> Add Link
-                  </button>
+                  {canCreate && (
+                    <button type="button" onClick={() => {
+                      const newCols = [...form.columns];
+                      newCols[cIdx].links.push({ label: '', url: '' });
+                      setForm(f => ({ ...f, columns: newCols }));
+                    }} className="text-xs font-semibold text-brand-medium flex items-center gap-1 hover:text-brand-dark">
+                      <Plus size={15} /> Add Link
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -178,12 +230,14 @@ export default function FooterAdmin() {
           </div>
         </div>
 
-        <div className="flex justify-end">
-          <button type="submit" disabled={saving}
-            className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60">
-            {saving ? 'Saving...' : 'Save Footer Settings'}
-          </button>
-        </div>
+        {canEdit && (
+          <div className="flex justify-end">
+            <button type="submit" disabled={saving}
+              className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60">
+              {saving ? 'Saving...' : 'Save Footer Settings'}
+            </button>
+          </div>
+        )}
       </form>
     </div>
   );

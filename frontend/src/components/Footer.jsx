@@ -109,6 +109,35 @@ export default function Footer() {
               </div>
             </React.Fragment>
           ))}
+
+          {/* Map Column */}
+          {(footerData?.mapIframe || (footerData?.mapLatitude && footerData?.mapLongitude) || footerData?.mapLink) && (
+            <React.Fragment>
+              <div className="hidden md:block w-px bg-white/15 self-stretch mx-0" />
+              <div className="block md:hidden h-px bg-white/15 mx-6 my-2" />
+              <div className="flex-1 space-y-4 px-6 py-4 md:py-0">
+                <h4 className="text-[10px] font-bold text-white uppercase tracking-widest">Find Us</h4>
+                {footerData.mapIframe ? (
+                  <div 
+                    className="w-full h-32 rounded-xl overflow-hidden border border-white/15 [&>iframe]:w-full [&>iframe]:h-full shadow-inner"
+                    dangerouslySetInnerHTML={{ __html: footerData.mapIframe }}
+                  />
+                ) : (footerData.mapLatitude && footerData.mapLongitude) ? (
+                  <iframe 
+                    src={`https://maps.google.com/maps?q=${footerData.mapLatitude},${footerData.mapLongitude}&t=&z=15&ie=UTF8&iwloc=&output=embed`} 
+                    className="w-full h-32 rounded-xl overflow-hidden border border-white/15 shadow-inner"
+                    title="Find Us"
+                  />
+                ) : null}
+                {(footerData.mapLink || footerData.mapLatitude) && (
+                  <a href={footerData.mapLink || `https://maps.google.com/?q=${footerData.mapLatitude},${footerData.mapLongitude}`} target="_blank" rel="noopener noreferrer" className="text-[11px] text-white/60 hover:text-white transition-colors inline-flex items-center gap-1.5 mt-2">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    Open in Google Maps
+                  </a>
+                )}
+              </div>
+            </React.Fragment>
+          )}
         </div>
 
         {/* Bottom bar */}

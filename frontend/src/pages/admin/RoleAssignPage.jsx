@@ -284,7 +284,7 @@ export default function RoleAssignPage({ onBack, targetStaff, currentUserPermiss
   return (
     <div className="flex-1 overflow-y-auto p-8">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
           <p className="text-[13px] md:text-sm font-serif text-white mb-1">
             Dashboard &rsaquo; Staff Management &rsaquo; <span className="font-semibold text-[#8B5E3C]">Role Assign</span>

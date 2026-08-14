@@ -14,6 +14,7 @@ import { IoLeaf } from 'react-icons/io5';
 import { FaWhatsapp } from 'react-icons/fa';
 import { BsBagHeartFill } from "react-icons/bs";
 import { RiHeartAdd2Line } from "react-icons/ri";
+import AdvancedBookingModal from '../components/AdvancedBookingModal';
 
 const finishOptions = ['Natural Maple', 'Oak Tint'];
 const featureBullets = [
@@ -34,7 +35,7 @@ const ProductImageZoom = ({ src, alt }) => {
   const handleMouseMove = (e) => {
     if (!imgRef.current) return;
     const { left, top, width, height } = imgRef.current.getBoundingClientRect();
-    
+
     const zoomWinW = 500;
     const zoomWinH = 500;
 
@@ -56,10 +57,10 @@ const ProductImageZoom = ({ src, alt }) => {
     if (lensY > height - lensH) lensY = height - lensH;
 
     setLensState({ x: lensX, y: lensY, w: lensW, h: lensH });
-    setBgState({ 
-      x: -(lensX * ZOOM_LEVEL), 
-      y: -(lensY * ZOOM_LEVEL), 
-      w: bgW, 
+    setBgState({
+      x: -(lensX * ZOOM_LEVEL),
+      y: -(lensY * ZOOM_LEVEL),
+      w: bgW,
       h: bgH
     });
   };
@@ -67,19 +68,19 @@ const ProductImageZoom = ({ src, alt }) => {
   return (
     <div className="relative w-full h-full flex items-center justify-center bg-white rounded-[2rem]">
       {/* Mobile view (no zoom) */}
-      <img src={src} alt={alt} className="w-full h-auto max-h-[460px] object-cover md:hidden rounded-[2rem]" onError={(e) => { e.target.style.display = 'none'; }} />
+      <img src={src} alt={alt} className="w-full h-auto max-h-[500px] object-cover md:hidden rounded-none sm:rounded-[2rem]" onError={(e) => { e.target.style.display = 'none'; }} />
 
       {/* Desktop view (with zoom) */}
-      <div 
+      <div
         className="hidden md:block relative w-full h-full cursor-crosshair group rounded-[2rem] overflow-hidden"
         onMouseEnter={() => setShowZoom(true)}
         onMouseLeave={() => setShowZoom(false)}
         onMouseMove={handleMouseMove}
       >
-        <img ref={imgRef} src={src} alt={alt} className="w-full h-auto max-h-[460px] object-cover rounded-[2rem]" onError={(e) => { e.target.style.display = 'none'; }} />
-        
+        <img ref={imgRef} src={src} alt={alt} className="w-full h-auto max-h-[600px] object-cover rounded-[2rem]" onError={(e) => { e.target.style.display = 'none'; }} />
+
         {showZoom && (
-          <div 
+          <div
             className="absolute bg-white/30 border border-[#AA7327]/50 pointer-events-none"
             style={{
               left: lensState.x,
@@ -94,7 +95,7 @@ const ProductImageZoom = ({ src, alt }) => {
 
       {/* Zoomed Result Window */}
       {showZoom && (
-        <div 
+        <div
           className="hidden lg:block absolute top-0 left-[calc(100%+40px)] w-[500px] h-[500px] bg-white z-[9999] border border-gray-200 shadow-2xl overflow-hidden rounded-2xl pointer-events-none"
           style={{
             backgroundImage: `url(${src})`,
@@ -419,6 +420,7 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
   const [showPolicy, setShowPolicy] = useState(false);
   const [product, setProduct] = useState(initialProduct || null);
   const [activeTab, setActiveTab] = useState('Description');
+  const [isAdvancedBookingOpen, setIsAdvancedBookingOpen] = useState(false);
   const [recommendedProducts, setRecommendedProducts] = useState([]);
   const [showSharePopup, setShowSharePopup] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState(null);
@@ -631,7 +633,7 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
 
       if (product.hasVariants && product.variants?.length > 0) {
         initialVariant = product.variants.find(v => v.isActive !== false) || product.variants[0];
-        
+
         if (initialVariant?.options && Array.isArray(initialVariant.options)) {
           initialVariant.options.forEach(opt => {
             const attrName = String(opt.attribute?.name || opt.attributeName || '').trim();
@@ -772,6 +774,9 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
     );
   }
 
+  const priceSource = selectedVariant || (Array.isArray(product?.variants) && product.variants.length === 1 ? product.variants[0] : null) || product;
+  const pricing = getPricingInfo(priceSource);
+
   return (
     <>
       <section className="py-6 px-4 sm:px-6 lg:px-8 bg-[#FDF9F1] min-h-screen font-sans">
@@ -792,7 +797,13 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
 
             {/* LEFT COLUMN: IMAGES */}
             <div className="space-y-6 min-w-0 w-full relative">
-              <div className="rounded-[2rem] bg-white shadow-sm flex items-center justify-center">
+              {pricing.hasDiscount && (
+                <div className="absolute top-4 left-0 sm:top-8 sm:left-8 hexagon-badge scale-[1.3] sm:scale-[2.2] origin-top-left z-20 shadow-md font-serif">
+                  <span className="text-[15px] leading-tight font-bold">{pricing.discountPercent}%</span>
+                  <span className="text-[11px] leading-tight font-bold tracking-wide">OFF</span>
+                </div>
+              )}
+              <div className="-mx-4 sm:mx-0 w-[calc(100%+2rem)] sm:w-full rounded-none sm:rounded-[2rem] bg-white shadow-sm flex items-center justify-center relative">
                 {selectedImage && selectedImage.trim() !== '' ? (
                   <ProductImageZoom src={selectedImage} alt={product.name} />
                 ) : (
@@ -808,13 +819,13 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                       key={`${src}-${index}`}
                       type="button"
                       onClick={() => setSelectedImage(src)}
-                      className={`cursor-pointer overflow-hidden rounded-[1.5rem] border-[3px] transition shrink-0 w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 bg-white snap-start ${isSelected ? 'border-[#AA7327]' : 'border-transparent hover:border-[#AA7327] shadow-sm'
+                      className={`cursor-pointer overflow-hidden rounded-[16px] border-[3px] transition shrink-0 w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 bg-white snap-start ${isSelected ? 'border-[#AA7327]' : 'border-transparent hover:border-[#AA7327] shadow-sm'
                         }`}
                     >
                       <img
                         src={src}
                         alt={`${product.name} view ${index + 1}`}
-                        className="w-full h-full object-cover rounded-[1.2rem]"
+                        className="w-full h-full object-cover rounded-[14px]"
                         onError={(e) => { e.target.style.display = 'none'; }}
                       />
                     </button>
@@ -844,23 +855,23 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                       handleAction('Wishlist');
                     }
                   }}
-                  className={`flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border bg-transparent transition ${isWishlisted
-                      ? 'border-red-500 text-red-500'
-                      : 'border-[#AA7327] text-[#AA7327] hover:text-[#AA7327] hover:border-[#AA7327]'
+                  className={`flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full border bg-transparent transition ${isWishlisted
+                    ? 'border-red-500 text-red-500'
+                    : 'border-[#AA7327] text-[#AA7327] hover:text-[#AA7327] hover:border-[#AA7327]'
                     }`}
                   aria-label="Add to Wishlist"
                   title="Add to Wishlist"
                 >
-                  <RiHeartAdd2Line className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <RiHeartAdd2Line className="h-5 w-5 sm:h-6 sm:w-6" />
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowSharePopup(true)}
-                  className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-[#AA7327] bg-transparent text-[#AA7327] transition hover:text-[#AA7327] hover:border-[#AA7327]"
+                  className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full border border-[#AA7327] bg-transparent text-[#AA7327] transition hover:text-[#AA7327] hover:border-[#AA7327]"
                   aria-label="Share Product"
                   title="Share"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                   </svg>
                 </button>
@@ -888,31 +899,19 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                 </div>
 
                 <div className="flex flex-col gap-2 mb-8">
-                  {(() => {
-                    const priceSource = selectedVariant || (Array.isArray(product?.variants) && product.variants.length === 1 ? product.variants[0] : null) || product;
-                    const pricing = getPricingInfo(priceSource);
-
-                    return (
-                      <>
-                        <div className="flex flex-wrap items-baseline gap-3 sm:gap-4 mt-1">
-                          {pricing.hasDiscount && (
-                            <span className="text-2xl sm:text-3xl text-[#5C2E0E] line-through shrink-0 font-medium tracking-tight opacity-70">
-                              ₹{(pricing.listPrice * quantity).toFixed(0)}
-                            </span>
-                          )}
-                          <p className="text-[2.5rem] sm:text-[3rem] font-medium tracking-tight text-[#141225] leading-none">
-                            ₹{(pricing.salePrice * quantity).toFixed(0)}
-                          </p>
-                          {pricing.hasDiscount && (
-                            <span className="inline-flex items-center rounded-full bg-[#9B4136] px-3 py-1 text-xs font-bold text-white shrink-0 whitespace-nowrap ml-2">
-                              {pricing.discountPercent}% OFF
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-sm text-[#141225] mt-1 font-medium">Inclusive of all taxes</p>
-                      </>
-                    );
-                  })()}
+                  <>
+                    <div className="flex flex-wrap items-baseline gap-3 sm:gap-4 mt-1">
+                      {pricing.hasDiscount && (
+                        <span className="text-[2.5rem] sm:text-[3rem] text-[#5C2E0E] line-through shrink-0 font-medium tracking-tight opacity-70 leading-none">
+                          ₹{(pricing.listPrice * quantity).toFixed(0)}
+                        </span>
+                      )}
+                      <p className="text-[2.5rem] sm:text-[3rem] font-medium tracking-tight text-[#141225] leading-none">
+                        ₹{(pricing.salePrice * quantity).toFixed(0)}
+                      </p>
+                    </div>
+                    <p className="text-sm text-[#141225] mt-1 font-medium">Inclusive of all taxes</p>
+                  </>
                 </div>
               </div>
 
@@ -954,8 +953,8 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                                       onClick={() => handleToggleAttributeValue(label, value)}
                                     >
                                       <div className={`w-12 h-12 rounded-full flex items-center justify-center transition p-1 ${isSelected
-                                          ? 'border-2 border-[#AA7327]'
-                                          : 'border-2 border-transparent group-hover:border-[#AA7327]'
+                                        ? 'border-2 border-[#AA7327]'
+                                        : 'border-2 border-transparent group-hover:border-[#AA7327]'
                                         }`}>
                                         <div
                                           className="w-full h-full rounded-full border border-black/10"
@@ -1012,8 +1011,9 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                         : (product?.inventory?.stockQuantity || product?.stock || 0);
 
                     // If maxAllowedQty is 0, it means we don't have stock info, fallback to 999 to allow adding
-                    if (maxAllowedQty === 0 && !product?.inventory && !product?.stock) {
-                         maxAllowedQty = 999;
+                    // ONLY if we aren't explicitly looking at a selected variant or product variants.
+                    if (maxAllowedQty === 0 && !product?.inventory && !product?.stock && productVariants.length === 0) {
+                      maxAllowedQty = 999;
                     }
 
                     const dynamicMaxOrderQty = product?.maxOrderQty || 6;
@@ -1055,37 +1055,49 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                             </div>
                           </div>
 
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (isOutOfStock) toast.error('Product is out of stock!');
-                              else handleAction('Cart');
-                            }}
-                            disabled={isVariantRequiredButNotSelected}
-                            className={`inline-flex h-[3.5rem] w-full items-center justify-center gap-2 rounded-full px-6 text-[15px] font-medium transition ${isDisabled
-                              ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                              : 'bg-[#6D3D14] text-white hover:bg-[#522c0e]'
-                              }`}
-                          >
-                            <BsBagHeartFill className="h-5 w-5" />
-                            {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
-                          </button>
-                        </div>
+                          {isOutOfStock ? (
+                            <div className="flex flex-col sm:flex-row gap-4 w-full">
+                              <button
+                                type="button"
+                                onClick={() => setIsAdvancedBookingOpen(true)}
+                                className="admin-btn w-full !h-[3.5rem] rounded-full text-[16px] font-semibold"
+                              >
+                                Advanced Booking
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col sm:flex-row gap-4 w-full">
+                              <div className="flex-1">
+                                <button
+                                  type="button"
+                                  onClick={() => handleAction('Cart')}
+                                  disabled={isVariantRequiredButNotSelected || isDisabled}
+                                  className={`inline-flex h-[3.5rem] w-full items-center justify-center gap-2 rounded-full px-6 text-[15px] font-medium transition ${isDisabled
+                                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                    : 'bg-[#6D3D14] text-white hover:bg-[#522c0e]'
+                                    }`}
+                                >
+                                  <BsBagHeartFill className="h-5 w-5" />
+                                  Add to Cart
+                                </button>
+                              </div>
 
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (isOutOfStock) toast.error('Product is out of stock!');
-                            else handleAction('Buy');
-                          }}
-                          disabled={isVariantRequiredButNotSelected}
-                          className={`inline-flex h-[3.5rem] w-full items-center justify-center rounded-full px-6 text-[15px] font-medium transition border ${isDisabled
-                            ? 'bg-slate-50 text-slate-300 border-slate-200 cursor-not-allowed'
-                            : 'bg-transparent text-[#141225] border-slate-300 hover:border-[#141225]'
-                            }`}
-                        >
-                          Buy Now
-                        </button>
+                              <div className="flex-1">
+                                <button
+                                  type="button"
+                                  onClick={() => handleAction('Buy')}
+                                  disabled={isVariantRequiredButNotSelected || isDisabled}
+                                  className={`inline-flex h-[3.5rem] w-full items-center justify-center rounded-full px-6 text-[15px] font-medium transition border ${isDisabled
+                                    ? 'bg-slate-50 text-slate-300 border-slate-200 cursor-not-allowed'
+                                    : 'bg-transparent text-[#141225] border-slate-300 hover:border-[#141225]'
+                                    }`}
+                                >
+                                  Buy Now
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     );
                   })()}
@@ -1093,6 +1105,13 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
               </div>
             </div>
           </div>
+
+          <AdvancedBookingModal
+            isOpen={isAdvancedBookingOpen}
+            onClose={() => setIsAdvancedBookingOpen(false)}
+            product={product}
+            selectedVariants={selectedAttributeValues}
+          />
 
           {/* --- TABS MOVED TO BOTTOM --- */}
           {(() => {
@@ -1210,7 +1229,7 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                     alert('Link copied to clipboard!');
                     setShowSharePopup(false);
                   }}
-                  className="px-5 py-2.5 bg-slate-900 text-white text-xs font-semibold uppercase tracking-wider rounded-lg hover:bg-slate-800 transition-colors shrink-0"
+                  className="admin-btn shrink-0"
                 >
                   Copy Link
                 </button>
@@ -1234,7 +1253,7 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                 <IoLeaf className="text-[#B0611C] transform scale-x-[-1] w-6 h-6 sm:w-8 sm:h-8" />
               </div>
             </div>
-            
+
             <div className="relative px-2 md:px-14">
               <style>{`
                 .custom-pagination-related { position: relative; margin-top: 2rem; display: flex; justify-content: center; gap: 12px; }
@@ -1277,12 +1296,12 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
                 {recommendedProducts.map((p) => (
                   <SwiperSlide key={p._id} className="h-auto">
                     <div className="h-full py-2">
-                      <ProductCard 
-                        product={p} 
-                        user={user} 
-                        onNavigate={onNavigate} 
-                        onAddToCart={onAddToCart} 
-                        onAddToWishlist={onAddToWishlist} 
+                      <ProductCard
+                        product={p}
+                        user={user}
+                        onNavigate={onNavigate}
+                        onAddToCart={onAddToCart}
+                        onAddToWishlist={onAddToWishlist}
                       />
                     </div>
                   </SwiperSlide>
@@ -1296,11 +1315,11 @@ export default function ProductDetails({ product: initialProduct, user, onNaviga
 
       {/* Floating WhatsApp Enquiry Button */}
       {product && (
-        <a 
+        <a
           href={`https://wa.me/919789660115?text=${encodeURIComponent(`Hi, I'm inquiring about ${product.name}: ${window.location.href}`)}`}
-          target="_blank" 
+          target="_blank"
           rel="noopener noreferrer"
-          className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-[60] bg-[#25D366] text-white p-3 md:p-4 rounded-full shadow-lg hover:scale-110 transition-transform duration-300 flex items-center justify-center cursor-pointer"
+          className="fixed bottom-28 right-4 md:bottom-6 md:right-6 z-[60] bg-[#25D366] text-white p-3 md:p-4 rounded-full shadow-lg hover:scale-110 transition-transform duration-300 flex items-center justify-center cursor-pointer"
           aria-label="WhatsApp Enquiry"
         >
           <FaWhatsapp className="w-6 h-6 md:w-8 md:h-8" />

@@ -332,7 +332,7 @@ function ReviewCard({ review, user, onVote, onOpenImage }) {
       {review.images?.length > 0 && (
         <div className="flex overflow-x-auto gap-2 snap-x scrollbar-hide mt-2 w-full py-1">
           {review.images.map((img, i) => (
-            <div key={i} className="shrink-0 w-24 h-20 md:w-32 md:h-24 relative cursor-pointer snap-start rounded-xl border border-[#E9DED3] overflow-hidden group/reviewimg" onClick={() => onOpenImage(review.images, i)}>
+            <div key={i} className="shrink-0 aspect-square w-24 md:w-32 relative cursor-pointer snap-start rounded-xl border border-[#E9DED3] overflow-hidden group/reviewimg" onClick={() => onOpenImage(review.images, i)}>
               <img src={normalizeMediaUrl(img)} alt="" className="w-full h-full object-cover group-hover/reviewimg:scale-105 transition duration-500" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.style.display = 'none'; }} />
               <div className="absolute inset-0 bg-black/0 group-hover/reviewimg:bg-black/30 transition-all duration-300 flex items-center justify-center">
                 <ZoomIn size={20} className="text-white opacity-0 group-hover/reviewimg:opacity-100 transition-opacity duration-300 drop-shadow-md scale-75 group-hover/reviewimg:scale-100" />
@@ -611,7 +611,7 @@ export default function ProductReviewSection({ product, user }) {
                       {gallery.map((g, index) => (
                         <SwiperSlide key={index}>
                           <div onClick={() => setLightbox({ images: gallery.map(x => x.url), index: index })}
-                            className="relative group cursor-pointer h-20 md:h-24 w-full overflow-hidden rounded-2xl border border-[#E9DED3] shadow-sm">
+                            className="relative group cursor-pointer aspect-square w-full overflow-hidden rounded-2xl border border-[#E9DED3] shadow-sm">
                             <img src={normalizeMediaUrl(g.url)} alt="" className="w-full h-full object-cover group-hover:scale-105 transition duration-500" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.style.display = 'none'; }} />
                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
                               <ZoomIn size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 drop-shadow-md scale-75 group-hover:scale-100" />

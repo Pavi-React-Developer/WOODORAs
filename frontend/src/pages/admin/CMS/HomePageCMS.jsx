@@ -28,24 +28,24 @@ const TABS = [
   { id: 'reviews', label: '⭐ Reviews' },
 ];
 
-export default function HomePageCMS() {
+export default function HomePageCMS({ canCreate, canEdit, canDelete }) {
   const [activeTab, setActiveTab] = useState('layout');
   const [refreshKey, setRefreshKey] = useState(0);
 
   const renderTab = () => {
     switch (activeTab) {
-      case 'layout': return <HomeLayoutBuilder key={refreshKey} />;
-      case 'navbar': return <NavbarAdmin key={refreshKey} />;
-      case 'hero': return <HeroBannerAdmin key={refreshKey} />;
-      case 'third': return <ThirdBannerAdmin key={refreshKey} />;
-      case 'grid': return <ProductGridAdmin key={refreshKey} />;
-      case 'category-grid': return <CategoryGridAdmin key={refreshKey} />;
-      case 'categories-grid': return <CategoriesGridAdmin key={refreshKey} />;
-      case 'gift-card': return <GiftCardBannerAdmin key={refreshKey} />;
-      case 'customize': return <CustomizeBannerAdmin key={refreshKey} />;
-      case 'bulk-order': return <BulkOrderBannerAdmin key={refreshKey} />;
-      case 'footer': return <FooterAdmin key={refreshKey} />;
-      case 'reviews': return <ReviewAdmin key={refreshKey} />;
+      case 'layout': return <HomeLayoutBuilder key={refreshKey} canCreate={canCreate} canEdit={canEdit} canDelete={canDelete} />;
+      case 'navbar': return <NavbarAdmin key={refreshKey} canCreate={canCreate} canEdit={canEdit} canDelete={canDelete} />;
+      case 'hero': return <HeroBannerAdmin key={refreshKey} canCreate={canCreate} canEdit={canEdit} canDelete={canDelete} />;
+      case 'third': return <ThirdBannerAdmin key={refreshKey} canCreate={canCreate} canEdit={canEdit} canDelete={canDelete} />;
+      case 'grid': return <ProductGridAdmin key={refreshKey} canCreate={canCreate} canEdit={canEdit} canDelete={canDelete} />;
+      case 'category-grid': return <CategoryGridAdmin key={refreshKey} canCreate={canCreate} canEdit={canEdit} canDelete={canDelete} />;
+      case 'categories-grid': return <CategoriesGridAdmin key={refreshKey} canCreate={canCreate} canEdit={canEdit} canDelete={canDelete} />;
+      case 'gift-card': return <GiftCardBannerAdmin key={refreshKey} canCreate={canCreate} canEdit={canEdit} canDelete={canDelete} />;
+      case 'customize': return <CustomizeBannerAdmin key={refreshKey} canCreate={canCreate} canEdit={canEdit} canDelete={canDelete} />;
+      case 'bulk-order': return <BulkOrderBannerAdmin key={refreshKey} canCreate={canCreate} canEdit={canEdit} canDelete={canDelete} />;
+      case 'footer': return <FooterAdmin key={refreshKey} canCreate={canCreate} canEdit={canEdit} canDelete={canDelete} />;
+      case 'reviews': return <ReviewAdmin key={refreshKey} canCreate={canCreate} canEdit={canEdit} canDelete={canDelete} />;
       default: return null;
     }
   };

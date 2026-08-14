@@ -66,7 +66,7 @@ function MediaUploader({ label, value, onChange, accept = "image/*,video/mp4,vid
   );
 }
 
-export default function HeroBannerAdmin() {
+export default function HeroBannerAdmin({ canCreate, canEdit, canDelete }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -132,10 +132,12 @@ export default function HeroBannerAdmin() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-bold text-brand-dark">Hero Banners</h3>
-        <button onClick={() => { window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowForm(true); setEditId(null); setForm(emptyForm); }}
-          className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60">
-          <Plus className="w-4 h-4" /> Add Banner
-        </button>
+        {canCreate && (
+          <button onClick={() => { window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowForm(true); setEditId(null); setForm(emptyForm); }}
+            className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60">
+            <Plus size={15} /> Add Banner
+          </button>
+        )}
       </div>
 
       {showForm && (
@@ -183,7 +185,7 @@ export default function HeroBannerAdmin() {
                 <label className="text-sm font-semibold text-brand-dark uppercase tracking-wider block">Media Items (Multi-Image / Multi-Video)</label>
                 <button type="button" onClick={() => setForm(f => ({ ...f, items: [...(f.items || []), { mediaType: 'image', desktopUrl: '', mobileUrl: '' }] }))}
                   className="px-4 py-1.5 border border-[#8B5E3C] text-[#8B5E3C] rounded-full text-xs font-bold flex items-center gap-1 hover:bg-[#F8F4EC] transition-colors bg-white">
-                  <Plus className="w-3 h-3" /> Add Item
+                  <Plus size={15} /> Add Item
                 </button>
               </div>
               <div className="space-y-4">
@@ -191,7 +193,7 @@ export default function HeroBannerAdmin() {
                   <div key={idx} className="p-4 border border-[#E6DFD4] rounded-xl bg-white relative">
                     <button type="button" onClick={() => setForm(f => ({ ...f, items: f.items.filter((_, i) => i !== idx) }))}
                       className="text-red-500 hover:text-red-600 transition-colors">
-                      <Trash className="w-4 h-4" />
+                      <Trash2 size={15} />
                     </button>
                     <div className="mb-3 w-1/3">
                       <label className="text-xs font-semibold text-brand-medium uppercase tracking-wider block mb-1">Type</label>
@@ -283,20 +285,26 @@ export default function HeroBannerAdmin() {
                   {new Date(item.startDate).toLocaleDateString()} → {new Date(item.endDate).toLocaleDateString()}
                 </p>
                 <div className="flex gap-2">
-                  <button onClick={() => handleToggle(item)}
-                    className="text-green-600 hover:text-green-700 transition-colors"
-                    title={item.status ? 'Disable' : 'Enable'}>
-                    {item.status ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                  <button onClick={() => handleEdit(item)}
-                    className="text-blue-600 hover:text-blue-700 transition-colors"
-                    title="Edit">
-                    <SquarePen className="w-4 h-4" />
-                  </button>
-                  <button onClick={() => handleDelete(item._id)}
-                    className="text-red-500 hover:text-red-600 transition-colors">
-                    <Trash className="w-3.5 h-3.5" />
-                  </button>
+                  {canEdit && (
+                    <>
+                      <button onClick={() => handleToggle(item)}
+                        className="text-green-600 hover:text-green-700 transition-colors"
+                        title={item.status ? 'Disable' : 'Enable'}>
+                        {item.status ? <EyeOff size={15} /> : <Eye size={15} />}
+                      </button>
+                      <button onClick={() => handleEdit(item)}
+                        className="text-blue-600 hover:text-blue-700 transition-colors"
+                        title="Edit">
+                        <SquarePen size={15} />
+                      </button>
+                    </>
+                  )}
+                  {canDelete && (
+                    <button onClick={() => handleDelete(item._id)}
+                      className="text-red-500 hover:text-red-600 transition-colors">
+                      <Trash2 size={15} />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

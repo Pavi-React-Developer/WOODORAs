@@ -13,7 +13,7 @@ import { catalogService } from '../../../api/catalogService';
 import { getImageSrc } from '../../../utils/imageUtils';
 
 // Sortable Item Component
-function SortableItem({ id, visible, label }) {
+function SortableItem({ id, visible, label, canEdit }) {
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
     const dispatch = useDispatch();
 
@@ -24,24 +24,26 @@ function SortableItem({ id, visible, label }) {
 
     return (
         <div ref={setNodeRef} style={style} className="flex items-center justify-between p-4 mb-3 bg-white border border-[#E6DFD4] rounded-xl shadow-sm">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center gap-3">
                 <div {...attributes} {...listeners} className="cursor-grab text-brand-medium hover:text-brand-dark p-1">
-                    <GripVertical size={20} />
+                    <GripVertical size={15} />
                 </div>
                 <span className="font-semibold text-brand-dark">{label}</span>
             </div>
-            <button
-                onClick={() => dispatch(setDraftVisibility({ id, visible: !visible }))}
-                className="text-green-600 hover:text-green-700 transition-colors"
-                title={visible ? 'Hide section' : 'Show section'}
-            >
-                {visible ? <Eye size={18} /> : <EyeOff size={18} />}
-            </button>
+            {canEdit && (
+                <button
+                    onClick={() => dispatch(setDraftVisibility({ id, visible: !visible }))}
+                    className="text-green-600 hover:text-green-700 transition-colors"
+                    title={visible ? 'Hide section' : 'Show section'}
+                >
+                    {visible ? <Eye size={15} /> : <EyeOff size={15} />}
+                </button>
+            )}
         </div>
     );
 }
 
-export default function HomeLayoutBuilder() {
+export default function HomeLayoutBuilder({ canCreate, canEdit, canDelete }) {
     const [previewMode, setPreviewMode] = useState('desktop');
     const dispatch = useDispatch();
     const { draftSections, status, error } = useSelector((state) => state.layout);
@@ -217,17 +219,21 @@ export default function HomeLayoutBuilder() {
                     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                         <SortableContext items={draftSections.map(s => s.id)} strategy={verticalListSortingStrategy}>
                             {draftSections.map((section) => (
-                                <SortableItem key={section.id} id={section.id} visible={section.visible} label={getSectionLabel(section)} />
+                                <SortableItem key={section.id} id={section.id} visible={section.visible} label={getSectionLabel(section)} canEdit={canEdit} />
                             ))}
                         </SortableContext>
                     </DndContext>
                 </div>
 
-                <div className="flex flex-wrap gap-3 mt-4 pt-4 border-t border-[#E6DFD4]">
-                    <button onClick={() => toast.success('Draft saved locally')} className="flex-1 px-8 py-3 border border-[#E6DFD4] rounded-full text-[15px] font-bold text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm text-center">Save Draft</button>
-                    <button onClick={handlePublish} className="flex-1 flex items-center justify-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60 text-center font-bold text-[15px]">Publish</button>
-                </div>
-                <button onClick={() => dispatch(resetDraft())} className="w-full mt-3 px-8 py-3 border border-red-200 rounded-full text-[15px] font-bold text-red-600 bg-white hover:bg-red-50 transition-colors shadow-sm uppercase tracking-wide">Reset to Published</button>
+                {canEdit && (
+                    <>
+                        <div className="flex flex-wrap gap-3 mt-4 pt-4 border-t border-[#E6DFD4]">
+                            <button onClick={() => toast.success('Draft saved locally')} className="flex-1 px-8 py-3 border border-[#E6DFD4] rounded-full text-[15px] font-bold text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm text-center">Save Draft</button>
+                            <button onClick={handlePublish} className="flex-1 flex items-center justify-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60 text-center font-bold text-[15px]">Publish</button>
+                        </div>
+                        <button onClick={() => dispatch(resetDraft())} className="w-full mt-3 px-8 py-3 border border-red-200 rounded-full text-[15px] font-bold text-red-600 bg-white hover:bg-red-50 transition-colors shadow-sm uppercase tracking-wide">Reset to Published</button>
+                    </>
+                )}
             </div>
 
             {/* Right Side: Live Preview */}

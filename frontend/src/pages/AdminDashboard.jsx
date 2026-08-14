@@ -5,7 +5,9 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsToolti
 import { catalogService } from '../api/catalogService';
 import { adminService } from '../api/adminService';
 import apiClient from '../api/apiClient';
+import { cmsService } from '../api/cmsService';
 import { downloadExcelFile } from '../utils/exportUtils';
+import { getImageSrc } from '../utils/imageUtils';
 import CategoriesPage from './admin/catalog/CategoriesPage';
 import SubCategoriesPage from './admin/catalog/SubCategoriesPage';
 import AttributesPage from './admin/catalog/AttributesPage';
@@ -29,19 +31,30 @@ import BulkOrdersAdminPage from './admin/BulkOrdersAdminPage';
 import BulkOrderFieldsAdminPage from './admin/BulkOrderFieldsAdminPage';
 import GiftAndCardAdminPage from './admin/GiftAndCardAdminPage';
 import CustomizeAdminPage from './admin/customize/CustomizeAdminPage';
+import AdvancedBookingManagement from './admin/advanced-booking/AdvancedBookingManagement';
 
 const adminRouteState = {
   '/admin': { tab: 'dashboard' },
   '/admin/dashboard': { tab: 'dashboard' },
   '/admin/staff': { tab: 'staff', staffSubTab: 'list', staffMenuOpen: true },
   '/admin/staff/add': { tab: 'staff', staffSubTab: 'add', staffMenuOpen: true },
+  '/admin/staff/edit': { tab: 'staff', staffSubTab: 'add', staffMenuOpen: true },
   '/admin/staff/roles': { tab: 'staff', staffSubTab: 'role-assign', staffMenuOpen: true },
   '/admin/catalog/categories': { tab: 'v2-categories', catalogMenuOpen: true },
+  '/admin/catalog/categories/add': { tab: 'v2-categories', categorySubTab: 'add', catalogMenuOpen: true },
+  '/admin/catalog/categories/edit': { tab: 'v2-categories', categorySubTab: 'add', catalogMenuOpen: true },
   '/admin/catalog/sub-categories': { tab: 'v2-subcategories', catalogMenuOpen: true },
+  '/admin/catalog/sub-categories/add': { tab: 'v2-subcategories', subCategorySubTab: 'add', catalogMenuOpen: true },
+  '/admin/catalog/sub-categories/edit': { tab: 'v2-subcategories', subCategorySubTab: 'add', catalogMenuOpen: true },
   '/admin/catalog/attributes': { tab: 'v2-attributes', catalogMenuOpen: true },
+  '/admin/catalog/attributes/add': { tab: 'v2-attributes', attributeSubTab: 'add', catalogMenuOpen: true },
+  '/admin/catalog/attributes/edit': { tab: 'v2-attributes', attributeSubTab: 'add', catalogMenuOpen: true },
   '/admin/products': { tab: 'v2-products', productSubTab: 'list', productMenuOpen: true },
   '/admin/products/add': { tab: 'v2-products', productSubTab: 'add', productMenuOpen: true },
+  '/admin/products/edit': { tab: 'v2-products', productSubTab: 'add', productMenuOpen: true },
   '/admin/orders': { tab: 'orders' },
+  '/admin/orders/view': { tab: 'orders' },
+  '/admin/orders/edit': { tab: 'orders' },
   '/admin/inventory': { tab: 'inventory', inventoryMenuOpen: true },
   '/admin/customers': { tab: 'customers', customerMenuOpen: true },
   '/admin/cms': { tab: 'cms' },
@@ -71,6 +84,7 @@ const adminRouteState = {
   '/admin/gift-and-card/gift-fee': { tab: 'gift_and_card', giftAndCardSubTab: 'gift-fee', giftAndCardMenuOpen: true },
   '/admin/customize': { tab: 'customize_order', customizeSubTab: 'list', customizeMenuOpen: true },
   '/admin/customize/form-fields': { tab: 'customize_order', customizeSubTab: 'form-fields', customizeMenuOpen: true },
+  '/admin/advanced-bookings': { tab: 'advanced_booking', advancedBookingSubTab: 'list', advancedBookingMenuOpen: true },
 };
 
 const adminTabPaths = {
@@ -92,6 +106,7 @@ const adminTabPaths = {
   'bulk-orders': '/admin/bulk-orders',
   'gift_and_card': '/admin/gift-and-card',
   'customize_order': '/admin/customize',
+  'advanced_booking': '/admin/advanced-bookings',
 };
 
 export default function AdminDashboard({ user, onNavigate, onLogout }) {
@@ -108,6 +123,13 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
   const [categorySubTab, setCategorySubTab] = useState('list'); // 'list' | 'add' | 'edit'
   const [subCategorySubTab, setSubCategorySubTab] = useState('list'); // 'list' | 'add'
   const [daysFilter, setDaysFilter] = useState('30'); // '30', '7', 'all'
+  const [isStatsLoading, setIsStatsLoading] = useState(false);
+  const [isDateDropdownOpen, setIsDateDropdownOpen] = useState(false);
+  const dateOptions = [
+    { value: '30', label: 'Last 30 Days' },
+    { value: '7', label: 'Last 7 Days' },
+    { value: 'all', label: 'All Time' },
+  ];
 
   // Staff Management state
   const [staffSubTab, setStaffSubTab] = useState('list'); // 'list' | 'add' | 'role-assign'
@@ -125,11 +147,16 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
   const [refundSubTab, setRefundSubTab] = useState('list'); // 'list' | 'analytics' | 'settings'
   const [refundMenuOpen, setRefundMenuOpen] = useState(false);
 
+  // Advanced Booking state
+  const [advancedBookingMenuOpen, setAdvancedBookingMenuOpen] = useState(false);
+  const [advancedBookingSubTab, setAdvancedBookingSubTab] = useState('list');
+
   // Inventory Management state
   const [inventoryMenuOpen, setInventoryMenuOpen] = useState(false);
 
   // Customer Management state
   const [customerMenuOpen, setCustomerMenuOpen] = useState(false);
+  const [customerEditId, setCustomerEditId] = useState(null);
 
   // Gift & Card Management state
   const [giftAndCardMenuOpen, setGiftAndCardMenuOpen] = useState(false);
@@ -145,6 +172,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
 
   // Dynamic permissions for sidebar
   const [userPermissions, setUserPermissions] = useState(null); // null = not loaded yet
+  const [adminLogo, setAdminLogo] = useState(null);
+  const [logoError, setLogoError] = useState(false);
 
   // True Super Admins (from User collection) see everything. Staff (even if role is named "admin") use permissions matrix.
   const isAdmin = user?.role?.toLowerCase() === 'admin' && user?.isStaff !== true;
@@ -225,6 +254,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
     if (options.productSubTab) setProductSubTab(options.productSubTab);
     if (options.feeSubTab) setFeeSubTab(options.feeSubTab);
     if (options.refundSubTab) setRefundSubTab(options.refundSubTab);
+    if (options.advancedBookingSubTab) setAdvancedBookingSubTab(options.advancedBookingSubTab);
     if (options.bulkOrderSubTab) setBulkOrderSubTab(options.bulkOrderSubTab);
     if (options.staffMenuOpen !== undefined) setStaffMenuOpen(options.staffMenuOpen);
     if (options.catalogMenuOpen !== undefined) setCatalogMenuOpen(options.catalogMenuOpen);
@@ -278,18 +308,13 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
           })
           .catch(err => console.error("Failed to load subcategories in admin", err)),
 
-        adminService.getDashboardStats(daysFilter)
-          .then(data => {
-            if (data) {
-              setTotalRevenue(data.totalRevenue || 0);
-              setTotalOrders(data.totalOrders || 0);
-              setTotalCustomers(data.totalCustomers || 0);
-              setTotalProducts(data.totalProducts || 0);
-              setRevenueAnalytics(data.revenueAnalytics || []);
-              setOrderVolume(data.orderVolume || []);
+        cmsService.getNavbar()
+          .then(res => {
+            if (res.success && res.data && res.data.logo) {
+              setAdminLogo(getImageSrc(res.data.logo));
             }
           })
-          .catch(err => console.error("Failed to load dashboard stats", err))
+          .catch(err => console.error("Failed to load admin logo", err))
       ]);
     } finally {
       setIsRefreshing(false);
@@ -311,8 +336,52 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
   }, []);
 
   useEffect(() => {
+    setIsStatsLoading(true);
+    adminService.getDashboardStats(daysFilter)
+      .then(data => {
+        if (data) {
+          setTotalRevenue(data.totalRevenue || 0);
+          setTotalOrders(data.totalOrders || 0);
+          setTotalCustomers(data.totalCustomers || 0);
+          setTotalProducts(data.totalProducts || 0);
+          setRevenueAnalytics(data.revenueAnalytics || []);
+          setOrderVolume(data.orderVolume || []);
+        }
+      })
+      .catch(err => console.error("Failed to load dashboard stats", err))
+      .finally(() => setIsStatsLoading(false));
+  }, [daysFilter]);
+
+  useEffect(() => {
     const normalizedPath = location.pathname.replace(/\/+$/, '') || '/admin';
-    const routeState = adminRouteState[normalizedPath] || adminRouteState['/admin'];
+    
+    let routeState = adminRouteState[normalizedPath];
+    let staffEditId = null;
+    let parsedCustomerEditId = null;
+
+    if (!routeState) {
+      if (normalizedPath.startsWith('/admin/staff/edit/')) {
+        staffEditId = normalizedPath.split('/').pop();
+        routeState = { tab: 'staff', staffSubTab: 'add', staffMenuOpen: true };
+      } else if (normalizedPath.startsWith('/admin/catalog/sub-categories/edit/')) {
+        routeState = { tab: 'v2-subcategories', subCategorySubTab: 'add', catalogMenuOpen: true };
+      } else if (normalizedPath.startsWith('/admin/catalog/categories/edit/')) {
+        routeState = { tab: 'v2-categories', categorySubTab: 'add', catalogMenuOpen: true };
+      } else if (normalizedPath.startsWith('/admin/catalog/attributes/edit/')) {
+        routeState = { tab: 'v2-attributes', attributeSubTab: 'add', catalogMenuOpen: true };
+      } else if (normalizedPath.startsWith('/admin/products/edit/')) {
+        routeState = { tab: 'v2-products', productSubTab: 'add', productMenuOpen: true };
+      } else if (normalizedPath.startsWith('/admin/orders/view/') || normalizedPath.startsWith('/admin/orders/edit/')) {
+        routeState = { tab: 'orders' };
+      } else if (normalizedPath.startsWith('/admin/customers/details/')) {
+        parsedCustomerEditId = normalizedPath.split('/').pop();
+        routeState = { tab: 'customers', customerMenuOpen: true };
+      } else {
+        routeState = adminRouteState['/admin'];
+      }
+    }
+    
+    setCustomerEditId(parsedCustomerEditId);
     setCurrentTab(routeState.tab);
     if (routeState.staffSubTab) setStaffSubTab(routeState.staffSubTab);
     if (routeState.productSubTab) setProductSubTab(routeState.productSubTab);
@@ -331,6 +400,16 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
     if (routeState.refundMenuOpen !== undefined) setRefundMenuOpen(routeState.refundMenuOpen);
     if (routeState.giftAndCardMenuOpen !== undefined) setGiftAndCardMenuOpen(routeState.giftAndCardMenuOpen);
     if (routeState.customizeMenuOpen !== undefined) setCustomizeMenuOpen(routeState.customizeMenuOpen);
+
+    if (staffEditId) {
+      staffAPI.getById(staffEditId)
+        .then(data => {
+          if (data?.staff) setEditingStaff(data.staff);
+        })
+        .catch(err => console.error("Failed to load staff for edit", err));
+    } else if (routeState.staffSubTab === 'add' && !normalizedPath.includes('/edit')) {
+      setEditingStaff(null);
+    }
   }, [location.pathname]);
 
   // Load the current logged-in staff member's permissions dynamically
@@ -635,8 +714,17 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
         <div>
           {/* Logo */}
           <div className="pt-8 pb-6 px-8 border-b border-[#E6DFD4]/50">
-            <h1 className="font-bold text-xl tracking-widest text-brand-dark leading-tight">WOODENTOYS</h1>
-            <p className="text-[10px] font-bold text-brand-medium uppercase tracking-widest mt-0.5">Admin Portal</p>
+            {!logoError && adminLogo ? (
+              <img
+                src={adminLogo}
+                alt="Admin Portal Logo"
+                className="w-full h-auto object-contain max-h-24 object-left"
+                onError={() => setLogoError(true)}
+              />
+            ) : (
+              <h1 className="font-bold text-xl tracking-widest text-brand-dark leading-tight">WOODENTOYS</h1>
+            )}
+            <p className="text-[10px] font-bold text-brand-medium uppercase tracking-widest mt-2">Admin Portal</p>
           </div>
 
           {/* Nav Links */}
@@ -647,8 +735,10 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                   onClick={() => openAdminTab('dashboard')}
                   className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-xl transition-colors text-left ${currentTab === 'dashboard' ? 'bg-[#E6DFD4] text-brand-dark' : 'text-brand-medium hover:bg-brand-light hover:text-brand-dark'}`}
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-                  Dashboard
+                  <span className="flex items-center gap-2.5">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                    Dashboard
+                  </span>
                 </button>
               </div>
             )}
@@ -1009,8 +1099,10 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                   className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${currentTab === 'cms' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
                     }`}
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg>
-                  CMS Management
+                  <span className="flex items-center gap-2.5">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg>
+                    CMS Management
+                  </span>
                 </button>
               </div>
             )}
@@ -1023,8 +1115,10 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                   className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${currentTab === 'coupons' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
                     }`}
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2H5zm0 10a2 2 0 00-2 2v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 00-2-2H5z" /></svg>
-                  Coupons & Offers
+                  <span className="flex items-center gap-2.5">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2H5zm0 10a2 2 0 00-2 2v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 00-2-2H5z" /></svg>
+                    Coupons & Offers
+                  </span>
                 </button>
               </div>
             )}
@@ -1037,8 +1131,10 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                   className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${currentTab === 'reviews' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
                     }`}
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
-                  Rating Management
+                  <span className="flex items-center gap-2.5">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
+                    Rating Management
+                  </span>
                 </button>
               </div>
             )}
@@ -1126,6 +1222,22 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                 )}
               </div>
             )}
+
+            {/* Advanced Booking Management */}
+            {(isAdmin || canView('advanced_booking')) && (
+              <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
+                <button
+                  onClick={() => openAdminTab('advanced_booking', { advancedBookingSubTab: 'list' })}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${currentTab === 'advanced_booking' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                    }`}
+                >
+                  <span className="flex items-center gap-2.5">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    Advanced Booking
+                  </span>
+                </button>
+              </div>
+            )}
           </nav>
         </div>
 
@@ -1186,18 +1298,38 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                   <button onClick={() => loadData()} disabled={isRefreshing} className="admin-secondary-btn flex items-center gap-2 disabled:opacity-60">
                     <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} /> {isRefreshing ? 'Refreshing...' : 'Refresh'}
                   </button>
-                  <select
-                    value={daysFilter}
-                    onChange={(e) => setDaysFilter(e.target.value)}
-                    className="bg-white border border-[#E6DFD4] text-brand-dark text-sm rounded-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-brand-medium cursor-pointer shadow-sm"
+                  <div className="relative">
+                    <button 
+                      onClick={() => setIsDateDropdownOpen(!isDateDropdownOpen)}
+                      className="bg-white border border-[#E6DFD4] text-brand-dark text-sm rounded-full h-[40px] px-4 py-2 focus:outline-none focus:ring-1 focus:ring-[#8B5E3C] cursor-pointer shadow-sm flex items-center justify-between min-w-[140px] hover:border-[#C8B9A5] transition-colors"
+                    >
+                      {dateOptions.find(opt => opt.value === daysFilter)?.label || 'Last 30 Days'}
+                      <svg className={`w-4 h-4 ml-2 transition-transform ${isDateDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    {isDateDropdownOpen && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setIsDateDropdownOpen(false)}></div>
+                        <div className="absolute right-0 mt-2 w-full min-w-[150px] bg-white border border-[#E6DFD4] rounded-xl shadow-lg z-50 overflow-hidden py-1">
+                          {dateOptions.map(option => (
+                            <button
+                              key={option.value}
+                              onClick={() => { setDaysFilter(option.value); setIsDateDropdownOpen(false); }}
+                              className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${daysFilter === option.value ? 'bg-[#FDF9F1] text-[#8B5E3C] font-semibold' : 'text-brand-dark hover:bg-[#FDF9F1] hover:text-[#8B5E3C]'}`}
+                            >
+                              {option.label}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  <button 
+                    onClick={handleExportCSV} 
+                    disabled={isStatsLoading}
+                    className="admin-export-btn flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    <option value="30">Last 30 Days</option>
-                    <option value="7">Last 7 Days</option>
-                    <option value="all">All Time</option>
-                  </select>
-                  <button onClick={handleExportCSV} className="admin-export-btn flex items-center gap-2">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                    Export CSV
+                    {isStatsLoading ? 'Loading...' : 'Export CSV'}
                   </button>
                 </div>
               </div>
@@ -2196,9 +2328,9 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
               canCreate={hasPermission('staff_management', 'create')}
               canEdit={hasPermission('staff_management', 'edit')}
               canDelete={hasPermission('staff_management', 'delete')}
-              onAddStaff={() => { setEditingStaff(null); setStaffSubTab('add'); }}
-              onEditStaff={(member) => { setEditingStaff(member); setStaffSubTab('add'); }}
-              onRoleAssign={(member) => { setRoleAssignStaff(member); setStaffSubTab('role-assign'); }}
+              onAddStaff={() => { openAdminTab('staff', { staffSubTab: 'add', editingStaff: null, path: '/admin/staff/add' }); }}
+              onEditStaff={(member) => { openAdminTab('staff', { staffSubTab: 'add', editingStaff: member, path: `/admin/staff/edit/${member._id}` }); }}
+              onRoleAssign={(member) => { openAdminTab('staff', { staffSubTab: 'role-assign', roleAssignStaff: member, path: '/admin/staff/roles' }); }}
             />
           )}
           {canAccessStaff && currentTab === 'staff' && staffSubTab === 'add' && (
@@ -2234,6 +2366,11 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
               canEdit={hasPermission('orders', 'edit')}
               canDelete={hasPermission('orders', 'delete')}
             />
+          )}
+
+          {/* ── ADVANCED BOOKING MANAGEMENT ── */}
+          {(isAdmin || canView('advanced_booking')) && currentTab === 'advanced_booking' && (
+            <AdvancedBookingManagement />
           )}
 
           {/* ── FEE MANAGEMENT ── */}
@@ -2281,6 +2418,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
             <CustomerManagementPage
               canEdit={hasPermission('customers', 'edit')}
               canDelete={hasPermission('customers', 'delete')}
+              customerEditId={customerEditId}
             />
           )}
 
@@ -2302,8 +2440,12 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
           )}
 
           {/* ── CMS MANAGEMENT ── */}
-          {isAdmin && currentTab === 'cms' && (
-            <HomePageCMS />
+          {(isAdmin || canView('cms')) && currentTab === 'cms' && (
+            <HomePageCMS 
+              canCreate={hasPermission('cms', 'create')}
+              canEdit={hasPermission('cms', 'edit')}
+              canDelete={hasPermission('cms', 'delete')}
+            />
           )}
 
           {/* ── BULK ORDERS MANAGEMENT ── */}

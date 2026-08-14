@@ -12,12 +12,47 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
   const [selectedIds, setSelectedIds] = useState([]);
 
   const toggleSelectAll = (checked) => {
-    setSelectedIds(checked ? refunds.map(item => item._id) : []);
+    setSelectedIds(checked ? filteredRefunds.map(item => item._id) : []);
   };
 
   const toggleSelectOne = (id, checked) => {
     setSelectedIds(prev => checked ? [...prev, id] : prev.filter(i => i !== id));
   };
+
+  const handleBulkStatus = async (status) => {
+    if (!selectedIds.length) return;
+    try {
+      setLoading(true);
+      await Promise.all(
+        selectedIds.map(async (id) => {
+          await adminService.updateRefundStatus(id, status);
+        })
+      );
+      toast.success(`Successfully updated ${selectedIds.length} refunds`);
+      setSelectedIds([]);
+      fetchRefunds();
+    } catch (e) {
+      toast.error('Failed to update refunds');
+      setLoading(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!selectedIds.length) return;
+    if (window.confirm(`Are you sure you want to delete ${selectedIds.length} refunds?`)) {
+      try {
+        setLoading(true);
+        await Promise.all(selectedIds.map(id => adminService.deleteRefund(id)));
+        toast.success(`Successfully deleted ${selectedIds.length} refunds`);
+        setSelectedIds([]);
+        fetchRefunds();
+      } catch (e) {
+        toast.error('Failed to delete refunds');
+        setLoading(false);
+      }
+    }
+  };
+
   const [loading, setLoading] = useState(true);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [activeViewRefund, setActiveViewRefund] = useState(null);
@@ -53,6 +88,12 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [dateFilter, setDateFilter] = useState('30'); // '30', '7', 'all'
+  const [isDateDropdownOpen, setIsDateDropdownOpen] = useState(false);
+  const dateOptions = [
+    { value: '30', label: 'Last 30 Days' },
+    { value: '7', label: 'Last 7 Days' },
+    { value: 'all', label: 'All Time' },
+  ];
 
   const fetchRefunds = async () => {
     setLoading(true);
@@ -140,14 +181,14 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
       const days = parseInt(dateFilter, 10);
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - days);
-      const refundDate = new Date(r.createdAt || Date.now());
+      const refundDate = r.createdAt ? new Date(r.createdAt) : new Date(0);
       matchDate = refundDate >= cutoffDate;
     }
 
     return matchPayment && matchStatus && matchSearch && matchDate;
   });
 
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
   const totalPages = Math.ceil(filteredRefunds.length / itemsPerPage) || 1;
   const currentRefunds = filteredRefunds.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
@@ -215,29 +256,48 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
   };
 
   return (
-    <div className="bg-[#FAF8F5] min-h-screen">
-      <div className="max-w-7xl mx-auto px-8 py-10">
+    <div className="flex-1 overflow-y-auto p-8">
+      <div className="max-w-7xl mx-auto space-y-8">
 
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-[#141225] font-serif tracking-tight">Refund Management</h1>
-            <p className="text-[#6D625C] mt-1.5 text-sm">Manage pending and processed refunds.</p>
+            <p className="text-[13px] md:text-sm font-serif text-white mb-1">
+              Dashboard &rsaquo; <span className="font-semibold text-[#8B5E3C]">Refund Management</span>
+            </p>
+            <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Refund Management</h1>
           </div>
+
           <div className="flex items-center gap-3">
             <button onClick={fetchRefunds} className="admin-secondary-btn">
               <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
               Refresh
             </button>
-            <select
-              value={dateFilter}
-              onChange={(e) => { setDateFilter(e.target.value); setCurrentPage(1); }}
-              className="bg-white border border-[#E9DED3] text-[#4A403B] text-sm rounded-lg px-4 py-2 focus:outline-none shadow-sm cursor-pointer"
-            >
-              <option value="30">Last 30 Days</option>
-              <option value="7">Last 7 Days</option>
-              <option value="all">All Time</option>
-            </select>
+            <div className="relative">
+              <button 
+                onClick={() => setIsDateDropdownOpen(!isDateDropdownOpen)}
+                className="bg-white border border-[#E9DED3] text-[#4A403B] text-sm rounded-full h-[40px] px-4 py-2 focus:outline-none shadow-sm cursor-pointer flex items-center justify-between min-w-[140px] hover:border-[#C8B9A5] transition-colors"
+              >
+                {dateOptions.find(opt => opt.value === dateFilter)?.label || 'Last 30 Days'}
+                <ChevronDown size={16} className={`ml-2 transition-transform ${isDateDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {isDateDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setIsDateDropdownOpen(false)}></div>
+                  <div className="absolute right-0 mt-2 w-full min-w-[150px] bg-white border border-[#E9DED3] rounded-xl shadow-lg z-50 overflow-hidden py-1">
+                    {dateOptions.map(option => (
+                      <button
+                        key={option.value}
+                        onClick={() => { setDateFilter(option.value); setCurrentPage(1); setIsDateDropdownOpen(false); }}
+                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${dateFilter === option.value ? 'bg-[#FDF9F1] text-[#8B5E3C] font-semibold' : 'text-[#4A403B] hover:bg-[#FDF9F1] hover:text-[#8B5E3C]'}`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
             <button onClick={exportRefundsExcel} className="admin-export-btn">
               <Download size={16} />
               Export Excel
@@ -252,9 +312,9 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
             <p className="text-sm text-[#6D625C]">Enable or Disable Wallet functionality across the entire application.</p>
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
-            <input 
-              type="checkbox" 
-              className="sr-only peer" 
+            <input
+              type="checkbox"
+              className="sr-only peer"
               checked={walletEnabled}
               onChange={handleToggleWallet}
               disabled={isTogglingWallet}
@@ -375,22 +435,22 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
         </div>
 
         {/* Data Table Controls */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
-          <div className="relative w-full md:w-80">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+        <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm p-4 mb-5 flex flex-wrap gap-3 items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A817C]" />
             <input
               type="text"
               placeholder="Search by Order ID or Customer..."
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-              className="w-full pl-9 pr-4 py-2 bg-white border border-[#E9DED3] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#8B5E3C]"
+              className="w-full pl-9 pr-4 py-2.5 bg-white border border-[#E9DED3] rounded-[10px] text-sm focus:outline-none focus:border-[#9A6031] focus:ring-1 focus:ring-[#9A6031] transition-all"
             />
           </div>
-          <div className="flex gap-3 w-full md:w-auto">
+          <div className="flex gap-3 flex-wrap">
             <select
               value={paymentTypeFilter}
               onChange={(e) => { setPaymentTypeFilter(e.target.value); setCurrentPage(1); }}
-              className="bg-white border border-[#E9DED3] text-[#4A403B] text-sm rounded-lg px-4 py-2 focus:outline-none shadow-sm cursor-pointer"
+              className="bg-white border border-[#E9DED3] rounded-[10px] px-4 py-2.5 text-sm text-[#4A403B] font-semibold outline-none focus:border-[#9A6031]"
             >
               <option>All Payment Types</option>
               <option>COD</option>
@@ -399,15 +459,30 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
             <select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-              className="bg-white border border-[#E9DED3] text-[#4A403B] text-sm rounded-lg px-4 py-2 focus:outline-none shadow-sm cursor-pointer"
+              className="bg-white border border-[#E9DED3] rounded-[10px] px-4 py-2.5 text-sm text-[#4A403B] font-semibold outline-none focus:border-[#9A6031]"
             >
               <option>All Statuses</option>
               <option value="Approval Pending">Approval Pending</option>
               <option value="Refund Approved">Refund Approved</option>
             </select>
-            <select className="bg-white border border-[#E9DED3] text-[#4A403B] text-sm rounded-lg px-4 py-2 focus:outline-none shadow-sm cursor-pointer">
+            <select className="bg-white border border-[#E9DED3] rounded-[10px] px-4 py-2.5 text-sm text-[#4A403B] font-semibold outline-none focus:border-[#9A6031]">
               <option>All Timelines</option>
             </select>
+          </div>
+        </div>
+
+        {/* Bulk Actions Toolbar */}
+        <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#F8F4EC] border border-[#E9DED3] rounded-[14px] transition-all duration-300 ${selectedIds.length > 0 ? 'opacity-100 p-4 mb-4' : 'opacity-0 h-0 p-0 overflow-hidden border-0 mb-0'}`}>
+          <div className="flex items-center">
+            <span className="text-[15px] font-bold text-[#8B5E3C]">
+              {selectedIds.length} selected
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <button onClick={() => handleBulkStatus('Active')} className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">Set Active</button>
+            <button onClick={() => handleBulkStatus('Inactive')} className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">Set Inactive</button>
+            <button onClick={handleBulkDelete} className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">Delete Selected</button>
+            <button onClick={() => setSelectedIds([])} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-white transition-colors text-gray-500 bg-white">Clear</button>
           </div>
         </div>
 
@@ -415,55 +490,63 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
         <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
-                <tr className="bg-[#FAF8F5] border-b border-[#E9DED3]">
-                                <th className="px-4 py-3.5 w-10">
-                                    <input
-                                        type="checkbox"
-                                        checked={refunds.length > 0 && selectedIds.length === refunds.length}
-                                        onChange={e => toggleSelectAll(e.target.checked)}
-                                        className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
-                                    />
-                                </th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Order ID</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Customer</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Amount</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Payment Type</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">SLA Timeline</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Status</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Refund</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Action</th>
+              <thead className="sticky top-0">
+                <tr className="bg-[#FAF4EF] text-[#8A817C] text-xs font-bold tracking-widest uppercase border-b border-[#E6DFD4]">
+                  <th className="px-4 py-3.5 w-10 text-center">
+                    <input
+                      type="checkbox"
+                      checked={filteredRefunds.length > 0 && selectedIds.length === filteredRefunds.length}
+                      onChange={e => toggleSelectAll(e.target.checked)}
+                      className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                    />
+                  </th>
+                  <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Order ID</th>
+                  <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Customer</th>
+                  <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Amount</th>
+                  <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Payment Type</th>
+                  <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">SLA Timeline</th>
+                  <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Status</th>
+                  <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Refund</th>
+                  <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#E9DED3]">
+              <tbody className="divide-y divide-[#E9DED3] text-sm text-brand-dark">
                 {loading ? (
                   <tr>
-                    <td colSpan="8" className="text-center py-12 text-[#8A817C] text-sm">
+                    <td colSpan="9" className="text-center py-12 text-[#8A817C] text-sm">
                       <div className="w-8 h-8 border-4 border-[#8B5E3C] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
                       Loading refunds...
                     </td>
                   </tr>
                 ) : currentRefunds.map((refund, idx) => (
-                  <tr key={idx} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${typeof idx !== "undefined" ? (idx % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : typeof index !== "undefined" ? (index % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : "bg-white"}`}>
-                    <td className="px-4 py-3.5 text-xs font-bold text-[#141225]">{refund.orderId}</td>
-                    <td className="px-4 py-3.5 text-xs text-[#141225]">{refund.customerName}</td>
-                    <td className="px-4 py-3.5 text-xs font-bold text-[#141225]">₹{refund.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                    <td className="px-4 py-3.5 text-center">
+                  <tr key={idx} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]"}`}>
+                    <td className="px-4 py-6 text-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(refund._id)}
+                        onChange={e => toggleSelectOne(refund._id, e.target.checked)}
+                        className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                      />
+                    </td>
+                    <td className="px-4 py-6 text-center text-sm font-bold text-[#141225]">{refund.orderId}</td>
+                    <td className="px-4 py-6 text-center text-sm font-bold text-[#141225]">{refund.customerName}</td>
+                    <td className="px-4 py-6 text-center text-xs font-semibold text-[#141225]">₹{refund.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-4 py-6 text-center">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tracking-wide ${refund.paymentType === 'Cashfree' ? 'text-blue-500 bg-blue-50' : 'text-purple-500 bg-purple-50'}`}>
                         {refund.paymentType}
                       </span>
                     </td>
-                    <td className="px-4 py-3.5 text-center">
-                      <span className={`text-[10px] font-bold ${refund.slaTimeline !== '-' ? 'text-orange-400' : 'text-gray-400'}`}>
+                    <td className="px-4 py-6 text-center">
+                      <span className={`text-sm font-bold ${refund.slaTimeline !== '-' ? 'text-orange-400' : 'text-gray-400'}`}>
                         {refund.slaTimeline}
                       </span>
                     </td>
-                    <td className="px-4 py-3.5 text-center">
-                      <span className={`inline-block px-3 py-1 rounded text-[10px] font-bold ${getStatusStyle(refund.status)}`}>
+                    <td className="px-4 py-6 text-center">
+                      <span className={`inline-block px-3 py-1 rounded text-[10px] uppercase tracking-wider font-bold ${getStatusStyle(refund.status)}`}>
                         {refund.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3.5 text-center">
+                    <td className="px-4 py-6 text-center">
                       {/* Step 2: Approve button (only for Approval Pending) */}
                       {(refund.status === 'Approval Pending' || refund.status === 'Pending') && canEdit && (
                         <button
@@ -477,7 +560,7 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
                       {refund.status === 'Refund Approved' && canEdit && (
                         <button
                           onClick={() => { setProcessRefund(refund); setRefundMethod(walletEnabled ? 'Wallet' : 'UPI'); }}
-                          className="inline-block px-4 py-1.5 rounded-lg text-[10px] font-bold shadow-sm bg-[#647C5E] text-white cursor-pointer hover:opacity-80 transition-opacity"
+                          className="inline-block px-4 py-1.5 rounded-lg text-[10px] font-bold shadow-sm bg-[#155DFC] text-white cursor-pointer hover:opacity-80 transition-opacity"
                         >
                           Refund
                         </button>
@@ -489,16 +572,18 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3.5 text-center">
-                      <button onClick={() => openViewModal(refund)} className="text-green-600 hover:text-green-700 transition-colors">
-                        <Eye size={16} />
-                      </button>
+                    <td className="px-4 py-6 text-center whitespace-nowrap">
+                      <div className="flex items-center justify-center gap-2">
+                        <button onClick={() => openViewModal(refund)} className="p-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors">
+                          <Eye size={15} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
                 {!loading && currentRefunds.length === 0 && (
                   <tr>
-                    <td colSpan="8" className="px-6 py-12 text-center text-[#6D625C] text-sm">
+                    <td colSpan="9" className="px-6 py-12 text-center text-[#6D625C] text-sm">
                       No refunds found matching the filters.
                     </td>
                   </tr>
@@ -508,14 +593,11 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
           </div>
 
           {/* Pagination */}
-          <div className="px-5 py-6 border-t border-[#E6DFD4] flex flex-col sm:flex-row sm:items-center justify-between bg-white gap-4">
-            <span className="text-xs text-[#8A817C] font-medium text-center sm:text-left">
-              Showing {filteredRefunds.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredRefunds.length)} of {filteredRefunds.length} results
-            </span>
-            <Pagination 
-              currentPage={currentPage} 
-              totalPages={totalPages} 
-              onPageChange={setCurrentPage} 
+          <div className="px-5 py-6 border-t border-[#E6DFD4] flex flex-col sm:flex-row sm:items-center justify-center bg-white gap-4">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
             />
           </div>
         </div>
@@ -525,14 +607,14 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
       {/* STEP 2: Approve Cancellation Request Modal */}
       {approveRefund && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-[#FAF8F5] rounded-2xl shadow-xl w-full max-w-[420px] border border-[#E9DED3] overflow-hidden">
-            <div className="flex items-center justify-between p-5 pb-4 bg-[#8B5E3C] text-white">
-              <h2 className="text-lg font-bold">Approve Refund Request</h2>
-              <button onClick={() => setApproveRefund(null)} className="text-red-500 hover:text-red-600 transition-colors" disabled={approveLoading}>
+          <div className="bg-white rounded-[20px] shadow-2xl w-full max-w-[500px] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-6 md:px-8 bg-[#8B5E3C] text-white">
+              <h2 className="text-2xl font-serif font-bold tracking-tight">Approve Refund Request</h2>
+              <button onClick={() => setApproveRefund(null)} className="p-2 text-gray-400 hover:text-red-300 transition-colors" disabled={approveLoading}>
                 <X size={20} />
               </button>
             </div>
-            <div className="p-6">
+            <div className="p-8">
               <div className="mb-4">
                 <p className="text-[11px] font-bold text-[#8A817C] uppercase tracking-wider mb-1">Order</p>
                 <p className="font-bold text-[#141225] text-base">{approveRefund.orderId}</p>
@@ -543,17 +625,17 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
                 <p className="text-xs text-[#8A817C]">{approveRefund.customerEmail || approveRefund.customerPhone || 'N/A'}</p>
               </div>
               <div className="flex justify-between items-center bg-[#F4EBE2]/50 rounded-xl p-4 mb-4 border border-[#E9DED3]">
-                <span className="text-sm font-bold text-[#6D625C]">Refund Amount</span>
+                <span className="text-sm font-bold text-[#A7632E]">Refund Amount</span>
                 <span className="text-xl font-black text-[#A7632E]">₹{approveRefund.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
               </div>
               <p className="text-xs text-center text-[#8A817C] mb-5 px-2">
                 Approving this request will notify the user that their cancellation has been accepted. You will then process the actual refund payment separately.
               </p>
-              <div className="flex gap-3">
+              <div className="pt-2 mt-2 flex items-center justify-center gap-4">
                 <button onClick={() => setApproveRefund(null)} disabled={approveLoading}
-                  className="admin-cancel-btn">CANCEL</button>
+                  className="admin-cancel-btn bg-white">CANCEL</button>
                 <button onClick={handleApprove} disabled={approveLoading}
-                  className="flex-[1.5] py-3 bg-[#8B5E3C] text-white rounded-xl font-bold text-sm shadow-sm hover:bg-[#7a5235] transition-colors disabled:opacity-50">
+                  className="inline-flex items-center justify-center text-[15px] font-bold shadow-sm transition-colors uppercase tracking-wide px-8 py-3 rounded-full bg-[#8B5E3C] hover:bg-[#7a5235] text-white border-0">
                   {approveLoading ? 'Approving...' : 'Approve Request'}
                 </button>
               </div>
@@ -565,14 +647,14 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
       {/* STEP 3: Process Refund Payment Modal */}
       {processRefund && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-[#FAF8F5] rounded-2xl shadow-xl w-full max-w-[420px] border border-[#E9DED3] overflow-hidden">
-            <div className="flex items-center justify-between p-5 pb-4 bg-[#647C5E] text-white">
-              <h2 className="text-lg font-bold">Process Refund Payment</h2>
-              <button onClick={() => setProcessRefund(null)} className="text-red-500 hover:text-red-600 transition-colors" disabled={processLoading}>
+          <div className="bg-white rounded-[20px] shadow-2xl w-full max-w-[500px] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-6 md:px-8 bg-[#DBEAFE] text-blue-900">
+              <h2 className="text-2xl font-serif font-bold tracking-tight">Process Refund Payment</h2>
+              <button onClick={() => setProcessRefund(null)} className="p-2 text-gray-500 hover:text-red-600 transition-colors" disabled={processLoading}>
                 <X size={20} />
               </button>
             </div>
-            <div className="p-6">
+            <div className="p-8">
               <div className="mb-4">
                 <p className="text-[11px] font-bold text-[#8A817C] uppercase tracking-wider mb-1">Customer</p>
                 <p className="font-bold text-[#141225]">{processRefund.customerName}</p>
@@ -586,36 +668,35 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
                   </div>
                 </div>
               )}
-              <div className="flex justify-between items-center bg-[#F4EBE2]/50 rounded-xl p-4 mb-5 border border-[#E9DED3]">
-                <span className="text-sm font-bold text-[#6D625C]">Refund Amount</span>
-                <span className="text-xl font-black text-[#A7632E]">₹{processRefund.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+              <div className="flex justify-between items-center bg-[#DBEAFE] rounded-xl p-4 mb-5">
+                <span className="text-sm font-bold text-[#155DFC]">Refund Amount</span>
+                <span className="text-xl font-black text-[#155DFC]">₹{processRefund.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
               </div>
               <div className="mb-5">
                 <p className="text-[11px] font-bold text-[#8A817C] uppercase tracking-wider mb-2">Select Refund Method</p>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="flex flex-wrap gap-3">
                   {['Wallet', 'UPI', 'Bank Transfer']
                     .filter(method => walletEnabled || method !== 'Wallet')
                     .map((method) => (
-                    <button key={method}
-                      onClick={() => setRefundMethod(method)}
-                      className={`py-2.5 rounded-xl text-xs font-bold border-2 transition-colors ${
-                        refundMethod === method
-                          ? 'border-[#647C5E] bg-[#647C5E] text-white'
-                          : 'border-[#E9DED3] bg-white text-[#4A403B] hover:border-[#647C5E]'
-                      }`}>
-                      {method}
-                    </button>
-                  ))}
+                      <button key={method}
+                        onClick={() => setRefundMethod(method)}
+                        className={`px-8 py-3 border rounded-full text-[15px] font-bold transition-colors shadow-sm uppercase tracking-wide ${refundMethod === method
+                          ? 'bg-[#DBEAFE] border-[#DBEAFE] text-blue-900'
+                          : 'border-[#DBEAFE] bg-white text-[#155DFC] hover:bg-blue-50'
+                          }`}>
+                        {method}
+                      </button>
+                    ))}
                 </div>
               </div>
               <p className="text-xs text-center text-[#8A817C] mb-5 px-2">
                 After clicking Refund, the stock will be automatically restored to inventory and the customer status will update to <strong>Refunded</strong>.
               </p>
-              <div className="flex gap-3">
+              <div className="pt-2 mt-2 flex items-center justify-center gap-4">
                 <button onClick={() => setProcessRefund(null)} disabled={processLoading}
-                  className="admin-cancel-btn">CANCEL</button>
+                  className="admin-cancel-btn bg-white">CANCEL</button>
                 <button onClick={handleProcessRefund} disabled={processLoading}
-                  className="flex-[1.5] py-3 bg-[#647C5E] text-white rounded-xl font-bold text-sm shadow-sm hover:bg-[#52664d] transition-colors disabled:opacity-50">
+                  className="inline-flex items-center justify-center text-[15px] font-bold shadow-sm transition-colors uppercase tracking-wide px-8 py-3 rounded-full bg-[#155DFC] hover:bg-blue-700 text-white border-0">
                   {processLoading ? 'Processing...' : `Refund via ${refundMethod}`}
                 </button>
               </div>
@@ -627,20 +708,20 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
       {/* View Refund Details Modal */}
       {isViewModalOpen && activeViewRefund && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-[#FAF8F5] rounded-2xl shadow-xl w-full max-w-[500px] border border-[#E9DED3] overflow-hidden">
+          <div className="bg-white rounded-[20px] shadow-2xl w-full max-w-[500px] max-h-[90vh] flex flex-col overflow-hidden">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-5 pb-4">
-              <h2 className="text-lg font-bold text-[#141225]">View Refund Details</h2>
+            <div className="flex items-center justify-between p-6 md:px-8 border-b border-[#E6DFD4] bg-[#F8F4EC]">
+              <h2 className="text-2xl font-serif font-bold tracking-tight text-[#141225]">View Refund Details</h2>
               <button
                 onClick={() => setIsViewModalOpen(false)}
-                className="text-red-500 hover:text-red-600 transition-colors"
+                className="p-2 text-gray-400 hover:text-red-700 transition-colors"
               >
                 <X size={20} />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="px-5 pb-5">
+            <div className="p-8 overflow-y-auto custom-scrollbar">
 
               <div className="flex justify-between items-start mb-4">
                 <div>
@@ -732,15 +813,6 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
                     {new Date(activeViewRefund.createdAt).toLocaleDateString('en-GB')}
                   </p>
                 </div>
-              </div>
-
-              <div className="flex justify-end">
-                <button
-                  onClick={() => setIsViewModalOpen(false)}
-                  className="px-6 py-2.5 bg-[#647C5E] text-white rounded-lg font-bold text-sm shadow-sm hover:bg-[#52664d] transition-colors"
-                >
-                  Close
-                </button>
               </div>
 
             </div>

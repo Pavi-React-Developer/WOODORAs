@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { categoryV2API } from '../../../api/catalogV2Service';
-import { Plus, Download, RefreshCw, X, Image as ImageIcon } from 'lucide-react';
+import { Plus, Download, RefreshCw, X, Image as ImageIcon, Trash2, SquarePen } from 'lucide-react';
 import Pagination from '../../../components/common/Pagination';
 import { downloadExcelFile } from '../../../utils/exportUtils';
 import { API_BASE } from '../../../api/apiClient';
@@ -27,6 +28,8 @@ const inputCls = 'w-full px-4 py-2.5 text-sm border border-[#E6DFD4] rounded-xl 
 
 export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = true }) => {
   // ─── State ────────────────────────────────────────────────────────────────
+  const location = useLocation();
+  const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
@@ -74,8 +77,36 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
 
   useEffect(() => { fetchCategories(); }, [fetchCategories]);
 
+  useEffect(() => {
+    const checkRoute = async () => {
+      const path = location.pathname;
+      if (path === '/admin/catalog/categories/add') {
+        if (!isFormOpen || editId) {
+          openForm(null, true);
+        }
+      } else if (path.startsWith('/admin/catalog/categories/edit/')) {
+        const id = path.split('/').pop();
+        if (!isFormOpen || editId !== id) {
+          try {
+            const res = await categoryV2API.getById(id);
+            if (res.success && res.category) {
+              openForm(res.category, true);
+            }
+          } catch (err) {
+            console.error("Failed to fetch category for edit", err);
+            navigate('/admin/catalog/categories');
+          }
+        }
+      } else {
+        setIsFormOpen(false);
+        setEditId(null);
+      }
+    };
+    checkRoute();
+  }, [location.pathname]); // omit categories dependency
+
   // ─── Handlers ────────────────────────────────────────────────────────────
-  const openForm = (cat = null) => {
+  const openForm = (cat = null, isFromRoute = false) => {
     setErrorMsg('');
     setSuccessMsg('');
     setImageFile(null);
@@ -95,7 +126,14 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
       setFormData({ name: '', slug: '', description: '', displayOrder: 1, isActive: true, seoTitle: '', seoDescription: '', seoKeywords: '', availableWoodTypes: '', image: null });
       setImagePreview(null);
     }
-    window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + ((cat && cat._id) || editId ? '/edit' : '/add')); setIsFormOpen(true);
+    setIsFormOpen(true);
+    if (!isFromRoute) {
+      if (cat) {
+        navigate(`/admin/catalog/categories/edit/${cat._id}`);
+      } else {
+        navigate('/admin/catalog/categories/add');
+      }
+    }
   };
 
   const handleSave = async (e) => {
@@ -125,7 +163,7 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
         await categoryV2API.create(payload);
         setSuccessMsg('Category created!');
       }
-      (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setIsFormOpen(false));
+      navigate('/admin/catalog/categories');
       setImageFile(null);
       setImagePreview(null);
       fetchCategories();
@@ -266,17 +304,13 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
             <Download size={16} /> Export Excel
           </button>
           {canCreate && (
-            <button
-              onClick={() => openForm()}
-              className="admin-btn"
-            >
+            <button onClick={() => navigate('/admin/catalog/categories/add')} className="admin-btn">
               <Plus size={16} /> Add Category
             </button>
           )}
         </div>
       </div>
 
-      {/* Filters */}
       <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm p-4 mb-5 flex flex-wrap gap-3 items-center">
         <div className="relative flex-1 min-w-[180px]">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
@@ -302,7 +336,6 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
         </button>
       </div>
 
-      {/* Bulk Actions Bar */}
       {selectedIds.length > 0 && (
         <div className="bg-[#F8F4EC] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3 flex-wrap">
           <span className="text-sm font-semibold text-[#8B5E3C]">{selectedIds.length} selected</span>
@@ -321,7 +354,6 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
         </div>
       )}
 
-      {/* Table */}
       <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -336,7 +368,7 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
                   />
                 </th>
                 {['Category Name', 'Slug', 'Display Order', 'Status', 'Created Date', 'Actions'].map(h => (
-                  <th key={h} className={`px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap ${h === 'Actions' ? 'text-right pr-8' : 'text-left'}`}>{h}</th>
+                  <th key={h} className={`px-4 py-3.5 text-[11px] font-bold uppercase tracking-widest text-gray-500 whitespace-nowrap text-center`}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -354,7 +386,7 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
                     <div className="w-12 h-12 bg-[#F8F4EC] rounded-full flex items-center justify-center text-2xl">🗂️</div>
                     <p className="font-medium">No categories found.</p>
                     {canCreate && (
-                      <button onClick={() => openForm()} className="text-[#8B5E3C] text-sm font-semibold hover:underline">+ Add your first category</button>
+                      <button onClick={() => navigate('/admin/catalog/categories/add')} className="text-[#8B5E3C] text-sm font-semibold hover:underline">+ Add your first category</button>
                     )}
                   </div>
                 </td></tr>
@@ -373,20 +405,26 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
                       />
                     </td>
                     <td className="px-4 py-3.5">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-[#F8F4EC] border border-[#E6DFD4] flex items-center justify-center text-base">🗂️</div>
-                        <span className="font-semibold text-gray-800">{cat.name}</span>
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-lg bg-[#F8F4EC] border border-[#E6DFD4] flex items-center justify-center text-xl overflow-hidden flex-shrink-0">
+                          {cat.image ? (
+                            <img src={cat.image?.url || cat.image} alt={cat.name} className="w-full h-full object-cover" />
+                          ) : "🗂️"}
+                        </div>
+                        <span className="font-bold text-sm text-gray-800">{cat.name}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3.5">
-                      <code className="text-xs bg-[#F8F4EC] text-[#8B5E3C] px-2 py-1 rounded-md font-mono">{cat.slug}</code>
+                    <td className="px-4 py-3.5 text-center">
+                      <span className="inline-block whitespace-nowrap bg-[#F8F4EC] text-[#8B5E3C] text-[11px] uppercase tracking-wider font-bold px-3 py-1.5 rounded-lg border border-[#E6DFD4] shadow-sm">
+                        {cat.slug}
+                      </span>
                     </td>
                     <td className="px-4 py-3.5 text-center">
-                      <span className="inline-flex items-center justify-center w-7 h-7 bg-[#F8F4EC] text-[#8B5E3C] text-xs font-bold rounded-full border border-[#E6DFD4]">
+                      <span className="inline-flex items-center justify-center w-7 h-7 bg-[#F8F4EC] text-[#8B5E3C] text-xs font-semibold rounded-full border border-[#E6DFD4]">
                         {cat.displayOrder}
                       </span>
                     </td>
-                    <td className="px-4 py-3.5">
+                    <td className="px-4 py-3.5 text-center">
                       {canEdit ? (
                         <button onClick={() => handleToggleStatus(cat)} title="Click to toggle">
                           <StatusBadge active={cat.isActive} />
@@ -395,18 +433,18 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
                         <StatusBadge active={cat.isActive} />
                       )}
                     </td>
-                    <td className="px-4 py-3.5 text-gray-500 text-xs whitespace-nowrap">
+                    <td className="px-4 py-3.5 text-gray-500 whitespace-nowrap text-center">
                       {new Date(cat.createdAt).toLocaleDateString('en-IN')}
                     </td>
-                    <td className="px-4 py-3.5 pr-8">
-                      <div className="flex gap-2 justify-end">
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center justify-center gap-2">
                         {canEdit && (
                           <button
-                            onClick={() => openForm(cat)}
+                            onClick={() => navigate(`/admin/catalog/categories/edit/${cat._id}`)}
                             className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
                             title="Edit"
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                            <SquarePen size={15} />
                           </button>
                         )}
                         {canDelete && (
@@ -415,7 +453,7 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
                             className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
                             title="Delete"
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            <Trash2 size={15} />
                           </button>
                         )}
                       </div>
@@ -439,7 +477,7 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
 
       {/* ── SIDE DRAWER FORM ──────────────────────────────────────────────── */}
       {isFormOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-sm" onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setIsFormOpen(false))}>
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-sm" onClick={() => navigate('/admin/catalog/categories')}>
           <div
             className="w-full max-w-lg bg-white h-full shadow-2xl flex flex-col"
             onClick={e => e.stopPropagation()}
@@ -450,7 +488,7 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
               <div>
                 <h2 className="text-3xl font-serif font-bold text-[#141225] tracking-tight">{editId ? 'Edit Category' : 'Add New Category'}</h2>
               </div>
-              <button onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setIsFormOpen(false))} className="p-2 rounded-full hover:bg-[#E6DFD4] text-gray-400 hover:text-gray-700 transition-colors">
+              <button onClick={() => navigate('/admin/catalog/categories')} className="p-2 text-gray-400 hover:text-red-700 transition-colors">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
@@ -560,7 +598,7 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
               </div>
               {/* Form Actions */}
               <div className="flex items-center justify-center gap-4 pt-6 pb-2">
-                <button type="button" onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setIsFormOpen(false))} className="admin-cancel-btn">CANCEL</button>
+                <button type="button" onClick={() => navigate('/admin/catalog/categories')} className="admin-cancel-btn">CANCEL</button>
                 <button
                   type="submit"
                   disabled={formLoading}

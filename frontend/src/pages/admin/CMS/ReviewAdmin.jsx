@@ -15,7 +15,7 @@ function StarRating({ rating }) {
   );
 }
 
-export default function ReviewAdmin() {
+export default function ReviewAdmin({ canCreate, canEdit, canDelete }) {
   const [form, setForm] = useState({
     animationType: 'marquee',
     showArrows: false,
@@ -125,14 +125,16 @@ export default function ReviewAdmin() {
           <h2 className="text-2xl font-serif text-brand-dark mb-1">Customer Reviews Settings</h2>
           <p className="text-sm text-brand-medium">Configure the "What Parents Love" section on the homepage.</p>
         </div>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60"
-        >
-          <Save className="w-4 h-4" />
-          {saving ? 'Saving...' : 'Save All'}
-        </button>
+        {canEdit && (
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60"
+          >
+            <Save className="w-4 h-4" />
+            {saving ? 'Saving...' : 'Save All'}
+          </button>
+        )}
       </div>
 
       {/* ── Section 1: Animation Config ── */}
@@ -176,7 +178,7 @@ export default function ReviewAdmin() {
 
         {form.animationType !== 'marquee' && (
           <>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center gap-3">
               <input
                 type="checkbox"
                 name="showArrows"
@@ -188,7 +190,7 @@ export default function ReviewAdmin() {
               <label htmlFor="showArrows" className="text-sm text-brand-dark cursor-pointer select-none">Show Arrow Navigation Buttons</label>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center gap-3">
               <input
                 type="checkbox"
                 name="showDots"
@@ -288,10 +290,10 @@ export default function ReviewAdmin() {
               return (
                 <div
                   key={review._id}
-                  onClick={() => toggleReview(review._id)}
-                  className={`relative cursor-pointer rounded-xl border-2 p-4 transition-all select-none ${isChecked
+                  onClick={canEdit ? () => toggleReview(review._id) : undefined}
+                  className={`relative ${canEdit ? 'cursor-pointer hover:border-[#C8B9A5] hover:bg-[#FDFCF9]' : 'cursor-default'} rounded-xl border-2 p-4 transition-all select-none ${isChecked
                     ? 'border-[#514332] bg-[#FDF9F1] shadow-md'
-                    : 'border-[#E6DFD4] bg-white hover:border-[#C8B9A5] hover:bg-[#FDFCF9]'
+                    : 'border-[#E6DFD4] bg-white'
                     }`}
                 >
                   {/* Checkbox indicator */}

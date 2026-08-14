@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Edit3, Trash2, Download, Plus, RefreshCw, Package , SquarePen , Trash } from 'lucide-react';
+import { Edit3, Trash2, Download, Plus, RefreshCw, Package , SquarePen } from 'lucide-react';
 import { feeAPI } from '../../../api/feeService';
 import Pagination from '../../../components/common/Pagination';
 import { downloadExcelFile } from '../../../utils/exportUtils';
@@ -265,15 +265,15 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
                                         className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
                                     />
                                 </th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">S.No</th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Fee Name</th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Category</th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Fee Type</th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Payment Method</th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">State</th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Weight Limits / Amount</th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Status</th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Actions</th>
+                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">S.No</th>
+                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Fee Name</th>
+                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Category</th>
+                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Fee Type</th>
+                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Payment Method</th>
+                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">State</th>
+                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Weight Limits / Amount</th>
+                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Status</th>
+                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E6DFD4] text-sm text-brand-dark">
@@ -286,7 +286,7 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
               ) : (
                 paginatedFees.map((fee, idx) => (
                   <tr key={fee._id} className="transition-colors hover:bg-[#FDF9F5] bg-white">
-                    <td className="py-4 px-4">
+                    <td className="py-6 px-4 text-center">
                       <input
                         type="checkbox"
                         checked={selectedIds.includes(fee._id)}
@@ -294,16 +294,24 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
                         className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
                       />
                     </td>
-                    <td className="py-4 px-4 font-medium">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
-                    <td className="py-4 px-4 font-bold">{fee.feeName}</td>
-                    <td className="py-4 px-4">{fee.feeCategory?.name}</td>
-                    <td className="py-4 px-4">{fee.feeType}</td>
-                    <td className="py-4 px-4">{fee.paymentMethod || 'Both (COD & CashFree)'}</td>
-                    <td className="py-4 px-4">{Array.isArray(fee.applicationState) ? fee.applicationState.join(', ') : fee.applicationState}</td>
-                    <td className="py-4 px-4">
+                    <td className="py-6 px-4 font-bold text-sm text-center">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
+                    <td className="py-6 px-4 text-sm font-bold text-center text-gray-900">{fee.feeName}</td>
+                    <td className="py-6 px-4 text-sm font-bold text-center text-gray-900">{fee.feeCategory?.name}</td>
+                    <td className="py-6 px-4 text-xs font-semibold text-center text-gray-700">{fee.feeType}</td>
+                    <td className="py-6 px-4 text-xs font-semibold text-center text-gray-700">{fee.paymentMethod || 'Both (COD & CashFree)'}</td>
+                    <td className="py-6 px-4 text-xs font-semibold text-center text-gray-700">
+                      <div className="flex flex-wrap justify-center gap-x-1">
+                        {(Array.isArray(fee.applicationState) ? fee.applicationState : [fee.applicationState]).filter(Boolean).map((s, i, arr) => (
+                          <div key={i} className="whitespace-nowrap">
+                            {s}{i < arr.length - 1 ? ',' : ''}
+                          </div>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="py-6 px-4 text-sm text-center">
                       {fee.weightSlabs && fee.weightSlabs.length > 0 ? (
                         fee.weightSlabs.map((slab, i) => (
-                          <div key={i} className="text-xs mb-1">
+                          <div key={i} className="text-sm mb-1">
                             {slab.minWeight}-{slab.maxWeight}kg: <span className="font-bold">{fee.feeType === 'Fixed Amount' ? '₹' : ''}{slab.feeValue}{fee.feeType === 'Percentage' ? '%' : ''}</span>
                           </div>
                         ))
@@ -311,7 +319,7 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
                         <span className="font-bold text-sm">{fee.feeType === 'Fixed Amount' ? '₹' : ''}{fee.flatFeeValue !== undefined ? fee.flatFeeValue : 'Not Set'}{fee.feeType === 'Percentage' ? '%' : ''}</span>
                       )}
                     </td>
-                    <td className="py-4 px-4">
+                    <td className="py-6 px-4 text-center">
                       <button 
                         onClick={() => handleToggleStatus(fee)}
                         title="Click to toggle status"
@@ -320,24 +328,24 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
                         {fee.active ? 'Active' : 'Inactive'}
                       </button>
                     </td>
-                    <td className="py-4 px-4 text-right whitespace-nowrap">
-                      <div className="inline-flex items-center gap-2">
+                    <td className="py-6 px-4 text-center whitespace-nowrap">
+                      <div className="flex items-center justify-center gap-2">
                         {canEdit && (
                           <button
                             onClick={() => onEditFee(fee)}
-                            className="text-blue-600 hover:text-blue-700 transition-colors"
+                            className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
                             title="Edit"
                           >
-                            <SquarePen className="w-4 h-4" />
+                            <SquarePen size={15} />
                           </button>
                         )}
                         {canDelete && (
                           <button
                             onClick={() => handleDelete(fee._id)}
-                            className="text-red-500 hover:text-red-600 transition-colors"
+                            className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                             title="Delete"
                           >
-                            <Trash className="w-4 h-4" />
+                            <Trash2 size={15} />
                           </button>
                         )}
                       </div>

@@ -450,7 +450,7 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
                       <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
                         <tr>
                           {['Product', 'Category', 'SKU', 'Stock', 'Status', 'Action'].map((h) => (
-                            <th key={h} className={`px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap ${h === 'Stock' ? 'text-right' : h === 'Action' ? 'text-center' : 'text-left'}`}>
+                            <th key={h} className="py-4 px-2 font-bold text-[11px] uppercase tracking-widest text-center text-gray-500 whitespace-nowrap border-b border-[#E6DFD4]">
                               {h}
                             </th>
                           ))}
@@ -476,30 +476,30 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
                           return (
                             <React.Fragment key={item._id}>
                               <tr className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
-                                <td className="px-4 py-3.5">
+                                <td className="p-4 text-left">
                                   <div className="flex items-center gap-3">
-                                    <ProductThumbnail src={getInventoryImage(item, productVariants)} alt={item.name} className="w-10 h-10 rounded-lg object-cover bg-gray-100" />
-                                    <span className="font-semibold text-gray-800">{item.name}</span>
+                                    <ProductThumbnail src={getInventoryImage(item, productVariants)} alt={item.name} className="w-12 h-12 object-cover rounded-lg border border-[#E6DFD4]" />
+                                    <span className="text-sm font-bold text-gray-900">{item.name}</span>
                                   </div>
                                 </td>
-                                <td className="px-4 py-3.5 capitalize text-gray-600">{item.category?.name || 'General'}</td>
-                                <td className="px-4 py-3.5">
-                                  <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-md text-xs font-medium tracking-wide">
+                                <td className="p-4 text-center capitalize text-xs font-semibold text-gray-600">{item.category?.name || 'General'}</td>
+                                <td className="p-4 text-center">
+                                  <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-md text-[11px] font-bold uppercase tracking-wider">
                                     {getInventorySku(item, productVariants)}
                                   </span>
                                 </td>
-                                <td className="px-4 py-3.5 text-right font-semibold text-gray-800">{currentStock}</td>
-                                <td className="px-4 py-3.5">
-                                  <span className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 w-fit ${statusColor}`}>
+                                <td className="p-4 text-center font-semibold text-gray-800">{currentStock}</td>
+                                <td className="p-4 text-center">
+                                  <span className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 w-fit mx-auto ${statusColor}`}>
                                     <span className={`w-1.5 h-1.5 rounded-full ${statusColor.replace('bg-', 'bg-').replace('100', '500').split(' ')[0]}`}></span>
                                     {statusLabel}
                                   </span>
                                 </td>
-                                <td className="px-4 py-3.5 text-center">
+                                <td className="p-4 text-center">
                                   <div className="flex items-center justify-center gap-3">
-                                    <button className="text-green-600 hover:text-green-700 transition-colors" title="View" onClick={() => openViewModal(item)}><Eye size={16} /></button>
+                                    <button className="text-green-600 hover:text-green-700 transition-colors" title="View" onClick={() => openViewModal(item)}><Eye size={15} /></button>
                                     {canEdit && (
-                                      <button className="text-blue-500 hover:text-blue-700 transition-colors" title="Edit Stock" onClick={() => openEditModal(item, 'product')}><SquarePen size={16} /></button>
+                                      <button className="text-blue-500 hover:text-blue-700 transition-colors" title="Edit Stock" onClick={() => openEditModal(item, 'product')}><SquarePen size={15} /></button>
                                     )}
                                   </div>
                                 </td>
@@ -559,7 +559,7 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
               <h2 className="text-[28px] font-serif font-bold text-[#141225] tracking-tight">Edit Stock</h2>
               <button
                 onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setEditModalOpen(false))}
-                className="p-2 rounded-full hover:bg-[#E6DFD4] text-gray-400 hover:text-gray-700 transition-colors"
+                className="p-2 text-gray-400 hover:text-red-700 transition-colors"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>

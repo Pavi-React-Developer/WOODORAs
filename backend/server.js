@@ -28,6 +28,7 @@ const customizeRoutes = require('./routes/customizeRoutes');
 const walletRoutes = require('./routes/walletRoutes');
 const sitemapRoutes = require('./routes/sitemapRoutes');
 const courierRoutes = require('./routes/courierRoutes');
+const advancedBookingRoutes = require('./routes/advancedBookingRoutes');
 const Order = require('./models/Order');
 const Review = require('./models/Review');
 const Module = require('./models/Module');
@@ -155,6 +156,7 @@ app.use('/api/product-fees', productFeeRoutes);
 app.use('/api/refunds', refundRoutes);
 app.use('/api/settings', require('./routes/systemSettingRoutes'));
 app.use('/api/couriers', courierRoutes);
+app.use('/api/advanced-bookings', advancedBookingRoutes);
 
 // Sitemap Route (serves /sitemap.xml)
 app.use('/sitemap.xml', sitemapRoutes);

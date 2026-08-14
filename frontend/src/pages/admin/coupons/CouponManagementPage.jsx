@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { adminService } from '../../../api/adminService';
 import { catalogService } from '../../../api/catalogService';
-import { Download, Plus, SquarePen, Trash, RefreshCw, X, BadgeX, BadgeCheck, Check, Eye, Search, Loader2, ChevronLeft, Ticket } from 'lucide-react';
+import { Download, Plus, SquarePen, Trash, Trash2, RefreshCw, X, BadgeX, BadgeCheck, Check, Eye, Search, Loader2, ChevronLeft, Ticket } from 'lucide-react';
 import { downloadExcelFile } from '../../../utils/exportUtils';
 import Pagination from '../../../components/common/Pagination';
 import BulkActions from '../../../components/admin/BulkActions';
@@ -675,33 +675,35 @@ export default function CouponManagementPage({ canCreate = true, canEdit = true,
       {/* View Modal */}
       {viewingCoupon && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-xl font-bold text-[#2F241D]">Coupon Details</h3>
-              <button onClick={() => setViewingCoupon(null)} className="p-2 rounded-full hover:bg-[#E6DFD4] text-gray-400 hover:text-gray-700 transition-colors">
-                <X size={18} />
-              </button>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              {[
-                ['Coupon Code', viewingCoupon.couponCode],
-                ['Offer Type', viewingCoupon.offerType],
-                ['Discount Type', viewingCoupon.discountType],
-                ['Discount', `${viewingCoupon.discountValue}${viewingCoupon.discountType === 'Percentage' ? '%' : ''}`],
-                ['Applicable Product', viewingCoupon.product?.name || '-'],
-                ['Applicable Category', viewingCoupon.category?.name || '-'],
-                ['Validity', `${formatDate(viewingCoupon.startDate)} - ${formatDate(viewingCoupon.endDate)}`],
-                ['Status', viewingCoupon.status],
-                ['Visibility', viewingCoupon.visible ? 'Visible' : 'Hidden'],
-                ['Usage Count', viewingCoupon.usageCount || 0],
-                ['Created Date', formatDate(viewingCoupon.createdAt)],
-                ['Description', viewingCoupon.description || '-'],
-              ].map(([label, value]) => (
-                <div key={label} className="rounded-2xl bg-[#FCF8F2] p-4">
-                  <p className="text-xs uppercase tracking-wider text-gray-500">{label}</p>
-                  <p className="mt-1 font-semibold text-[#2F241D]">{value}</p>
-                </div>
-              ))}
+          <div className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+            <div className="p-6 overflow-y-auto">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-xl font-bold text-[#2F241D]">Coupon Details</h3>
+                <button onClick={() => setViewingCoupon(null)} className="p-2 text-gray-400 hover:text-red-700 transition-colors">
+                  <X size={18} />
+                </button>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                {[
+                  ['Coupon Code', viewingCoupon.couponCode],
+                  ['Offer Type', viewingCoupon.offerType],
+                  ['Discount Type', viewingCoupon.discountType],
+                  ['Discount', `${viewingCoupon.discountValue}${viewingCoupon.discountType === 'Percentage' ? '%' : ''}`],
+                  ['Applicable Product', viewingCoupon.product?.name || '-'],
+                  ['Applicable Category', viewingCoupon.category?.name || '-'],
+                  ['Validity', `${formatDate(viewingCoupon.startDate)} - ${formatDate(viewingCoupon.endDate)}`],
+                  ['Status', viewingCoupon.status],
+                  ['Visibility', viewingCoupon.visible ? 'Visible' : 'Hidden'],
+                  ['Usage Count', viewingCoupon.usageCount || 0],
+                  ['Created Date', formatDate(viewingCoupon.createdAt)],
+                  ['Description', viewingCoupon.description || '-'],
+                ].map(([label, value]) => (
+                  <div key={label} className="rounded-2xl bg-[#FCF8F2] p-4">
+                    <p className="text-xs uppercase tracking-wider text-gray-500">{label}</p>
+                    <p className="mt-1 font-semibold text-[#2F241D]">{value}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -770,13 +772,13 @@ export default function CouponManagementPage({ canCreate = true, canEdit = true,
                     className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
                   />
                 </th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Coupon Code</th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Discount Type</th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Offer Type</th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Validity</th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Status</th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Visibility</th>
-                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Actions</th>
+                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Coupon Code</th>
+                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Discount Type</th>
+                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Offer Type</th>
+                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Validity</th>
+                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Status</th>
+                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Visibility</th>
+                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E6DFD4] text-sm">
@@ -790,17 +792,17 @@ export default function CouponManagementPage({ canCreate = true, canEdit = true,
                       className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
                     />
                   </td>
-                  <td className="px-4 py-3 font-semibold text-[#2F241D]">{coupon.couponCode}</td>
-                  <td className="px-4 py-3">{coupon.discountType}</td>
-                  <td className="px-4 py-3">{coupon.offerType}</td>
-                  <td className="px-4 py-3">{formatDate(coupon.startDate)} - {formatDate(coupon.endDate)}</td>
-                  <td className="px-4 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusBadge(coupon.status)}`}>{coupon.status}</span></td>
-                  <td className="px-4 py-3">{coupon.visible ? <span className="text-emerald-700">Visible</span> : <span className="text-slate-500">Hidden</span>}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-2">
+                  <td className="px-4 py-3 text-center text-sm font-bold text-[#2F241D]">{coupon.couponCode}</td>
+                  <td className="px-4 py-3 text-center text-xs font-semibold">{coupon.discountType}</td>
+                  <td className="px-4 py-3 text-center text-xs font-semibold">{coupon.offerType}</td>
+                  <td className="px-4 py-3 text-center text-sm">{formatDate(coupon.startDate)} - {formatDate(coupon.endDate)}</td>
+                  <td className="px-4 py-3 text-center"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusBadge(coupon.status)}`}>{coupon.status}</span></td>
+                  <td className="px-4 py-3 text-center">{coupon.visible ? <span className="text-xs font-semibold text-emerald-700">Visible</span> : <span className="text-xs font-semibold text-slate-500">Hidden</span>}</td>
+                  <td className="px-4 py-3 text-center">
+                    <div className="flex flex-wrap items-center justify-center gap-2">
                       <button onClick={() => setViewingCoupon(coupon)} className="text-green-600 hover:text-green-700 transition-colors" title="View"><Eye size={15} /></button>
                       {canEdit && <button onClick={() => openEdit(coupon)} className="text-blue-600 hover:text-blue-700 transition-colors" title="Edit"><SquarePen size={15} /></button>}
-                      {canDelete && <button onClick={() => setConfirmDelete(coupon)} className="text-red-500 hover:text-red-600 transition-colors" title="Delete"><Trash size={15} /></button>}
+                      {canDelete && <button onClick={() => setConfirmDelete(coupon)} className="text-red-500 hover:text-red-600 transition-colors" title="Delete"><Trash2 size={15} /></button>}
                       {canEdit && <button onClick={() => handleToggleStatus(coupon)} className="p-1.5 text-amber-600 hover:text-amber-700 transition-colors" title="Enable/Disable">{coupon.status === 'active' ? <BadgeX size={15} /> : <BadgeCheck size={15} />}</button>}
                       {canEdit && <button onClick={() => handleToggleVisibility(coupon)} className="text-green-600 hover:text-green-700 transition-colors" title="Visible/Invisible">{coupon.visible ? <X size={15} /> : <Check size={15} />}</button>}
                     </div>

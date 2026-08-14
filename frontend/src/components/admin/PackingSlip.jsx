@@ -11,28 +11,43 @@ export const PackingSlip = forwardRef(({ orders }, ref) => {
 
     return (
         <div ref={ref} className="packing-slip-container">
-            <style>{`
+        <style>{`
                 @media print {
                     @page {
-                        size: 100mm 100mm;
-                        margin: 0;
+                        size: A4 portrait;
+                        margin: 0mm;
                     }
-                    body {
+                    html, body {
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        background: white !important;
                         -webkit-print-color-adjust: exact !important;
                         print-color-adjust: exact !important;
                     }
+                    .packing-slip-container {
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        background: white !important;
+                    }
+                    .packing-slip-page {
+                        page-break-after: always;
+                        page-break-inside: avoid;
+                    }
+                    .packing-slip-page:last-child {
+                        page-break-after: auto;
+                    }
                 }
                 .packing-slip-page {
-                    width: 100mm;
-                    height: 100mm;
-                    padding: 2mm;
+                    width: 210mm;
+                    min-height: 297mm;
+                    padding: 14mm 16mm;
                     box-sizing: border-box;
                     background: white;
                     color: black;
                     font-family: Arial, sans-serif;
-                    font-size: 6px;
-                    line-height: 1.2;
-                    overflow: hidden;
+                    font-size: 8px;
+                    line-height: 1.4;
+                    margin: 0 auto;
                     page-break-after: always;
                 }
                 .packing-slip-page:last-child {
@@ -72,8 +87,8 @@ export const PackingSlip = forwardRef(({ orders }, ref) => {
                     background-color: black;
                     color: white;
                 }
-                .ps-p-1 { padding: 1mm; }
-                .ps-p-05 { padding: 0.5mm; }
+                .ps-p-1 { padding: 2mm; }
+                .ps-p-05 { padding: 1mm; }
                 
                 table.ps-table {
                     width: 100%;
@@ -81,11 +96,13 @@ export const PackingSlip = forwardRef(({ orders }, ref) => {
                 }
                 table.ps-table th, table.ps-table td {
                     border: 1px solid black;
-                    padding: 0.5mm 1mm;
+                    padding: 1mm 1.5mm;
                     text-align: left;
+                    font-size: 8px;
                 }
                 table.ps-table th {
                     font-weight: bold;
+                    background: #f0f0f0;
                 }
             `}</style>
 
@@ -106,8 +123,8 @@ export const PackingSlip = forwardRef(({ orders }, ref) => {
                         
                         {/* Logo Section */}
                         {cachedLogoUrl && cachedLogoUrl !== 'undefined' && (
-                            <div className="ps-flex" style={{ justifyContent: 'center', marginBottom: '2mm', paddingTop: '1mm' }}>
-                                <img src={cachedLogoUrl} alt="Logo" style={{ maxHeight: '10mm', objectFit: 'contain' }} />
+                            <div className="ps-flex" style={{ justifyContent: 'center', marginBottom: '4mm', paddingTop: '2mm' }}>
+                                <img src={cachedLogoUrl} alt="Logo" style={{ maxHeight: '18mm', objectFit: 'contain' }} />
                             </div>
                         )}
 
@@ -115,13 +132,13 @@ export const PackingSlip = forwardRef(({ orders }, ref) => {
                         <div className="ps-flex ps-border">
                             {/* Left Side: Address */}
                             <div className="ps-border-r ps-p-1" style={{ flex: '1', width: '50%', minWidth: 0 }}>
-                                <div className="ps-bold ps-border-b" style={{ paddingBottom: '0.5mm', marginBottom: '0.5mm' }}>Customer Address</div>
-                                <div className="ps-bold" style={{ fontSize: '7px' }}>{name}</div>
-                                <div>{address.address}</div>
+                                <div className="ps-bold ps-border-b" style={{ paddingBottom: '1mm', marginBottom: '1mm', fontSize: '9px' }}>Customer Address</div>
+                                <div className="ps-bold" style={{ fontSize: '10px' }}>{name}</div>
+                                <div style={{ marginTop: '1mm' }}>{address.address}</div>
                                 <div>{address.city}, {address.state}, {address.pinCode}</div>
                                 {address.phone && <div>Ph: {address.phone}</div>}
                                 
-                                <div className="ps-border-t" style={{ marginTop: '2mm', paddingTop: '1mm' }}>
+                                <div className="ps-border-t" style={{ marginTop: '3mm', paddingTop: '2mm' }}>
                                     <div className="ps-bold">If undelivered, return to:</div>
                                     <div>Wooden Toys Warehouse</div>
                                     <div>12 Craft Street, Coimbatore,</div>
@@ -131,20 +148,20 @@ export const PackingSlip = forwardRef(({ orders }, ref) => {
                             
                             {/* Right Side: Courier & Barcode */}
                             <div style={{ flex: '1', width: '50%', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-                                <div className="ps-black-bg ps-p-1 ps-text-center ps-bold">
+                                <div className="ps-black-bg ps-p-1 ps-text-center ps-bold" style={{ fontSize: '9px', padding: '2mm' }}>
                                     {isCOD ? `COD: Collect ₹${(order.balanceAmount ?? order.totalPrice ?? 0).toFixed(2)}` : 'PREPAID: Do Not Collect'}
                                 </div>
-                                <div className="ps-p-1" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                    <div className="ps-bold" style={{ fontSize: '9px' }}>{order.courierName || 'Standard Delivery'}</div>
-                                    <div className="ps-bold ps-black-bg" style={{ display: 'inline-block', padding: '0.5mm 1mm', marginTop: '0.5mm', width: 'fit-content' }}>Pickup</div>
+                                <div className="ps-p-1" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '2mm' }}>
+                                    <div className="ps-bold" style={{ fontSize: '13px' }}>{order.courierName || 'Standard Delivery'}</div>
+                                    <div className="ps-bold ps-black-bg" style={{ display: 'inline-block', padding: '1mm 2mm', marginTop: '1mm', width: 'fit-content', fontSize: '8px' }}>Pickup</div>
                                     
-                                    <div className="ps-text-center" style={{ marginTop: 'auto', width: '100%', overflow: 'hidden' }}>
-                                        <div className="ps-bold" style={{ fontSize: '7px', wordWrap: 'break-word' }}>{trackingId}</div>
-                                        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1mm' }}>
+                                    <div className="ps-text-center" style={{ marginTop: '3mm', width: '100%', overflow: 'hidden' }}>
+                                        <div className="ps-bold" style={{ fontSize: '10px', wordWrap: 'break-word' }}>{trackingId}</div>
+                                        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2mm' }}>
                                             <Barcode 
                                                 value={trackingId} 
-                                                width={1.2} 
-                                                height={25} 
+                                                width={1.8} 
+                                                height={40} 
                                                 displayValue={false} 
                                                 margin={0}
                                                 background="transparent"
@@ -156,40 +173,40 @@ export const PackingSlip = forwardRef(({ orders }, ref) => {
                         </div>
 
                         {/* Fold Line */}
-                        <div className="ps-text-center" style={{ borderBottom: '1px dashed black', margin: '1mm 0', fontSize: '5px', paddingBottom: '0.5mm' }}>
-                            Fold Here
+                        <div className="ps-text-center" style={{ borderBottom: '1px dashed black', margin: '3mm 0', fontSize: '7px', paddingBottom: '1mm', color: '#555' }}>
+                            ✂ Fold Here ✂
                         </div>
 
                         {/* Tax Invoice */}
                         <div className="ps-border">
                             <div className="ps-flex ps-border-b">
-                                <div className="ps-bold ps-p-05" style={{ flex: 1, textAlign: 'center' }}>TAX INVOICE</div>
-                                <div className="ps-p-05 ps-border-l" style={{ fontSize: '5px' }}>Original For Recipient</div>
+                                <div className="ps-bold ps-p-05" style={{ flex: 1, textAlign: 'center', fontSize: '10px', padding: '2mm' }}>TAX INVOICE</div>
+                                <div className="ps-p-05 ps-border-l" style={{ fontSize: '7px', padding: '2mm' }}>Original For Recipient</div>
                             </div>
                             
                             <div className="ps-flex ps-border-b">
                                 <div className="ps-p-1 ps-border-r" style={{ flex: 1 }}>
-                                    <div className="ps-bold">BILL TO</div>
-                                    <div>{name}</div>
+                                    <div className="ps-bold" style={{ fontSize: '8px' }}>BILL TO</div>
+                                    <div style={{ marginTop: '1mm' }}>{name}</div>
                                     <div>{address.city}, {address.state}</div>
                                     <div>Place of Supply: {address.state}</div>
                                 </div>
                                 <div className="ps-p-1 ps-border-r" style={{ flex: 1 }}>
-                                    <div className="ps-bold">SHIP TO</div>
-                                    <div>{name}</div>
+                                    <div className="ps-bold" style={{ fontSize: '8px' }}>SHIP TO</div>
+                                    <div style={{ marginTop: '1mm' }}>{name}</div>
                                     <div>{address.address}</div>
                                     <div>{address.city}, {address.state}, {address.pinCode}</div>
                                 </div>
                                 <div className="ps-p-1" style={{ flex: 1.2 }}>
-                                    <div style={{ fontSize: '6px' }}>Sold by: Wooden Toys Warehouse</div>
-                                    <div style={{ fontSize: '6px' }}>GSTIN: 33ABCDE1234F1Z5</div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1mm' }}>
-                                        <div style={{ fontSize: '6px' }}>Order No.</div>
-                                        <div className="ps-bold" style={{ fontSize: '6px' }}>{order.orderId || order._id.substring(order._id.length - 8)}</div>
+                                    <div style={{ fontSize: '8px' }}>Sold by: Wooden Toys Warehouse</div>
+                                    <div style={{ fontSize: '8px' }}>GSTIN: 33ABCDE1234F1Z5</div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2mm' }}>
+                                        <div style={{ fontSize: '8px' }}>Order No.</div>
+                                        <div className="ps-bold" style={{ fontSize: '8px' }}>{order.orderId || order._id.substring(order._id.length - 8)}</div>
                                     </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                        <div style={{ fontSize: '6px' }}>Order Date</div>
-                                        <div className="ps-bold" style={{ fontSize: '6px' }}>{new Date(order.createdAt).toLocaleDateString('en-IN')}</div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1mm' }}>
+                                        <div style={{ fontSize: '8px' }}>Order Date</div>
+                                        <div className="ps-bold" style={{ fontSize: '8px' }}>{new Date(order.createdAt).toLocaleDateString('en-IN')}</div>
                                     </div>
                                 </div>
                             </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { orderService } from '../../api/orderService';
-import { Package, Search, Calendar, MapPin, Eye, X, Download, RefreshCw, Gift, SquarePen, Trash, Save, Printer, FileText } from 'lucide-react';
+import { Package, Search, Calendar, MapPin, Eye, X, Download, RefreshCw, Gift, SquarePen, Trash2, Save, Printer, FileText } from 'lucide-react';
 import Pagination from '../../components/common/Pagination';
 import { useReactToPrint } from 'react-to-print';
 import { PackingSlip } from '../../components/admin/PackingSlip';
@@ -9,6 +10,8 @@ import toast from 'react-hot-toast';
 import OrderPricingSummary from '../../components/OrderPricingSummary';
 
 export default function OrdersPage({ canView = true, canEdit = true, canDelete = true }) {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -44,8 +47,12 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
     contentRef: packingSlipRef,
     documentTitle: 'Packing_Slips',
     pageStyle: `
-      @page { size: 100mm 100mm !important; margin: 0 !important; }
-      @media print { body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }
+      @page { size: A4 portrait; margin: 0mm; }
+      @media print {
+        html, body { margin: 0 !important; padding: 0 !important; background: white !important; }
+        body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        .packing-slip-container { margin: 0 !important; padding: 0 !important; background: white !important; }
+      }
     `
   });
 
@@ -53,6 +60,36 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
     fetchOrders();
     fetchCouriers();
   }, []);
+
+  // Route-based deep linking: re-open modal on refresh
+  useEffect(() => {
+    const path = location.pathname;
+    if (orders.length === 0) return; // wait until orders are loaded
+    if (path.startsWith('/admin/orders/view/')) {
+      const id = path.split('/').pop();
+      const order = orders.find(o => o._id === id);
+      if (order && !showViewModal) {
+        setSelectedOrder(order);
+        setShowViewModal(true);
+      }
+    } else if (path.startsWith('/admin/orders/edit/')) {
+      const id = path.split('/').pop();
+      const order = orders.find(o => o._id === id);
+      if (order && !showEditModal) {
+        setSelectedOrder(order);
+        setEditFormData({
+          status: order.status,
+          paymentMethod: order.paymentMethod || '',
+          isPaid: order.isPaid || false,
+          trackingId: order.trackingId || '',
+          trackingUrl: order.trackingUrl || '',
+          additionalTracking: order.additionalTracking || [],
+          shippingAddress: { ...order.shippingAddress }
+        });
+        setShowEditModal(true);
+      }
+    }
+  }, [location.pathname, orders]);
 
   const fetchCouriers = async () => {
     try {
@@ -176,6 +213,13 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
   const handleViewOrder = (order) => {
     setSelectedOrder(order);
     setShowViewModal(true);
+    navigate(`/admin/orders/view/${order._id}`);
+  };
+
+  const closeViewModal = () => {
+    setShowViewModal(false);
+    setSelectedOrder(null);
+    navigate('/admin/orders');
   };
 
   const exportOrdersExcel = () => {
@@ -192,11 +236,6 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
     downloadExcelFile('orders', header, rows);
   };
 
-  const closeViewModal = () => {
-    setShowViewModal(false);
-    setSelectedOrder(null);
-  };
-
   const handleEditOrder = (order) => {
     setSelectedOrder(order);
     setEditFormData({
@@ -209,6 +248,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
       shippingAddress: { ...order.shippingAddress }
     });
     setShowEditModal(true);
+    navigate(`/admin/orders/edit/${order._id}`);
   };
 
   const closeEditModal = () => {
@@ -216,6 +256,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
     setSelectedOrder(null);
     setEditFormData({});
     setIsEditingShipping(false);
+    navigate('/admin/orders');
   };
 
   const handleSaveOrderDetails = async () => {
@@ -462,12 +503,12 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                         className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
                       />
                     </th>
-                    <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Order ID & Date</th>
-                    <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Customer</th>
-                    <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Total</th>
-                    <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Payment</th>
-                    <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Status</th>
-                    <th className="px-4 py-3.5 text-right pr-8 text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Actions</th>
+                    <th className="px-4 py-3.5 text-[11px] font-bold uppercase tracking-widest text-gray-500 whitespace-nowrap text-center">Order ID &amp; Date</th>
+                    <th className="px-4 py-3.5 text-[11px] font-bold uppercase tracking-widest text-gray-500 whitespace-nowrap text-center">Customer</th>
+                    <th className="px-4 py-3.5 text-[11px] font-bold uppercase tracking-widest text-gray-500 whitespace-nowrap text-center">Total</th>
+                    <th className="px-4 py-3.5 text-[11px] font-bold uppercase tracking-widest text-gray-500 whitespace-nowrap text-center">Payment</th>
+                    <th className="px-4 py-3.5 text-[11px] font-bold uppercase tracking-widest text-gray-500 whitespace-nowrap text-center">Status</th>
+                    <th className="px-4 py-3.5 text-[11px] font-bold uppercase tracking-widest text-gray-500 whitespace-nowrap text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E6DFD4]">
@@ -488,7 +529,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                           className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
                         />
                       </td>
-                      <td className="px-4 py-3.5">
+                      <td className="px-4 py-3.5 text-center">
                         <div className="font-mono text-sm font-bold text-gray-900 mb-1">{(order.orderId || 'DEBUG_' + (order._id || '').substring(order._id.length - 8))}</div>
                         {order.isGiftOrder && (() => {
                           const giftItems = (order.orderItems || []).filter(item => item.isGift);
@@ -497,49 +538,49 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                           return (
                             <span className="mb-2 inline-flex items-center gap-1 rounded bg-[#FDF0EB] px-2 py-0.5 text-[10px] font-bold text-[#D04E26] uppercase tracking-wider">
                               <Gift className="w-3 h-3" />
-                              GIFT & CARD {allNoWrapper ? '(NO WRAPPER)' : ''}
+                              GIFT &amp; CARD {allNoWrapper ? '(NO WRAPPER)' : ''}
                             </span>
                           );
                         })()}
-                        <div className="text-xs text-gray-500 flex items-center gap-1">
+                        <div className="text-xs text-gray-500 flex items-center justify-center gap-1 mt-0.5">
                           <Calendar className="w-3 h-3" />
                           {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}
                         </div>
                       </td>
-                      <td className="px-4 py-3.5">
-                        <div className="font-semibold text-gray-900">{order.user?.name || order.shippingAddress?.fullName}</div>
-                        <div className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                      <td className="px-4 py-3.5 text-center">
+                        <div className="font-bold text-sm text-gray-900">{order.user?.name || order.shippingAddress?.fullName}</div>
+                        <div className="text-xs text-gray-500 flex items-center justify-center gap-1 mt-1">
                           <MapPin className="w-3 h-3" />
                           {order.shippingAddress?.city}, {order.shippingAddress?.state}
                         </div>
                       </td>
-                      <td className="px-4 py-3.5">
-                        <div className="font-bold text-gray-900">₹{(order.totalPrice || 0).toLocaleString()}</div>
+                      <td className="px-4 py-3.5 text-center">
+                        <div className="text-xs font-semibold text-gray-900">₹{(order.totalPrice || 0).toLocaleString()}</div>
                         <div className="text-xs text-gray-500">{(order.orderItems || []).reduce((acc, item) => acc + (item.qty || 0), 0)} items</div>
                       </td>
-                      <td className="px-4 py-3.5">
+                      <td className="px-4 py-3.5 text-center">
                         {order.paymentMethod === 'COD' ? (
-                          <div className="space-y-2">
-                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${order.codAdvance > 0 ? 'bg-yellow-100 text-yellow-700' : order.isPaid ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
+                          <div className="space-y-1">
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${order.codAdvance > 0 ? 'bg-yellow-100 text-yellow-700' : order.isPaid ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
                               COD{order.codAdvance > 0 ? ' (Partially Paid)' : ''}
                             </span>
                             {order.codAdvance > 0 && (
-                              <div className="text-xs text-gray-500 space-y-0.5">
+                              <div className="text-xs text-gray-500 space-y-0.5 mt-1">
                                 <div>Paid online: ₹{(order.codAdvance || 0).toLocaleString()}</div>
                                 <div>Balance due: ₹{(order.balanceAmount ?? 0).toLocaleString()}</div>
                               </div>
                             )}
                           </div>
                         ) : (
-                          <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${order.isPaid ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                          <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${order.isPaid ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
                             {order.paymentMethod} {order.isPaid ? '(Paid)' : '(Unpaid)'}
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3.5">
-                        <div className="inline-flex items-center rounded-full border border-[#E6DFD4] bg-white shadow-sm">
+                      <td className="px-4 py-3.5 text-center">
+                        <div className="relative inline-flex items-center rounded-full border border-[#E6DFD4] bg-white shadow-sm">
                           <select
-                            className={`appearance-none bg-transparent px-4 py-2 text-sm font-semibold text-gray-900 rounded-full focus:outline-none ${!canEdit || normalizeOrderStatus(order.status) === 'Delivered' ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                            className={`appearance-none bg-transparent pl-4 pr-8 py-2 text-sm font-semibold text-gray-900 rounded-full focus:outline-none w-full ${!canEdit || normalizeOrderStatus(order.status) === 'Delivered' ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                             value={normalizeOrderStatus(order.status)}
                             onChange={(e) => {
                               const val = e.target.value;
@@ -555,7 +596,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                               </option>
                             ))}
                           </select>
-                          <span className="pointer-events-none px-3 text-gray-500">▾</span>
+                          <span className="pointer-events-none absolute right-3 text-gray-500 text-xs">▾</span>
                         </div>
                         {order.courierName && (
                           <div className="mt-2 text-xs font-bold text-[#8B5E3C]">
@@ -563,15 +604,15 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                           </div>
                         )}
                       </td>
-                      <td className="px-4 py-3.5 pr-8">
-                        <div className="flex gap-2 justify-end mt-2">
+                      <td className="px-4 py-3.5">
+                        <div className="flex gap-2 justify-center items-center">
                           {canView && (
                             <button
                               onClick={() => handleViewOrder(order)}
                               className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors"
                               title="View"
                             >
-                              <Eye className="w-4 h-4" />
+                              <Eye size={15} />
                             </button>
                           )}
                           {canEdit && (
@@ -580,7 +621,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                               className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
                               title="Edit"
                             >
-                              <SquarePen className="w-4 h-4" />
+                              <SquarePen size={15} />
                             </button>
                           )}
                           {canDelete && (
@@ -589,7 +630,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                               className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
                               title="Delete"
                             >
-                              <Trash className="w-4 h-4" />
+                              <Trash2 size={15} />
                             </button>
                           )}
                         </div>

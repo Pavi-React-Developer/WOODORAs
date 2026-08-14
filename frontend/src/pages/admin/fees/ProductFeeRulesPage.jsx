@@ -1,13 +1,46 @@
 import React, { useState, useEffect } from 'react';
 import { adminService } from '../../../api/adminService';
 import { toast } from 'react-hot-toast';
-import { SquarePen, ToggleLeft, ToggleRight, Trash, X } from 'lucide-react';
+import { SquarePen, ToggleLeft, ToggleRight, Trash2, X } from 'lucide-react';
 import useCartStore from '../../../store/useCartStore';
 
 export default function ProductFeeRulesPage() {
   const [rules, setRules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingRuleId, setEditingRuleId] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
+  
+  const toggleSelectAll = (checked) => {
+    setSelectedIds(checked ? rules.map(item => item._id) : []);
+  };
+
+  const toggleSelectOne = (id, checked) => {
+    setSelectedIds(prev => checked ? [...prev, id] : prev.filter(i => i !== id));
+  };
+
+  const handleBulkStatusChange = async (activeStatus) => {
+    if (!window.confirm(`Are you sure you want to set ${selectedIds.length} rules to ${activeStatus ? 'Active' : 'Inactive'}?`)) return;
+    try {
+      await Promise.all(selectedIds.map(id => adminService.updateProductFeeRule(id, { isActive: activeStatus })));
+      toast.success(`Updated status for ${selectedIds.length} rules!`);
+      setSelectedIds([]);
+      fetchRules();
+    } catch (error) {
+      toast.error('Failed to update status for some rules');
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Are you sure you want to delete ${selectedIds.length} rules?`)) return;
+    try {
+      await Promise.all(selectedIds.map(id => adminService.deleteProductFeeRule(id)));
+      toast.success(`Deleted ${selectedIds.length} rules!`);
+      setSelectedIds([]);
+      fetchRules();
+    } catch (error) {
+      toast.error('Failed to delete some rules');
+    }
+  };
   
   const [formData, setFormData] = useState({
     minVolume: '',
@@ -266,58 +299,89 @@ export default function ProductFeeRulesPage() {
           </form>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Min Vol (cm³)</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Max Vol (cm³)</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Box Size</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Fee (₹)</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Action</th>
+        {/* Bulk Actions Toolbar */}
+        {selectedIds.length > 0 && (
+          <div className="bg-[#FDF9F5] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3 flex-wrap">
+            <span className="text-sm font-semibold text-[#8B5E3C]">{selectedIds.length} selected</span>
+            <div className="flex gap-2 ml-auto flex-wrap">
+              <button onClick={() => handleBulkStatusChange(true)} className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">Set Active</button>
+              <button onClick={() => handleBulkStatusChange(false)} className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">Set Inactive</button>
+              <button onClick={handleBulkDelete} className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">Delete Selected</button>
+              <button onClick={() => setSelectedIds([])} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] bg-white rounded-lg hover:bg-gray-50 transition-colors text-gray-500">Clear</button>
+            </div>
+          </div>
+        )}
+
+        <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm overflow-hidden">
+          <table className="w-full text-sm text-left border-collapse">
+            <thead className="sticky top-0">
+              <tr className="bg-[#FAF4EF] text-[#8A817C] text-xs font-bold tracking-widest uppercase border-b border-[#E6DFD4]">
+                <th className="px-4 py-3.5 w-10 text-center">
+                  <input
+                    type="checkbox"
+                    checked={rules.length > 0 && selectedIds.length === rules.length}
+                    onChange={e => toggleSelectAll(e.target.checked)}
+                    className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                  />
+                </th>
+                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Min Vol (cm³)</th>
+                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Max Vol (cm³)</th>
+                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Box Size</th>
+                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Fee (₹)</th>
+                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Status</th>
+                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Action</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-100">
+            <tbody className="divide-y divide-[#E6DFD4] text-sm text-brand-dark">
               {rules.map((rule) => (
-                <tr key={rule._id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="px-6 py-4 text-sm text-gray-900">{rule.minVolume}</td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{rule.maxVolume}</td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{rule.boxSize}</td>
-                  <td className="px-6 py-4 text-sm font-medium text-green-600">₹{rule.productFee}</td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${rule.isActive ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>
+                <tr key={rule._id} className="transition-colors hover:bg-[#FDF9F5] bg-white">
+                  <td className="py-6 px-4 text-center">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(rule._id)}
+                      onChange={(e) => toggleSelectOne(rule._id, e.target.checked)}
+                      className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                    />
+                  </td>
+                  <td className="py-6 px-4 text-sm font-bold text-center text-gray-900">{rule.minVolume}</td>
+                  <td className="py-6 px-4 text-sm font-bold text-center text-gray-900">{rule.maxVolume}</td>
+                  <td className="py-6 px-4 text-xs font-semibold text-center text-gray-700">{rule.boxSize}</td>
+                  <td className="py-6 px-4 text-sm font-bold text-center text-gray-900">₹{rule.productFee}</td>
+                  <td className="py-6 px-4 text-center">
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${rule.isActive ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
                       {rule.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-center flex justify-center gap-4">
-                    <button 
-                      onClick={() => handleEdit(rule)} 
-                      className="text-blue-500 hover:text-blue-700 transition-colors" 
-                      title="Edit Rule"
-                    >
-                      <SquarePen className="w-4 h-4" />
-                    </button>
-                    <button 
-                      onClick={() => handleToggleStatus(rule)} 
-                      className={`transition-colors ${rule.isActive ? 'text-green-500 hover:text-green-700' : 'text-gray-400 hover:text-gray-600'}`} 
-                      title={rule.isActive ? 'Deactivate' : 'Activate'}
-                    >
-                      {rule.isActive ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(rule._id)} 
-                      className="text-red-400 hover:text-red-600 transition-colors" 
-                      title="Delete Rule"
-                    >
-                      <Trash className="w-4 h-4" />
-                    </button>
+                  <td className="py-6 px-4 text-center whitespace-nowrap">
+                    <div className="flex items-center justify-center gap-2">
+                      <button 
+                        onClick={() => handleEdit(rule)} 
+                        className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors" 
+                        title="Edit Rule"
+                      >
+                        <SquarePen size={15} />
+                      </button>
+                      <button 
+                        onClick={() => handleToggleStatus(rule)} 
+                        className={`p-1.5 rounded-lg transition-colors ${rule.isActive ? 'text-green-500 hover:text-green-700 hover:bg-green-50' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'}`} 
+                        title={rule.isActive ? 'Deactivate' : 'Activate'}
+                      >
+                        {rule.isActive ? <ToggleRight size={15} /> : <ToggleLeft size={15} />}
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(rule._id)} 
+                        className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" 
+                        title="Delete Rule"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
               {rules.length === 0 && (
                 <tr>
-                  <td colSpan="6" className="px-6 py-12 text-center text-gray-500">No product fee rules configured.</td>
+                  <td colSpan="7" className="px-6 py-12 text-center text-gray-500">No product fee rules configured.</td>
                 </tr>
               )}
             </tbody>

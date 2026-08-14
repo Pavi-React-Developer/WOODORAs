@@ -222,27 +222,27 @@ export default function CustomizeFieldManager({ canCreate = true, canEdit = true
       <div className="bg-white rounded-3xl shadow-sm border border-[#E6DFD4] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="text-xs text-[#8A817C] uppercase bg-[#FAF4EF]">
+            <thead className="bg-[#FAF4EF] text-[#8A817C] text-[11px] uppercase tracking-widest text-center">
               <tr>
-                <th className="px-6 py-4 w-10 border-b border-[#E6DFD4]">
+                <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] w-10 text-center">
                   <input
                     type="checkbox"
                     checked={fields.length > 0 && selectedIds.length === fields.length}
                     onChange={(e) => setSelectedIds(e.target.checked ? fields.map(f => f._id) : [])}
-                    className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer"
+                    className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer mx-auto block"
                   />
                 </th>
-                <th className="px-6 py-4 border-b border-[#E6DFD4] font-bold">Field Label</th>
-                <th className="px-6 py-4 border-b border-[#E6DFD4] font-bold">Type</th>
-                <th className="px-6 py-4 border-b border-[#E6DFD4] font-bold">Required</th>
-                <th className="px-6 py-4 border-b border-[#E6DFD4] font-bold">Status</th>
-                <th className="px-6 py-4 border-b border-[#E6DFD4] font-bold text-right">Actions</th>
+                <th className="py-4 px-2 border-b border-[#E6DFD4] font-bold text-center">Field Label</th>
+                <th className="py-4 px-2 border-b border-[#E6DFD4] font-bold text-center">Type</th>
+                <th className="py-4 px-2 border-b border-[#E6DFD4] font-bold text-center">Required</th>
+                <th className="py-4 px-2 border-b border-[#E6DFD4] font-bold text-center">Status</th>
+                <th className="py-4 px-2 border-b border-[#E6DFD4] font-bold text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E6DFD4]">
               {fields.map((field, idx) => (
                 <tr key={field._id} className={`hover:bg-[#FAF4EF]/30 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
-                  <td className="px-6 py-4">
+                  <td className="p-4 text-center">
                     <input
                       type="checkbox"
                       checked={selectedIds.includes(field._id)}
@@ -250,43 +250,43 @@ export default function CustomizeFieldManager({ canCreate = true, canEdit = true
                         if (e.target.checked) setSelectedIds([...selectedIds, field._id]);
                         else setSelectedIds(selectedIds.filter(id => id !== field._id));
                       }}
-                      className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer"
+                      className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer mx-auto block"
                     />
                   </td>
-                  <td className="px-6 py-4">
-                    <span className="font-medium text-[#4A3326]">{field.label}</span>
+                  <td className="p-4 text-left">
+                    <div className="text-sm font-bold text-gray-900">{field.label}</div>
                     {field.type === 'dropdown' && (
                       <div className="text-xs text-gray-500 mt-1">Options: {field.options.join(', ')}</div>
                     )}
                   </td>
-                  <td className="px-6 py-4 uppercase text-xs tracking-wider font-semibold text-gray-600">
+                  <td className="p-4 text-left uppercase text-xs font-semibold text-gray-600">
                     {field.type}
                   </td>
-                  <td className="px-6 py-4">
-                    <span className={`text-xs px-2 py-1 rounded-md ${field.isRequired ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600'}`}>
+                  <td className="p-4 text-center">
+                    <span className={`text-[11px] px-2 py-1 rounded-md font-bold uppercase tracking-wider ${field.isRequired ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600'}`}>
                       {field.isRequired ? 'Required' : 'Optional'}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="p-4 text-center">
                     {canEdit && (
                       <button
                         onClick={() => handleToggleStatus(field._id, field.isActive)}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${field.isActive ? 'bg-[#4ADE80]' : 'bg-gray-200'}`}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${field.isActive ? 'bg-[#4ADE80]' : 'bg-gray-200'} mx-auto block`}
                       >
                         <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${field.isActive ? 'translate-x-6' : 'translate-x-1'}`} />
                       </button>
                     )}
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex justify-end gap-3">
+                  <td className="p-4 text-center">
+                    <div className="flex items-center justify-center gap-3">
                       {canEdit && (
-                        <button onClick={() => openEditModal(field)} className="text-blue-600 hover:text-blue-700 transition-colors p-1" title="Edit Field">
-                          <Edit className="w-4 h-4" />
+                        <button onClick={() => openEditModal(field)} className="text-blue-600 hover:text-blue-700 transition-colors" title="Edit Field">
+                          <Edit size={15} />
                         </button>
                       )}
                       {canDelete && (
-                        <button onClick={() => handleDelete(field._id)} className="text-red-500 hover:text-red-600 transition-colors p-1" title="Delete Field">
-                          <Trash className="w-4 h-4" />
+                        <button onClick={() => handleDelete(field._id)} className="text-red-500 hover:text-red-600 transition-colors" title="Delete Field">
+                          <Trash2 size={15} />
                         </button>
                       )}
                     </div>
@@ -313,11 +313,11 @@ export default function CustomizeFieldManager({ canCreate = true, canEdit = true
               <h2 className="text-[28px] font-serif font-bold text-[#141225] tracking-tight flex items-center gap-2">
                 <Settings className="w-6 h-6 text-[#8B5E3C]" /> Create New Field
               </h2>
-              <button onClick={() => setShowAddModal(false)} className="p-2 rounded-full hover:bg-[#E6DFD4] text-gray-400 hover:text-gray-700 transition-colors">
+              <button onClick={() => setShowAddModal(false)} className="p-2 text-gray-400 hover:text-red-700 transition-colors">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
-            
+
             {/* Content */}
             <form onSubmit={handleAddField} className="p-8 space-y-6 bg-white overflow-y-auto max-h-[70vh]">
               <div>
@@ -420,11 +420,11 @@ export default function CustomizeFieldManager({ canCreate = true, canEdit = true
               <h2 className="text-[28px] font-serif font-bold text-[#141225] tracking-tight flex items-center gap-2">
                 <Settings className="w-6 h-6 text-[#8B5E3C]" /> Edit Field
               </h2>
-              <button onClick={() => setShowEditModal(false)} className="p-2 rounded-full hover:bg-[#E6DFD4] text-gray-400 hover:text-gray-700 transition-colors">
+              <button onClick={() => setShowEditModal(false)} className="p-2 text-gray-400 hover:text-red-700 transition-colors">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
-            
+
             {/* Content */}
             <form onSubmit={handleUpdateField} className="p-8 space-y-6 bg-white overflow-y-auto max-h-[70vh]">
               <div>

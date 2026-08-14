@@ -56,6 +56,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 import { saveAs } from 'file-saver';
+import UserAdvancedBookings from './profile/UserAdvancedBookings';
 import { authService } from '../api/authService';
 import Pagination from '../components/common/Pagination';
 import { orderService } from '../api/orderService';
@@ -103,6 +104,7 @@ const modules = [
   { id: 'wishlist', label: 'Wishlist', icon: Heart },
   { id: 'refunds', label: 'Refunds', icon: ExternalLink },
   { id: 'gift-card', label: 'Gift & Card', icon: Gift },
+  { id: 'advanced-booking', label: 'Advanced Booking', icon: Package },
 ];
 
 const profileModulePaths = {
@@ -122,6 +124,7 @@ const profileModulePaths = {
   password: '/profile/change-password',
   notifications: '/profile/notifications',
   'gift-card': '/profile/gift-card',
+  'advanced-booking': '/profile/advanced-booking',
 };
 
 const profilePathModules = Object.fromEntries(
@@ -3108,7 +3111,7 @@ export default function CustomerProfilePage({
           onMouseLeave={handleMouseLeave}
           onMouseUp={handleMouseUp}
           onMouseMove={handleMouseMove}
-          className="flex overflow-x-auto gap-4 hide-scrollbar bg-white rounded-[18px] p-3 shadow-[0_18px_60px_rgba(62,39,35,0.08)] cursor-grab active:cursor-grabbing select-none"
+          className="flex overflow-x-auto gap-4 bg-white rounded-[18px] p-3 shadow-[0_18px_60px_rgba(62,39,35,0.08)] cursor-grab active:cursor-grabbing select-none"
         >
           {visibleModules.map(({ id, label, icon: Icon }) => (
             <button
@@ -3180,6 +3183,7 @@ export default function CustomerProfilePage({
           {activeModule === 'password' && renderChangePassword()}
           {activeModule === 'notifications' && renderNotifications()}
           {activeModule === 'gift-card' && renderGiftCardOrders()}
+          {activeModule === 'advanced-booking' && <div className="p-4 md:p-8"><UserAdvancedBookings /></div>}
         </div>
       </div>
 

@@ -3,13 +3,12 @@ import { staffAPI } from '../../api/staffService';
 import { authService } from '../../api/authService';
 import Pagination from '../../components/common/Pagination';
 import { roleAPI } from '../../api/roleService';
-import { Download, RefreshCw, Plus } from 'lucide-react';
+import { Download, RefreshCw, Plus, Trash2 } from 'lucide-react';
 import { downloadExcelFile } from '../../utils/exportUtils';
 
 const Badge = ({ status }) => (
-  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
-    status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-  }`}>
+  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+    }`}>
     <span className={`w-1.5 h-1.5 rounded-full ${status === 'active' ? 'bg-green-500' : 'bg-gray-400'}`} />
     {status === 'active' ? 'Active' : 'Inactive'}
   </span>
@@ -81,6 +80,28 @@ export default function StaffListPage({ onAddStaff, onEditStaff, onRoleAssign, c
     }
   };
 
+  const handleBulkStatus = async (isActive) => {
+    if (!window.confirm(`Are you sure you want to set ${selectedIds.length} staff to ${isActive ? 'active' : 'inactive'}?`)) return;
+    try {
+      await Promise.all(selectedIds.map(id => staffAPI.update(id, { status: isActive ? 'active' : 'inactive' })));
+      setSelectedIds([]);
+      fetchStaff();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Are you sure you want to delete ${selectedIds.length} staff?`)) return;
+    try {
+      await Promise.all(selectedIds.map(id => staffAPI.delete(id)));
+      setSelectedIds([]);
+      fetchStaff();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   const exportStaffExcel = () => {
     const header = ['Staff ID', 'Name', 'Email', 'Mobile', 'Role', 'Status', 'Created At'];
     const rows = staffList.map(member => ({
@@ -100,7 +121,7 @@ export default function StaffListPage({ onAddStaff, onEditStaff, onRoleAssign, c
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
         <div>
-          <p className="text-[13px] md:text-sm font-serif text-[#94A3B8] mb-1">
+          <p className="text-[13px] md:text-sm font-serif text-white mb-1">
             Dashboard &rsaquo; Staff Management &rsaquo; <span className="font-semibold text-[#8B5E3C]">Staff List</span>
           </p>
           <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Staff List</h1>
@@ -113,12 +134,12 @@ export default function StaffListPage({ onAddStaff, onEditStaff, onRoleAssign, c
             <Download size={16} /> Export Excel
           </button>
           {canCreate && (
-          <button
-            onClick={onAddStaff}
-            className="admin-btn"
-          >
-            <Plus size={16} /> Add Staff
-          </button>
+            <button
+              onClick={onAddStaff}
+              className="admin-btn"
+            >
+              <Plus size={16} /> Add Staff
+            </button>
           )}
         </div>
       </div>
@@ -154,9 +175,15 @@ export default function StaffListPage({ onAddStaff, onEditStaff, onRoleAssign, c
         <div className="bg-[#F8F4EC] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3 flex-wrap">
           <span className="text-sm font-semibold text-[#8B5E3C]">{selectedIds.length} selected</span>
           <div className="flex gap-2 ml-auto flex-wrap">
-             {typeof handleBulkDelete !== 'undefined' && (
-                <button onClick={handleBulkDelete} className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">Delete Selected</button>
-             )}
+            {canEdit && (
+              <>
+                <button onClick={() => handleBulkStatus(true)} className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">Set Active</button>
+                <button onClick={() => handleBulkStatus(false)} className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">Set Inactive</button>
+              </>
+            )}
+            {canDelete && (
+              <button onClick={handleBulkDelete} className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">Delete Selected</button>
+            )}
             <button onClick={() => setSelectedIds([])} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-white transition-colors text-gray-500">Clear</button>
           </div>
         </div>
@@ -177,7 +204,7 @@ export default function StaffListPage({ onAddStaff, onEditStaff, onRoleAssign, c
                   />
                 </th>
                 {['Profile', 'Full Name', 'Email', 'Mobile', 'Role', 'Status', 'Created Date', 'Actions'].map(h => (
-                  <th key={h} className={`px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap ${h === 'Actions' ? 'text-right pr-8' : 'text-left'}`}>{h}</th>
+                  <th key={h} className={`px-4 py-3.5 text-[11px] font-bold uppercase tracking-widest text-gray-500 whitespace-nowrap ${['Profile', 'Full Name', 'Email', 'Mobile', 'Role', 'Status', 'Created Date', 'Actions'].includes(h) ? 'text-center' : 'text-left'}`}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -218,12 +245,14 @@ export default function StaffListPage({ onAddStaff, onEditStaff, onRoleAssign, c
                       </div>
                     </td>
                     <td className="px-4 py-3.5 font-semibold text-gray-800 whitespace-nowrap">{member.fullName}</td>
-                    <td className="px-4 py-3.5 text-gray-600">{member.email}</td>
+                    <td className="px-4 py-3.5 text-center text-gray-600">{member.email}</td>
                     <td className="px-4 py-3.5 text-gray-500">{member.mobile || '—'}</td>
-                    <td className="px-4 py-3.5">
-                      <span className="bg-[#F8F4EC] text-[#8B5E3C] text-xs font-semibold px-2.5 py-1 rounded-lg border border-[#E6DFD4]">{member.role}</span>
+                    <td className="px-4 py-3.5 text-center">
+                      <span className="inline-block whitespace-nowrap bg-[#F8F4EC] text-[#8B5E3C] text-[11px] uppercase tracking-wider font-bold px-3 py-1.5 rounded-lg border border-[#E6DFD4] shadow-sm">
+                        {member.role}
+                      </span>
                     </td>
-                    <td className="px-4 py-3.5">
+                    <td className="px-4 py-3.5 text-center">
                       {canEdit ? (
                         <button onClick={() => handleToggleStatus(member)} title="Toggle status">
                           <Badge status={member.status} />
@@ -233,22 +262,22 @@ export default function StaffListPage({ onAddStaff, onEditStaff, onRoleAssign, c
                       )}
                     </td>
                     <td className="px-4 py-3.5 text-gray-500 whitespace-nowrap">{new Date(member.createdAt).toLocaleDateString('en-IN')}</td>
-                    <td className="px-4 py-3.5 pr-8">
-                      <div className="flex items-center justify-end gap-1">
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center justify-center gap-2">
                         {canEdit && (
-                        <button onClick={() => onEditStaff(member)} className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors" title="Edit">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                        </button>
+                          <button onClick={() => onEditStaff(member)} className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors" title="Edit">
+                            <svg className="w-[15px] h-[15px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                          </button>
                         )}
                         {canEdit && (
-                        <button onClick={() => onRoleAssign(member)} className="p-1.5 rounded-lg text-[#8B5E3C] hover:bg-[#F8F4EC] transition-colors" title="Edit Permissions">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-                        </button>
+                          <button onClick={() => onRoleAssign(member)} className="p-1.5 rounded-lg text-[#8B5E3C] hover:bg-[#F8F4EC] transition-colors" title="Edit Permissions">
+                            <svg className="w-[15px] h-[15px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                          </button>
                         )}
                         {canDelete && (
-                        <button onClick={() => setDeleteId(member._id)} className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors" title="Delete">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                        </button>
+                          <button onClick={() => setDeleteId(member._id)} className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors" title="Delete">
+                            <Trash2 size={15} />
+                          </button>
                         )}
                       </div>
                     </td>
@@ -261,10 +290,10 @@ export default function StaffListPage({ onAddStaff, onEditStaff, onRoleAssign, c
 
         {/* Pagination */}
         <div className="px-5 py-6 border-t border-[#E6DFD4] flex justify-center bg-white">
-          <Pagination 
-            currentPage={page} 
-            totalPages={pagination.pages} 
-            onPageChange={setPage} 
+          <Pagination
+            currentPage={page}
+            totalPages={pagination.pages}
+            onPageChange={setPage}
           />
         </div>
       </div>

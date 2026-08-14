@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { cmsService } from '../../../api/cmsService';
-import { Plus, Trash, SquarePen, Eye, EyeOff, X, Upload } from 'lucide-react';
+import {  Plus, Trash, SquarePen, Eye, EyeOff, X, Upload , Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 function MultiImageUploader({ label, images, onChange }) {
@@ -55,7 +55,7 @@ function MultiImageUploader({ label, images, onChange }) {
 
 const FieldLabel = ({ children }) => <label className="block text-xs font-semibold text-brand-dark mb-1">{children}</label>;
 
-export default function GiftCardBannerAdmin() {
+export default function GiftCardBannerAdmin({ canCreate, canEdit, canDelete }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -125,10 +125,10 @@ export default function GiftCardBannerAdmin() {
     <div className="bg-transparent">
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-sm font-bold text-brand-dark uppercase tracking-widest">Gift & Card Banner (Dual Slider)</h3>
-        {!showForm && (
+        {!showForm && canCreate && (
           <button onClick={() => { setForm(initialForm); setEditingId(null); window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowForm(true); }}
             className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60">
-            <Plus className="w-4 h-4" /> Add Gift & Card Banner
+            <Plus size={15} /> Add Gift & Card Banner
           </button>
         )}
       </div>
@@ -279,15 +279,21 @@ export default function GiftCardBannerAdmin() {
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${item.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
                 {item.status ? 'Active' : 'Off'}
               </span>
-              <button onClick={() => handleToggle(item)} className="text-green-600 hover:text-green-700 transition-colors">
-                {item.status ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-              <button onClick={() => handleEdit(item)} className="text-blue-600 hover:text-blue-700 transition-colors">
-                <SquarePen className="w-4 h-4" />
-              </button>
-              <button onClick={() => handleDelete(item._id)} className="text-red-500 hover:text-red-600 transition-colors">
-                <Trash className="w-4 h-4" />
-              </button>
+              {canEdit && (
+                <>
+                  <button onClick={() => handleToggle(item)} className="text-green-600 hover:text-green-700 transition-colors">
+                    {item.status ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+                  <button onClick={() => handleEdit(item)} className="text-blue-600 hover:text-blue-700 transition-colors">
+                    <SquarePen size={15} />
+                  </button>
+                </>
+              )}
+              {canDelete && (
+                <button onClick={() => handleDelete(item._id)} className="text-red-500 hover:text-red-600 transition-colors">
+                  <Trash2 size={15} />
+                </button>
+              )}
             </div>
           </div>
         ))}

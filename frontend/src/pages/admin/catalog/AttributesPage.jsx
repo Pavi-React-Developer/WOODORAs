@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Plus, SquarePen, Trash, RefreshCw, X, PlusCircle, Settings2 } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Download, Plus, SquarePen, Trash2, RefreshCw, X, PlusCircle, Settings2 } from 'lucide-react';
 import Pagination from '../../../components/common/Pagination';
 import { attributeV2API, categoryV2API, subCategoryV2API } from '../../../api/catalogV2Service';
 import { downloadExcelFile } from '../../../utils/exportUtils';
@@ -18,6 +19,8 @@ const Field = ({ label, required, children }) => (
 const inputCls = 'w-full px-4 py-2.5 text-sm border border-[#E6DFD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-colors';
 
 export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = true }) => {
+    const location = useLocation();
+    const navigate = useNavigate();
     const [attributes, setAttributes] = useState([]);
     const [selectedIds, setSelectedIds] = useState([]);
 
@@ -77,6 +80,34 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
         fetchSubCategories();
     }, []);
 
+    useEffect(() => {
+        const checkRoute = async () => {
+            const path = location.pathname;
+            if (path === '/admin/catalog/attributes/add') {
+                if (!isFormOpen || editId) {
+                    handleOpenForm(null, true);
+                }
+            } else if (path.startsWith('/admin/catalog/attributes/edit/')) {
+                const id = path.split('/').pop();
+                if (!isFormOpen || editId !== id) {
+                    try {
+                        const res = await attributeV2API.getById(id);
+                        if (res.success && res.attribute) {
+                            handleOpenForm(res.attribute, true);
+                        }
+                    } catch (err) {
+                        console.error("Failed to fetch attribute for edit", err);
+                        navigate('/admin/catalog/attributes');
+                    }
+                }
+            } else {
+                setIsFormOpen(false);
+                setEditId(null);
+            }
+        };
+        checkRoute();
+    }, [location.pathname, categories]);
+
     const fetchAttributes = async () => {
         setLoading(true);
         try {
@@ -116,7 +147,7 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
         }
     };
 
-    const handleOpenForm = (attr = null) => {
+    const handleOpenForm = (attr = null, isFromRoute = false) => {
         if (attr) {
             setEditId(attr._id);
             setFormData({
@@ -162,7 +193,14 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
         }
         setNewValue('');
         setErrorMsg('');
-        window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + (editId || attr ? '/edit' : '/add')); setIsFormOpen(true);
+        setIsFormOpen(true);
+        if (!isFromRoute) {
+            if (attr) {
+                navigate(`/admin/catalog/attributes/edit/${attr._id}`);
+            } else {
+                navigate('/admin/catalog/attributes/add');
+            }
+        }
     };
 
     const handleSave = async (e) => {
@@ -176,7 +214,7 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
             } else {
                 await attributeV2API.create(formData);
             }
-            (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setIsFormOpen(false));
+            navigate('/admin/catalog/attributes');
             fetchAttributes();
         } catch (err) {
             setErrorMsg(err.message || 'Failed to save attribute');
@@ -336,7 +374,7 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                         <Download size={16} /> Export Excel
                     </button>
                     {canCreate && (
-                        <button onClick={() => handleOpenForm()} className="admin-btn">
+                        <button onClick={() => navigate('/admin/catalog/attributes/add')} className="admin-btn">
                             <Plus size={16} /> Add Attribute
                         </button>
                     )}
@@ -419,7 +457,7 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                                     />
                                 </th>
                                 {['Attribute Name', 'Mapping', 'System Code', 'Type', 'Options/Values', 'Validation', 'Actions'].map(h => (
-                                    <th key={h} className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">{h}</th>
+                                    <th key={h} className={`px-4 py-3.5 text-[11px] font-bold uppercase tracking-widest text-gray-500 whitespace-nowrap ${['System Code', 'Type', 'Options/Values', 'Validation', 'Actions'].includes(h) ? 'text-center' : 'text-left'}`}>{h}</th>
                                 ))}
                             </tr>
                         </thead>
@@ -453,24 +491,24 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                                             />
                                         </td>
                                         <td className="px-4 py-3.5">
-                                            <p className="font-semibold text-gray-800">{attr.name}</p>
+                                            <p className="font-bold text-sm text-gray-800">{attr.name}</p>
                                             {attr.description && <p className="text-xs text-gray-400 mt-0.5">{attr.description}</p>}
                                         </td>
                                         <td className="px-4 py-3.5">
-                                            <p className="text-xs font-semibold text-[#8B5E3C]">{attr.category?.name || 'Unmapped'}</p>
+                                            <p className="font-bold text-sm text-[#8B5E3C]">{attr.category?.name || 'Unmapped'}</p>
                                             <p className="text-xs text-gray-500">{attr.subCategory?.name || '-'}</p>
                                         </td>
-                                        <td className="px-4 py-3.5">
-                                            <code className="text-xs bg-[#F8F4EC] text-[#8B5E3C] px-2 py-1 rounded-md font-mono">{attr.code || '-'}</code>
+                                        <td className="px-4 py-3.5 text-center">
+                                            <span className="inline-block whitespace-nowrap bg-[#F8F4EC] text-[#8B5E3C] text-[11px] uppercase tracking-wider font-bold px-3 py-1.5 rounded-lg border border-[#E6DFD4] shadow-sm">{attr.code || '-'}</span>
                                         </td>
-                                        <td className="px-4 py-3.5">
+                                        <td className="px-4 py-3.5 text-center">
                                             <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">{attr.type}</span>
                                         </td>
-                                        <td className="px-4 py-3.5 max-w-xs">
+                                        <td className="px-4 py-3.5 text-center max-w-xs">
                                             {attr.values && attr.values.length > 0 ? (
-                                                <div className="flex flex-wrap gap-1">
+                                                <div className="flex flex-wrap items-center justify-center gap-1.5">
                                                     {attr.values.slice(0, 4).map((v, i) => (
-                                                        <span key={i} className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-[#F8F4EC] border border-[#E6DFD4] text-gray-700">
+                                                        <span key={i} className="inline-flex items-center whitespace-nowrap bg-[#F8F4EC] text-gray-600 text-[11px] font-bold px-3 py-1.5 rounded-lg border border-[#E6DFD4] shadow-sm">
                                                             {attr.type === 'ColorPicker' && (
                                                                 <span className="w-2.5 h-2.5 rounded-full mr-1.5 border border-black/10" style={{ backgroundColor: v.colorCode }} />
                                                             )}
@@ -487,22 +525,18 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                                                 <span className="text-[#8B5E3C] text-xs italic opacity-70">No values defined</span>
                                             )}
                                         </td>
-                                        <td className="px-4 py-3.5">
-                                            <div className="flex flex-wrap gap-1">
+                                        <td className="px-4 py-3.5 text-center">
+                                            <div className="flex flex-wrap items-center justify-center gap-1">
                                                 {attr.isRequired && <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">Required</span>}
                                                 {attr.isSearchable && <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">Searchable</span>}
                                                 {attr.isFilterable && <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">Filterable</span>}
                                             </div>
                                         </td>
                                         <td className="px-4 py-3.5">
-                                            <div className="flex gap-2 justify-end">
+                                            <div className="flex items-center justify-center gap-2">
                                                 {canEdit && (
-                                                    <button
-                                                        onClick={() => handleOpenForm(attr)}
-                                                        className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
-                                                        title="Edit"
-                                                    >
-                                                        <SquarePen size={16} />
+                                                    <button onClick={() => navigate(`/admin/catalog/attributes/edit/${attr._id}`)} className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors" title="Edit">
+                                                        <SquarePen size={15} />
                                                     </button>
                                                 )}
                                                 {canDelete && (
@@ -511,7 +545,7 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                                                         className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
                                                         title="Delete"
                                                     >
-                                                        <Trash size={16} />
+                                                        <Trash2 size={15} />
                                                     </button>
                                                 )}
                                             </div>
@@ -536,13 +570,13 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
 
             {/* Create/Edit Attribute Form Drawer */}
             {isFormOpen && (
-                <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-xs animate-fade-in">
-                    <div className="w-full max-w-xl bg-white h-full shadow-2xl flex flex-col animate-slide-left">
+                <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-sm" onClick={() => navigate('/admin/catalog/attributes')}>
+                    <div className="w-full max-w-xl bg-white h-full shadow-2xl flex flex-col animate-slide-left" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-between px-8 py-8 border-b border-[#E6DFD4] bg-[#F8F4EC]">
                             <div>
                                 <h2 className="text-3xl font-serif font-bold text-[#141225] tracking-tight">{editId ? 'Edit Attribute' : 'Create Attribute'}</h2>
                             </div>
-                            <button onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setIsFormOpen(false))} className="p-2 rounded-full hover:bg-[#E6DFD4] text-gray-400 hover:text-gray-700 transition-colors">
+                            <button onClick={() => navigate('/admin/catalog/attributes')} className="p-2 text-gray-400 hover:text-red-700 transition-colors">
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
                         </div>
@@ -684,7 +718,7 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                             )}
 
                             <div className="flex items-center justify-center gap-4 pt-6 pb-2">
-                                <button type="button" onClick={() => (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setIsFormOpen(false))} className="admin-cancel-btn">
+                                <button type="button" onClick={() => navigate('/admin/catalog/attributes')} className="admin-cancel-btn">
                                     CANCEL
                                 </button>
                                 <button type="submit" disabled={formLoading} className="flex items-center gap-2 bg-[#8B5E3C] hover:bg-[#7a5234] disabled:opacity-60 text-white px-8 py-3 rounded-full text-[15px] font-bold transition-colors shadow-sm uppercase tracking-wide">
