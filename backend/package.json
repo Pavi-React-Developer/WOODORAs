@@ -25,6 +25,8 @@
     "express": "^5.2.1",
     "express-mongo-sanitize": "^2.2.0",
     "express-rate-limit": "^8.6.1",
+    "express-slow-down": "^3.1.0",
+    "file-type": "^22.0.1",
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.7.2",
@@ -38,7 +40,8 @@
     "passport-google-oauth20": "^2.0.0",
     "passport-microsoft": "^2.1.0",
     "pdfkit": "^0.19.1",
-    "streamifier": "^0.1.1"
+    "streamifier": "^0.1.1",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

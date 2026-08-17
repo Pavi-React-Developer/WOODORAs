@@ -188,8 +188,7 @@ const forgotPassword = async (req, res) => {
         user.resetPasswordExpire = Date.now() + 15 * 60 * 1000; // 15 minutes
         await user.save();
 
-        // Dynamically get the frontend URL from the request origin, fallback to env, then localhost
-        const frontendUrl = process.env.FRONTEND_URL || req.headers.origin || 'http://localhost:5173';
+        const frontendUrl = process.env.FRONTEND_URL || req.headers.origin;
         const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
         await sendPasswordResetEmail(user.email, resetUrl);
 
@@ -344,20 +343,20 @@ const getCustomerOrders = async (req, res) => {
 const oauthSuccessCallback = (req, res) => {
     try {
         if (!req.user) {
-            return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=OAuthFailed`);
+            return res.redirect(`${process.env.FRONTEND_URL}/login?error=OAuthFailed`);
         }
 
         const token = generateAccessToken(req.user._id);
         const refreshToken = generateRefreshToken(req.user._id);
         
         // Redirect to frontend OAuthCallback page with tokens
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const frontendUrl = process.env.FRONTEND_URL;
         const redirectUrl = `${frontendUrl}/oauth-success?token=${token}&refreshToken=${refreshToken}`;
         
         res.redirect(redirectUrl);
     } catch (error) {
         console.error('OAuth Callback Error:', error);
-        res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=OAuthCallbackError`);
+        res.redirect(`${process.env.FRONTEND_URL}/login?error=OAuthCallbackError`);
     }
 };
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, Search } from 'lucide-react';
+import { RefreshCw, Info } from 'lucide-react';
 import { advancedBookingService } from '../../api/advancedBookingService';
 import toast from 'react-hot-toast';
 
@@ -23,15 +23,24 @@ export default function UserAdvancedBookings() {
     fetchBookings();
   }, []);
 
-  const getStatusStyle = (status) => {
+  const getOrderStatusStyle = (status) => {
     switch (status) {
       case 'Placed': return 'bg-blue-50 text-blue-600';
       case 'Packed': return 'bg-orange-50 text-orange-600';
-      case 'Shipped': return 'bg-purple-50 text-purple-600';
-      case 'Out for Delivery': return 'bg-yellow-50 text-yellow-600';
+      case 'Shipping': return 'bg-purple-50 text-purple-600';
+      case 'Out of Delivery': return 'bg-yellow-50 text-yellow-600';
       case 'Delivered': return 'bg-green-50 text-green-600';
       case 'Cancelled': return 'bg-red-50 text-red-600';
       default: return 'bg-gray-50 text-gray-600';
+    }
+  };
+
+  const getBookingStatusStyle = (status) => {
+    switch (status) {
+      case 'Pending': return 'bg-yellow-100 text-yellow-800';
+      case 'Approved': return 'bg-green-100 text-green-800';
+      case 'Rejected': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -52,23 +61,25 @@ export default function UserAdvancedBookings() {
               <tr>
                 <th className="px-4 py-3 font-bold text-[#8A817C] uppercase tracking-wider text-[11px]">Date</th>
                 <th className="px-4 py-3 font-bold text-[#8A817C] uppercase tracking-wider text-[11px]">Product</th>
-                <th className="px-4 py-3 font-bold text-[#8A817C] uppercase tracking-wider text-[11px]">Qty</th>
-                <th className="px-4 py-3 font-bold text-[#8A817C] uppercase tracking-wider text-[11px]">Status</th>
+                <th className="px-4 py-3 font-bold text-[#8A817C] uppercase tracking-wider text-[11px] text-center">Qty</th>
+                <th className="px-4 py-3 font-bold text-[#8A817C] uppercase tracking-wider text-[11px]">Payment Details</th>
+                <th className="px-4 py-3 font-bold text-[#8A817C] uppercase tracking-wider text-[11px] text-center">Expected Date</th>
+                <th className="px-4 py-3 font-bold text-[#8A817C] uppercase tracking-wider text-[11px] text-center">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F0EAE2]">
               {loading ? (
-                <tr><td colSpan="4" className="text-center py-12 text-[#8A817C]">Loading bookings...</td></tr>
+                <tr><td colSpan="6" className="text-center py-12 text-[#8A817C]">Loading bookings...</td></tr>
               ) : bookings.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="text-center py-12">
+                  <td colSpan="6" className="text-center py-12">
                     <p className="text-[#8A817C] mb-2">You haven't made any advanced bookings yet.</p>
                   </td>
                 </tr>
               ) : (
                 bookings.map((booking) => (
                   <tr key={booking._id} className="hover:bg-[#FDF9F5] transition-colors">
-                    <td className="px-4 py-4 align-top text-[#6D625C]">
+                    <td className="px-4 py-4 align-top text-[#6D625C] whitespace-nowrap">
                       {new Date(booking.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </td>
                     <td className="px-4 py-4 align-top">
@@ -92,13 +103,40 @@ export default function UserAdvancedBookings() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-4 align-top font-bold text-[#141225]">
+                    <td className="px-4 py-4 align-top text-center font-bold text-[#141225]">
                       {booking.quantity}
                     </td>
                     <td className="px-4 py-4 align-top">
-                      <span className={`inline-block px-3 py-1 rounded text-[10px] uppercase tracking-wider font-bold ${getStatusStyle(booking.status)}`}>
-                        {booking.status}
-                      </span>
+                      <div className="text-sm font-semibold text-[#141225]">Total: ₹{booking.totalAmount}</div>
+                      <div className="text-xs text-gray-500 mt-1">Paid: <span className="text-green-600 font-medium">₹{booking.paidAmount || 0}</span></div>
+                      <div className="text-xs text-gray-500">Balance: <span className="text-red-600 font-medium">₹{booking.balanceAmount || booking.totalAmount}</span></div>
+                    </td>
+                    <td className="px-4 py-4 align-top text-center text-[#6D625C] font-medium whitespace-nowrap">
+                      {booking.expectedDate ? new Date(booking.expectedDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Pending'}
+                    </td>
+                    <td className="px-4 py-4 align-top text-center">
+                      <div className="flex flex-col items-center gap-2">
+                        <span className={`inline-block px-3 py-1 rounded-full text-[10px] uppercase tracking-wider font-bold ${getBookingStatusStyle(booking.bookingStatus)}`}>
+                          Req: {booking.bookingStatus}
+                        </span>
+                        {booking.bookingStatus === 'Approved' && (
+                          <span className={`inline-block px-3 py-1 rounded-full text-[10px] uppercase tracking-wider font-bold ${getOrderStatusStyle(booking.orderStatus)}`}>
+                            {booking.orderStatus}
+                          </span>
+                        )}
+                      </div>
+                      
+                      {booking.bookingStatus === 'Rejected' && booking.reason && (
+                         <div className="mt-2 text-[10px] bg-red-50 text-red-600 p-1.5 rounded text-left flex items-start gap-1">
+                           <Info size={12} className="shrink-0 mt-0.5"/> <span>{booking.reason}</span>
+                         </div>
+                      )}
+                      
+                      {booking.orderStatus === 'Shipping' && booking.shippingDetails?.trackingUrl && (
+                         <a href={booking.shippingDetails.trackingUrl} target="_blank" rel="noreferrer" className="mt-2 inline-block text-[10px] text-blue-500 hover:underline">
+                           Track Order
+                         </a>
+                      )}
                     </td>
                   </tr>
                 ))

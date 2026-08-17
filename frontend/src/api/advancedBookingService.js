@@ -60,7 +60,39 @@ export const advancedBookingService = {
         );
     },
 
-    // Admin: Update Booking Status
+    // Admin: Get Dashboard Metrics
+    getDashboardMetrics: async () => {
+        return withAuthRetry(
+            (config) => axios.get(`${API_URL}/advanced-bookings/admin/metrics`, config),
+            'Failed to load dashboard metrics'
+        );
+    },
+
+    // Admin: Approve Booking
+    approveBooking: async (id, data) => {
+        return withAuthRetry(
+            (config) => axios.put(`${API_URL}/advanced-bookings/admin/${id}/approve`, data, config),
+            'Failed to approve booking'
+        );
+    },
+
+    // Admin: Reject Booking
+    rejectBooking: async (id, data) => {
+        return withAuthRetry(
+            (config) => axios.put(`${API_URL}/advanced-bookings/admin/${id}/reject`, data, config),
+            'Failed to reject booking'
+        );
+    },
+
+    // Admin: Update Order Details
+    updateOrderDetails: async (id, data) => {
+        return withAuthRetry(
+            (config) => axios.put(`${API_URL}/advanced-bookings/admin/${id}/details`, data, config),
+            'Failed to update order details'
+        );
+    },
+
+    // Admin: Update Booking Status (Legacy)
     updateBookingStatus: async (id, status) => {
         return withAuthRetry(
             (config) => axios.put(`${API_URL}/advanced-bookings/admin/${id}/status`, { status }, config),

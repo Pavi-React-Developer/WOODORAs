@@ -29,6 +29,35 @@ const uploadImages = [
             const folderType = req.body.folder || req.query.folder || 'product';
             const cloudinaryFolder = getCloudinaryFolder(folderType);
 
+            let fileTypeModule;
+            try {
+                fileTypeModule = await import('file-type');
+            } catch (err) {
+                console.error("Failed to load file-type:", err);
+                return res.status(500).json({ success: false, message: 'Server configuration error' });
+            }
+            const { fileTypeFromBuffer } = fileTypeModule;
+
+            for (const file of files) {
+                // SVG is XML, file-type doesn't detect it reliably as an image format, so we check for SVG text
+                if (file.mimetype === 'image/svg+xml') {
+                    const content = file.buffer.toString('utf8');
+                    if (!content.includes('<svg')) {
+                        return res.status(400).json({ success: false, message: 'Invalid SVG file content' });
+                    }
+                    continue;
+                }
+
+                const type = await fileTypeFromBuffer(file.buffer);
+                if (!type) {
+                    return res.status(400).json({ success: false, message: 'Could not determine file type from magic bytes' });
+                }
+                const allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/avif', 'image/gif', 'video/mp4', 'video/webm', 'video/quicktime'];
+                if (!allowedMimes.includes(type.mime)) {
+                    return res.status(400).json({ success: false, message: `Invalid file content detected: ${type.mime}` });
+                }
+            }
+
             const uploadPromises = files.map(file => {
                 const isVideo = file.mimetype.startsWith('video/');
                 const optimizationParams = isVideo ? getVideoOptimizationParams() : getImageOptimizationParams();
@@ -56,7 +85,7 @@ const uploadImages = [
             });
         } catch (error) {
             console.error('Upload Controller Error:', error);
-            res.status(500).json({ success: false, message: error.message });
+            res.status(500).json({ success: false, message: 'An error occurred during file upload' });
         }
     },
 ];
@@ -80,7 +109,8 @@ const deleteImage = async (req, res) => {
             res.status(400).json({ success: false, message: 'Failed to delete asset from Cloudinary', result });
         }
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        console.error('Delete Image Error:', error);
+        res.status(500).json({ success: false, message: 'An error occurred during file deletion' });
     }
 };
 

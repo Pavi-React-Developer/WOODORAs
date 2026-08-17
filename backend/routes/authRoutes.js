@@ -3,12 +3,13 @@ const router = express.Router();
 const passport = require('passport');
 const { registerUser, loginUser, refreshToken, forgotPassword, verifyResetToken, resetPassword, getProfile, updateProfile, getCustomers, getCustomerOrders, oauthSuccessCallback } = require('../controllers/authController');
 const { protect, authorize } = require('../middleware/authMiddleware');
-const { authLimiter } = require('../middleware/rateLimiter');
+const { authLimiter, authSpeedLimiter } = require('../middleware/rateLimiter');
+const { validate, registerSchema, loginSchema } = require('../middleware/validationMiddleware');
 
-router.post('/register', authLimiter, registerUser);
-router.post('/login', loginUser); // Rate limiting temporarily disabled
+router.post('/register', authLimiter, authSpeedLimiter, validate(registerSchema), registerUser);
+router.post('/login', authLimiter, authSpeedLimiter, validate(loginSchema), loginUser);
 router.post('/refresh', refreshToken);
-router.post('/forgot-password', authLimiter, forgotPassword);
+router.post('/forgot-password', authLimiter, authSpeedLimiter, forgotPassword);
 router.get('/reset-password/verify', verifyResetToken);
 router.post('/reset-password', resetPassword);
 

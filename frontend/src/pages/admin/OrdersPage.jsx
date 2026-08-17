@@ -530,7 +530,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                         />
                       </td>
                       <td className="px-4 py-3.5 text-center">
-                        <div className="font-mono text-sm font-bold text-gray-900 mb-1">{(order.orderId || 'DEBUG_' + (order._id || '').substring(order._id.length - 8))}</div>
+                        <div className="font-bold text-sm text-gray-900 mb-1">{(order.orderId || 'DEBUG_' + (order._id || '').substring(order._id.length - 8))}</div>
                         {order.isGiftOrder && (() => {
                           const giftItems = (order.orderItems || []).filter(item => item.isGift);
                           const noWrapperFee = (order.gift_fee || 0) === 0;

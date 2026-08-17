@@ -37,6 +37,14 @@ const StaffModel = require('./models/Staff');
 // Load env vars
 dotenv.config();
 
+// Fail fast for critical variables
+const requiredEnvVars = ['JWT_SECRET', 'MONGO_URI', 'FRONTEND_URL'];
+const missingVars = requiredEnvVars.filter(v => !process.env[v]);
+if (missingVars.length > 0) {
+    console.error(`[FATAL ERROR] Missing required environment variables: ${missingVars.join(', ')}`);
+    process.exit(1);
+}
+
 // Connect to database
 connectDB();
 

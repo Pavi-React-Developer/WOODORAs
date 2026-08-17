@@ -41,7 +41,7 @@ const createPaymentSession = async (req, res) => {
     }
 
     // Build the return URL â€” app reads ?view=cashfree-callback on load
-    const frontendUrl = req.headers.origin || process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendUrl = req.headers.origin || process.env.FRONTEND_URL;
     const returnUrl = `${frontendUrl}/cashfree-callback?app_order_id=${order._id}&order_id={order_id}&cf_id={cf_order_id}`;
 
     const gatewayAmount = order.paymentMethod === 'COD'
@@ -87,8 +87,7 @@ const createPaymentSession = async (req, res) => {
       diagnostics: getCashfreeDiagnostics(),
     });
     res.status(500).json({
-      message: 'Failed to create payment session',
-      error: error?.response?.data || error.message,
+      message: 'Failed to create payment session. Please try again later.',
     });
   }
 };
@@ -196,8 +195,7 @@ const verifyPayment = async (req, res) => {
   } catch (error) {
     console.error('[Cashfree] Verify payment error:', error?.response?.data || error.message);
     res.status(500).json({
-      message: 'Failed to verify payment',
-      error: error?.response?.data || error.message,
+      message: 'Failed to verify payment. Please try again later.',
     });
   }
 };
