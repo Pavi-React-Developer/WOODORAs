@@ -9,6 +9,7 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const catalogRoutes = require('./routes/catalogRoutes');
 const catalogV2Routes = require('./routes/catalogV2Routes');
+const gstRoutes = require('./routes/gstRoutes');
 const staffRoutes = require('./routes/staffRoutes');
 const roleRoutes = require('./routes/roleRoutes');
 const orderRoutes = require('./routes/orderRoutes');
@@ -78,6 +79,7 @@ mongoose.connection.once('open', async () => {
 
     await Review.syncIndexes();
     console.log('Connected to DB. Valid order statuses:', Order.VALID_STATUSES.join(', '));
+    console.log('[SERVER v3] ✅ Gift Order Fix ACTIVE — New gift orders will generate MKG sequence');
     try {
         const existingModules = await Module.find({});
         const existingKeys = existingModules.map(m => m.key);
@@ -146,6 +148,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/catalog', catalogRoutes);
 app.use('/api/v2/catalog', catalogV2Routes);
+app.use('/api/v2/gst', gstRoutes);
 app.use('/api/staff', staffRoutes);
 app.use('/api/roles', roleRoutes);
 app.use('/api/orders', orderRoutes);

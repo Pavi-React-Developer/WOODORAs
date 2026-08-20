@@ -1,11 +1,20 @@
 const AdvancedBooking = require('../models/AdvancedBooking');
+const Counter = require('../models/Counter');
 
 // Create a new advanced booking
 exports.createBooking = async (req, res) => {
     try {
         const { product, category, subCategory, productName, productImage, price, variants, quantity, customerName, phoneNo } = req.body;
 
+        const counter = await Counter.findByIdAndUpdate(
+            { _id: 'advancedBookingId' },
+            { $inc: { seq: 1 } },
+            { new: true, upsert: true }
+        );
+        const orderId = `MKA${String(counter.seq).padStart(5, '0')}`;
+
         const newBooking = new AdvancedBooking({
+            orderId,
             user: req.user ? req.user.id : undefined, // Works for logged in users
             product,
             category,

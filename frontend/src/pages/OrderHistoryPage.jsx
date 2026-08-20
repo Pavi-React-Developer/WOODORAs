@@ -7,6 +7,7 @@ import { saveAs } from 'file-saver';
 import { API_ORIGIN } from '../api/apiClient';
 import { formatDeliveryDate, getDeliveryDate } from '../utils/deliveryDate';
 import OrderPricingSummary from '../components/OrderPricingSummary';
+import { formatPaymentMethod } from '../utils/formatters';
 
 export default function OrderHistoryPage({ onNavigate, user }) {
   const [orders, setOrders] = useState([]);
@@ -150,7 +151,7 @@ export default function OrderHistoryPage({ onNavigate, user }) {
                   
                   <div className="grid grid-cols-2 gap-y-2 mb-5 text-[13px]">
                      <div className="text-gray-500">Date: <span className="text-[#333] font-medium">{formattedDate}</span></div>
-                     <div className="text-gray-500 text-right">Pay: <span className="text-[#333] font-medium">{order.paymentMethod || 'Online'}</span></div>
+                     <div className="text-gray-500 text-right">Pay: <span className="text-[#333] font-medium">{formatPaymentMethod(order.paymentMethod)}</span></div>
                      <div className="text-gray-500">Total: <span className="text-[#111] font-bold">₹{order.totalPrice.toLocaleString()}</span></div>
                   </div>
 

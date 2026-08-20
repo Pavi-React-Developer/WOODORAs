@@ -8,6 +8,10 @@ import { PackingSlip } from '../../components/admin/PackingSlip';
 import { downloadExcelFile } from '../../utils/exportUtils';
 import toast from 'react-hot-toast';
 import OrderPricingSummary from '../../components/OrderPricingSummary';
+import CustomDropdown from '../../components/admin/CustomDropdown';
+import { OrderBadge } from '../../components/admin/CommonComponents';
+import { saveAs } from 'file-saver';
+import { formatOrderId, formatPaymentMethod } from '../../utils/formatters';
 
 export default function OrdersPage({ canView = true, canEdit = true, canDelete = true }) {
   const location = useLocation();
@@ -38,6 +42,21 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
   const [shippingTrackingUrl, setShippingTrackingUrl] = useState('');
   const [shippingAdditionalTracking, setShippingAdditionalTracking] = useState([]);
   const [shippingCourierName, setShippingCourierName] = useState('');
+
+  const [downloadingInvoice, setDownloadingInvoice] = useState(null);
+
+  const handleDownloadInvoice = async (orderId) => {
+    try {
+      setDownloadingInvoice(orderId);
+      const blob = await orderService.downloadInvoice(orderId);
+      saveAs(blob, `invoice-${orderId}.pdf`);
+      toast.success('Invoice downloaded successfully');
+    } catch (error) {
+      toast.error(error.message || 'Failed to download invoice');
+    } finally {
+      setDownloadingInvoice(null);
+    }
+  };
 
   // Packing Slip State
   const [showPackingSlipModal, setShowPackingSlipModal] = useState(false);
@@ -310,11 +329,15 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
 
   const filteredOrders = orders.filter(order => {
     const searchLower = searchTerm.toLowerCase();
-    const matchId = order._id?.toLowerCase().includes(searchLower);
+    const matchId = (order._id || '').toLowerCase().includes(searchLower);
+    const displayId = formatOrderId(order).toLowerCase();
+    const matchOrderId = displayId.includes(searchLower) || (order.orderId || '').toLowerCase().includes(searchLower);
     const matchUser = (order.user?.name || '').toLowerCase().includes(searchLower);
     const matchShipping = (order.shippingAddress?.fullName || '').toLowerCase().includes(searchLower);
+    const matchPhone = (order.shippingAddress?.phone || order.shippingAddress?.phoneNumber || '').toLowerCase().includes(searchLower);
+    const matchEmail = (order.user?.email || '').toLowerCase().includes(searchLower);
 
-    return matchId || matchUser || matchShipping;
+    return matchId || matchOrderId || matchUser || matchShipping || matchPhone || matchEmail;
   });
 
   const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE);
@@ -396,16 +419,16 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Paid': return 'bg-green-100 text-green-700';
-      case 'Placed': return 'bg-yellow-100 text-yellow-700';
-      case 'Shipping': return 'bg-sky-100 text-sky-700';
-      case 'Out for delivery': return 'bg-purple-100 text-purple-700';
-      case 'Pending': return 'bg-amber-100 text-amber-700';
-      case 'Packed': return 'bg-blue-100 text-blue-700';
-      case 'Shipped': return 'bg-violet-100 text-violet-700';
-      case 'Delivered': return 'bg-green-100 text-green-700';
-      case 'Cancelled': return 'bg-red-100 text-red-700';
-      default: return 'bg-gray-100 text-gray-700';
+      case 'Paid': return '  text-sm font-semibold text-gray-800';
+      case 'Placed': return '  text-sm font-semibold text-gray-800';
+      case 'Shipping': return '  text-sm font-semibold text-gray-800';
+      case 'Out for delivery': return '  text-sm font-semibold text-gray-800';
+      case 'Pending': return '  text-sm font-semibold text-gray-800';
+      case 'Packed': return '  text-sm font-semibold text-gray-800';
+      case 'Shipped': return '  text-sm font-semibold text-gray-800';
+      case 'Delivered': return '  text-sm font-semibold text-gray-800';
+      case 'Cancelled': return '  text-sm font-semibold text-gray-800';
+      default: return '  text-sm font-semibold text-gray-800';
     }
   };
 
@@ -495,7 +518,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
               <table className="w-full text-sm">
                 <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
                   <tr>
-                    <th className="px-4 py-3.5 w-10">
+                    <th className="px-6 py-3.5 w-10">
                       <input
                         type="checkbox"
                         checked={filteredOrders.length > 0 && selectedIds.length === filteredOrders.length}
@@ -503,25 +526,27 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                         className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
                       />
                     </th>
-                    <th className="px-4 py-3.5 text-[11px] font-bold uppercase tracking-widest text-gray-500 whitespace-nowrap text-center">Order ID &amp; Date</th>
-                    <th className="px-4 py-3.5 text-[11px] font-bold uppercase tracking-widest text-gray-500 whitespace-nowrap text-center">Customer</th>
-                    <th className="px-4 py-3.5 text-[11px] font-bold uppercase tracking-widest text-gray-500 whitespace-nowrap text-center">Total</th>
-                    <th className="px-4 py-3.5 text-[11px] font-bold uppercase tracking-widest text-gray-500 whitespace-nowrap text-center">Payment</th>
-                    <th className="px-4 py-3.5 text-[11px] font-bold uppercase tracking-widest text-gray-500 whitespace-nowrap text-center">Status</th>
-                    <th className="px-4 py-3.5 text-[11px] font-bold uppercase tracking-widest text-gray-500 whitespace-nowrap text-center">Actions</th>
+                    <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Order ID</th>
+                    <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Date</th>
+                    <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Customer</th>
+                    <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Total</th>
+                    <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Payment</th>
+                    <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Order Status</th>
+                    <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Status</th>
+                    <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E6DFD4]">
                   {paginatedOrders.length === 0 ? (
                     <tr>
-                      <td colSpan="7" className="px-6 py-12 text-center">
+                      <td colSpan="8" className="px-6 py-4 text-center text-sm">
                         <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                        <p className="text-gray-500 font-medium">No orders found</p>
+                        <p className="text-[#8B5E3C] font-medium">No orders found</p>
                       </td>
                     </tr>
                   ) : paginatedOrders.map((order, idx) => (
                     <tr key={order._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
-                      <td className="px-4 py-3.5">
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                         <input
                           type="checkbox"
                           checked={selectedIds.includes(order._id)}
@@ -529,82 +554,78 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                           className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
                         />
                       </td>
-                      <td className="px-4 py-3.5 text-center">
-                        <div className="font-bold text-sm text-gray-900 mb-1">{(order.orderId || 'DEBUG_' + (order._id || '').substring(order._id.length - 8))}</div>
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                        <div className="font-bold text-sm text-gray-800 mb-1">{formatOrderId(order)}</div>
                         {order.isGiftOrder && (() => {
                           const giftItems = (order.orderItems || []).filter(item => item.isGift);
                           const noWrapperFee = (order.gift_fee || 0) === 0;
                           const allNoWrapper = (giftItems.length > 0 && giftItems.every(item => item.isGiftWrapper === false)) || noWrapperFee;
                           return (
-                            <span className="mb-2 inline-flex items-center gap-1 rounded bg-[#FDF0EB] px-2 py-0.5 text-[10px] font-bold text-[#D04E26] uppercase tracking-wider">
+                            <span className="inline-flex items-center justify-center gap-1.5 px-2 py-1 mt-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-[#FFF2ED] text-[#D04E26] border border-[#FADCD0] mx-auto">
                               <Gift className="w-3 h-3" />
-                              GIFT &amp; CARD {allNoWrapper ? '(NO WRAPPER)' : ''}
+                              GIFT &amp; CARD {allNoWrapper ? '(NO WRAP)' : ''}
                             </span>
                           );
                         })()}
-                        <div className="text-xs text-gray-500 flex items-center justify-center gap-1 mt-0.5">
-                          <Calendar className="w-3 h-3" />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                        <div className="text-sm font-semibold text-gray-600 flex items-center justify-center gap-1 mt-0.5">
                           {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}
                         </div>
                       </td>
-                      <td className="px-4 py-3.5 text-center">
-                        <div className="font-bold text-sm text-gray-900">{order.user?.name || order.shippingAddress?.fullName}</div>
-                        <div className="text-xs text-gray-500 flex items-center justify-center gap-1 mt-1">
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                        <div className="font-bold text-sm text-gray-800">{order.user?.name || order.shippingAddress?.fullName}</div>
+                        <div className="text-sm font-semibold text-gray-600 flex items-center justify-center gap-1 mt-1">
                           <MapPin className="w-3 h-3" />
                           {order.shippingAddress?.city}, {order.shippingAddress?.state}
                         </div>
                       </td>
-                      <td className="px-4 py-3.5 text-center">
-                        <div className="text-xs font-semibold text-gray-900">₹{(order.totalPrice || 0).toLocaleString()}</div>
-                        <div className="text-xs text-gray-500">{(order.orderItems || []).reduce((acc, item) => acc + (item.qty || 0), 0)} items</div>
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                        <div className="text-sm font-bold text-gray-800">₹{(order.totalPrice || 0).toLocaleString()}</div>
+                        <div className="text-sm font-semibold text-gray-600">{(order.orderItems || []).reduce((acc, item) => acc + (item.qty || 0), 0)} items</div>
                       </td>
-                      <td className="px-4 py-3.5 text-center">
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                         {order.paymentMethod === 'COD' ? (
                           <div className="space-y-1">
-                            <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${order.codAdvance > 0 ? 'bg-yellow-100 text-yellow-700' : order.isPaid ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
-                              COD{order.codAdvance > 0 ? ' (Partially Paid)' : ''}
+                            <span className={`px-2.5 py-1 rounded-full text-sm font-semibold ${normalizeOrderStatus(order.status) === 'Delivered' || order.isPaid ? 'bg-green-100 text-green-700' : order.codAdvance > 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-700'}`}>
+                              COD{normalizeOrderStatus(order.status) === 'Delivered' || order.isPaid ? ' (Paid)' : order.codAdvance > 0 ? ' (Partially Paid)' : ' (Unpaid)'}
                             </span>
-                            {order.codAdvance > 0 && (
-                              <div className="text-xs text-gray-500 space-y-0.5 mt-1">
+                            {(order.codAdvance > 0 && normalizeOrderStatus(order.status) !== 'Delivered' && !order.isPaid) && (
+                              <div className="text-sm font-semibold text-gray-600 space-y-0.5 mt-1">
                                 <div>Paid online: ₹{(order.codAdvance || 0).toLocaleString()}</div>
                                 <div>Balance due: ₹{(order.balanceAmount ?? 0).toLocaleString()}</div>
                               </div>
                             )}
                           </div>
                         ) : (
-                          <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${order.isPaid ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                            {order.paymentMethod} {order.isPaid ? '(Paid)' : '(Unpaid)'}
+                          <span className={`px-2.5 py-1 rounded-full text-sm font-semibold ${order.isPaid ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                            {formatPaymentMethod(order.paymentMethod)} {order.isPaid ? '(Paid)' : '(Unpaid)'}
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3.5 text-center">
-                        <div className="relative inline-flex items-center rounded-full border border-[#E6DFD4] bg-white shadow-sm">
-                          <select
-                            className={`appearance-none bg-transparent pl-4 pr-8 py-2 text-sm font-semibold text-gray-900 rounded-full focus:outline-none w-full ${!canEdit || normalizeOrderStatus(order.status) === 'Delivered' ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
-                            value={normalizeOrderStatus(order.status)}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (val) {
-                                handleStatusSelectChange(order, val);
-                              }
-                            }}
-                            disabled={!canEdit || normalizeOrderStatus(order.status) === 'Delivered' || normalizeOrderStatus(order.status) === 'Cancelled'}
-                          >
-                            {getOrderStatusSelectOptions(order.status).map((statusOption) => (
-                              <option key={statusOption} value={statusOption}>
-                                {statusOption}
-                              </option>
-                            ))}
-                          </select>
-                          <span className="pointer-events-none absolute right-3 text-gray-500 text-xs">▾</span>
-                        </div>
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                        <OrderBadge status={normalizeOrderStatus(order.status)} />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                        <CustomDropdown
+                          disabled={!canEdit || normalizeOrderStatus(order.status) === 'Delivered'}
+                          buttonClassName={`px-4 py-1.5 text-sm font-semibold rounded-full border border-[#E6DFD4] ${!canEdit || normalizeOrderStatus(order.status) === 'Delivered' ? 'cursor-not-allowed opacity-50 bg-gray-50' : 'bg-white shadow-sm'}`}
+                          dropdownClassName="min-w-[140px] text-left"
+                          options={getOrderStatusSelectOptions(order.status).map(status => ({ label: status, value: status }))}
+                          value={normalizeOrderStatus(order.status)}
+                          onChange={(val) => {
+                            if (val) {
+                              handleStatusSelectChange(order, val);
+                            }
+                          }}
+                        />
                         {order.courierName && (
-                          <div className="mt-2 text-xs font-bold text-[#8B5E3C]">
+                          <div className="mt-2 text-sm font-bold text-[#8B5E3C]">
                             {order.courierName}
                           </div>
                         )}
                       </td>
-                      <td className="px-4 py-3.5">
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                         <div className="flex gap-2 justify-center items-center">
                           {canView && (
                             <button
@@ -612,7 +633,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                               className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors"
                               title="View"
                             >
-                              <Eye size={15} />
+                              <Eye className="w-[15px] h-[15px]" />
                             </button>
                           )}
                           {canEdit && (
@@ -621,16 +642,16 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                               className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
                               title="Edit"
                             >
-                              <SquarePen size={15} />
+                              <SquarePen className="w-[15px] h-[15px]" />
                             </button>
                           )}
                           {canDelete && (
                             <button
                               onClick={() => handleDeleteOrder(order._id)}
-                              className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
+                              className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
                               title="Delete"
                             >
-                              <Trash2 size={15} />
+                              <Trash2 className="w-[15px] h-[15px]" />
                             </button>
                           )}
                         </div>
@@ -669,7 +690,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
             </div>
             <div className="flex-1 overflow-y-auto p-6 bg-gray-50 flex flex-col items-center gap-6">
               {/* Render a visual preview of what will be printed */}
-              <div className="bg-white shadow-sm border border-gray-200 pointer-events-none scale-150 origin-top my-10">
+              <div className="bg-white shadow-sm border border-gray-200 pointer-events-none origin-top my-10">
                 <PackingSlip
                   orders={selectedIds.length > 0 ? orders.filter(o => selectedIds.includes(o._id)) : filteredOrders}
                 />
@@ -701,7 +722,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                 Dashboard &rsaquo; Order Management &rsaquo; <span className="font-semibold text-[#8B5E3C]">Details</span>
               </p>
               <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Order Details</h1>
-              <p className="text-sm text-gray-500 mt-1">View information for order #{selectedOrder.orderId || (selectedOrder._id || '').substring((selectedOrder._id || '').length - 8)}</p>
+              <p className="text-sm text-gray-500 mt-1">View information for order #{formatOrderId(selectedOrder)}</p>
             </div>
             <button onClick={closeViewModal} className="admin-btn flex items-center gap-2 text-[#6D625C] hover:text-gray-900 transition-colors text-sm font-medium">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
@@ -885,7 +906,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                 Dashboard &rsaquo; Order Management &rsaquo; <span className="font-semibold text-[#8B5E3C]">Edit</span>
               </p>
               <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Edit Order Details</h1>
-              <p className="text-sm text-gray-500 mt-1">Update information for order #{selectedOrder.orderId || (selectedOrder._id || '').substring((selectedOrder._id || '').length - 8)}</p>
+              <p className="text-sm text-gray-500 mt-1">Update information for order #{formatOrderId(selectedOrder)}</p>
             </div>
             <button onClick={closeEditModal} className="admin-btn flex items-center gap-2 text-[#6D625C] hover:text-gray-900 transition-colors text-sm font-medium">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
@@ -983,22 +1004,44 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                 <p className="text-xs uppercase tracking-widest text-gray-500 mb-3">Order Items</p>
                 <div className="space-y-4">
                   {(selectedOrder.orderItems || []).map((item, index) => (
-                    <div key={index} className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-4 rounded-3xl border border-[#E6DFD4] p-4 items-center">
-                      <div className="h-16 w-16 rounded-3xl overflow-hidden bg-gray-100 flex items-center justify-center">
-                        {item.image ? (
-                          <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
-                        ) : (
-                          <div className="text-xs text-gray-400">No Image</div>
-                        )}
+                    <div key={index} className="rounded-3xl border border-[#E6DFD4] overflow-hidden">
+                      <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-4 p-4 items-center bg-white">
+                        <div className="h-16 w-16 rounded-3xl overflow-hidden bg-gray-100 flex items-center justify-center">
+                          {item.image ? (
+                            <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="text-xs text-gray-400">No Image</div>
+                          )}
+                        </div>
+                        <div className="space-y-1">
+                          <p className="font-semibold text-gray-900 line-clamp-1">{item.name}</p>
+                          <p className="text-sm text-gray-500">Qty: {item.qty} {(item.weight && item.weight !== '0') && `| Weight: ${item.weight}`}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm text-gray-500">Unit Price</p>
+                          <p className="font-semibold text-gray-900">₹{(item.price || 0).toLocaleString()}</p>
+                        </div>
                       </div>
-                      <div className="space-y-1">
-                        <p className="font-semibold text-gray-900 line-clamp-1">{item.name}</p>
-                        <p className="text-sm text-gray-500">Qty: {item.qty} {(item.weight && item.weight !== '0') && `| Weight: ${item.weight}`}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-gray-500">Unit Price</p>
-                        <p className="font-semibold text-gray-900">₹{(item.price || 0).toLocaleString()}</p>
-                      </div>
+                      
+                      {item.isGift && (
+                        <div className="bg-[#FAF4EF] p-4 border-t border-[#E6DFD4]">
+                          <h4 className="text-[11px] font-bold text-[#141225] uppercase tracking-widest mb-3">GIFT PREFERENCES</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                              <p className="text-sm"><span className="font-bold text-[#6D625C]">Order Date:</span> {formatDate(selectedOrder.createdAt)}</p>
+                              <p className="text-sm"><span className="font-bold text-[#6D625C]">Delivery Date:</span> {formatDeliveryDate(item.deliveryDate || getDeliveryDate(selectedOrder))}</p>
+                              <p className="text-sm"><span className="font-bold text-[#6D625C]">Style:</span> {item.giftMessageStyle || 'Classic'}</p>
+                              <p className="text-sm"><span className="font-bold text-[#6D625C]">Wrapper:</span> {item.isGiftWrapper ? 'Premium Wrapping' : 'No Wrapper'}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-[#6D625C] mb-1">Message:</p>
+                              <div className={`w-full bg-white border border-[#E9DED3] p-3 rounded-sm min-h-[60px] text-gray-700 ${item.giftMessageStyle === 'Classic' ? 'font-serif text-sm' : item.giftMessageStyle === 'Elegant' ? 'font-script italic text-base' : 'font-sans tracking-wide text-sm'}`}>
+                                {item.giftMessage || 'No message provided'}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -1109,6 +1152,14 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                 disabled={saving}
               >CANCEL</button>
               <button
+                onClick={() => handleDownloadInvoice(selectedOrder._id)}
+                className="admin-btn flex items-center gap-2 px-4 py-2 bg-[#F8F4EC] text-[#8B5E3C] border border-[#E6DFD4]"
+                disabled={downloadingInvoice === selectedOrder._id}
+              >
+                <Download className="w-4 h-4" />
+                {downloadingInvoice === selectedOrder._id ? 'Downloading...' : 'Invoice'}
+              </button>
+              <button
                 onClick={handleSaveOrderDetails}
                 className="admin-btn"
                 disabled={saving}
@@ -1121,38 +1172,40 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
       )}
 
       {showShippingModal && shippingModalOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3.5 border-b border-[#E6DFD4]">
-              <h2 className="text-lg font-bold text-gray-900">Enter Shipping Details</h2>
-              <button onClick={() => setShowShippingModal(false)} className="text-red-500 hover:text-red-600 transition-colors">
-                <X className="w-5 h-5" />
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-[#E6DFD4] bg-[#F8F4EC] shrink-0">
+              <h2 className="text-2xl font-serif font-bold text-[#141225]">Enter Shipping Details</h2>
+              <button onClick={() => setShowShippingModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                <X className="w-6 h-6" />
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
+            {/* Scrollable Body */}
+            <div className="p-6 space-y-5 overflow-y-auto max-h-[60vh] custom-scrollbar bg-white">
               <div>
-                <p className="text-xs uppercase tracking-widest text-gray-500 mb-1">Order ID</p>
-                <p className="font-semibold text-gray-900">{shippingModalOrder.orderId || shippingModalOrder._id.substring(shippingModalOrder._id.length - 8)}</p>
+                <p className="text-xs uppercase tracking-widest text-gray-500 mb-1 font-bold">Order ID</p>
+                <p className="font-serif font-bold text-lg text-[#141225]">{shippingModalOrder.orderId || shippingModalOrder._id.substring(shippingModalOrder._id.length - 8)}</p>
               </div>
 
               <div className="relative">
                 <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-semibold text-gray-500">Courier</label>
+                  <label className="block text-sm font-bold text-gray-600">Courier</label>
                   {!showNewCourierInput && (
-                    <button onClick={() => setShowNewCourierInput(true)} className="text-[10px] font-bold text-[#8B5E3C] hover:text-[#7a5234]">
+                    <button onClick={() => setShowNewCourierInput(true)} className="text-[11px] font-bold text-[#8B5E3C] hover:text-[#7a5234] uppercase">
                       + ADD COURIER
                     </button>
                   )}
                 </div>
 
                 {showNewCourierInput ? (
-                  <div className="flex flex-col gap-2 p-3 bg-[#F8F4EC] rounded-xl border border-[#E6DFD4]">
+                  <div className="flex flex-col gap-3 p-4 bg-[#FDF9F5] rounded-2xl border border-[#E9DED3]">
                     <div className="flex items-center gap-2">
                       <input
                         type="text"
                         placeholder="Courier Name (e.g. ST Courier)"
-                        className="w-full px-4 py-2 text-sm rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30"
+                        className="w-full px-4 py-3 text-sm rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 bg-white shadow-sm"
                         value={newCourierName}
                         onChange={(e) => setNewCourierName(e.target.value)}
                         autoFocus
@@ -1162,22 +1215,30 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                       <input
                         type="url"
                         placeholder="Tracking Base URL (Optional)"
-                        className="w-full px-4 py-2 text-sm rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30"
+                        className="w-full px-4 py-3 text-sm rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 bg-white shadow-sm"
                         value={newCourierTrackingUrl}
                         onChange={(e) => setNewCourierTrackingUrl(e.target.value)}
                       />
                     </div>
-                    <div className="flex justify-end gap-2 mt-1">
-                      <button onClick={() => { setShowNewCourierInput(false); setNewCourierName(''); setNewCourierTrackingUrl(''); }} className="admin-cancel-btn">CANCEL</button>
-                      <button onClick={handleAddCourier} className="px-3 py-1.5 bg-[#8B5E3C] text-white text-xs font-bold rounded-lg hover:bg-[#7a5234] flex items-center gap-1">
-                        <Save className="w-3 h-3" /> Save
+                    <div className="flex justify-center gap-3 mt-2">
+                      <button 
+                        onClick={() => { setShowNewCourierInput(false); setNewCourierName(''); setNewCourierTrackingUrl(''); }} 
+                        className="px-6 py-2.5 border border-red-200 rounded-full text-[13px] font-bold text-red-600 bg-white hover:bg-red-50 transition-colors shadow-sm uppercase tracking-wide"
+                      >
+                        CANCEL
+                      </button>
+                      <button 
+                        onClick={handleAddCourier} 
+                        className="px-6 py-2.5 rounded-full bg-[#8B5E3C] hover:bg-[#724C30] text-white text-[13px] font-bold uppercase tracking-wide transition-colors shadow-sm flex items-center gap-1.5"
+                      >
+                        <Save className="w-4 h-4" /> Save
                       </button>
                     </div>
                   </div>
                 ) : (
                   <div className="relative group">
                     <select
-                      className="w-full px-4 py-2 text-sm rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 appearance-none pr-10"
+                      className="w-full px-4 py-3 text-sm rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 appearance-none pr-10 bg-gray-50 hover:bg-white transition-colors"
                       value={shippingCourierName}
                       onChange={(e) => {
                         const selectedName = e.target.value;
@@ -1199,10 +1260,10 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                     {shippingCourierName && couriers.find(c => c.name === shippingCourierName) && (
                       <button
                         onClick={(e) => handleDeleteCourier(e, couriers.find(c => c.name === shippingCourierName)._id)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         title="Delete this courier"
                       >
-                        <Trash className="w-4 h-4" />
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     )}
                   </div>
@@ -1210,34 +1271,34 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Primary Tracking ID</label>
+                <label className="block text-sm font-bold text-gray-600 mb-1">Primary Tracking ID</label>
                 <input
                   type="text"
                   placeholder="e.g. AWB123456789"
-                  className="w-full px-4 py-2 rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30"
+                  className="w-full px-4 py-3 text-sm rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 bg-white"
                   value={shippingTrackingId}
                   onChange={(e) => setShippingTrackingId(e.target.value)}
                 />
               </div>
 
-              <div className="mt-4">
-                <label className="block text-xs font-bold text-gray-800 uppercase tracking-wider mb-2">
-                  Primary Tracking URL
+              <div>
+                <label className="block text-sm font-bold text-gray-800 uppercase tracking-wider mb-2">
+                  PRIMARY TRACKING URL
                 </label>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <input
                     type="url"
                     placeholder="https://tracker.example.com/..."
-                    className="w-full px-4 py-2.5 text-sm rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 transition-all bg-white"
+                    className="w-full px-4 py-3 text-sm rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 bg-white"
                     value={shippingTrackingUrl}
                     onChange={(e) => setShippingTrackingUrl(e.target.value)}
                   />
                   {shippingAdditionalTracking.map((pkg, idx) => (
-                    <div key={idx} className="relative">
+                    <div key={idx} className="relative group">
                       <input
                         type="text"
                         placeholder="AWB Number, URL, or Description"
-                        className="w-full px-4 py-2.5 pr-10 text-sm rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 transition-all bg-white"
+                        className="w-full px-4 py-3 pr-10 text-sm rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 bg-white"
                         value={pkg.trackingUrl || ''}
                         onChange={(e) => {
                           const newArr = [...shippingAdditionalTracking];
@@ -1251,7 +1312,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                           newArr.splice(idx, 1);
                           setShippingAdditionalTracking(newArr);
                         }}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-red-400 hover:text-red-600"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-red-400 hover:text-red-600 p-1 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
                         title="Remove URL"
                       >
                         <X className="w-4 h-4" />
@@ -1261,22 +1322,25 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                 </div>
                 <button
                   onClick={() => setShippingAdditionalTracking([...shippingAdditionalTracking, { trackingUrl: '' }])}
-                  className="text-xs font-bold text-[#8B5E3C] hover:text-[#7a5234] mt-3 inline-flex items-center gap-1"
+                  className="text-xs font-bold text-[#8B5E3C] hover:text-[#7a5234] mt-3 inline-flex items-center gap-1 uppercase"
                 >
-                  + ADD
+                  <span className="text-lg leading-none">+</span> ADD
                 </button>
               </div>
             </div>
 
-            <div className="border-t border-[#E6DFD4] p-6 flex justify-end gap-3 bg-gray-50">
+            {/* Footer */}
+            <div className="border-t border-[#E6DFD4] p-6 flex justify-center gap-4 bg-[#FAFAFA] shrink-0">
               <button
                 onClick={() => setShowShippingModal(false)}
-                className="px-6 py-2 rounded-xl font-bold text-gray-700 bg-white border border-[#E6DFD4] hover:bg-gray-50 transition-colors"
+                className="px-8 py-3 border border-red-200 rounded-full text-[15px] font-bold text-red-600 bg-white hover:bg-red-50 transition-colors shadow-sm uppercase tracking-wide"
                 disabled={saving}
-              >CANCEL</button>
+              >
+                CANCEL
+              </button>
               <button
                 onClick={submitShippingDetails}
-                className="px-6 py-2 rounded-xl font-bold text-white bg-[#8B5E3C] hover:bg-[#7a5234] transition-colors flex items-center gap-2"
+                className="px-8 py-3 rounded-full bg-[#8B5E3C] hover:bg-[#724C30] text-white text-[15px] font-bold uppercase tracking-wide transition-colors shadow-sm flex items-center justify-center gap-2"
                 disabled={saving}
               >
                 {saving ? 'Saving...' : 'Save & Update Status'}

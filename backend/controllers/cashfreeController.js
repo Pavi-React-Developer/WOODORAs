@@ -112,8 +112,10 @@ const verifyPayment = async (req, res) => {
     const isPaid = cfOrder.order_status === 'PAID';
 
     if (isPaid) {
-      // CRITICAL SECURITY FIX: Ensure the receipt actually belongs to the requested order
-      if (String(cfOrder.order_id) !== String(orderId)) {
+      const fetchedOrderId = cfOrder.order_id || cfOrderId; // fallback to cfOrderId if Cashfree didn't return it
+      const expectedOrderId = `cf_${orderId}`;
+      if (String(fetchedOrderId) !== String(expectedOrderId) && String(fetchedOrderId) !== String(orderId)) {
+        console.error('[Cashfree] Mismatch:', { fetchedOrderId, expectedOrderId, orderId, cfOrder });
         return res.status(403).json({ message: 'Security validation failed: Order mismatch.' });
       }
 

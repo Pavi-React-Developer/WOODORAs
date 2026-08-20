@@ -11,6 +11,7 @@ import { getImageSrc } from '../utils/imageUtils';
 import CategoriesPage from './admin/catalog/CategoriesPage';
 import SubCategoriesPage from './admin/catalog/SubCategoriesPage';
 import AttributesPage from './admin/catalog/AttributesPage';
+import GSTRulesPage from './admin/catalog/GSTRulesPage';
 import ProductsPage from './admin/catalog/ProductsPage';
 import StaffListPage from './admin/StaffListPage';
 import AddStaffPage from './admin/AddStaffPage';
@@ -49,6 +50,8 @@ const adminRouteState = {
   '/admin/catalog/attributes': { tab: 'v2-attributes', catalogMenuOpen: true },
   '/admin/catalog/attributes/add': { tab: 'v2-attributes', attributeSubTab: 'add', catalogMenuOpen: true },
   '/admin/catalog/attributes/edit': { tab: 'v2-attributes', attributeSubTab: 'add', catalogMenuOpen: true },
+  '/admin/catalog/gst-rules': { tab: 'v2-gst-rules', catalogMenuOpen: true },
+  '/admin/catalog/gst-rules/add': { tab: 'v2-gst-rules', catalogMenuOpen: true },
   '/admin/products': { tab: 'v2-products', productSubTab: 'list', productMenuOpen: true },
   '/admin/products/add': { tab: 'v2-products', productSubTab: 'add', productMenuOpen: true },
   '/admin/products/edit': { tab: 'v2-products', productSubTab: 'add', productMenuOpen: true },
@@ -79,7 +82,7 @@ const adminRouteState = {
   '/admin/gift-and-card/rules': { tab: 'gift_and_card', giftAndCardSubTab: 'rules', giftAndCardMenuOpen: true },
   '/admin/gift-and-card/rules/add': { tab: 'gift_and_card', giftAndCardSubTab: 'rules', giftAndCardMenuOpen: true },
   '/admin/gift-and-card/rules/edit': { tab: 'gift_and_card', giftAndCardSubTab: 'rules', giftAndCardMenuOpen: true },
-  '/admin/gift-and-card/messages': { tab: 'gift_and_card', giftAndCardSubTab: 'messages', giftAndCardMenuOpen: true },
+
   '/admin/gift-and-card/orders': { tab: 'gift_and_card', giftAndCardSubTab: 'orders', giftAndCardMenuOpen: true },
   '/admin/gift-and-card/gift-fee': { tab: 'gift_and_card', giftAndCardSubTab: 'gift-fee', giftAndCardMenuOpen: true },
   '/admin/customize': { tab: 'customize_order', customizeSubTab: 'list', customizeMenuOpen: true },
@@ -93,6 +96,7 @@ const adminTabPaths = {
   'v2-categories': '/admin/catalog/categories',
   'v2-subcategories': '/admin/catalog/sub-categories',
   'v2-attributes': '/admin/catalog/attributes',
+  'v2-gst-rules': '/admin/catalog/gst-rules',
   'v2-products': '/admin/products',
   orders: '/admin/orders',
   inventory: '/admin/inventory',
@@ -174,6 +178,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
   const [userPermissions, setUserPermissions] = useState(null); // null = not loaded yet
   const [adminLogo, setAdminLogo] = useState(null);
   const [logoError, setLogoError] = useState(false);
+  const [badgeCounts, setBadgeCounts] = useState({ orderCount: 0, advancedBookingCount: 0, bulkOrderCount: 0, customizeOrderCount: 0 });
 
   // True Super Admins (from User collection) see everything. Staff (even if role is named "admin") use permissions matrix.
   const isAdmin = user?.role?.toLowerCase() === 'admin' && user?.isStaff !== true;
@@ -314,7 +319,13 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
               setAdminLogo(getImageSrc(res.data.logo));
             }
           })
-          .catch(err => console.error("Failed to load admin logo", err))
+          .catch(err => console.error("Failed to load admin logo", err)),
+          
+        apiClient.get('/orders/badges/counts')
+          .then(res => {
+            if (res.data) setBadgeCounts(res.data);
+          })
+          .catch(err => console.error("Failed to load badge counts", err))
       ]);
     } finally {
       setIsRefreshing(false);
@@ -333,9 +344,18 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
 
   useEffect(() => {
     loadData();
+    // Poll for badges every 30 seconds
+    const interval = setInterval(() => {
+      apiClient.get('/orders/badges/counts')
+        .then(res => {
+          if (res.data) setBadgeCounts(res.data);
+        })
+        .catch(err => console.error("Failed to load badge counts", err))
+    }, 30000);
+    return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
+  const fetchDashboardStats = () => {
     setIsStatsLoading(true);
     adminService.getDashboardStats(daysFilter)
       .then(data => {
@@ -350,6 +370,10 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
       })
       .catch(err => console.error("Failed to load dashboard stats", err))
       .finally(() => setIsStatsLoading(false));
+  };
+
+  useEffect(() => {
+    fetchDashboardStats();
   }, [daysFilter]);
 
   useEffect(() => {
@@ -369,6 +393,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
         routeState = { tab: 'v2-categories', categorySubTab: 'add', catalogMenuOpen: true };
       } else if (normalizedPath.startsWith('/admin/catalog/attributes/edit/')) {
         routeState = { tab: 'v2-attributes', attributeSubTab: 'add', catalogMenuOpen: true };
+      } else if (normalizedPath.startsWith('/admin/catalog/gst-rules/edit/') || normalizedPath.startsWith('/admin/catalog/gst-rules/view/')) {
+        routeState = { tab: 'v2-gst-rules', catalogMenuOpen: true };
       } else if (normalizedPath.startsWith('/admin/products/edit/')) {
         routeState = { tab: 'v2-products', productSubTab: 'add', productMenuOpen: true };
       } else if (normalizedPath.startsWith('/admin/orders/view/') || normalizedPath.startsWith('/admin/orders/edit/')) {
@@ -728,12 +754,12 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
           </div>
 
           {/* Nav Links */}
-          <nav className="px-4 space-y-1 mt-4">
+          <nav className="px-4 pb-2 space-y-1 mt-4">
             {canAccessDashboard && (
               <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
                 <button
                   onClick={() => openAdminTab('dashboard')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-xl transition-colors text-left ${currentTab === 'dashboard' ? 'bg-[#E6DFD4] text-brand-dark' : 'text-brand-medium hover:bg-brand-light hover:text-brand-dark'}`}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${currentTab === 'dashboard' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'}`}
                 >
                   <span className="flex items-center gap-2.5">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
@@ -841,6 +867,16 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                         Attributes
                       </button>
                     )}
+                    {canAccessCatalog && (
+                      <button
+                        onClick={() => openAdminTab('v2-gst-rules', { catalogMenuOpen: true })}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${currentTab === 'v2-gst-rules' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
+                          }`}
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                        GST Rules
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -895,13 +931,18 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
               <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
                 <button
                   onClick={() => openAdminTab('orders')}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${currentTab === 'orders' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${currentTab === 'orders' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
                     }`}
                 >
                   <span className="flex items-center gap-2.5">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
                     Orders Management
                   </span>
+                  {badgeCounts.orderCount > 0 && (
+                    <span className="bg-[#8B5E3C] text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
+                      {badgeCounts.orderCount}
+                    </span>
+                  )}
                 </button>
               </div>
             )}
@@ -918,7 +959,14 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
                     Bulk Orders
                   </span>
-                  <svg className={`w-3.5 h-3.5 transition-transform ${bulkOrderMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                  <div className="flex items-center gap-2">
+                    {badgeCounts.bulkOrderCount > 0 && (
+                      <span className="bg-[#8B5E3C] text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
+                        {badgeCounts.bulkOrderCount}
+                      </span>
+                    )}
+                    <svg className={`w-3.5 h-3.5 transition-transform ${bulkOrderMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                  </div>
                 </button>
                 {bulkOrderMenuOpen && (
                   <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
@@ -968,14 +1016,6 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                       Delivery Rules
                     </button>
                     <button
-                      onClick={() => openAdminTab('gift_and_card', { giftAndCardSubTab: 'messages', giftAndCardMenuOpen: true, path: '/admin/gift-and-card/messages' })}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${currentTab === 'gift_and_card' && giftAndCardSubTab === 'messages' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
-                        }`}
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                      Personalized Messages
-                    </button>
-                    <button
                       onClick={() => openAdminTab('gift_and_card', { giftAndCardSubTab: 'orders', giftAndCardMenuOpen: true, path: '/admin/gift-and-card/orders' })}
                       className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors text-left ${currentTab === 'gift_and_card' && giftAndCardSubTab === 'orders' ? 'bg-[#8B5E3C]/10 text-[#8B5E3C] font-semibold' : 'text-gray-500 hover:text-[#8B5E3C] hover:bg-[#F8F4EC]'
                         }`}
@@ -1008,7 +1048,14 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                     Customize Order
                   </span>
-                  <svg className={`w-3.5 h-3.5 transition-transform ${customizeMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                  <div className="flex items-center gap-2">
+                    {badgeCounts.customizeOrderCount > 0 && (
+                      <span className="bg-[#8B5E3C] text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
+                        {badgeCounts.customizeOrderCount}
+                      </span>
+                    )}
+                    <svg className={`w-3.5 h-3.5 transition-transform ${customizeMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                  </div>
                 </button>
                 {customizeMenuOpen && (
                   <div className="ml-3 pl-3 border-l border-[#E6DFD4] space-y-0.5 mb-1">
@@ -1228,13 +1275,18 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
               <div className="pt-2 border-t border-[#E6DFD4]/50 first:border-t-0 first:pt-0 mt-2 first:mt-0">
                 <button
                   onClick={() => openAdminTab('advanced_booking', { advancedBookingSubTab: 'list' })}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${currentTab === 'advanced_booking' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-0.5 text-left ${currentTab === 'advanced_booking' ? 'bg-[#F8F4EC] text-[#8B5E3C]' : 'text-gray-600 hover:bg-[#F8F4EC] hover:text-[#8B5E3C]'
                     }`}
                 >
                   <span className="flex items-center gap-2.5">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                     Advanced Booking
                   </span>
+                  {badgeCounts.advancedBookingCount > 0 && (
+                    <span className="bg-[#8B5E3C] text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
+                      {badgeCounts.advancedBookingCount}
+                    </span>
+                  )}
                 </button>
               </div>
             )}
@@ -1295,8 +1347,13 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                   <h2 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Dashboard Overview</h2>
                 </div>
                 <div className="flex items-center gap-3">
-                  <button onClick={() => loadData()} disabled={isRefreshing} className="admin-secondary-btn flex items-center gap-2 disabled:opacity-60">
-                    <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} /> {isRefreshing ? 'Refreshing...' : 'Refresh'}
+                  <button 
+                    onClick={() => { loadData(); fetchDashboardStats(); }} 
+                    disabled={isRefreshing || isStatsLoading} 
+                    className="bg-white border border-[#E6DFD4] text-brand-dark text-[13px] font-bold uppercase rounded-full h-[40px] px-6 shadow-sm flex items-center gap-2 hover:border-[#C8B9A5] transition-colors disabled:opacity-60"
+                  >
+                    <RefreshCw size={15} strokeWidth={2.5} className={(isRefreshing || isStatsLoading) ? 'animate-spin' : ''} /> 
+                    {(isRefreshing || isStatsLoading) ? 'REFRESHING...' : 'REFRESH'}
                   </button>
                   <div className="relative">
                     <button 
@@ -2320,6 +2377,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
           {canAccessCatalog && currentTab === 'v2-categories' && <CategoriesPage canCreate={hasPermission('catalog', 'create')} canEdit={hasPermission('catalog', 'edit')} canDelete={hasPermission('catalog', 'delete')} />}
           {canAccessCatalog && currentTab === 'v2-subcategories' && <SubCategoriesPage canCreate={hasPermission('catalog', 'create')} canEdit={hasPermission('catalog', 'edit')} canDelete={hasPermission('catalog', 'delete')} />}
           {canAccessCatalog && currentTab === 'v2-attributes' && <AttributesPage canCreate={hasPermission('catalog', 'create')} canEdit={hasPermission('catalog', 'edit')} canDelete={hasPermission('catalog', 'delete')} />}
+          {canAccessCatalog && currentTab === 'v2-gst-rules' && <GSTRulesPage />}
           {canAccessCatalog && currentTab === 'v2-products' && <ProductsPage canCreate={hasPermission('products', 'create') || hasPermission('catalog', 'create')} canEdit={hasPermission('products', 'edit') || hasPermission('catalog', 'edit')} canDelete={hasPermission('products', 'delete') || hasPermission('catalog', 'delete')} isAddMode={productSubTab === 'add'} onCancelAdd={() => openAdminTab('v2-products', { productSubTab: 'list', path: '/admin/products' })} />}
 
           {/* ── STAFF MANAGEMENT ── */}

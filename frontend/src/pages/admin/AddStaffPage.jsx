@@ -50,27 +50,27 @@ const PermissionTable = ({ modules, permissions, onToggle, onToggleRow, onToggle
       </div>
       <div className="border border-[#E6DFD4] rounded-[14px] overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-[#F8F4EC] border-b border-[#E6DFD4]">
+          <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
             <tr>
-              <th className="px-6 py-4 text-left text-[13px] font-bold uppercase tracking-wider text-[#3B322D] w-48 font-serif">Module</th>
+              <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-left w-48">Module</th>
               {ACTIONS.map(action => {
                 const allowedModules = visibleModules.filter((m) => canToggleActionForModule(m.key || m, action));
                 const allChecked = allowedModules.length > 0 && allowedModules.every(mod => permissions[mod.key || mod]?.[action]);
                 return (
-                  <th key={action} className="px-6 py-4 text-center">
+                  <th key={action} className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">
                     <div className="flex items-center justify-center gap-2 cursor-pointer" onClick={() => onToggleColumn(action)}>
                       <input
                         type="checkbox"
                         checked={allChecked}
                         readOnly
-                        className="w-[18px] h-[18px] accent-[#70482B] rounded-[4px] border-[#D7CFC8] cursor-pointer pointer-events-none"
+                        className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer pointer-events-none"
                       />
-                      <span className="capitalize text-[16px] font-serif font-bold text-[#3B322D] hover:text-[#70482B] transition-colors">{action}</span>
+                      <span className="capitalize hover:text-[#8B5E3C] transition-colors">{action}</span>
                     </div>
                   </th>
                 );
               })}
-              <th className="px-6 py-4 text-center">
+              <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">
                 <div className="flex items-center justify-center gap-2 cursor-pointer" onClick={(e) => {
                   const allChecked = visibleModules.length > 0 && visibleModules.every(mod => ACTIONS.every(a => permissions[mod.key || mod]?.[a]));
                   allChecked ? onClearAll() : onSelectAll();
@@ -79,9 +79,9 @@ const PermissionTable = ({ modules, permissions, onToggle, onToggleRow, onToggle
                     type="checkbox"
                     checked={visibleModules.length > 0 && visibleModules.every(mod => ACTIONS.every(a => permissions[mod.key || mod]?.[a]))}
                     readOnly
-                    className="w-[18px] h-[18px] accent-[#70482B] rounded-[4px] border-[#D7CFC8] cursor-pointer pointer-events-none"
+                    className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer pointer-events-none"
                   />
-                  <span className="capitalize text-[16px] font-serif font-bold text-[#3B322D] hover:text-[#70482B] transition-colors">All</span>
+                  <span className="hover:text-[#8B5E3C] transition-colors">All</span>
                 </div>
               </th>
             </tr>
@@ -93,31 +93,31 @@ const PermissionTable = ({ modules, permissions, onToggle, onToggleRow, onToggle
               const allOn = ACTIONS.every(a => perm[a]);
               const canToggleRowForModule = ACTIONS.some((action) => canToggleActionForModule(moduleKey, action));
               return (
-                <tr key={moduleKey} className={`hover:bg-[#FDF9F5] transition-colors ${idx !== visibleModules.length - 1 ? 'border-b border-[#F0EAE2]' : ''} ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
-                  <td className="px-6 py-4 text-[15px] font-serif font-bold text-[#3B322D]">
+                <tr key={moduleKey} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
+                  <td className="px-6 py-4 whitespace-nowrap font-bold text-sm text-gray-800">
                     <div className="flex items-center gap-2">
                       <span className="text-gray-400">{mod.icon}</span>
                       {mod.label}
                     </div>
                   </td>
                   {ACTIONS.map(action => (
-                    <td key={action} className="px-6 py-4 text-center">
+                    <td key={action} className="px-6 py-4 text-center text-sm">
                       <input
                         type="checkbox"
                         checked={!!perm[action]}
                         disabled={!canToggleActionForModule(moduleKey, action)}
                         onChange={() => onToggle(moduleKey, action)}
-                        className="w-[18px] h-[18px] accent-[#70482B] rounded-[4px] border-[#D7CFC8] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                        className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                       />
                     </td>
                   ))}
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                     <input
                       type="checkbox"
                       checked={allOn}
                       disabled={!canToggleRowForModule}
                       onChange={() => onToggleRow(moduleKey)}
-                      className="w-[18px] h-[18px] accent-[#70482B] rounded-[4px] border-[#D7CFC8] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                      className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                     />
                   </td>
                 </tr>
@@ -401,7 +401,7 @@ export default function AddStaffPage({ onBack, onSuccess, editingStaff, currentU
                       onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
                       className={`w-full flex items-center justify-between px-4 py-3 text-sm bg-white border rounded-[10px] focus:outline-none transition-colors ${errors.role ? 'border-red-400' : 'border-[#E6DFD4]'}`}
                     >
-                      <span className={form.role ? 'text-gray-900' : 'text-gray-500'}>
+                      <span className={form.role ? 'text-gray-900' : 'text-[#8B5E3C]'}>
                         {form.role || "Select Role..."}
                       </span>
                       <ChevronDown className="w-4 h-4 text-gray-500" />

@@ -60,6 +60,7 @@ import UserAdvancedBookings from './profile/UserAdvancedBookings';
 import { authService } from '../api/authService';
 import Pagination from '../components/common/Pagination';
 import { orderService } from '../api/orderService';
+import { generateDisplayId, formatOrderId, formatPaymentMethod } from '../utils/formatters';
 import { uploadAPI } from '../api/catalogAdminService';
 import { reviewService } from '../api/reviewService';
 import { walletService } from '../api/walletService';
@@ -146,106 +147,106 @@ const toInputDate = (value) => {
 const formatDate = (value, fallback = 'Not added') => {
   if (!value) return fallback;
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return fallback;
-  return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-};
+    if (Number.isNaN(date.getTime())) return fallback;
+    return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
 
-const isWalletRefundDestination = (destination) => {
-  return String(destination || '').trim().toUpperCase() === 'WALLET';
-};
+  const isWalletRefundDestination = (destination) => {
+    return String(destination || '').trim().toUpperCase() === 'WALLET';
+  };
 
-const emptyAddress = {
-  label: 'Home',
-  fullName: '',
-  phone: '',
-  address: '',
-  city: '',
-  state: '',
-  pinCode: '',
-  landmark: '',
-  isDefault: true,
-};
+  const emptyAddress = {
+    label: 'Home',
+    fullName: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    pinCode: '',
+    landmark: '',
+    isDefault: true,
+  };
 
-import { useConfigStore } from '../store/useConfigStore';
+  import { useConfigStore } from '../store/useConfigStore';
 
-export default function CustomerProfilePage({
-  user,
-  profileData,
-  profileLoading,
-  profileError,
-  onNavigate,
-  onLogout,
-  onProfileUpdated,
-  wishlistItems = [],
-  onRemoveFromWishlist,
-  onMoveToCart,
-  savedItems = [],
-}) {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const profile = profileData?.user || user || {};
-  const { cartItems, updateQuantity, removeFromCart, getSubtotal } = useCartStore();
-  const { walletEnabled } = useConfigStore();
-  const [activeModule, setActiveModule] = useState('profile');
-  const [activeOrder, setActiveOrder] = useState(null);
-  const [activeBulkOrder, setActiveBulkOrder] = useState(null);
-  const [activeCustomizeOrder, setActiveCustomizeOrder] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  export default function CustomerProfilePage({
+    user,
+    profileData,
+    profileLoading,
+    profileError,
+    onNavigate,
+    onLogout,
+    onProfileUpdated,
+    wishlistItems = [],
+    onRemoveFromWishlist,
+    onMoveToCart,
+    savedItems = [],
+  }) {
+    const location = useLocation();
+    const navigate = useNavigate();
+    const profile = profileData?.user || user || {};
+    const { cartItems, updateQuantity, removeFromCart, getSubtotal } = useCartStore();
+    const { walletEnabled } = useConfigStore();
+    const [activeModule, setActiveModule] = useState('profile');
+    const [activeOrder, setActiveOrder] = useState(null);
+    const [activeBulkOrder, setActiveBulkOrder] = useState(null);
+    const [activeCustomizeOrder, setActiveCustomizeOrder] = useState(null);
+    const [isEditing, setIsEditing] = useState(false);
 
-  const visibleModules = modules.filter(m => walletEnabled ? true : m.id !== 'wallet');
-  const [saving, setSaving] = useState(false);
-  const { addresses: storeAddresses, loading: addressLoading, fetchAddresses, addAddress: addStoreAddress, updateAddress: updateStoreAddress, deleteAddress: deleteStoreAddress } = useAddressStore();
-  const [addressModalOpen, setAddressModalOpen] = useState(false);
-  const [editingAddressId, setEditingAddressId] = useState(null);
-  const [addressForm, setAddressForm] = useState({
-    label: '', fullName: '', phone: '', pinCode: '', address: '', city: '', state: '', landmark: '', isDefault: false
-  });
-  
-  useEffect(() => {
-    fetchAddresses();
-  }, [fetchAddresses]);
-  
-  // Drag-to-scroll ref and state
-  const navRef = useRef(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
-  // State for password change form
-  const [passwordForm, setPasswordForm] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
-  });
-  const [showPassword, setShowPassword] = useState({
-    current: false,
-    new: false,
-    confirm: false,
-  });
-  const [orders, setOrders] = useState([]);
-  const [ordersPage, setOrdersPage] = useState(1);
-  const [ordersSearchTerm, setOrdersSearchTerm] = useState('');
-  const [ordersFilterStatus, setOrdersFilterStatus] = useState('All');
-  const [giftOrdersPage, setGiftOrdersPage] = useState(1);
-  const [giftSearchTerm, setGiftSearchTerm] = useState('');
-  const [giftFilterStatus, setGiftFilterStatus] = useState('All');
-  const [bulkOrdersPage, setBulkOrdersPage] = useState(1);
-  const [bulkSearchTerm, setBulkSearchTerm] = useState('');
-  const [bulkFilterStatus, setBulkFilterStatus] = useState('All');
-  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 640 : false);
+    const visibleModules = modules.filter(m => walletEnabled ? true : m.id !== 'wallet');
+    const [saving, setSaving] = useState(false);
+    const { addresses: storeAddresses, loading: addressLoading, fetchAddresses, addAddress: addStoreAddress, updateAddress: updateStoreAddress, deleteAddress: deleteStoreAddress } = useAddressStore();
+    const [addressModalOpen, setAddressModalOpen] = useState(false);
+    const [editingAddressId, setEditingAddressId] = useState(null);
+    const [addressForm, setAddressForm] = useState({
+      label: '', fullName: '', phone: '', pinCode: '', address: '', city: '', state: '', landmark: '', isDefault: false
+    });
+    
+    useEffect(() => {
+      fetchAddresses();
+    }, [fetchAddresses]);
+    
+    // Drag-to-scroll ref and state
+    const navRef = useRef(null);
+    const [isDragging, setIsDragging] = useState(false);
+    const [startX, setStartX] = useState(0);
+    const [scrollLeft, setScrollLeft] = useState(0);
+    // State for password change form
+    const [passwordForm, setPasswordForm] = useState({
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    });
+    const [showPassword, setShowPassword] = useState({
+      current: false,
+      new: false,
+      confirm: false,
+    });
+    const [orders, setOrders] = useState([]);
+    const [ordersPage, setOrdersPage] = useState(1);
+    const [ordersSearchTerm, setOrdersSearchTerm] = useState('');
+    const [ordersFilterStatus, setOrdersFilterStatus] = useState('All');
+    const [giftOrdersPage, setGiftOrdersPage] = useState(1);
+    const [giftSearchTerm, setGiftSearchTerm] = useState('');
+    const [giftFilterStatus, setGiftFilterStatus] = useState('All');
+    const [bulkOrdersPage, setBulkOrdersPage] = useState(1);
+    const [bulkSearchTerm, setBulkSearchTerm] = useState('');
+    const [bulkFilterStatus, setBulkFilterStatus] = useState('All');
+    const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 640 : false);
 
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 640);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-  const [ordersLoading, setOrdersLoading] = useState(false);
-  const [bulkOrders, setBulkOrders] = useState([]);
-  const [bulkOrdersLoading, setBulkOrdersLoading] = useState(false);
-  const [customizeOrders, setCustomizeOrders] = useState([]);
-  const [customizeOrdersLoading, setCustomizeOrdersLoading] = useState(false);
-  const [customizeOrdersPage, setCustomizeOrdersPage] = useState(1);
-  const [customizeSearchTerm, setCustomizeSearchTerm] = useState('');
-  const [customizeFilterStatus, setCustomizeFilterStatus] = useState('All');
+    useEffect(() => {
+      const handleResize = () => setIsMobile(window.innerWidth < 640);
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }, []);
+    const [ordersLoading, setOrdersLoading] = useState(false);
+    const [bulkOrders, setBulkOrders] = useState([]);
+    const [bulkOrdersLoading, setBulkOrdersLoading] = useState(false);
+    const [customizeOrders, setCustomizeOrders] = useState([]);
+    const [customizeOrdersLoading, setCustomizeOrdersLoading] = useState(false);
+    const [customizeOrdersPage, setCustomizeOrdersPage] = useState(1);
+    const [customizeSearchTerm, setCustomizeSearchTerm] = useState('');
+    const [customizeFilterStatus, setCustomizeFilterStatus] = useState('All');
   const [expandedCustomizeOrders, setExpandedCustomizeOrders] = useState({});
   const toggleCustomizeOrderExpand = (id) => {
     setExpandedCustomizeOrders(prev => ({ ...prev, [id]: !prev[id] }));
@@ -1067,7 +1068,7 @@ export default function CustomerProfilePage({
                           <div className="min-w-0 flex-1">
                             <p className="font-bold text-[#141225]">{item.name}</p>
                             <p className="mt-1 text-sm text-[#6D625C]">Qty: {item.qty} • Rs. {Number(item.price || 0).toLocaleString()}</p>
-                            <p className="mt-1 text-sm text-[#6D625C]">Order #{(order.orderId || order._id?.slice(-8)).toUpperCase()} • Status: <span className={`font-semibold ${orderStatus === 'Delivered' ? 'text-emerald-600' : 'text-[#8B5E3C]'}`}>{orderStatus}</span></p>
+                            <p className="mt-1 text-sm text-[#6D625C]">Order #{formatOrderId(order)} • Status: <span className={`font-semibold ${orderStatus === 'Delivered' ? 'text-emerald-600' : 'text-[#8B5E3C]'}`}>{orderStatus}</span></p>
                           </div>
                         </div>
 
@@ -1232,7 +1233,7 @@ export default function CustomerProfilePage({
                             <img src={imageSrc} alt={firstItem.name || 'Product'} className="h-full w-full object-cover" />
                           </div>
                           <div>
-                            <p className="font-bold text-[#141225] line-clamp-1">{firstItem.name || `Order #${(order.orderId || order._id.slice(-8)).toUpperCase()}`}</p>
+                            <p className="font-bold text-[#141225] line-clamp-1">{firstItem.name || `Order #${formatOrderId(order)}`}</p>
                             {order.isGiftOrder && (
                               <span className="mt-1 mb-1 inline-flex w-max items-center gap-1 rounded bg-[#FDF0EB] px-2 py-0.5 text-[10px] font-bold text-[#D04E26] uppercase tracking-wider">
                                 <Gift size={10} />
@@ -1240,7 +1241,7 @@ export default function CustomerProfilePage({
                               </span>
                             )}
                             {extraItemsCount > 0 && <p className="text-xs font-semibold text-[#9A6031]">+{extraItemsCount} more item(s)</p>}
-                            <p className="text-xs text-[#6D625C] mt-0.5">#{(order.orderId || order._id.slice(-8)).toUpperCase()}</p>
+                            <p className="text-xs text-[#6D625C] mt-0.5">#{formatOrderId(order)}</p>
                           </div>
                         </div>
                       </td>
@@ -1253,7 +1254,7 @@ export default function CustomerProfilePage({
                           {order.status || 'Pending'}
                         </span>
                       </td>
-                      <td className="p-4 whitespace-nowrap font-medium text-center text-[#6D625C]">{order.paymentMethod || 'Online'}</td>
+                      <td className="p-4 whitespace-nowrap font-medium text-center text-[#6D625C]">{formatPaymentMethod(order.paymentMethod)}</td>
                       <td className="p-4 text-center">
                         {order.status === 'Delivered' ? (() => {
                           const productId = firstItem?.product;
@@ -1370,7 +1371,7 @@ export default function CustomerProfilePage({
                          {imageSrc ? <img src={imageSrc} alt={firstItem.name} className="w-full h-full object-cover" /> : <Package className="w-6 h-6 text-gray-400" />}
                        </div>
                        <h4 className="font-bold text-[#111] text-[15px] line-clamp-2 leading-snug">
-                         {firstItem.name || `Order #${(order.orderId || order._id.slice(-8)).toUpperCase()}`}
+                         {firstItem.name || `Order #${formatOrderId(order)}`}
                        </h4>
                     </div>
                     <span className="shrink-0 px-2.5 py-1 rounded-[6px] text-[10px] font-bold uppercase tracking-wider bg-[#FFF9E6] text-[#B8860B] border border-[#F5E6B3]">
@@ -1380,7 +1381,7 @@ export default function CustomerProfilePage({
                   
                   <div className="grid grid-cols-2 gap-y-2 mb-5 text-[13px]">
                      <div className="text-gray-500">Date: <span className="text-[#333] font-medium">{formattedDate}</span></div>
-                     <div className="text-gray-500 text-right">Pay: <span className="text-[#333] font-medium">{order.paymentMethod || 'Online'}</span></div>
+                     <div className="text-gray-500 text-right">Pay: <span className="text-[#333] font-medium">{formatPaymentMethod(order.paymentMethod)}</span></div>
                      <div className="text-gray-500">Total: <span className="text-[#111] font-bold">₹{order.totalPrice.toLocaleString()}</span></div>
                   </div>
 
@@ -1523,7 +1524,7 @@ export default function CustomerProfilePage({
         ) : (
           <div className="space-y-4">
             {paginatedOrders.map((order) => {
-              const reqId = `#CO${order.orderId || order._id.slice(-4)}`.toUpperCase();
+              const reqId = `#CO${(order.orderId || order._id.slice(-4)).toUpperCase()}`;
               const contactName = order.customerInfo?.fullName || 'N/A';
               const productName = getProductName(order.productDetails);
               const woodType = getWoodType(order.productDetails) || 'N/A';
@@ -1783,7 +1784,7 @@ export default function CustomerProfilePage({
     if (bulkSearchTerm) {
       const term = bulkSearchTerm.toLowerCase();
       filteredOrders = filteredOrders.filter(o => {
-        const idMatch = (o.orderId || o._id.slice(-8)).toLowerCase().includes(term);
+        const idMatch = (o.displayId || generateDisplayId('MKB', o._id)).toLowerCase().includes(term);
         const company = getBulkOrderValue(o, 'company').toLowerCase();
         const name = getBulkOrderValue(o, 'name').toLowerCase();
         return idMatch || company.includes(term) || name.includes(term);
@@ -1873,7 +1874,7 @@ export default function CustomerProfilePage({
                   </thead>
                   <tbody className="divide-y divide-[#E9DED3]">
                     {paginatedOrders.map((order) => {
-                      const reqId = `#BO${order.orderId || order._id.slice(-4)}`.toUpperCase();
+                      const reqId = order.displayId || generateDisplayId('MKB', order._id);
                       const company = getBulkOrderValue(order, 'Company');
                       const name = getBulkOrderValue(order, 'Name');
                       const email = getBulkOrderValue(order, 'Email');
@@ -1921,7 +1922,7 @@ export default function CustomerProfilePage({
             {/* Mobile Cards View */}
             <div className="md:hidden space-y-4">
               {paginatedOrders.map((order) => {
-                const reqId = `#BO${order.orderId || order._id.slice(-4)}`.toUpperCase();
+                const reqId = order.displayId || generateDisplayId('MKB', order._id);
                 const company = getBulkOrderValue(order, 'Company');
                 const name = getBulkOrderValue(order, 'Name');
                 const phone = getBulkOrderValue(order, 'Phone');
@@ -2210,10 +2211,10 @@ export default function CustomerProfilePage({
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div>
             <h2 className="text-lg font-bold text-[#141225]">Order Details</h2>
-            <p className="mt-1 text-sm text-[#6D625C]">Order #{(activeOrder.orderId || activeOrder._id.slice(-8)).toUpperCase()}</p>
+            <p className="mt-1 text-sm text-[#6D625C]">Order #{formatOrderId(activeOrder)}</p>
           </div>
           <div className="flex items-center gap-3 w-full sm:w-auto">
-            {(activeOrder.isPaid || activeOrder.paymentMethod === 'COD') && activeOrder.status !== 'Pending' && activeOrder.status !== 'Cancelled' && (
+            {(activeOrder.isPaid || activeOrder.paymentMethod === 'COD') && activeOrder.status !== 'Cancelled' && (
               <button 
                 type="button" 
                 onClick={() => handleDownloadInvoice(activeOrder._id)}
@@ -2293,17 +2294,18 @@ export default function CustomerProfilePage({
               {activeOrder.orderItems?.map((item, idx) => {
                 const imageSrc = item.image ? (item.image.startsWith('http') || item.image.startsWith('data:') ? item.image : (item.image.startsWith('/uploads') || item.image.startsWith('uploads/')) ? `http://localhost:5000${item.image.startsWith('/') ? '' : '/'}${item.image}` : item.image) : '';
                 return (
-                  <div key={idx} className="py-4 flex flex-row gap-4 items-center">
-                    <div className="h-20 w-20 shrink-0 overflow-hidden rounded-[8px] bg-[#F8F3EF]">
-                      <img src={imageSrc} alt={item.name} className="h-full w-full object-cover" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-bold text-[#141225]">{item.name}</p>
-                      <p className="text-sm text-[#6D625C] mt-1">
-                        Qty: {item.qty} | Rs. {Number(item.price).toLocaleString()}
-                        {(item.weight && item.weight !== '0' && item.weight !== 0) ? ` | Weight: ${item.weight}` : ''}
-                      </p>
-                    </div>
+                  <div key={idx} className="py-4 flex flex-col gap-2 border-b border-[#E9DED3] last:border-0">
+                    <div className="flex flex-row gap-4 items-center">
+                      <div className="h-20 w-20 shrink-0 overflow-hidden rounded-[8px] bg-[#F8F3EF]">
+                        <img src={imageSrc} alt={item.name} className="h-full w-full object-cover" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-bold text-[#141225]">{item.name}</p>
+                        <p className="text-sm text-[#6D625C] mt-1">
+                          Qty: {item.qty} | Rs. {Number(item.price).toLocaleString()}
+                          {(item.weight && item.weight !== '0' && item.weight !== 0) ? ` | Weight: ${item.weight}` : ''}
+                        </p>
+                      </div>
                     <div className="hidden md:block">
                       <button 
                         onClick={() => onNavigate(`/product/${item.product}`)}
@@ -2325,6 +2327,26 @@ export default function CustomerProfilePage({
                         </button>
                       )}
                     </div>
+                    </div>
+                    {item.isGift && (
+                      <div className="w-full mt-2 bg-[#FAF4EF] p-4 rounded-sm border border-[#E9DED3]">
+                        <h4 className="text-[11px] font-bold text-[#141225] uppercase tracking-widest mb-3">GIFT PREFERENCES</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-2">
+                            <p className="text-sm"><span className="font-bold text-[#6D625C]">Order Date:</span> {new Date(activeOrder.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                            <p className="text-sm"><span className="font-bold text-[#6D625C]">Delivery Date:</span> {item.deliveryDate ? new Date(item.deliveryDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}</p>
+                            <p className="text-sm"><span className="font-bold text-[#6D625C]">Style:</span> {item.giftMessageStyle || 'Classic'}</p>
+                            <p className="text-sm"><span className="font-bold text-[#6D625C]">Wrapper:</span> {item.isGiftWrapper ? 'Premium Wrapping' : 'No Wrapper'}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-[#6D625C] mb-1">Message:</p>
+                            <div className={`w-full bg-white border border-[#E9DED3] p-3 rounded-sm min-h-[60px] text-gray-700 ${item.giftMessageStyle === 'Classic' ? 'font-serif text-sm' : item.giftMessageStyle === 'Elegant' ? 'font-script italic text-base' : 'font-sans tracking-wide text-sm'}`}>
+                              {item.giftMessage || 'No message provided'}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -2788,7 +2810,7 @@ export default function CustomerProfilePage({
         id: 'order', 
         type: 'order', 
         title: 'Order Processing', 
-        message: `Your latest order #${(orders[0].orderId || orders[0]._id?.slice(-8)).toUpperCase()} is being processed.`, 
+        message: `Your latest order #${formatOrderId(orders[0])} is being processed.`, 
         time: formatDate(orders[0].createdAt), 
         unread: true 
       });
@@ -2860,7 +2882,7 @@ export default function CustomerProfilePage({
     let giftOrders = orders.filter(o => o.isGiftOrder);
     if (giftSearchTerm) {
       giftOrders = giftOrders.filter(o => {
-        const orderId = (o.orderId || o._id.slice(-8)).toLowerCase();
+        const orderId = (o.displayId || generateDisplayId('MKG', o._id)).toLowerCase();
         return orderId.includes(giftSearchTerm.toLowerCase());
       });
     }
@@ -2939,7 +2961,7 @@ export default function CustomerProfilePage({
                     {/* Mobile Only: Basic Info next to image */}
                     <div className="flex flex-col justify-between py-0.5 sm:py-1 lg:hidden flex-1">
                       <div>
-                        <h3 className="font-serif font-bold text-[#141225] text-[14px] sm:text-[16px] leading-tight">Order #{(order.orderId || order._id.slice(-8)).toUpperCase()}</h3>
+                        <h3 className="font-serif font-bold text-[#141225] text-[14px] sm:text-[16px] leading-tight">#{formatOrderId(order)}</h3>
                         <p className="text-[11px] sm:text-xs text-gray-500 mt-1">{formatDate(order.createdAt)}</p>
                       </div>
                       
@@ -2962,7 +2984,7 @@ export default function CustomerProfilePage({
                     
                     {/* Column 1: Order ID & Message */}
                     <div className="flex flex-col gap-3 h-full">
-                      <h3 className="font-serif font-bold text-[#141225] text-[17px]">Order #{(order.orderId || order._id.slice(-8)).toUpperCase()}</h3>
+                      <h3 className="font-serif font-bold text-[#141225] text-[17px]">#{formatOrderId(order)}</h3>
                       {order.giftMessage ? (
                          <div className="p-3 bg-[#FAF8F5] rounded-md border border-[#E9DED3] flex-1">
                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Personalized Message</p>
@@ -3105,30 +3127,32 @@ export default function CustomerProfilePage({
       <div className="mx-auto flex max-w-[1440px] flex-col gap-6">
         
         {/* Top Horizontal Drag-to-Scroll Navigation */}
-        <nav 
-          ref={navRef}
-          onMouseDown={handleMouseDown}
-          onMouseLeave={handleMouseLeave}
-          onMouseUp={handleMouseUp}
-          onMouseMove={handleMouseMove}
-          className="flex overflow-x-auto gap-4 bg-white rounded-[18px] p-3 shadow-[0_18px_60px_rgba(62,39,35,0.08)] cursor-grab active:cursor-grabbing select-none"
-        >
-          {visibleModules.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => openProfileModule(id)}
-              className={`flex shrink-0 whitespace-nowrap items-center gap-2 lg:gap-3 rounded-[10px] px-4 py-3 text-left text-sm font-semibold transition ${
-                isModuleActive(id)
-                  ? 'bg-[#F4EBE2] text-[#2E2E2E] shadow-sm border border-[#E9DED3]'
-                  : 'text-[#6D625C] hover:bg-[#FAF4EF] hover:text-[#8B5E3C]'
-              }`}
-            >
-              <Icon className="h-4 w-4 text-[#A7632E]" strokeWidth={2} />
-              {label}
-            </button>
-          ))}
-        </nav>
+        <div className="rounded-[18px] bg-white shadow-[0_18px_60px_rgba(62,39,35,0.08)] overflow-hidden">
+          <nav 
+            ref={navRef}
+            onMouseDown={handleMouseDown}
+            onMouseLeave={handleMouseLeave}
+            onMouseUp={handleMouseUp}
+            onMouseMove={handleMouseMove}
+            className="flex overflow-x-auto gap-4 p-3 custom-scrollbar cursor-grab active:cursor-grabbing select-none"
+          >
+            {visibleModules.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => openProfileModule(id)}
+                className={`flex shrink-0 whitespace-nowrap items-center gap-2 lg:gap-3 rounded-[10px] px-4 py-3 text-left text-sm font-semibold transition ${
+                  isModuleActive(id)
+                    ? 'bg-[#F4EBE2] text-[#2E2E2E] shadow-sm border border-[#E9DED3]'
+                    : 'text-[#6D625C] hover:bg-[#FAF4EF] hover:text-[#8B5E3C]'
+                }`}
+              >
+                <Icon className="h-4 w-4 text-[#A7632E]" strokeWidth={2} />
+                {label}
+              </button>
+            ))}
+          </nav>
+        </div>
 
         <div className="overflow-hidden rounded-[18px] border border-[#E9DED3] bg-white shadow-[0_18px_70px_rgba(62,39,35,0.07)]">
           <header className="flex flex-col gap-5 border-b border-[#E9DED3] px-5 py-7 sm:flex-row sm:items-center sm:justify-between lg:px-7">

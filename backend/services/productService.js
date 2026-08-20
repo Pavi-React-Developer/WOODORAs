@@ -6,6 +6,7 @@ const ProductAttributeValue = require('../models/ProductAttributeValue');
 const ProductVariant = require('../models/ProductVariant');
 const ProductVariantOption = require('../models/ProductVariantOption');
 const Inventory = require('../models/Inventory');
+const GSTRule = require('../models/GSTRule');
 const ProductImage = require('../models/catalog/ProductImage');
 const CategoryAttributeMapping = require('../models/catalog/CategoryAttributeMapping');
 const auditService = require('./auditService');
@@ -260,6 +261,7 @@ const getProducts = async (query = {}) => {
 
     const products = await Product.find(filter)
         .populate('category', 'name slug')
+        .populate('gstRule')
         .sort(sort)
         .skip(skip)
         .limit(Number(limit));
@@ -329,6 +331,7 @@ const getProductById = async (id) => {
     const product = await Product.findOne({ ...query, isDeleted: false })
         .populate('category', 'name slug')
         .populate('subCategory', 'name slug category')
+        .populate('gstRule')
         .populate('relatedProducts', 'name slug price')
         .populate('crossSellProducts', 'name slug price')
         .populate('upSellProducts', 'name slug price');
@@ -433,7 +436,7 @@ const createProduct = async (data, auditContext) => {
         lowStockAlert, isFeatured, isBestSeller, isNewArrival, isRecommended,
         warranty, returnPolicy, additionalInfo, seoTitle, seoDescription,
         metaKeywords, tags, relatedProducts, crossSellProducts, upSellProducts,
-        isActive,
+        isActive, gstRule,
         
         // Relational details
         attributeValues, // Array of { attributeId, value, values, numericValue, dateValue }
@@ -479,6 +482,7 @@ const createProduct = async (data, auditContext) => {
         shortDescription,
         costPrice,
         taxPercent: taxPercent || 0,
+        gstRule: gstRule || undefined,
         hsnCode,
         shippingWeight,
         shippingClass,
@@ -603,7 +607,7 @@ const updateProduct = async (id, data, auditContext) => {
 
     const fields = [
         'name', 'description', 'slug', 'category', 'subCategory', 'price', 'compareAtPrice', 'sku',
-        'barcode', 'shortDescription', 'costPrice', 'taxPercent', 'hsnCode',
+        'barcode', 'shortDescription', 'costPrice', 'taxPercent', 'gstRule', 'hsnCode',
         'shippingWeight', 'shippingClass', 'dimensions', 'minOrderQty', 'maxOrderQty',
         'lowStockAlert', 'isFeatured', 'isBestSeller', 'isNewArrival', 'isRecommended',
         'warranty', 'returnPolicy', 'additionalInfo', 'seoTitle', 'seoDescription',

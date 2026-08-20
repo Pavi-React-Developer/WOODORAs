@@ -4,12 +4,14 @@ import { toast } from 'react-hot-toast';
 import CustomCalendar from '../../components/CustomCalendar';
 import { Eye, X, Edit2, ToggleLeft, ToggleRight, Trash2, SquarePen, Trash, RefreshCw } from 'lucide-react';
 import { getImageSrc } from '../../utils/imageUtils';
+import { ActiveBadge, RequestBadge, OrderBadge } from '../../components/admin/CommonComponents';
 import { formatDeliveryDate, getDeliveryDate } from '../../utils/deliveryDate';
 import EditGiftBoxRulePage from './fees/EditGiftBoxRulePage';
 import Pagination from '../../components/common/Pagination';
 import OrderPricingSummary from '../../components/OrderPricingSummary';
 
 const formatDate = formatDeliveryDate;
+import { formatOrderId } from '../../utils/formatters';
 
 export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate = true, canEdit = true, canDelete = true }) {
   const [activeTab, setActiveTab] = useState(activeSubTab);
@@ -185,7 +187,6 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
 
   const tabTitles = {
     rules: 'Delivery Rules',
-    messages: 'Personalized Messages',
     'gift-fee': 'Gift Fee',
     orders: 'Gift Orders',
   };
@@ -382,8 +383,8 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
                                   } catch (e) {
                                     toast.error('Failed to update status');
                                   }
-                                }} className={`transition-colors ${rule.isActive ? 'text-green-500 hover:text-green-600' : 'text-gray-400 hover:text-gray-500'}`} title={rule.isActive ? 'Deactivate' : 'Activate'}>
-                                  {rule.isActive ? <ToggleRight size={17} /> : <ToggleLeft size={17} />}
+                                }} title={rule.isActive ? 'Deactivate' : 'Activate'}>
+                                  <ActiveBadge status={rule.isActive} />
                                 </button>
                               </>
                             )}
@@ -424,90 +425,6 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
         </div>
       )}
 
-      {activeTab === 'messages' && (
-        <>
-          {selectedMsgIds.length > 0 && (
-            <div className="bg-[#F8F4EC] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3 flex-wrap">
-              <span className="text-sm font-semibold text-[#8B5E3C]">{selectedMsgIds.length} selected</span>
-              <div className="flex gap-2 ml-auto flex-wrap">
-                {canEdit && (
-                  <>
-                    <button onClick={() => toast.success('Status updated')} className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">Set Active</button>
-                    <button onClick={() => toast.success('Status updated')} className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">Set Inactive</button>
-                  </>
-                )}
-                {canDelete && (
-                  <button
-                    onClick={async () => {
-                      if (!window.confirm(`Delete ${selectedMsgIds.length} message(s)?`)) return;
-                      try {
-                        await Promise.all(selectedMsgIds.map(id => adminService.deleteAdminMessage?.(id)));
-                        toast.success('Messages deleted');
-                        setSelectedMsgIds([]);
-                        fetchData();
-                      } catch (e) {
-                        toast.error('Failed to delete messages');
-                      }
-                    }}
-                    className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
-                  >
-                    Delete Selected
-                  </button>
-                )}
-                <button onClick={() => setSelectedMsgIds([])} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-white transition-colors text-gray-500">Clear</button>
-              </div>
-            </div>
-          )}
-          <div className="bg-white rounded-3xl shadow-sm border border-[#E6DFD4] overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
-                <tr>
-                  <th className="py-4 px-2 font-bold w-10 text-center text-[11px] uppercase tracking-widest text-gray-500 whitespace-nowrap">
-                    <input
-                      type="checkbox"
-                      checked={paginatedMessages.length > 0 && paginatedMessages.every(m => selectedMsgIds.includes(m._id))}
-                      onChange={e => toggleMsgSelectAll(e.target.checked)}
-                      className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer mx-auto block"
-                    />
-                  </th>
-                  <th className="py-4 px-2 font-bold text-[11px] uppercase tracking-widest text-gray-500 whitespace-nowrap text-center">Order ID</th>
-                  <th className="py-4 px-2 font-bold text-[11px] uppercase tracking-widest text-gray-500 whitespace-nowrap text-center">Customer</th>
-                  <th className="py-4 px-2 font-bold text-[11px] uppercase tracking-widest text-gray-500 whitespace-nowrap text-center">Message</th>
-                  <th className="py-4 px-2 font-bold text-[11px] uppercase tracking-widest text-gray-500 whitespace-nowrap text-center">Style</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {messages.length === 0 ? (
-                  <tr><td colSpan="5" className="px-4 py-3.5 text-center text-sm text-gray-500">No messages found.</td></tr>
-                ) : (
-                  paginatedMessages.map((msg, idx) => (
-                    <tr key={msg._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
-                      <td className="p-4 text-center">
-                        <input
-                          type="checkbox"
-                          checked={selectedMsgIds.includes(msg._id)}
-                          onChange={e => toggleMsgSelectOne(msg._id, e.target.checked)}
-                          className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer mx-auto block"
-                        />
-                      </td>
-                      <td className="p-4 text-left whitespace-nowrap text-sm font-bold text-gray-900">{msg._id.substring(0, 8)}</td>
-                      <td className="p-4 text-left whitespace-nowrap text-xs font-semibold text-gray-900">{msg.user?.name || msg.user?.fullName || 'N/A'}</td>
-                      <td className="p-4 text-left text-xs font-semibold text-gray-900 italic max-w-xs truncate">{msg.message}</td>
-                      <td className="p-4 text-left whitespace-nowrap text-xs font-semibold text-gray-900">{msg.style || 'Classic'}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-            {/* Messages Pagination */}
-            {totalMessagePages > 1 && (
-              <div className="px-5 py-6 border-t border-[#E6DFD4] flex justify-center bg-white">
-                <Pagination currentPage={messagesPage} totalPages={totalMessagePages} onPageChange={setMessagesPage} />
-              </div>
-            )}
-          </div>
-        </>
-      )}
 
       {activeTab === 'orders' && (
         <>
@@ -563,7 +480,7 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
                         />
                       </td>
                       <td className="p-4 text-left whitespace-nowrap text-sm font-bold text-gray-900">
-                        {order._id.substring(0, 8)}
+                        {formatOrderId(order)}
                       </td>
                       <td className="p-4 text-left whitespace-nowrap">
                         {order.user ? (
@@ -654,18 +571,40 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
                 <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase">Order Items</h3>
                 <div className="space-y-3">
                   {selectedOrder.orderItems?.map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-4 border border-gray-100 p-3 rounded-lg">
-                      <div className="w-16 h-16 bg-gray-100 rounded flex-shrink-0">
-                        {item.image ? (
-                          <img src={getImageSrc(item.image)} alt={item.name} className="w-full h-full object-cover rounded" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">No Image</div>
-                        )}
+                    <div key={idx} className="border border-gray-100 rounded-lg overflow-hidden">
+                      <div className="flex items-center gap-4 p-3 bg-white">
+                        <div className="w-16 h-16 bg-gray-100 rounded flex-shrink-0">
+                          {item.image ? (
+                            <img src={getImageSrc(item.image)} alt={item.name} className="w-full h-full object-cover rounded" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">No Image</div>
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-800">{item.name}</p>
+                          <p className="text-sm text-gray-500">Qty: {item.qty} | Price: ₹{item.price}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-gray-800">{item.name}</p>
-                        <p className="text-sm text-gray-500">Qty: {item.qty} | Price: ₹{item.price}</p>
-                      </div>
+                      
+                      {item.isGift && (
+                        <div className="bg-[#FAF4EF] p-4 border-t border-gray-100">
+                          <h4 className="text-[11px] font-bold text-[#141225] uppercase tracking-widest mb-3">GIFT PREFERENCES</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                              <p className="text-sm"><span className="font-bold text-[#6D625C]">Order Date:</span> {formatDate(selectedOrder.createdAt)}</p>
+                              <p className="text-sm"><span className="font-bold text-[#6D625C]">Delivery Date:</span> {formatDeliveryDate(item.deliveryDate || getDeliveryDate(selectedOrder))}</p>
+                              <p className="text-sm"><span className="font-bold text-[#6D625C]">Style:</span> {item.giftMessageStyle || 'Classic'}</p>
+                              <p className="text-sm"><span className="font-bold text-[#6D625C]">Wrapper:</span> {item.isGiftWrapper ? 'Premium Wrapping' : 'No Wrapper'}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-[#6D625C] mb-1">Message:</p>
+                              <div className={`w-full bg-white border border-[#E9DED3] p-3 rounded-sm min-h-[60px] text-gray-700 ${item.giftMessageStyle === 'Classic' ? 'font-serif text-sm' : item.giftMessageStyle === 'Elegant' ? 'font-script italic text-base' : 'font-sans tracking-wide text-sm'}`}>
+                                {item.giftMessage || 'No message provided'}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -677,23 +616,25 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
                 <div className="bg-gray-50 p-4 rounded-lg"><OrderPricingSummary order={selectedOrder} /></div>
               </div>
 
-              {/* Gift Details */}
-              <div className="bg-[#FAF4EF] p-4 rounded-lg border border-[#E6DFD4]">
-                <h3 className="text-sm font-semibold text-gray-700 mb-2 uppercase">Gift Preferences</h3>
-                <div className="space-y-2 text-sm text-gray-600">
-                  <p><span className="font-medium text-gray-800">Order Date:</span> {formatDate(selectedOrder.createdAt)}</p>
-                  <p><span className="font-medium text-gray-800">Delivery Date:</span> {formatDeliveryDate(getDeliveryDate(selectedOrder))}</p>
-                  <p><span className="font-medium text-gray-800">Style:</span> {selectedOrder.giftMessageStyle || 'Classic'}</p>
-                  {selectedOrder.giftMessage && (
-                    <div className="mt-2">
-                      <span className="font-medium text-gray-800 block mb-1">Message:</span>
-                      <p className="italic bg-white p-3 rounded border border-gray-200">
-                        {selectedOrder.giftMessage}
-                      </p>
-                    </div>
-                  )}
+              {/* Gift Details (Fallback for old global orders) */}
+              {(!selectedOrder.orderItems || !selectedOrder.orderItems.some(i => i.isGift)) && (
+                <div className="bg-[#FAF4EF] p-4 rounded-lg border border-[#E6DFD4]">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-2 uppercase">Global Gift Preferences</h3>
+                  <div className="space-y-2 text-sm text-gray-600">
+                    <p><span className="font-medium text-gray-800">Order Date:</span> {formatDate(selectedOrder.createdAt)}</p>
+                    <p><span className="font-medium text-gray-800">Delivery Date:</span> {formatDeliveryDate(getDeliveryDate(selectedOrder))}</p>
+                    <p><span className="font-medium text-gray-800">Style:</span> {selectedOrder.giftMessageStyle || 'Classic'}</p>
+                    {selectedOrder.giftMessage && (
+                      <div className="mt-2">
+                        <span className="font-medium text-gray-800 block mb-1">Message:</span>
+                        <p className="italic bg-white p-3 rounded border border-gray-200">
+                          {selectedOrder.giftMessage}
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
 
             </div>
           </div>

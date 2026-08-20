@@ -1,3 +1,4 @@
+import { ActiveBadge, RequestBadge, OrderBadge } from '../../../components/admin/CommonComponents';
 import React, { useState, useEffect } from 'react';
 import { Download, Search, ChevronDown, ChevronLeft, ChevronRight, Eye, X, CheckCircle2, RefreshCw } from 'lucide-react';
 import Pagination from '../../../components/common/Pagination';
@@ -542,9 +543,7 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
                       </span>
                     </td>
                     <td className="px-4 py-6 text-center">
-                      <span className={`inline-block px-3 py-1 rounded text-[10px] uppercase tracking-wider font-bold ${getStatusStyle(refund.status)}`}>
-                        {refund.status}
-                      </span>
+                      <RequestBadge status={refund.status} />
                     </td>
                     <td className="px-4 py-6 text-center">
                       {/* Step 2: Approve button (only for Approval Pending) */}

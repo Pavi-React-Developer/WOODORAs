@@ -14,10 +14,13 @@ const {
   getDashboardStats,
   deleteOrder,
   downloadInvoice,
+  getBadgeCounts,
 } = require('../controllers/orderController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
 router.route('/dashboard-stats').get(protect, authorize('admin', 'manager', 'staff'), getDashboardStats);
+
+router.route('/badges/counts').get(protect, authorize('admin', 'manager', 'staff'), getBadgeCounts);
 
 router.route('/')
   .post(protect, addOrderItems)

@@ -1,3 +1,4 @@
+import { ActiveBadge, RequestBadge, OrderBadge } from '../../../components/admin/CommonComponents';
 import React, { useState, useEffect } from 'react';
 import { adminService } from '../../../api/adminService';
 import { toast } from 'react-hot-toast';
@@ -348,9 +349,7 @@ export default function ProductFeeRulesPage() {
                   <td className="py-6 px-4 text-xs font-semibold text-center text-gray-700">{rule.boxSize}</td>
                   <td className="py-6 px-4 text-sm font-bold text-center text-gray-900">₹{rule.productFee}</td>
                   <td className="py-6 px-4 text-center">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${rule.isActive ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-                      {rule.isActive ? 'Active' : 'Inactive'}
-                    </span>
+                    <ActiveBadge status={rule.isActive} />
                   </td>
                   <td className="py-6 px-4 text-center whitespace-nowrap">
                     <div className="flex items-center justify-center gap-2">
@@ -363,10 +362,8 @@ export default function ProductFeeRulesPage() {
                       </button>
                       <button 
                         onClick={() => handleToggleStatus(rule)} 
-                        className={`p-1.5 rounded-lg transition-colors ${rule.isActive ? 'text-green-500 hover:text-green-700 hover:bg-green-50' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'}`} 
-                        title={rule.isActive ? 'Deactivate' : 'Activate'}
-                      >
-                        {rule.isActive ? <ToggleRight size={15} /> : <ToggleLeft size={15} />}
+                        title={rule.isActive ? "Deactivate" : "Activate"}>
+                            <ActiveBadge status={rule.isActive} />
                       </button>
                       <button 
                         onClick={() => handleDelete(rule._id)} 

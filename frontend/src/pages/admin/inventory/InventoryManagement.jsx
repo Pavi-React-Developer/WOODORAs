@@ -417,7 +417,7 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
                         <div className="variant-card-actions flex gap-3 mt-2">
                           {canEdit && (
                             <button className="text-blue-600 hover:text-blue-700 transition-colors" title="Edit Stock" onClick={() => openEditModal(v, 'variant')}>
-                              <SquarePen size={14} />
+                              <SquarePen size={16} />
                             </button>
                           )}
                         </div>
@@ -450,7 +450,7 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
                       <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
                         <tr>
                           {['Product', 'Category', 'SKU', 'Stock', 'Status', 'Action'].map((h) => (
-                            <th key={h} className="py-4 px-2 font-bold text-[11px] uppercase tracking-widest text-center text-gray-500 whitespace-nowrap border-b border-[#E6DFD4]">
+                            <th key={h} className={`px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap ${h === 'Product' ? 'text-left' : 'text-center'}`}>
                               {h}
                             </th>
                           ))}
@@ -476,30 +476,34 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
                           return (
                             <React.Fragment key={item._id}>
                               <tr className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
-                                <td className="p-4 text-left">
+                                <td className="px-6 py-4 whitespace-nowrap text-left text-sm">
                                   <div className="flex items-center gap-3">
                                     <ProductThumbnail src={getInventoryImage(item, productVariants)} alt={item.name} className="w-12 h-12 object-cover rounded-lg border border-[#E6DFD4]" />
-                                    <span className="text-sm font-bold text-gray-900">{item.name}</span>
+                                    <span className="font-bold text-sm text-gray-800">{item.name}</span>
                                   </div>
                                 </td>
-                                <td className="p-4 text-center capitalize text-xs font-semibold text-gray-600">{item.category?.name || 'General'}</td>
-                                <td className="p-4 text-center">
-                                  <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-md text-[11px] font-bold uppercase tracking-wider">
+                                <td className="px-6 py-4 whitespace-nowrap text-center capitalize text-sm font-semibold text-gray-600">{item.category?.name || 'General'}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                                  <span className="text-gray-600 text-sm font-bold font-semibold">
                                     {getInventorySku(item, productVariants)}
                                   </span>
                                 </td>
-                                <td className="p-4 text-center font-semibold text-gray-800">{currentStock}</td>
-                                <td className="p-4 text-center">
-                                  <span className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 w-fit mx-auto ${statusColor}`}>
+                                <td className="px-6 py-4 whitespace-nowrap text-center font-bold text-sm text-gray-800">{currentStock}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                                  <span className={`px-3 py-1 rounded-full text-sm font-semibold flex items-center justify-center gap-1.5 w-fit mx-auto ${statusColor}`}>
                                     <span className={`w-1.5 h-1.5 rounded-full ${statusColor.replace('bg-', 'bg-').replace('100', '500').split(' ')[0]}`}></span>
                                     {statusLabel}
                                   </span>
                                 </td>
-                                <td className="p-4 text-center">
+                                <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                                   <div className="flex items-center justify-center gap-3">
-                                    <button className="text-green-600 hover:text-green-700 transition-colors" title="View" onClick={() => openViewModal(item)}><Eye size={15} /></button>
+                                    <button className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors" title="View" onClick={() => openViewModal(item)}>
+                                      <Eye className="w-[15px] h-[15px]" />
+                                    </button>
                                     {canEdit && (
-                                      <button className="text-blue-500 hover:text-blue-700 transition-colors" title="Edit Stock" onClick={() => openEditModal(item, 'product')}><SquarePen size={15} /></button>
+                                      <button className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors" title="Edit Stock" onClick={() => openEditModal(item, 'product')}>
+                                        <SquarePen className="w-[15px] h-[15px]" />
+                                      </button>
                                     )}
                                   </div>
                                 </td>

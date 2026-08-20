@@ -1,3 +1,4 @@
+import { ActiveBadge, RequestBadge, OrderBadge } from '../../../components/admin/CommonComponents';
 import React, { useState, useEffect, useMemo } from 'react';
 import { RefreshCw, Search, Eye, X, Check, XCircle, Edit, Bell, FileText, Upload, Loader, Plus } from 'lucide-react';
 import { advancedBookingService } from '../../../api/advancedBookingService';

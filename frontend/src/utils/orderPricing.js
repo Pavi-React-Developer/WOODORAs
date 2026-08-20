@@ -92,12 +92,24 @@ export const getOrderPricing = (order = {}) => {
     dynamicFeesTotal = productFee + giftFee + shippingFee + weightFee + platformFee;
   }
 
-  // Grand total = subtotal − discount + billable fees (advance excluded).
+  const calculatedItemsGst = Array.isArray(order.orderItems) 
+    ? order.orderItems.reduce((sum, item) => sum + (number(item.gstAmount) || 0), 0) 
+    : 0;
+  const gstAmount = number(order.gstAmount) || number(order.totalGst) || calculatedItemsGst || 0;
+
+  // Grand total = subtotal − discount + billable fees (advance excluded) + GST.
   // Prefer the server-persisted total_amount; fall back to a recalculation so
   // that old orders (which may have a stale or missing total_amount) still render
   // correctly without ever adding the advance back in.
-  const total = number(order.total_amount) || number(order.totalPrice)
-    || Math.max(0, subtotal - couponDiscount + dynamicFeesTotal);
+  let total = number(order.total_amount) || number(order.totalPrice)
+    || Math.max(0, subtotal - couponDiscount + dynamicFeesTotal + gstAmount);
+  
+  // If this is an old order where totalGst was 0, but we calculated a non-zero gstAmount 
+  // from the items, it means the server-persisted total_amount doesn't include GST.
+  if (calculatedItemsGst > 0 && !(number(order.totalGst) > 0 || number(order.gstAmount) > 0)) {
+    // total_amount currently lacks GST, so we must add it back in for display
+    total += calculatedItemsGst;
+  }
 
   // Advance payment — shown as a deduction below the grand total.
   const advancePayment = number(order.advance_payment) || number(order.codAdvance);
@@ -123,5 +135,6 @@ export const getOrderPricing = (order = {}) => {
     advancePayment,
     paidAmount,
     balanceAmount,
+    gstAmount,
   };
 };

@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Settings, ToggleLeft, ToggleRight, List, Columns, ShieldAlert, Download, RefreshCw, Sparkles, Layers, Globe, SquarePen, Trash, X, GripVertical, Image as ImageIcon } from 'lucide-react';
 import Pagination from '../../../components/common/Pagination';
-import { productV2API, categoryV2API, subCategoryV2API } from '../../../api/catalogV2Service';
+import { productV2API, categoryV2API, subCategoryV2API, clearCatalogCache } from '../../../api/catalogV2Service';
+import { gstService } from '../../../api/gstService';
 import toast from 'react-hot-toast';
 import { downloadExcelFile } from '../../../utils/exportUtils';
-import { SearchBar, Button, Badge, Card } from '../../../components/admin/CommonComponents';
+import { SearchBar, Button, Badge, Card, StatusBadge } from '../../../components/admin/CommonComponents';
 import ConfirmDialog from '../../../components/admin/ConfirmDialog';
 import BulkActions from '../../../components/admin/BulkActions';
 import ImageUploader from '../../../components/admin/ImageUploader';
@@ -36,6 +37,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
     const [filterAttributes, setFilterAttributes] = useState([]);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     // Form/Modal state
     const [isFormOpen, setIsFormOpen] = useState(isAddMode);
@@ -53,6 +55,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
         shortDescription: '',
         costPrice: 0,
         taxPercent: 0,
+        gstRule: '',
         hsnCode: '',
         shippingWeight: 0,
         shippingClass: '',
@@ -75,6 +78,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
     const [subCategories, setSubCategories] = useState([]);
     const [formSubCategories, setFormSubCategories] = useState([]); // Subcategories for the parent category in the form
     const [mappedAttributes, setMappedAttributes] = useState([]);  // Mapped attributes for the subcategory selected in the form
+    const [gstRules, setGstRules] = useState([]);
     const [formLoading, setFormLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
     const [formErrors, setFormErrors] = useState({});
@@ -130,6 +134,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
             shortDescription: '',
             costPrice: 0,
             taxPercent: 0,
+            gstRule: '',
             hsnCode: '',
             shippingWeight: 0,
             shippingClass: '',
@@ -154,7 +159,17 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
         fetchProducts();
         fetchCategories();
         fetchSubCategories();
-    }, [search, categoryFilter, subCategoryFilter, attributeFilters, page]);
+        fetchGstRules();
+    }, [search, categoryFilter, subCategoryFilter, attributeFilters, page, refreshKey]);
+
+    const fetchGstRules = async () => {
+        try {
+            const data = await gstService.getRules();
+            setGstRules(data.rules?.filter(r => r.isActive) || []);
+        } catch (error) {
+            console.error('Failed to fetch GST rules', error);
+        }
+    };
 
 
 
@@ -221,8 +236,8 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
 
     const fetchCategories = async () => {
         try {
-            const res = await categoryV2API.getAll({ limit: 100, isActive: 'true' });
-            if (res.success) setCategories(res.categories || []);
+            const res = await categoryV2API.getAll({ limit: 100 });
+            if (res.success) setCategories(res.data || res.categories || []);
         } catch (err) {
             console.error(err);
         }
@@ -230,8 +245,8 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
 
     const fetchSubCategories = async () => {
         try {
-            const res = await subCategoryV2API.getAll({ limit: 100, isActive: 'true' });
-            if (res.success) setSubCategories(res.subCategories || []);
+            const res = await subCategoryV2API.getAll({ limit: 100 });
+            if (res.success) setSubCategories(res.data || res.subCategories || []);
         } catch (err) {
             console.error(err);
         }
@@ -317,6 +332,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                         shortDescription: prod.shortDescription || '',
                         costPrice: prod.costPrice || 0,
                         taxPercent: prod.taxPercent || 0,
+                        gstRule: prod.gstRule?._id || prod.gstRule || '',
                         hsnCode: prod.hsnCode || '',
                         shippingWeight: prod.shippingWeight || 0,
                         shippingClass: prod.shippingClass || '',
@@ -448,6 +464,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
             compareAtPrice: Number(formData.compareAtPrice),
             costPrice: Number(formData.costPrice),
             taxPercent: Number(formData.taxPercent),
+            gstRule: formData.gstRule || null,
             shippingWeight: Number(formData.shippingWeight),
             lowStockAlert: Number(formData.lowStockAlert),
             dimensions: {
@@ -570,6 +587,16 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
         }
     };
 
+    const handleRefresh = () => {
+        clearCatalogCache();
+        setSearch('');
+        setCategoryFilter('');
+        setSubCategoryFilter('');
+        setAttributeFilters({});
+        setPage(1);
+        setRefreshKey(k => k + 1);
+    };
+
     return (
         <div className="flex-1 overflow-y-auto p-8 space-y-6">
             {/* Header */}
@@ -581,7 +608,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                     <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Products</h1>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button onClick={fetchProducts} className="admin-secondary-btn">
+                    <button onClick={handleRefresh} className="admin-secondary-btn">
                         <RefreshCw size={16} /> Refresh
                     </button>
                     <button onClick={exportProductsExcel} className="admin-export-btn">
@@ -681,29 +708,29 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                     <table className="w-full text-sm">
                         <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
                             <tr>
-                                <th className="px-4 py-3.5 w-10">
+                                <th className="px-6 py-3.5 w-10 text-center">
                                     <input
                                         type="checkbox"
                                         checked={products.length > 0 && selectedIds.length === products.length}
                                         onChange={e => handleSelectAll(e.target.checked)}
-                                        className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                                        className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer mx-auto block"
                                     />
                                 </th>
                                 {['Product', 'Category', 'Price', 'Total Stock', 'Status', 'Actions'].map(h => (
-                                    <th key={h} className="px-4 py-3.5 text-[11px] font-bold uppercase tracking-widest text-gray-500 whitespace-nowrap text-center">{h}</th>
+                                    <th key={h} className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">{h}</th>
                                 ))}
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="bg-white divide-y divide-[#E9DED3]">
                             {loading ? (
-                                <tr><td colSpan={7} className="text-center py-16 text-gray-400">
+                                <tr><td colSpan={7} className="px-6 py-4 text-center text-gray-400 text-sm">
                                     <div className="flex items-center justify-center gap-2">
                                         <div className="w-4 h-4 border-2 border-[#8B5E3C] border-t-transparent rounded-full animate-spin" />
                                         Loading catalog products...
                                     </div>
                                 </td></tr>
                             ) : products.length === 0 ? (
-                                <tr><td colSpan={7} className="text-center py-16 text-gray-400">
+                                <tr><td colSpan={7} className="px-6 py-4 text-center text-gray-400 text-sm">
                                     <div className="flex flex-col items-center gap-3">
                                         <div className="w-12 h-12 bg-[#F8F4EC] rounded-full flex items-center justify-center text-2xl">🧸</div>
                                         <p className="font-medium">No products matched criteria.</p>
@@ -717,20 +744,20 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                             key={prod._id}
                                             className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}
                                         >
-                                            <td className="px-4 py-3.5">
+                                            <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                                                 <input
                                                     type="checkbox"
                                                     checked={selectedIds.includes(prod._id)}
                                                     onChange={(e) => handleSelectRow(prod._id, e.target.checked)}
-                                                    className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                                                    className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer mx-auto block"
                                                 />
                                             </td>
-                                            <td className="px-4 py-3.5">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm">
                                                 <div className="flex items-center gap-3">
                                                     {mainImage ? (
                                                         <img src={mainImage} alt={prod.name} className="w-12 h-12 object-cover rounded-lg border border-[#E6DFD4]" />
                                                     ) : (
-                                                        <div className="w-12 h-12 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center text-[#8B5E3C] font-bold text-xs">
+                                                        <div className="w-12 h-12 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center text-[#8B5E3C] font-bold text-sm">
                                                             TOY
                                                         </div>
                                                     )}
@@ -740,36 +767,28 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-4 py-3.5 text-xs font-semibold text-[#8B5E3C] text-center">{prod.category?.name || 'Unknown'}</td>
-                                            <td className="px-4 py-3.5 text-xs font-semibold text-amber-900 text-center">₹{(prod.price || 0).toFixed(2)}</td>
-                                            <td className="px-4 py-3.5 text-center">
-                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${prod.isLowStock ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-[#8B5E3C] text-center">{prod.category?.name || 'Unknown'}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-amber-900 text-center">₹{(prod.price || 0).toFixed(2)}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-semibold ${prod.isLowStock ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
                                                     }`}>
                                                     {prod.totalStock} {prod.isLowStock ? 'low' : 'in stock'}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-3.5 text-center">
+                                            <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                                                 {canEdit ? (
                                                     <button onClick={() => handleToggleStatus(prod)} title="Click to toggle">
-                                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${prod.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                                                            }`}>
-                                                            <span className={`w-1.5 h-1.5 rounded-full ${prod.isActive ? 'bg-green-500' : 'bg-gray-400'}`} />
-                                                            {prod.isActive ? 'Active' : 'Inactive'}
-                                                        </span>
+                                                        <StatusBadge status={prod.isActive ? "Active" : "Inactive"} />
                                                     </button>
                                                 ) : (
-                                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${prod.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                                                        }`}>
-                                                        <span className={`w-1.5 h-1.5 rounded-full ${prod.isActive ? 'bg-green-500' : 'bg-gray-400'}`} />
-                                                        {prod.isActive ? 'Active' : 'Inactive'}
-                                                    </span>
+                                                    <StatusBadge status={prod.isActive ? "Active" : "Inactive"} />
                                                 )}
                                             </td>
-                                            <td className="px-4 py-3.5">
+                                            <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                                                 <div className="flex gap-2 justify-center">
                                                     {canEdit && (
                                                         <button onClick={() => navigate(`/admin/products/edit/${prod._id}`)} className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors" title="Edit">
-                                                            <SquarePen size={15} />
+                                                            <SquarePen className="w-[15px] h-[15px]" />
                                                         </button>
                                                     )}
                                                     {canDelete && (
@@ -778,7 +797,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                                             className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
                                                             title="Delete"
                                                         >
-                                                            <Trash2 size={15} />
+                                                            <Trash2 className="w-[15px] h-[15px]" />
                                                         </button>
                                                     )}
                                                 </div>
@@ -826,7 +845,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                             {/* Section 1: Base details */}
                             <div className="bg-[#FAFAFA] border border-[#F0EAE2] rounded-2xl p-6 space-y-5">
                                 <h3 className="text-[17px] font-serif font-bold text-[#3E2723] flex items-center gap-2">
-                                    <span className="w-6 h-6 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center text-xs">📦</span>
+                                    <span className="w-6 h-6 #E6DFD4] flex items-center justify-center text-sm font-semibold text-gray-800">📦</span>
                                     Basic Information
                                 </h3>
 
@@ -900,6 +919,32 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                         {formErrors.subCategory && <p className="text-red-500 text-[10px] mt-1">{formErrors.subCategory}</p>}
                                     </Field>
                                 </div>
+                                
+                                {gstRules.length > 0 && (
+                                    <div className="mb-4 bg-[#F8F4EC]/50 p-4 rounded-xl border border-[#E6DFD4]">
+                                        <label className="block text-sm font-bold text-gray-800 uppercase tracking-wider mb-3">
+                                            Applicable GST Rule
+                                        </label>
+                                        <div className="flex flex-wrap gap-4">
+                                            {gstRules.map((rule) => (
+                                                <label key={rule._id} className="flex items-center gap-2 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={formData.gstRule === rule._id}
+                                                        onChange={() => {
+                                                            setFormData(prev => ({
+                                                                ...prev,
+                                                                gstRule: prev.gstRule === rule._id ? '' : rule._id
+                                                            }));
+                                                        }}
+                                                        className="w-4 h-4 text-[#8B5E3C] border-[#E6DFD4] rounded focus:ring-[#8B5E3C]"
+                                                    />
+                                                    <span className="text-sm font-medium text-gray-700">{rule.name} ({rule.percentage}%)</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div className="flex flex-col gap-1.5">
                                     <div className="flex justify-between items-center mb-1.5">
@@ -972,7 +1017,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                             {mappedAttributes.length > 0 && (
                                 <div className="bg-[#FAFAFA] border border-[#F0EAE2] rounded-2xl p-6 space-y-5">
                                     <h3 className="text-[17px] font-serif font-bold text-[#3E2723] flex items-center gap-2">
-                                        <span className="w-6 h-6 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center text-xs">✨</span>
+                                        <span className="w-6 h-6 #E6DFD4] flex items-center justify-center text-sm font-semibold text-gray-800">✨</span>
                                         Custom Specifications
                                     </h3>
                                     <DynamicFormBuilder
@@ -987,7 +1032,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                             {mappedAttributes.some(m => m.attribute?.isVariant) && (
                                 <div className="bg-[#FAFAFA] border border-[#F0EAE2] rounded-2xl p-6 space-y-5">
                                     <h3 className="text-[17px] font-serif font-bold text-[#3E2723] flex items-center gap-2">
-                                        <span className="w-6 h-6 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center text-xs">📑</span>
+                                        <span className="w-6 h-6 #E6DFD4] flex items-center justify-center text-sm font-semibold text-gray-800">📑</span>
                                         Variant Management
                                     </h3>
                                     <VariantManagement
@@ -1011,7 +1056,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                             {/* Section 6: SEO */}
                             <div className="bg-[#FAFAFA] border border-[#F0EAE2] rounded-2xl p-6 space-y-5">
                                 <h3 className="text-[17px] font-serif font-bold text-[#3E2723] flex items-center gap-2">
-                                    <span className="w-6 h-6 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center text-xs">🌐</span>
+                                    <span className="w-6 h-6 #E6DFD4] flex items-center justify-center text-sm font-semibold text-gray-800">🌐</span>
                                     SEO & Search Indexing
                                 </h3>
                                 <div className="grid grid-cols-2 gap-4">

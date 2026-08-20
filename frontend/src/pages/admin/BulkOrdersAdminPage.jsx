@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Package, Search, Clock, Eye, X, RefreshCw, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ActiveBadge, RequestBadge, OrderBadge } from '../../components/admin/CommonComponents';
+import { Plus, Eye, X, Filter, FileText, PackageX, User, Building, MapPin, Mail, Phone, Calendar, Download, Search, Clock, RefreshCw, Check, ChevronLeft, ChevronRight, Package } from 'lucide-react';
 import Pagination from '../../components/common/Pagination';
 import toast from 'react-hot-toast';
 import { bulkOrderService } from '../../api/bulkOrderService';
@@ -29,7 +30,9 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
     try {
       const data = await bulkOrderService.getAllBulkOrders();
       if (data.success) {
-        setOrders(data.data || []);
+        const rawOrders = data.data || [];
+        const sortedDesc = rawOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        setOrders(sortedDesc);
       } else {
         toast.error(data.message || 'Failed to load bulk orders');
       }
@@ -236,7 +239,7 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
           ) : (
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-[#FAF4EF] text-[#8A817C] text-[11px] uppercase tracking-widest text-center">
+                <tr className="bg-[#FAF4EF] text-[#8B5E3C] text-[11px] uppercase tracking-widest text-center">
                   <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] w-10 text-center">
                     <input
                       type="checkbox"
@@ -245,7 +248,8 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                       className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer mx-auto block"
                     />
                   </th>
-                  <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] whitespace-nowrap text-center">Date &amp; ID</th>
+                  <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] whitespace-nowrap text-center">Order ID</th>
+                  <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] whitespace-nowrap text-center">Date</th>
                   <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] whitespace-nowrap text-center">Selected Product</th>
                   <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] whitespace-nowrap text-center">Custom Fields Preview</th>
                   <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] whitespace-nowrap text-center">Status</th>
@@ -266,11 +270,13 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                         className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer"
                       />
                     </td>
-                    <td className="p-4 border-b border-[#E6DFD4] text-left">
+                    <td className="p-4 border-b border-[#E6DFD4] text-center">
                       <p className="text-sm font-bold text-[#141225]">
-                        Order #{order._id.substring(order._id.length - 6).toUpperCase()}
+                        {order.displayId}
                       </p>
-                      <p className="text-xs text-[#6D625C] mt-0.5">
+                    </td>
+                    <td className="p-4 border-b border-[#E6DFD4] text-center">
+                      <p className="text-sm font-semibold text-[#6D625C]">
                         {new Date(order.createdAt).toLocaleDateString()}
                       </p>
                     </td>
@@ -303,19 +309,7 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                       </div>
                     </td>
                     <td className="p-4 border-b border-[#E6DFD4] text-left">
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${order.status === 'Approved'
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : order.status === 'Rejected'
-                            ? 'bg-red-100 text-red-700'
-                            : 'bg-amber-100 text-amber-700'
-                          }`}
-                      >
-                        {order.status === 'Approved' && <Check className="w-3 h-3" />}
-                        {order.status === 'Rejected' && <X className="w-3 h-3" />}
-                        {(!order.status || order.status === 'Pending') && <Clock className="w-3 h-3" />}
-                        {order.status || 'Pending'}
-                      </span>
+                      <RequestBadge status={order.status || 'Pending'} />
                       {order.status === 'Rejected' && order.rejectionReason && (
                         <p className="text-[10px] text-red-600 mt-1 max-w-[150px] truncate" title={order.rejectionReason}>
                           {order.rejectionReason}
@@ -379,7 +373,7 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
             <div className="p-6 md:px-8 py-8 bg-white">
               <p className="text-sm text-[#4A403B] mb-4">
                 Please provide a reason for rejecting the bulk order{' '}
-                <strong>#{rejectingOrder?._id.substring(rejectingOrder._id.length - 6).toUpperCase()}</strong>.
+                <strong>{rejectingOrder?.displayId}</strong>.
               </p>
               <textarea
                 value={rejectionReason}
@@ -424,7 +418,7 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                       <p>
                         <span className="text-[#6D625C] w-28 inline-block">Order ID:</span>
                         <span className="font-bold text-[#141225]">
-                          #{viewingOrder._id.substring(viewingOrder._id.length - 6).toUpperCase()}
+                          {viewingOrder.displayId}
                         </span>
                       </p>
                       <p>
@@ -435,15 +429,8 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                       </p>
                       <p>
                         <span className="text-[#6D625C] w-28 inline-block">Status:</span>
-                        <span
-                          className={`ml-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${viewingOrder.status === 'Approved'
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : viewingOrder.status === 'Rejected'
-                              ? 'bg-red-100 text-red-700'
-                              : 'bg-amber-100 text-amber-700'
-                            }`}
-                        >
-                          {viewingOrder.status || 'Pending'}
+                        <span className="ml-2">
+                          <RequestBadge status={viewingOrder.status || 'Pending'} />
                         </span>
                       </p>
                       {viewingOrder.status === 'Rejected' && viewingOrder.rejectionReason && (

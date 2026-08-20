@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Settings, ToggleLeft, ToggleRight, List, Columns, ShieldAlert, Download, RefreshCw, SquarePen, Trash } from 'lucide-react';
-import { subCategoryV2API, categoryV2API, attributeV2API } from '../../../api/catalogV2Service';
+import { subCategoryV2API, categoryV2API, attributeV2API, clearCatalogCache } from '../../../api/catalogV2Service';
 import { downloadExcelFile } from '../../../utils/exportUtils';
-import { SearchBar, Button, Badge, Card } from '../../../components/admin/CommonComponents';
+import { SearchBar, Button, Badge, Card, StatusBadge } from '../../../components/admin/CommonComponents';
 import ConfirmDialog from '../../../components/admin/ConfirmDialog';
 import BulkActions from '../../../components/admin/BulkActions';
 import Pagination from '../../../components/common/Pagination';
@@ -31,6 +31,7 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
     const [categoryFilter, setCategoryFilter] = useState('');
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     // Form/Modal state
     const [isFormOpen, setIsFormOpen] = useState(false);
@@ -66,7 +67,7 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
         fetchSubCategories();
         fetchCategories();
         fetchAttributes();
-    }, [search, categoryFilter, page]);
+    }, [search, categoryFilter, page, refreshKey]);
 
     useEffect(() => {
         const checkRoute = async () => {
@@ -340,6 +341,14 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
         }
     };
 
+    const handleRefresh = () => {
+        clearCatalogCache();
+        setSearch('');
+        setCategoryFilter('');
+        setPage(1);
+        setRefreshKey(k => k + 1);
+    };
+
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-6">
             {/* Header */}
@@ -351,7 +360,7 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                     <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Sub-Categories</h1>
                 </div>
                 <div className="flex flex-col sm:flex-row items-center gap-3">
-                    <button onClick={fetchSubCategories} className="admin-secondary-btn">
+                    <button onClick={handleRefresh} className="admin-secondary-btn">
                         <RefreshCw size={16} /> Refresh
                     </button>
                     <button onClick={exportSubCategoriesExcel} className="admin-export-btn flex items-center gap-2">
@@ -404,29 +413,29 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                     <table className="w-full text-sm">
                         <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
                             <tr>
-                                <th className="px-4 py-3.5 w-10">
+                                <th className="px-6 py-3.5 w-10 text-center">
                                     <input
                                         type="checkbox"
                                         checked={subCategories.length > 0 && selectedIds.length === subCategories.length}
                                         onChange={(e) => handleSelectAll(e.target.checked)}
-                                        className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                                        className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer mx-auto block"
                                     />
                                 </th>
                                 {['Sub-Category Name', 'Parent Category', 'Slug', 'Status', 'Actions'].map(h => (
-                                    <th key={h} className={`px-4 py-3.5 text-[11px] font-bold uppercase tracking-widest text-gray-500 whitespace-nowrap ${['Sub-Category Name', 'Parent Category', 'Slug', 'Status', 'Actions'].includes(h) ? 'text-center' : 'text-left'}`}>{h}</th>
+                                    <th key={h} className={`px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap ${['Parent Category', 'Slug', 'Status', 'Actions'].includes(h) ? 'text-center' : 'text-left'}`}>{h}</th>
                                 ))}
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="bg-white divide-y divide-[#E9DED3]">
                             {loading ? (
-                                <tr><td colSpan={6} className="text-center py-16 text-gray-400">
+                                <tr><td colSpan={6} className="px-6 py-4 text-center text-gray-400 text-sm">
                                     <div className="flex items-center justify-center gap-2">
                                         <div className="w-4 h-4 border-2 border-[#8B5E3C] border-t-transparent rounded-full animate-spin" />
                                         Loading subcategories...
                                     </div>
                                 </td></tr>
                             ) : subCategories.length === 0 ? (
-                                <tr><td colSpan={6} className="text-center py-16 text-gray-400">
+                                <tr><td colSpan={6} className="px-6 py-4 text-center text-gray-400 text-sm">
                                     <div className="flex flex-col items-center gap-3">
                                         <div className="w-12 h-12 bg-[#F8F4EC] rounded-full flex items-center justify-center text-2xl">🗂️</div>
                                         <p className="font-medium">No subcategories found.</p>
@@ -438,42 +447,36 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                                         key={sub._id}
                                         className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}
                                     >
-                                        <td className="px-4 py-3.5">
+                                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                                             <input
                                                 type="checkbox"
                                                 checked={selectedIds.includes(sub._id)}
                                                 onChange={(e) => handleSelectRow(sub._id, e.target.checked)}
-                                                className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                                                className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer mx-auto block"
                                             />
                                         </td>
-                                        <td className="px-4 py-3.5">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
                                             <div className="flex items-center gap-4">
                                                 <div className="w-12 h-12 rounded-lg bg-[#F8F4EC] border border-[#E6DFD4] flex items-center justify-center text-xl overflow-hidden flex-shrink-0">🗂️</div>
                                                 <span className="font-bold text-sm text-gray-800">{sub.name}</span>
                                             </div>
                                         </td>
-                                        <td className="px-4 py-3.5 font-bold text-sm text-[#8B5E3C]">{sub.category?.name || 'Unknown'}</td>
-                                        <td className="px-4 py-3.5 text-center">
-                                            <span className="inline-block whitespace-nowrap bg-[#F8F4EC] text-[#8B5E3C] text-[11px] uppercase tracking-wider font-bold px-3 py-1.5 rounded-lg border border-[#E6DFD4] shadow-sm">
+                                        <td className="px-6 py-4 whitespace-nowrap font-bold text-sm text-[#8B5E3C] text-center">{sub.category?.name || 'Unknown'}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                                            <span className="text-sm font-semibold text-gray-800">
                                                 {sub.slug}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3.5 text-center">
+                                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                                             {canEdit ? (
                                                 <button onClick={() => handleToggleStatus(sub)} title="Click to toggle">
-                                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${sub.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                                                        <span className={`w-1.5 h-1.5 rounded-full ${sub.isActive ? 'bg-green-500' : 'bg-gray-400'}`} />
-                                                        {sub.isActive ? 'Active' : 'Inactive'}
-                                                    </span>
+                                                    <StatusBadge status={sub.isActive ? "Active" : "Inactive"} />
                                                 </button>
                                             ) : (
-                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${sub.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                                                    <span className={`w-1.5 h-1.5 rounded-full ${sub.isActive ? 'bg-green-500' : 'bg-gray-400'}`} />
-                                                    {sub.isActive ? 'Active' : 'Inactive'}
-                                                </span>
+                                                <StatusBadge status={sub.isActive ? "Active" : "Inactive"} />
                                             )}
                                         </td>
-                                        <td className="px-4 py-3.5">
+                                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                                             <div className="flex items-center justify-center gap-2">
                                                 {canEdit && (
                                                     <button
@@ -481,7 +484,7 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                                                         className="p-1.5 rounded-lg text-amber-700 hover:bg-amber-50 transition-colors"
                                                         title="Map Fields/Attributes"
                                                     >
-                                                        <Settings size={15} />
+                                                        <Settings className="w-[15px] h-[15px]" />
                                                     </button>
                                                 )}
                                                 {canEdit && (
@@ -490,7 +493,7 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                                                         className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
                                                         title="Edit"
                                                     >
-                                                        <SquarePen size={15} />
+                                                        <SquarePen className="w-[15px] h-[15px]" />
                                                     </button>
                                                 )}
                                                 {canDelete && (
@@ -499,7 +502,7 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                                                         className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
                                                         title="Delete"
                                                     >
-                                                        <Trash2 size={15} />
+                                                        <Trash2 className="w-[15px] h-[15px]" />
                                                     </button>
                                                 )}
                                             </div>
@@ -545,7 +548,7 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                             {/* Basic Info */}
                             <div className="bg-[#FAFAFA] border border-[#F0EAE2] rounded-2xl p-6 space-y-5">
                                 <h3 className="text-[17px] font-serif font-bold text-[#3E2723] flex items-center gap-2">
-                                    <span className="w-6 h-6 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center text-xs">📦</span>
+                                    <span className="w-6 h-6 #E6DFD4] flex items-center justify-center text-sm font-semibold text-gray-800">📦</span>
                                     Basic Information
                                 </h3>
                                 <Field label="Sub-Category Name" required>
@@ -568,7 +571,7 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                             {/* Settings */}
                             <div className="bg-[#FAFAFA] border border-[#F0EAE2] rounded-2xl p-6 space-y-5">
                                 <h3 className="text-[17px] font-serif font-bold text-[#3E2723] flex items-center gap-2">
-                                    <span className="w-6 h-6 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center text-xs">⚙️</span>
+                                    <span className="w-6 h-6 #E6DFD4] flex items-center justify-center text-sm font-semibold text-gray-800">⚙️</span>
                                     Settings
                                 </h3>
                                 <div className="grid grid-cols-2 gap-4">
@@ -587,7 +590,7 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                             {/* SEO */}
                             <div className="bg-[#FAFAFA] border border-[#F0EAE2] rounded-2xl p-6 space-y-5">
                                 <h3 className="text-[17px] font-serif font-bold text-[#3E2723] flex items-center gap-2">
-                                    <span className="w-6 h-6 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center text-xs">🔍</span>
+                                    <span className="w-6 h-6 #E6DFD4] flex items-center justify-center text-sm font-semibold text-gray-800">🔍</span>
                                     SEO & Metadata
                                 </h3>
                                 <Field label="SEO Title">

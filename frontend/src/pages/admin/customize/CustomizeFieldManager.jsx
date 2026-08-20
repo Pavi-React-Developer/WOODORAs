@@ -1,3 +1,4 @@
+import { ActiveBadge, RequestBadge, OrderBadge, TypeBadge } from '../../../components/admin/CommonComponents';
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { Plus, Trash2, Settings, X, PlusCircle, Trash, RefreshCw, Edit } from 'lucide-react';
@@ -222,9 +223,9 @@ export default function CustomizeFieldManager({ canCreate = true, canEdit = true
       <div className="bg-white rounded-3xl shadow-sm border border-[#E6DFD4] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="bg-[#FAF4EF] text-[#8A817C] text-[11px] uppercase tracking-widest text-center">
+            <thead className="bg-[#FAF4EF] text-[#8B5E3C] text-xs uppercase tracking-wider text-center">
               <tr>
-                <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] w-10 text-center">
+                <th className="px-6 py-4 border-b border-[#E6DFD4] w-12 text-center">
                   <input
                     type="checkbox"
                     checked={fields.length > 0 && selectedIds.length === fields.length}
@@ -232,53 +233,61 @@ export default function CustomizeFieldManager({ canCreate = true, canEdit = true
                     className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer mx-auto block"
                   />
                 </th>
-                <th className="py-4 px-2 border-b border-[#E6DFD4] font-bold text-center">Field Label</th>
-                <th className="py-4 px-2 border-b border-[#E6DFD4] font-bold text-center">Type</th>
-                <th className="py-4 px-2 border-b border-[#E6DFD4] font-bold text-center">Required</th>
-                <th className="py-4 px-2 border-b border-[#E6DFD4] font-bold text-center">Status</th>
-                <th className="py-4 px-2 border-b border-[#E6DFD4] font-bold text-center">Actions</th>
+                <th className="px-6 py-4 border-b border-[#E6DFD4] font-bold text-center">Label</th>
+                <th className="px-6 py-4 border-b border-[#E6DFD4] font-bold text-center">Type</th>
+                <th className="px-6 py-4 border-b border-[#E6DFD4] font-bold text-center">Required</th>
+                <th className="px-6 py-4 border-b border-[#E6DFD4] font-bold text-center">Status</th>
+                <th className="px-6 py-4 border-b border-[#E6DFD4] font-bold text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E6DFD4]">
               {fields.map((field, idx) => (
-                <tr key={field._id} className={`hover:bg-[#FAF4EF]/30 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
-                  <td className="p-4 text-center">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.includes(field._id)}
-                      onChange={(e) => {
-                        if (e.target.checked) setSelectedIds([...selectedIds, field._id]);
-                        else setSelectedIds(selectedIds.filter(id => id !== field._id));
-                      }}
-                      className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer mx-auto block"
-                    />
-                  </td>
-                  <td className="p-4 text-left">
-                    <div className="text-sm font-bold text-gray-900">{field.label}</div>
-                    {field.type === 'dropdown' && (
-                      <div className="text-xs text-gray-500 mt-1">Options: {field.options.join(', ')}</div>
-                    )}
-                  </td>
-                  <td className="p-4 text-left uppercase text-xs font-semibold text-gray-600">
-                    {field.type}
-                  </td>
-                  <td className="p-4 text-center">
-                    <span className={`text-[11px] px-2 py-1 rounded-md font-bold uppercase tracking-wider ${field.isRequired ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600'}`}>
-                      {field.isRequired ? 'Required' : 'Optional'}
-                    </span>
-                  </td>
-                  <td className="p-4 text-center">
-                    {canEdit && (
-                      <button
-                        onClick={() => handleToggleStatus(field._id, field.isActive)}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${field.isActive ? 'bg-[#4ADE80]' : 'bg-gray-200'} mx-auto block`}
-                      >
-                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${field.isActive ? 'translate-x-6' : 'translate-x-1'}`} />
-                      </button>
-                    )}
-                  </td>
-                  <td className="p-4 text-center">
-                    <div className="flex items-center justify-center gap-3">
+                  <tr key={field._id} className={`hover:bg-[#FAF4EF]/30 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(field._id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedIds([...selectedIds, field._id]);
+                          } else {
+                            setSelectedIds(selectedIds.filter(id => id !== field._id));
+                          }
+                        }}
+                        className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer mx-auto block"
+                      />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-left text-sm">
+                      <p className="font-bold text-sm text-gray-800">{field.label}</p>
+                      {field.type === 'dropdown' && (
+                        <div className="text-[10px] text-gray-500 mt-1 truncate max-w-[200px]">
+                          {field.options.join(', ')}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                      <div className="flex justify-center">
+                        <TypeBadge type={field.type} />
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                      <div className="flex justify-center">
+                        <ActiveBadge status={field.isRequired ? 'Required' : 'Optional'} />
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                      <div className="flex justify-center">
+                        {canEdit ? (
+                          <button onClick={() => handleToggleStatus(field._id, field.isActive)} title="Click to toggle">
+                            <ActiveBadge status={field.isActive} />
+                          </button>
+                        ) : (
+                          <ActiveBadge status={field.isActive} />
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                      <div className="flex items-center justify-center gap-3">
                       {canEdit && (
                         <button onClick={() => openEditModal(field)} className="text-blue-600 hover:text-blue-700 transition-colors" title="Edit Field">
                           <Edit size={15} />
@@ -306,215 +315,236 @@ export default function CustomizeFieldManager({ canCreate = true, canEdit = true
       </div>
 
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-[20px] shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 md:px-8 border-b border-[#E6DFD4] bg-[#F8F4EC]">
-              <h2 className="text-[28px] font-serif font-bold text-[#141225] tracking-tight flex items-center gap-2">
-                <Settings className="w-6 h-6 text-[#8B5E3C]" /> Create New Field
-              </h2>
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-xs animate-fade-in">
+          <div className="w-full max-w-2xl bg-white h-full shadow-2xl flex flex-col animate-slide-left">
+            <div className="px-6 py-5 border-b border-[#E9DED3] bg-[#FDFBF7] flex items-center justify-between sticky top-0 z-10">
+              <h2 className="text-3xl font-serif font-bold text-[#141225] tracking-tight">Create New Field</h2>
               <button onClick={() => setShowAddModal(false)} className="p-2 text-gray-400 hover:text-red-700 transition-colors">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
 
-            {/* Content */}
-            <form onSubmit={handleAddField} className="p-8 space-y-6 bg-white overflow-y-auto max-h-[70vh]">
-              <div>
-                <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Field Label <span className="text-red-500">*</span></label>
-                <input
-                  type="text"
-                  required
-                  value={newField.label}
-                  onChange={(e) => setNewField({ ...newField, label: e.target.value })}
-                  className="w-full px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all"
-                  placeholder="e.g. Wood Type, Product Name, Gift Wrap"
-                />
-              </div>
+            <form id="addFieldForm" onSubmit={handleAddField} className="flex-1 overflow-y-auto p-6 space-y-8 bg-white">
+              <div className="bg-[#FAFAFA] border border-[#F0EAE2] rounded-2xl p-6 space-y-5">
+                <h3 className="text-[17px] font-serif font-bold text-[#3E2723] flex items-center gap-2">
+                  <span className="w-6 h-6 flex items-center justify-center text-sm font-semibold text-gray-800">📋</span>
+                  Field Configuration
+                </h3>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Field Type <span className="text-red-500">*</span></label>
-                  <select
-                    value={newField.type}
-                    onChange={(e) => setNewField({ ...newField, type: e.target.value })}
-                    className="w-full px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all appearance-none"
-                  >
-                    <option value="text">Text Input</option>
-                    <option value="dropdown">Dropdown</option>
-                    <option value="checkbox">Checkbox</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Requirement</label>
-                  <select
-                    value={newField.isRequired ? 'yes' : 'no'}
-                    onChange={(e) => setNewField({ ...newField, isRequired: e.target.value === 'yes' })}
-                    className="w-full px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all appearance-none"
-                  >
-                    <option value="yes">Required</option>
-                    <option value="no">Optional</option>
-                  </select>
-                </div>
-              </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Field Label <span className="text-red-500">*</span></label>
+                    <input
+                      type="text"
+                      required
+                      value={newField.label}
+                      onChange={(e) => setNewField({ ...newField, label: e.target.value })}
+                      className="w-full px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all"
+                      placeholder="e.g. Wood Type, Product Name, Gift Wrap"
+                    />
+                  </div>
 
-              {newField.type === 'dropdown' && (
-                <div className="bg-[#F8F4EC] p-6 rounded-xl space-y-4 border border-[#E9DED3]">
-                  <label className="block text-[15px] font-serif font-bold text-[#3E2723]">Dropdown Options</label>
-                  {newField.options.map((opt, idx) => (
-                    <div key={idx} className="flex gap-3">
-                      <input
-                        type="text"
-                        value={opt}
-                        onChange={(e) => updateOption(idx, e.target.value)}
-                        placeholder={`Option ${idx + 1}`}
-                        className="flex-1 px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all"
-                        required
-                      />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Field Type <span className="text-red-500">*</span></label>
+                      <select
+                        value={newField.type}
+                        onChange={(e) => setNewField({ ...newField, type: e.target.value })}
+                        className="w-full px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all appearance-none"
+                      >
+                        <option value="text">Text Input</option>
+                        <option value="dropdown">Dropdown</option>
+                        <option value="checkbox">Checkbox</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Requirement</label>
+                      <select
+                        value={newField.isRequired ? 'yes' : 'no'}
+                        onChange={(e) => setNewField({ ...newField, isRequired: e.target.value === 'yes' })}
+                        className="w-full px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all appearance-none"
+                      >
+                        <option value="yes">Required</option>
+                        <option value="no">Optional</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {newField.type === 'dropdown' && (
+                    <div className="bg-[#F8F4EC] p-6 rounded-xl space-y-4 border border-[#E9DED3]">
+                      <label className="block text-[15px] font-serif font-bold text-[#3E2723]">Dropdown Options</label>
+                      {newField.options.map((opt, idx) => (
+                        <div key={idx} className="flex gap-3">
+                          <input
+                            type="text"
+                            value={opt}
+                            onChange={(e) => updateOption(idx, e.target.value)}
+                            placeholder={`Option ${idx + 1}`}
+                            className="flex-1 px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all"
+                            required
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeOption(idx)}
+                            disabled={newField.options.length === 1}
+                            className="p-3 text-red-500 hover:bg-red-50 rounded-xl transition-colors disabled:opacity-50"
+                          >
+                            <Trash className="w-5 h-5" />
+                          </button>
+                        </div>
+                      ))}
                       <button
                         type="button"
-                        onClick={() => removeOption(idx)}
-                        disabled={newField.options.length === 1}
-                        className="p-3 text-red-500 hover:bg-red-50 rounded-xl transition-colors disabled:opacity-50"
+                        onClick={addOption}
+                        className="text-[15px] font-bold text-[#8B5E3C] hover:text-[#7a5234] flex items-center gap-1 transition-colors"
                       >
-                        <Trash className="w-5 h-5" />
+                        <Plus className="w-4 h-4" /> Add Option
                       </button>
                     </div>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={addOption}
-                    className="text-[15px] font-bold text-[#8B5E3C] hover:text-[#7a5234] flex items-center gap-1 transition-colors"
-                  >
-                    <Plus className="w-4 h-4" /> Add Option
-                  </button>
+                  )}
                 </div>
-              )}
-
-              <div className="pt-6 mt-6 border-t border-[#E6DFD4] flex items-center justify-center gap-4">
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="admin-cancel-btn"
-                >
-                  CANCEL
-                </button>
-                <button
-                  type="submit"
-                  disabled={adding}
-                  className="flex items-center justify-center gap-2 bg-[#8B5E3C] hover:bg-[#7a5234] text-white px-8 py-3 rounded-full text-[15px] font-bold shadow-sm transition-all uppercase tracking-wide disabled:opacity-60"
-                >
-                  {adding ? 'SAVING...' : 'SAVE FIELD'}
-                </button>
               </div>
             </form>
+            
+            <div className="p-6 border-t border-[#E9DED3] bg-[#FDFBF7] flex justify-end gap-3 sticky bottom-0 z-10">
+              <button
+                type="button"
+                onClick={() => setShowAddModal(false)}
+                className="px-6 py-2.5 rounded-xl border border-[#D6C9BC] text-[#7A5C44] font-semibold hover:bg-[#F5EDE4] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="addFieldForm"
+                disabled={adding}
+                className="px-8 py-2.5 rounded-xl bg-[#8B5E3C] text-white font-bold hover:bg-[#7A5234] transition-colors shadow-md disabled:opacity-70 flex items-center gap-2"
+              >
+                {adding ? 'Saving...' : 'Save Field'}
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {showEditModal && editingField && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-[20px] shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 md:px-8 border-b border-[#E6DFD4] bg-[#F8F4EC]">
-              <h2 className="text-[28px] font-serif font-bold text-[#141225] tracking-tight flex items-center gap-2">
-                <Settings className="w-6 h-6 text-[#8B5E3C]" /> Edit Field
-              </h2>
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-xs animate-fade-in">
+          <div className="w-full max-w-2xl bg-white h-full shadow-2xl flex flex-col animate-slide-left">
+            <div className="px-6 py-5 border-b border-[#E9DED3] bg-[#FDFBF7] flex items-center justify-between sticky top-0 z-10">
+              <h2 className="text-3xl font-serif font-bold text-[#141225] tracking-tight">Edit Field</h2>
               <button onClick={() => setShowEditModal(false)} className="p-2 text-gray-400 hover:text-red-700 transition-colors">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
 
-            {/* Content */}
-            <form onSubmit={handleUpdateField} className="p-8 space-y-6 bg-white overflow-y-auto max-h-[70vh]">
-              <div>
-                <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Field Label <span className="text-red-500">*</span></label>
-                <input
-                  type="text"
-                  required
-                  value={editingField.label}
-                  onChange={(e) => setEditingField({ ...editingField, label: e.target.value })}
-                  className="w-full px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all"
-                  placeholder="e.g. Wood Type, Product Name, Gift Wrap"
-                />
-              </div>
+            <form id="editFieldForm" onSubmit={handleUpdateField} className="flex-1 overflow-y-auto p-6 space-y-8 bg-white">
+              <div className="bg-[#FAFAFA] border border-[#F0EAE2] rounded-2xl p-6 space-y-5">
+                <h3 className="text-[17px] font-serif font-bold text-[#3E2723] flex items-center gap-2">
+                  <span className="w-6 h-6 flex items-center justify-center text-sm font-semibold text-gray-800">📋</span>
+                  Field Configuration
+                </h3>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Field Type <span className="text-red-500">*</span></label>
-                  <select
-                    value={editingField.type}
-                    onChange={(e) => setEditingField({ ...editingField, type: e.target.value })}
-                    className="w-full px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all appearance-none"
-                  >
-                    <option value="text">Text Input</option>
-                    <option value="dropdown">Dropdown</option>
-                    <option value="checkbox">Checkbox</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Requirement</label>
-                  <select
-                    value={editingField.isRequired ? 'yes' : 'no'}
-                    onChange={(e) => setEditingField({ ...editingField, isRequired: e.target.value === 'yes' })}
-                    className="w-full px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all appearance-none"
-                  >
-                    <option value="yes">Required</option>
-                    <option value="no">Optional</option>
-                  </select>
-                </div>
-              </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Field Label <span className="text-red-500">*</span></label>
+                    <input
+                      type="text"
+                      required
+                      value={editingField.label}
+                      onChange={(e) => setEditingField({ ...editingField, label: e.target.value })}
+                      className="w-full px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all"
+                      placeholder="e.g. Wood Type, Product Name, Gift Wrap"
+                    />
+                  </div>
 
-              {editingField.type === 'dropdown' && (
-                <div className="bg-[#F8F4EC] p-6 rounded-xl space-y-4 border border-[#E9DED3]">
-                  <label className="block text-[15px] font-serif font-bold text-[#3E2723]">Dropdown Options</label>
-                  {editingField.options.map((opt, idx) => (
-                    <div key={idx} className="flex gap-3">
-                      <input
-                        type="text"
-                        value={opt}
-                        onChange={(e) => updateEditOption(idx, e.target.value)}
-                        placeholder={`Option ${idx + 1}`}
-                        className="flex-1 px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all"
-                        required
-                      />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Field Type <span className="text-red-500">*</span></label>
+                      <select
+                        value={editingField.type}
+                        onChange={(e) => setEditingField({ ...editingField, type: e.target.value })}
+                        className="w-full px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all appearance-none"
+                      >
+                        <option value="text">Text Input</option>
+                        <option value="dropdown">Dropdown</option>
+                        <option value="checkbox">Checkbox</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[15px] font-serif font-bold text-[#3E2723] mb-1.5">Requirement</label>
+                      <select
+                        value={editingField.isRequired ? 'yes' : 'no'}
+                        onChange={(e) => setEditingField({ ...editingField, isRequired: e.target.value === 'yes' })}
+                        className="w-full px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all appearance-none"
+                      >
+                        <option value="yes">Required</option>
+                        <option value="no">Optional</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {editingField.type === 'dropdown' && (
+                    <div className="bg-[#F8F4EC] p-6 rounded-xl space-y-4 border border-[#E9DED3]">
+                      <label className="block text-[15px] font-serif font-bold text-[#3E2723]">Dropdown Options</label>
+                      {editingField.options.map((opt, idx) => (
+                        <div key={idx} className="flex gap-3">
+                          <input
+                            type="text"
+                            value={opt}
+                            onChange={(e) => {
+                              const newOpts = [...editingField.options];
+                              newOpts[idx] = e.target.value;
+                              setEditingField({ ...editingField, options: newOpts });
+                            }}
+                            placeholder={`Option ${idx + 1}`}
+                            className="flex-1 px-4 py-3 bg-white border border-[#E6DFD4] rounded-xl text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-all"
+                            required
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newOpts = editingField.options.filter((_, i) => i !== idx);
+                              setEditingField({ ...editingField, options: newOpts });
+                            }}
+                            disabled={editingField.options.length === 1}
+                            className="p-3 text-red-500 hover:bg-red-50 rounded-xl transition-colors disabled:opacity-50"
+                          >
+                            <Trash className="w-5 h-5" />
+                          </button>
+                        </div>
+                      ))}
                       <button
                         type="button"
-                        onClick={() => removeEditOption(idx)}
-                        disabled={editingField.options.length === 1}
-                        className="p-3 text-red-500 hover:bg-red-50 rounded-xl transition-colors disabled:opacity-50"
+                        onClick={() => {
+                          setEditingField({ ...editingField, options: [...editingField.options, ''] });
+                        }}
+                        className="text-[15px] font-bold text-[#8B5E3C] hover:text-[#7a5234] flex items-center gap-1 transition-colors"
                       >
-                        <Trash className="w-5 h-5" />
+                        <Plus className="w-4 h-4" /> Add Option
                       </button>
                     </div>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={addEditOption}
-                    className="text-[15px] font-bold text-[#8B5E3C] hover:text-[#7a5234] flex items-center gap-1 transition-colors"
-                  >
-                    <Plus className="w-4 h-4" /> Add Option
-                  </button>
+                  )}
                 </div>
-              )}
-
-              <div className="pt-6 mt-6 border-t border-[#E6DFD4] flex items-center justify-center gap-4">
-                <button
-                  type="button"
-                  onClick={() => setShowEditModal(false)}
-                  className="admin-cancel-btn"
-                >
-                  CANCEL
-                </button>
-                <button
-                  type="submit"
-                  disabled={editing}
-                  className="flex items-center justify-center gap-2 bg-[#8B5E3C] hover:bg-[#7a5234] text-white px-8 py-3 rounded-full text-[15px] font-bold shadow-sm transition-all uppercase tracking-wide disabled:opacity-60"
-                >
-                  {editing ? 'SAVING...' : 'SAVE CHANGES'}
-                </button>
               </div>
             </form>
+            
+            <div className="p-6 border-t border-[#E9DED3] bg-[#FDFBF7] flex justify-end gap-3 sticky bottom-0 z-10">
+              <button
+                type="button"
+                onClick={() => setShowEditModal(false)}
+                className="px-6 py-2.5 rounded-xl border border-[#D6C9BC] text-[#7A5C44] font-semibold hover:bg-[#F5EDE4] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="editFieldForm"
+                disabled={adding}
+                className="px-8 py-2.5 rounded-xl bg-[#8B5E3C] text-white font-bold hover:bg-[#7A5234] transition-colors shadow-md disabled:opacity-70 flex items-center gap-2"
+              >
+                {adding ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
           </div>
         </div>
       )}

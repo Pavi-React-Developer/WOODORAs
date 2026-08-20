@@ -37,6 +37,14 @@ export default function OrderPricingSummary({ order, className = '' }) {
         </div>
       )}
 
+      {/* GST Amount */}
+      {pricing.gstAmount !== undefined && pricing.gstAmount !== null && (
+        <div className="flex justify-between">
+          <span className="text-gray-600">GST Amount</span>
+          <span className="font-semibold text-gray-900">{pricing.gstAmount > 0 ? `+${money(pricing.gstAmount)}` : money(0)}</span>
+        </div>
+      )}
+
       {/* Dynamic billable fees — advance is already excluded from this list */}
       {pricing.fees.map((fee, idx) => (
         <div key={idx} className="flex justify-between">

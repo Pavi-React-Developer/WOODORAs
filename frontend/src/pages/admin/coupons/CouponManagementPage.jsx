@@ -398,7 +398,7 @@ export default function CouponManagementPage({ canCreate = true, canEdit = true,
           {/* â”€â”€ Coupon Details â”€â”€ */}
           <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm p-6 space-y-5">
             <h3 className="text-[17px] font-serif font-bold text-[#3E2723] flex items-center gap-2">
-              <span className="w-6 h-6 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center"><svg className="w-3.5 h-3.5 text-[#8B5E3C]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" /></svg></span>
+              <span className="w-6 h-6 #E6DFD4] flex items-center justify-center text-sm font-semibold text-gray-800"><svg className="w-3.5 h-3.5 text-[#8B5E3C]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" /></svg></span>
               Coupon Details
             </h3>
             <div className="grid gap-5 md:grid-cols-2">
@@ -465,7 +465,7 @@ export default function CouponManagementPage({ canCreate = true, canEdit = true,
           {(form.offerType === 'General Offer' || form.offerType === 'Category Offer' || form.offerType === 'Cart Offer' || form.discountType === 'Percentage') && (
             <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm p-6 space-y-5">
               <h3 className="text-[17px] font-serif font-bold text-[#3E2723] flex items-center gap-2">
-                <span className="w-6 h-6 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center"><svg className="w-3.5 h-3.5 text-[#8B5E3C]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg></span>
+                <span className="w-6 h-6 #E6DFD4] flex items-center justify-center text-sm font-semibold text-gray-800"><svg className="w-3.5 h-3.5 text-[#8B5E3C]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg></span>
                 Conditions
               </h3>
               <div className="grid gap-5 md:grid-cols-2">
@@ -764,47 +764,47 @@ export default function CouponManagementPage({ canCreate = true, canEdit = true,
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
               <tr>
-                <th className="px-4 py-3.5 w-10">
+                <th className="px-6 py-3.5 w-10 text-center">
                   <input
                     type="checkbox"
                     checked={coupons.length > 0 && selectedIds.length === coupons.length}
                     onChange={e => toggleSelectAll(e.target.checked)}
-                    className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                    className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer mx-auto block"
                   />
                 </th>
-                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Coupon Code</th>
-                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Discount Type</th>
-                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Offer Type</th>
-                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Validity</th>
-                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Status</th>
-                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Visibility</th>
-                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Actions</th>
+                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Coupon Code</th>
+                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Discount Type</th>
+                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Offer Type</th>
+                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Validity</th>
+                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Status</th>
+                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Visibility</th>
+                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#E6DFD4] text-sm">
+            <tbody className="bg-white divide-y divide-[#E9DED3] text-sm">
               {sortedCoupons.map((coupon, index) => (
                 <tr key={coupon._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${index % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
-                  <td className="px-4 py-3.5">
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                     <input
                       type="checkbox"
                       checked={selectedIds.includes(coupon._id)}
                       onChange={e => toggleSelectOne(coupon._id, e.target.checked)}
-                      className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                      className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer mx-auto block"
                     />
                   </td>
-                  <td className="px-4 py-3 text-center text-sm font-bold text-[#2F241D]">{coupon.couponCode}</td>
-                  <td className="px-4 py-3 text-center text-xs font-semibold">{coupon.discountType}</td>
-                  <td className="px-4 py-3 text-center text-xs font-semibold">{coupon.offerType}</td>
-                  <td className="px-4 py-3 text-center text-sm">{formatDate(coupon.startDate)} - {formatDate(coupon.endDate)}</td>
-                  <td className="px-4 py-3 text-center"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusBadge(coupon.status)}`}>{coupon.status}</span></td>
-                  <td className="px-4 py-3 text-center">{coupon.visible ? <span className="text-xs font-semibold text-emerald-700">Visible</span> : <span className="text-xs font-semibold text-slate-500">Hidden</span>}</td>
-                  <td className="px-4 py-3 text-center">
-                    <div className="flex flex-wrap items-center justify-center gap-2">
-                      <button onClick={() => setViewingCoupon(coupon)} className="text-green-600 hover:text-green-700 transition-colors" title="View"><Eye size={15} /></button>
-                      {canEdit && <button onClick={() => openEdit(coupon)} className="text-blue-600 hover:text-blue-700 transition-colors" title="Edit"><SquarePen size={15} /></button>}
-                      {canDelete && <button onClick={() => setConfirmDelete(coupon)} className="text-red-500 hover:text-red-600 transition-colors" title="Delete"><Trash2 size={15} /></button>}
-                      {canEdit && <button onClick={() => handleToggleStatus(coupon)} className="p-1.5 text-amber-600 hover:text-amber-700 transition-colors" title="Enable/Disable">{coupon.status === 'active' ? <BadgeX size={15} /> : <BadgeCheck size={15} />}</button>}
-                      {canEdit && <button onClick={() => handleToggleVisibility(coupon)} className="text-green-600 hover:text-green-700 transition-colors" title="Visible/Invisible">{coupon.visible ? <X size={15} /> : <Check size={15} />}</button>}
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-bold text-[#2F241D]">{coupon.couponCode}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-semibold">{coupon.discountType}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-semibold">{coupon.offerType}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm">{formatDate(coupon.startDate)} - {formatDate(coupon.endDate)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm"><span className={`rounded-full px-2.5 py-1 text-sm font-semibold ${getStatusBadge(coupon.status)}`}>{coupon.status}</span></td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm">{coupon.visible ? <span className="text-sm font-semibold text-emerald-700">Visible</span> : <span className="text-sm font-semibold text-slate-500">Hidden</span>}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                    <div className="flex items-center justify-center gap-2">
+                      <button onClick={() => setViewingCoupon(coupon)} className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors" title="View"><Eye className="w-[15px] h-[15px]" /></button>
+                      {canEdit && <button onClick={() => openEdit(coupon)} className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors" title="Edit"><SquarePen className="w-[15px] h-[15px]" /></button>}
+                      {canDelete && <button onClick={() => setConfirmDelete(coupon)} className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors" title="Delete"><Trash2 className="w-[15px] h-[15px]" /></button>}
+                      {canEdit && <button onClick={() => handleToggleStatus(coupon)} className="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50 transition-colors" title="Enable/Disable">{coupon.status === 'active' ? <BadgeX className="w-[15px] h-[15px]" /> : <BadgeCheck className="w-[15px] h-[15px]" />}</button>}
+                      {canEdit && <button onClick={() => handleToggleVisibility(coupon)} className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors" title="Visible/Invisible">{coupon.visible ? <X className="w-[15px] h-[15px]" /> : <Check className="w-[15px] h-[15px]" />}</button>}
                     </div>
                   </td>
                 </tr>
@@ -827,7 +827,7 @@ export default function CouponManagementPage({ canCreate = true, canEdit = true,
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl">
             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Trash size={20} className="text-red-500" />
+              <Trash size={16} className="text-red-500" />
             </div>
             <h4 className="text-lg font-bold text-[#2F241D] text-center">Delete Coupon?</h4>
             <p className="mt-2 text-sm text-gray-600 text-center">

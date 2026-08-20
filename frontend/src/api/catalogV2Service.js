@@ -31,7 +31,7 @@ const request = async (path, options = {}) => {
     const method = options.method || 'GET';
     const cacheKey = `${V2_BASE_URL}${path}`;
 
-    if (method === 'GET') {
+    if (method === 'GET' && !options.forceRefresh) {
         const cached = cache.get(cacheKey);
         if (cached && Date.now() - cached.time < 5 * 60 * 1000) return cached.data; // 5 min TTL
     }
@@ -67,6 +67,8 @@ const request = async (path, options = {}) => {
 
     return data;
 };
+
+export const clearCatalogCache = () => cache.clear();
 
 export const categoryV2API = {
     getAll: async (params = {}) => {

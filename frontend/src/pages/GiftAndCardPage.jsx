@@ -126,11 +126,6 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
   const navigate = useNavigate();
   const { wishlistItems, toggleWishlist } = useWishlistStore();
   const [config, setConfig] = useState(null);
-  const [message, setMessage] = useState('');
-  const [style, setStyle] = useState('Classic');
-  const [selectedDate, setSelectedDate] = useState('');
-  const [showCalendar, setShowCalendar] = useState(false);
-  const [isGiftWrapper, setIsGiftWrapper] = useState(true);
   const [dynamicBanner, setDynamicBanner] = useState(null);
 
   // Product Selection States
@@ -139,8 +134,35 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
   const [products, setProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedSubCategory, setSelectedSubCategory] = useState('');
-  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedProducts, setSelectedProducts] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const toggleProductSelection = (product) => {
+    setSelectedProducts(prev => {
+      const isSelected = prev.some(p => p._id === product._id);
+      if (isSelected) {
+        return prev.filter(p => p._id !== product._id);
+      }
+      return [...prev, { 
+        ...product, 
+        giftPrefs: { 
+          isGiftWrapper: true, 
+          message: '', 
+          style: 'Classic',
+          selectedDate: '',
+          showCalendar: false
+        } 
+      }];
+    });
+  };
+
+  const updateGiftPref = (productId, field, value) => {
+    setSelectedProducts(prev => prev.map(p => 
+      p._id === productId 
+        ? { ...p, giftPrefs: { ...p.giftPrefs, [field]: value } }
+        : p
+    ));
+  };
 
   useEffect(() => {
     const fetchConfig = async () => {
@@ -216,46 +238,49 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
   }, [selectedCategory, selectedSubCategory, searchQuery]);
 
   const handleConfirm = async () => {
-    if (!selectedProduct) {
-      toast.error('Please select a product first.');
+    if (selectedProducts.length === 0) {
+      toast.error('Please select at least one product first.');
       return;
     }
-    if (!selectedDate) {
-      toast.error('Please select a delivery date.');
+    const missingDate = selectedProducts.some(p => !p.giftPrefs.selectedDate);
+    if (missingDate) {
+      toast.error('Please select a delivery date for all selected gifts.');
       return;
     }
 
-    // Build a cart-compatible product object with ALL gift preferences embedded.
-    // The useCartStore.addToCart() picks up these fields directly from the product arg.
-    const productWithGiftPrefs = {
-      ...selectedProduct,
-      // Core product identity fields required by addToCart
-      _id: selectedProduct._id,
-      name: selectedProduct.name,
-      price: selectedProduct.salePrice || selectedProduct.discountPrice || selectedProduct.price || 0,
-      images: selectedProduct.images,
-      // Gift preference fields – picked up by addToCart & stored in cart item
-      isGift: true,
-      isGiftWrapper: isGiftWrapper,
-      giftMessage: message || '',
-      giftMessageStyle: style,       // cart store maps this → giftCardStyle on the item
-      deliveryDate: selectedDate,
-      scheduledDeliveryDate: selectedDate,
-    };
-
-    localStorage.setItem('giftCardPreferences', JSON.stringify({
-      productId: selectedProduct._id,
-      message: message || '',
-      style,
-      deliveryDate: selectedDate,
-    }));
-
-    // Add product to cart and navigate
     if (onAddToCart && onNavigate) {
-      await onAddToCart(productWithGiftPrefs);
-      useCartStore.getState().setCheckoutOrigin('/gift-and-card');
-      toast.success('Gift preferences saved! Added to cart.');
-      onNavigate('/review-order');
+      try {
+        for (const product of selectedProducts) {
+          const productWithGiftPrefs = {
+            ...product,
+            _id: product._id,
+            name: product.name,
+            price: product.salePrice || product.discountPrice || product.price || 0,
+            images: product.images,
+            isGift: true,
+            isGiftWrapper: product.giftPrefs.isGiftWrapper,
+            giftMessage: product.giftPrefs.message || '',
+            giftMessageStyle: product.giftPrefs.style,
+            deliveryDate: product.giftPrefs.selectedDate,
+            scheduledDeliveryDate: product.giftPrefs.selectedDate,
+          };
+          await onAddToCart(productWithGiftPrefs);
+        }
+        
+        localStorage.setItem('giftCardPreferences', JSON.stringify({
+          productId: selectedProducts[0]._id,
+          message: selectedProducts[0].giftPrefs.message || '',
+          style: selectedProducts[0].giftPrefs.style,
+          deliveryDate: selectedProducts[0].giftPrefs.selectedDate,
+        }));
+
+        useCartStore.getState().setCheckoutOrigin('/gift-and-card');
+        toast.success('Gift preferences saved! Added to cart.');
+        onNavigate('/review-order');
+      } catch (error) {
+        toast.error('Failed to add some products to cart.');
+        console.error(error);
+      }
     } else {
        toast.error('Navigation error. Please try again.');
     }
@@ -360,9 +385,9 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
               {products.map(product => (
                 <div 
                   key={product._id}
-                  onClick={() => setSelectedProduct(product)}
+                  onClick={() => toggleProductSelection(product)}
                   className={`group cursor-pointer bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col border ${
-                    selectedProduct?._id === product._id ? 'border-[#A66C1C] ring-1 ring-[#A66C1C]' : 'border-[#E6DFD4]'
+                    selectedProducts.some(p => p._id === product._id) ? 'border-[#A66C1C] ring-1 ring-[#A66C1C]' : 'border-[#E6DFD4]'
                   }`}
                 >
                   <div className="aspect-[4/5] sm:aspect-[4/3] bg-[#F7F3EE] relative overflow-hidden shrink-0">
@@ -423,123 +448,161 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
               )}
             </div>
           </div>
-
-          {selectedProduct && (
-            <div className="bg-[#FAF4EF] p-4 flex items-center gap-4 border border-gray-200 rounded-sm">
-              <div className="w-16 h-16 bg-white rounded-sm overflow-hidden shrink-0 border border-gray-100">
-                {selectedProduct.images?.[0] && (
-                  <img src={getImageSrc(selectedProduct.images[0])} alt={selectedProduct.name} className="w-full h-full object-cover" />
-                )}
-              </div>
-              <div className="flex-1">
-                <p className="text-xs font-bold tracking-wider text-gray-500 uppercase">SELECTED GIFT</p>
-                <p className="text-sm font-medium text-gray-900 line-clamp-1">{selectedProduct.name}</p>
-                <p className="text-sm font-bold text-[#A66C1C] mt-0.5">₹{(selectedProduct.discountPrice || selectedProduct.price || 0).toLocaleString()}</p>
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* Preferences Section */}
-        <div className="max-w-4xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-6">
-          
-          {/* Personalized Message */}
-          <div className="bg-white p-6 shadow-sm rounded-sm border border-gray-100">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">TOUCH OF THOUGHT</p>
-            <h3 className="text-xl font-semibold text-[#A66C1C] mb-4">Personalized Message</h3>
-            
-            <div className="mb-6 flex items-center justify-between bg-gray-50 p-4 rounded-sm border border-gray-100">
-              <div>
-                <p className="text-sm font-bold text-gray-900">Gift Wrapper</p>
-                <p className="text-xs text-gray-500">Add premium wrapping and gift box</p>
-              </div>
-              <button 
-                onClick={() => setIsGiftWrapper(!isGiftWrapper)}
-                className={`flex-none shrink-0 relative inline-flex h-6 w-11 min-w-[44px] max-w-[44px] min-h-[24px] max-h-[24px] items-center rounded-full transition-colors ${isGiftWrapper ? 'bg-[#A66C1C]' : 'bg-gray-300'}`}
-              >
-                <span className={`flex-none shrink-0 inline-block h-4 w-4 min-w-[16px] max-w-[16px] min-h-[16px] max-h-[16px] transform rounded-full bg-white transition-transform ${isGiftWrapper ? 'translate-x-6' : 'translate-x-1'}`} />
-              </button>
-            </div>
-
-            <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">YOUR NOTE</label>
-            <textarea
-              rows="3"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Write your heartfelt message here..."
-              className={`w-full border border-gray-200 p-3 focus:ring-[#A66C1C] focus:border-[#A66C1C] resize-none mb-4 rounded-sm ${
-                style === 'Classic' ? 'font-serif text-sm' : style === 'Elegant' ? 'font-script italic text-base' : 'font-sans tracking-wide text-sm'
-              }`}
-            ></textarea>
-            
-            <div className="flex flex-wrap gap-2 mb-6">
-              {['Classic', 'Elegant', 'Modernist'].map(s => (
-                <button
-                  key={s}
-                  onClick={() => setStyle(s)}
-                  className={`px-3 py-1.5 text-xs font-bold tracking-wider uppercase border ${style === s ? 'border-[#A66C1C] text-[#A66C1C]' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-
-            <div className={`border border-dashed border-gray-300 p-4 text-center italic text-gray-600 min-h-[80px] flex items-center justify-center ${
-              style === 'Classic' ? 'font-serif' : style === 'Elegant' ? 'font-script text-xl' : 'font-sans tracking-wide'
-            }`}>
-              {message || '"A little joy for a big heart."'}
-            </div>
-          </div>
-
-          {/* Schedule Delivery */}
-          <div className="bg-white p-6 shadow-sm rounded-sm border border-gray-100 flex flex-col">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">PERFECT TIMING</p>
-            <h3 className="text-xl font-semibold text-[#A66C1C] mb-4">Schedule Delivery</h3>
-            
-            <div className="mb-6 flex-1 flex gap-4">
-              <div className="flex-1">
-                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Today's Date</label>
-                <input 
-                  type="text" 
-                  value={new Date().toLocaleDateString('en-GB')} 
-                  disabled 
-                  className="w-full h-11 border border-gray-200 px-3 text-sm bg-gray-50 text-gray-500 rounded-sm cursor-not-allowed"
-                />
-              </div>
-
-              <div className="flex-1">
-                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Delivery Date</label>
-                <div className="relative">
-                  <div 
-                    className="w-full h-11 border border-gray-200 px-3 text-sm bg-white cursor-pointer hover:border-gray-300 rounded-sm flex justify-between items-center"
-                    onClick={() => setShowCalendar(!showCalendar)}
-                  >
-                    <span className={`truncate mr-2 ${selectedDate ? "text-gray-900" : "text-gray-400"}`}>
-                      {selectedDate ? new Date(selectedDate).toLocaleDateString('en-GB') : 'Select a date'}
-                    </span>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="shrink-0 h-4 w-4 text-[#A66C1C]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
+        {/* Selected Gifts Summary & Preferences */}
+        {selectedProducts.length > 0 && (
+          <div className="max-w-4xl mx-auto w-full mb-6 bg-white p-6 shadow-sm rounded-sm border border-gray-100">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">SELECTED GIFT{selectedProducts.length > 1 ? 'S' : ''} ({selectedProducts.length})</p>
+            <div className="flex flex-col gap-6">
+              {selectedProducts.map((sp, index) => (
+                <div key={`${sp._id}-${index}`} className="flex flex-col gap-4 bg-gray-50 p-4 rounded-sm border border-gray-200">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 bg-white rounded overflow-hidden shrink-0 border border-gray-100 shadow-sm">
+                      {sp.images?.[0] && (
+                        <img src={getImageSrc(sp.images[0])} alt={sp.name} className="w-full h-full object-cover" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-base font-semibold text-gray-900">{sp.name}</p>
+                      <p className="text-sm font-bold text-[#A66C1C] mt-1">₹{(sp.salePrice || sp.discountPrice || sp.price || 0).toLocaleString()}</p>
+                    </div>
+                    <button onClick={() => toggleProductSelection(sp)} className="p-2 text-gray-400 hover:text-red-500 transition-colors self-start">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
                   </div>
 
-                  {showCalendar && (
-                    <div className="absolute top-full mt-1 w-[280px] sm:w-[320px] z-50 shadow-xl rounded-lg bg-white border border-gray-100 right-0 origin-top-right">
-                      <CustomCalendar 
-                        selectedDate={selectedDate} 
-                        onSelectDate={handleDateSelect} 
-                        config={config} 
-                        isAdminMode={false} 
-                      />
+                  {/* Per-item Touch of Thought & Perfect Timing */}
+                  <div className="bg-white p-5 rounded-sm border border-gray-100 mt-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      {/* Left: TOUCH OF THOUGHT */}
+                      <div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">TOUCH OF THOUGHT</p>
+                        <div className="mb-4 flex items-center justify-between bg-[#F9F6F0] p-3 rounded-sm border border-[#EFE6DB]">
+                          <div>
+                            <p className="text-sm font-bold text-gray-900 flex items-center">
+                              Gift Wrapper
+                              {sp.giftPrefs?.isGiftWrapper && config?.giftWrapFee > 0 && (
+                                <span className="ml-2 text-[10px] text-[#A66C1C] bg-white px-2 py-0.5 rounded-full border border-[#EFE6DB]">+₹{config.giftWrapFee}</span>
+                              )}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-0.5">Premium wrapping & box</p>
+                          </div>
+                          <button 
+                            onClick={() => updateGiftPref(sp._id, 'isGiftWrapper', !sp.giftPrefs?.isGiftWrapper)}
+                            className={`flex-none shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${sp.giftPrefs?.isGiftWrapper ? 'bg-[#A66C1C]' : 'bg-gray-300'}`}
+                          >
+                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${sp.giftPrefs?.isGiftWrapper ? 'translate-x-6' : 'translate-x-1'}`} />
+                          </button>
+                        </div>
+
+                        <label className="block text-[10px] font-bold text-gray-600 uppercase tracking-wider mb-2">Personalized Note</label>
+                        <textarea
+                          rows="2"
+                          value={sp.giftPrefs?.message || ''}
+                          onChange={(e) => updateGiftPref(sp._id, 'message', e.target.value)}
+                          placeholder="Write your heartfelt message..."
+                          className={`w-full border border-gray-200 p-2.5 focus:ring-[#A66C1C] focus:border-[#A66C1C] resize-none mb-3 rounded-sm ${
+                            sp.giftPrefs?.style === 'Classic' ? 'font-serif text-sm' : sp.giftPrefs?.style === 'Elegant' ? 'font-script italic text-base' : 'font-sans tracking-wide text-sm'
+                          }`}
+                        ></textarea>
+                        
+                        <div className="flex flex-wrap gap-2">
+                          {['Classic', 'Elegant', 'Modernist'].map(s => (
+                            <button
+                              key={s}
+                              onClick={() => updateGiftPref(sp._id, 'style', s)}
+                              className={`px-3 py-1 text-[9px] font-bold tracking-wider uppercase border ${sp.giftPrefs?.style === s ? 'border-[#A66C1C] text-[#A66C1C] bg-[#FAF4EF]' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}
+                            >
+                              {s}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Right: PERFECT TIMING */}
+                      <div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">PERFECT TIMING</p>
+                        <div className="flex flex-col gap-4">
+                          <div>
+                            <label className="block text-[10px] font-bold text-gray-600 uppercase tracking-wider mb-2">Today's Date</label>
+                            <input 
+                              type="text" 
+                              value={new Date().toLocaleDateString('en-GB')} 
+                              disabled 
+                              className="w-full h-10 border border-gray-200 px-3 text-sm bg-gray-50 text-gray-500 rounded-sm cursor-not-allowed"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-bold text-gray-600 uppercase tracking-wider mb-2">Delivery Date</label>
+                            <div className="relative">
+                              <div 
+                                className="w-full h-10 border border-gray-200 px-3 text-sm bg-white cursor-pointer hover:border-gray-300 rounded-sm flex justify-between items-center"
+                                onClick={() => updateGiftPref(sp._id, 'showCalendar', !sp.giftPrefs?.showCalendar)}
+                              >
+                                <span className={`truncate mr-2 ${sp.giftPrefs?.selectedDate ? "text-gray-900" : "text-gray-400"}`}>
+                                  {sp.giftPrefs?.selectedDate ? new Date(sp.giftPrefs.selectedDate).toLocaleDateString('en-GB') : 'Select a date'}
+                                </span>
+                                <svg className="shrink-0 h-4 w-4 text-[#A66C1C]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                              </div>
+
+                              {sp.giftPrefs?.showCalendar && (
+                                <div className="absolute top-full mt-1 w-[280px] sm:w-[320px] z-50 shadow-xl rounded-lg bg-white border border-gray-100 right-0 origin-top-right">
+                                  <CustomCalendar 
+                                    selectedDate={sp.giftPrefs?.selectedDate} 
+                                    onSelectDate={(date) => {
+                                      const today = new Date();
+                                      const tYear = today.getFullYear();
+                                      const tMonth = String(today.getMonth() + 1).padStart(2, '0');
+                                      const tDay = String(today.getDate()).padStart(2, '0');
+                                      const todayStr = `${tYear}-${tMonth}-${tDay}`;
+
+                                      if (date === todayStr) {
+                                        toast.error("Delivery date must be different from today's date! Please select another date.");
+                                        return;
+                                      }
+                                      updateGiftPref(sp._id, 'selectedDate', date);
+                                      updateGiftPref(sp._id, 'showCalendar', false);
+                                    }} 
+                                    config={config} 
+                                    isAdminMode={false} 
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </div>
+              ))}
+            </div>
+            <div className="mt-6 pt-4 border-t border-gray-100 flex flex-col items-end">
+              <div className="flex items-center gap-4">
+                <p className="text-sm font-bold text-gray-600 uppercase tracking-wider">Total Selection</p>
+                <p className="text-2xl font-bold text-[#A66C1C]">
+                  ₹{(
+                    selectedProducts.reduce((sum, sp) => {
+                      const basePrice = sp.salePrice || sp.discountPrice || sp.price || 0;
+                      const wrapFee = (sp.giftPrefs?.isGiftWrapper && config?.giftWrapFee) ? config.giftWrapFee : 0;
+                      return sum + basePrice + wrapFee;
+                    }, 0)
+                  ).toLocaleString()}
+                </p>
               </div>
             </div>
-
-            <button onClick={handleConfirm} className="w-full bg-[#A66C1C] text-white px-6 py-3 text-sm font-bold tracking-widest uppercase hover:bg-[#8B5E3C] transition-colors mt-auto">
-              Confirm Preferences
-            </button>
           </div>
+        )}
+
+        {/* Global Confirm Section */}
+        <div className="max-w-4xl mx-auto w-full mt-2 mb-6">
+          <button onClick={handleConfirm} className="w-full bg-[#A66C1C] text-white px-6 py-4 text-sm font-bold tracking-widest uppercase hover:bg-[#8B5E3C] transition-colors rounded-sm shadow-sm">
+            Confirm Preferences
+          </button>
         </div>
       </div>
     </div>

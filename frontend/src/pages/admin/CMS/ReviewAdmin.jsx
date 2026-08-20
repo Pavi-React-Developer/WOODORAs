@@ -259,7 +259,7 @@ export default function ReviewAdmin({ canCreate, canEdit, canDelete }) {
             <p className="text-xs text-brand-medium mt-1">
               Check the reviews you want to show on the landing page.
               {form.featuredReviewIds.length > 0 && (
-                <span className="ml-2 bg-[#514332] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                <span className="ml-2 text-white text-[10px] font-bold text-sm font-semibold">
                   {form.featuredReviewIds.length} selected
                 </span>
               )}

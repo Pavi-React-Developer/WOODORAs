@@ -277,6 +277,7 @@ const useCartStore = create(
           variantOptions,
           maxStock: Math.max(1, maxStock),
           weight: selectedVariant?.weight ?? product.shippingWeight ?? product.weight ?? 0,
+          gstRule: product.gstRule || null,
           isGift: product.isGift || false,
           isGiftWrapper: product.isGiftWrapper !== undefined ? product.isGiftWrapper : true,
           giftBox: product.giftBox || null,
@@ -518,6 +519,7 @@ function normalizeCartItem(item = {}) {
     giftCardStyle: item.giftCardStyle || null,
     deliveryDate: item.deliveryDate || item.scheduledDeliveryDate || null,
     scheduledDeliveryDate: item.scheduledDeliveryDate || null,
+    gstRule: item.gstRule || null,
   };
 }
 

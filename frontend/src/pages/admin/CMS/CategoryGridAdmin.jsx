@@ -328,7 +328,7 @@ export default function CategoryGridAdmin({ canCreate, canEdit, canDelete }) {
               <p className="font-semibold text-brand-dark text-sm">{item.title}</p>
               <div className="flex items-center gap-3 text-xs text-brand-medium mt-0.5">
                 <span>{item.category?.name || 'Unassigned category'}</span>
-                <span className="w-1 h-1 bg-gray-300 rounded-full" />
+                <span className="w-1 h-1 text-sm font-semibold text-gray-800" />
                 <span>{item.products?.length || 0} products</span>
               </div>
             </div>

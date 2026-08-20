@@ -102,6 +102,10 @@ const productSchema = new mongoose.Schema({
         default: 0,
         min: 0,
     },
+    gstRule: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'GSTRule'
+    },
     hsnCode: {
         type: String,
         trim: true,

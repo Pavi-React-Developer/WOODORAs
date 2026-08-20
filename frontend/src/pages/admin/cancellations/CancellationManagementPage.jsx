@@ -1,3 +1,4 @@
+import { ActiveBadge, RequestBadge, OrderBadge } from '../../../components/admin/CommonComponents';
 import React, { useState, useEffect } from 'react';
 import { Pencil, Trash2, Download, Plus, Search, ChevronDown, Check, X, Lock, AlertCircle, RefreshCw, SquarePen } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -391,12 +392,7 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
                           </button>
                         </td>
                         <td className="px-4 py-6 text-center">
-                          <span className={`inline-flex px-2 py-1 rounded text-[10px] uppercase tracking-wider font-bold ${rule.status === 'Active' ? 'bg-emerald-100 text-emerald-700' :
-                            rule.status === 'Disabled' ? 'bg-red-100 text-red-700' :
-                              'bg-gray-100 text-gray-700'
-                            }`}>
-                            {rule.status}
-                          </span>
+                          <RequestBadge status={rule.status} />
                         </td>
                         <td className="px-4 py-6 text-center whitespace-nowrap">
                           {rule.status !== 'Locked' ? (

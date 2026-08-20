@@ -100,7 +100,17 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
   });
 
   const subtotal = getSubtotal();
-  const total = Math.max(0, subtotal + appliedFees.reduce((sum, fee) => sum + fee.amount, 0) - discountAmount);
+  const totalGst = cartItems.reduce((sum, item) => {
+    const qty = Number(item.qty) || 1;
+    const price = Number(item.price) || 0;
+    const gstPercentage = Number(item.gstRule?.percentage) || 0;
+    
+    if (gstPercentage > 0) {
+      return sum + ((price * qty) * (gstPercentage / 100));
+    }
+    return sum;
+  }, 0);
+  const total = Math.max(0, subtotal + totalGst + appliedFees.reduce((sum, fee) => sum + fee.amount, 0) - discountAmount);
 
   useEffect(() => {
     let mounted = true;
@@ -343,11 +353,14 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
           giftMessage: item.giftMessage,
           giftMessageStyle: item.giftCardStyle,
           deliveryDate: item.deliveryDate || item.scheduledDeliveryDate || null,
+          gstPercent: item.gstRule?.percentage || 0,
+          gstAmount: item.gstRule?.percentage ? ((item.price * item.qty) * (item.gstRule.percentage / 100)) : 0,
         })),
         shippingAddress,
         paymentMethod,
         itemsPrice: subtotal,
         taxPrice: 0,
+        totalGst,
         shippingPrice: deliveryCharge,
         totalPrice: total,
         codAdvance,
@@ -710,6 +723,12 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
                   <span>Subtotal</span>
                   <span className="text-gray-900 font-medium">₹{subtotal.toLocaleString()}</span>
                 </div>
+                {totalGst !== undefined && (
+                  <div className="flex justify-between text-gray-600">
+                    <span>GST Amount</span>
+                    <span className="text-gray-900 font-medium">₹{(totalGst || 0).toLocaleString()}</span>
+                  </div>
+                )}
                 {discountAmount > 0 && appliedCoupon && (
                   <div className="flex justify-between text-emerald-700 font-medium">
                     <span>Coupon {appliedCoupon.couponCode}</span>

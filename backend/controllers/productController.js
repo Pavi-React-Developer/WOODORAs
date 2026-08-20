@@ -4,6 +4,7 @@ const SubCategory = require('../models/SubCategory');
 const Attribute = require('../models/Attribute');
 const ProductAttributeValue = require('../models/ProductAttributeValue');
 const Inventory = require('../models/Inventory');
+const GSTRule = require('../models/GSTRule');
 const ProductImage = require('../models/catalog/ProductImage');
 const ProductVariant = require('../models/ProductVariant');
 const ProductVariantOption = require('../models/ProductVariantOption');
@@ -136,19 +137,21 @@ const getProducts = async (req, res) => {
         const products = await Product.find(filter)
             .populate('category')
             .populate('subCategory')
+            .populate('gstRule')
             .sort({ createdAt: -1 })
             .skip(skip)
-            .limit(parseInt(limit));
+            .limit(parseInt(limit))
+            .lean();
 
         // Get inventory info for each product
         const productsWithInventory = await Promise.all(
             products.map(async (product) => {
-                const inventory = await Inventory.findOne({ product: product._id });
+                const inventory = await Inventory.findOne({ product: product._id }).lean();
                 const attributes = await ProductAttributeValue.find({ product: product._id })
-                    .populate('attribute', 'name type');
-                const images = await ProductImage.find({ product: product._id }).sort({ displayOrder: 1 });
+                    .populate('attribute', 'name type').lean();
+                const images = await ProductImage.find({ product: product._id }).sort({ displayOrder: 1 }).lean();
                 
-                const productObj = product.toObject();
+                const productObj = { ...product };
                 if (images && images.length > 0) {
                     productObj.images = images.map(img => img.url);
                 }
@@ -183,23 +186,24 @@ const getProductById = async (req, res) => {
     try {
         const product = await Product.findById(req.params.id)
             .populate('category', 'name slug')
+            .populate('gstRule')
             .populate({
                 path: 'subCategory',
                 select: 'name slug attributes',
                 populate: { path: 'attributes', select: 'name type' }
-            });
+            }).lean();
 
         if (!product) {
             return res.status(404).json({ success: false, message: 'Product not found' });
         }
 
-        const inventory = await Inventory.findOne({ product: product._id });
+        const inventory = await Inventory.findOne({ product: product._id }).lean();
         const attributes = await ProductAttributeValue.find({ product: product._id })
             .populate('attribute', 'name type slug')
-            .populate('attribute.values', 'value colorCode');
-        const images = await ProductImage.find({ product: product._id }).sort({ displayOrder: 1 });
+            .populate('attribute.values', 'value colorCode').lean();
+        const images = await ProductImage.find({ product: product._id }).sort({ displayOrder: 1 }).lean();
         
-        const productObj = product.toObject();
+        const productObj = { ...product };
         if (images && images.length > 0) {
             productObj.images = images.map(img => img.url);
         }
@@ -384,7 +388,7 @@ const getSubCategoryAttributes = async (req, res) => {
         const AttributeValue = require('../models/AttributeValue');
 
         const subCategory = await SubCategory.findById(req.params.subCategoryId)
-            .populate('attributes', 'name slug type displayOrder');
+            .populate('attributes', 'name slug type displayOrder').lean();
 
         if (!subCategory) {
             return res.status(404).json({ success: false, message: 'SubCategory not found' });
@@ -395,7 +399,7 @@ const getSubCategoryAttributes = async (req, res) => {
             subCategory.attributes.map(async (attr) => {
                 const values = await AttributeValue.find({ attribute: attr._id, isActive: true })
                     .sort({ displayOrder: 1 })
-                    .select('_id value slug colorCode displayOrder');
+                    .select('_id value slug colorCode displayOrder').lean();
                 return {
                     _id: attr._id,
                     name: attr.name,

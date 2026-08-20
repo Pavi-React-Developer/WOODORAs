@@ -312,7 +312,7 @@ export default function AddFeePage({ onNavigate, editingFee }) {
         {/* Row 1: Fee Name & State */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-2">Fee Name <span className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">*</span></label>
+            <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-2">Fee Name <span className="p-1.5 hover: hover: transition-colors text-sm font-semibold text-gray-800">*</span></label>
             <input
               type="text"
               value={feeName}
@@ -324,7 +324,7 @@ export default function AddFeePage({ onNavigate, editingFee }) {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-2">Application State <span className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">*</span></label>
+            <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-2">Application State <span className="p-1.5 hover: hover: transition-colors text-sm font-semibold text-gray-800">*</span></label>
             <div className="flex items-center gap-6 mt-3">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -359,7 +359,7 @@ export default function AddFeePage({ onNavigate, editingFee }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="relative">
             <div className="flex justify-between items-center mb-2">
-              <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider">Fee Category <span className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">*</span></label>
+              <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider">Fee Category <span className="p-1.5 hover: hover: transition-colors text-sm font-semibold text-gray-800">*</span></label>
               <button onClick={() => setShowCatModal(true)} className="text-[10px] text-brand-dark font-bold uppercase hover:underline">+ Add Category</button>
             </div>
 
@@ -426,7 +426,7 @@ export default function AddFeePage({ onNavigate, editingFee }) {
         {/* Row 3: Fee Type & Active */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-2">Fee Type <span className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">*</span></label>
+            <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-2">Fee Type <span className="p-1.5 hover: hover: transition-colors text-sm font-semibold text-gray-800">*</span></label>
             <select
               value={feeType}
               onChange={(e) => setFeeType(e.target.value)}
@@ -538,7 +538,7 @@ export default function AddFeePage({ onNavigate, editingFee }) {
           <>
             <hr className="border-[#E6DFD4]" />
             <div>
-              <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-2">Fee Value ({feeType === 'Fixed Amount' ? '₹' : '%'}) <span className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">*</span></label>
+              <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-2">Fee Value ({feeType === 'Fixed Amount' ? '₹' : '%'}) <span className="p-1.5 hover: hover: transition-colors text-sm font-semibold text-gray-800">*</span></label>
               <input
                 type="text" inputMode="numeric"
                 value={flatFeeValue}

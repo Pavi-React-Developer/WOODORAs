@@ -12,14 +12,10 @@ import {
 import { BsBagHeart } from "react-icons/bs";
 
 /* ── helpers ─────────────────────────────────── */
+import { Avatar } from '../../../components/admin/CommonComponents';
+
 const fmt = (n) => `₹${Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '–';
-const avatar = (name = '') => {
-  const c = name.trim()[0]?.toUpperCase() || '?';
-  const colors = ['#9A6031', '#C78B4A', '#7E4B25', '#5C6BC0', '#42A5F5', '#26A69A', '#66BB6A', '#EC407A'];
-  const idx = name.charCodeAt(0) % colors.length;
-  return { char: c, bg: colors[idx] };
-};
 
 const STATUS_COLORS = {
   Delivered: 'bg-emerald-100 text-emerald-700',
@@ -39,8 +35,6 @@ function CustomerDetailPage({ customer, onBack }) {
   const [loading, setLoading] = useState(true);
   const [orderPage, setOrderPage] = useState(1);
   const orderLimit = 10;
-  const av = avatar(customer.name || '');
-
   useEffect(() => {
     adminService.getCustomerOrders(customer._id)
       .then(data => setOrders(Array.isArray(data) ? data : []))
@@ -77,12 +71,7 @@ function CustomerDetailPage({ customer, onBack }) {
         <div className="bg-white rounded-2xl border border-[#E9DED3] shadow-sm p-6">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-5">
             {/* Avatar */}
-            <div
-              className="w-20 h-20 rounded-2xl flex items-center justify-center text-white text-3xl font-bold shrink-0 shadow-md"
-              style={{ background: av.bg }}
-            >
-              {av.char}
-            </div>
+            <Avatar name={customer.name} size={80} className="rounded-2xl shadow-md" />
             {/* Info */}
             <div className="flex-1">
               <div className="flex items-center gap-3 flex-wrap">
@@ -151,60 +140,60 @@ function CustomerDetailPage({ customer, onBack }) {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left">
-                <thead>
-                  <tr className="bg-[#FAF8F5] text-[#8A817C] text-[11px] uppercase tracking-widest text-center border-b border-[#E9DED3]">
+                <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
+                  <tr>
                     {['Order ID', 'Date', 'Products', 'Status', 'Payment', 'Amount'].map(h => (
-                      <th key={h} className="py-4 px-2 font-bold whitespace-nowrap text-center text-gray-500 border-b border-[#E6DFD4]">{h}</th>
+                      <th key={h} className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">{h}</th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#F2EBE4]">
-                  {paginatedOrders.map(order => (
-                    <tr key={order._id} className="hover:bg-[#FAF8F5] transition-colors">
+                <tbody className="bg-white divide-y divide-[#E9DED3]">
+                  {paginatedOrders.map((order, i) => (
+                    <tr key={order._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${i % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
                       {/* Order ID */}
-                      <td className="p-4 text-center whitespace-nowrap">
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-sm">
                         <p className="text-sm font-bold text-[#141225]">#{(order.orderId || String(order._id).slice(-8)).toUpperCase()}</p>
                       </td>
                       {/* Date */}
-                      <td className="p-4 text-center whitespace-nowrap text-sm text-[#6D625C]">
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-sm text-[#6D625C]">
                         {fmtDate(order.createdAt)}
                       </td>
                       {/* Products */}
-                      <td className="p-4 text-center">
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                         <div className="space-y-1.5 inline-block text-left">
                           {(order.orderItems || []).slice(0, 2).map((item, i) => (
                             <div key={i} className="flex items-center gap-3">
                               {item.image ? (
                                 <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded-lg border border-[#E6DFD4] shrink-0" />
                               ) : (
-                                <div className="w-12 h-12 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center text-[#8B5E3C] font-bold text-xs shrink-0">
+                                <div className="w-12 h-12 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center text-[#8B5E3C] font-bold text-sm shrink-0">
                                   TOY
                                 </div>
                               )}
                               <div>
                                 <p className="text-sm font-bold text-[#141225] leading-tight max-w-[160px] truncate">{item.name}</p>
-                                <p className="text-[10px] font-semibold text-[#8A817C] mt-1">Qty: {item.qty}</p>
+                                <p className="text-sm font-semibold text-[#8A817C] mt-1">Qty: {item.qty}</p>
                               </div>
                             </div>
                           ))}
                           {(order.orderItems || []).length > 2 && (
-                            <p className="text-[10px] text-[#8A817C] pl-[60px]">+{order.orderItems.length - 2} more</p>
+                            <p className="text-sm text-[#8A817C] pl-[60px]">+{order.orderItems.length - 2} more</p>
                           )}
                         </div>
                       </td>
                       {/* Status */}
-                      <td className="p-4 text-center whitespace-nowrap">
-                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-600'}`}>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-sm">
+                        <span className={`text-sm font-bold px-2.5 py-1 rounded-full ${STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-600'}`}>
                           {order.status || 'Pending'}
                         </span>
                       </td>
                       {/* Payment */}
-                      <td className="p-4 text-center whitespace-nowrap text-xs font-semibold text-[#6D625C]">
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-sm font-semibold text-[#6D625C]">
                         {order.paymentMethod || '–'}
                       </td>
                       {/* Amount */}
-                      <td className="p-4 text-center whitespace-nowrap">
-                        <span className="text-xs font-semibold text-[#9A6031]">{fmt(order.totalPrice)}</span>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-sm">
+                        <span className="text-sm font-semibold text-[#9A6031]">{fmt(order.totalPrice)}</span>
                       </td>
                     </tr>
                   ))}
@@ -397,8 +386,8 @@ export default function CustomerManagementPage({ canEdit = true, canDelete = tru
         <div className="bg-white rounded-2xl border border-[#E9DED3] shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
-              <thead>
-                <tr className="bg-[#FAF8F5] text-[#8A817C] text-[11px] uppercase tracking-widest text-center border-b border-[#E9DED3]">
+              <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
+                <tr>
                   {[
                     { label: 'Customer Name', key: 'name' },
                     { label: 'Contact', key: null },
@@ -410,57 +399,54 @@ export default function CustomerManagementPage({ canEdit = true, canDelete = tru
                     <th
                       key={col.label}
                       onClick={() => col.key && toggleSort(col.key)}
-                      className={`py-4 px-2 font-bold whitespace-nowrap text-center text-gray-500 ${col.key ? 'cursor-pointer hover:text-[#9A6031] select-none' : ''}`}
+                      className={`px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center ${col.key ? 'cursor-pointer hover:text-[#9A6031] select-none' : ''}`}
                     >
                       {col.label}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#F2EBE4]">
+              <tbody className="bg-white divide-y divide-[#E9DED3]">
                 {loading ? (
-                  <tr><td colSpan={6} className="px-5 py-16 text-center text-[#8A817C] text-sm">Loading customers…</td></tr>
+                  <tr><td colSpan={6} className="px-6 py-4 text-center text-[#8A817C] text-sm">Loading customers…</td></tr>
                 ) : displayed.length === 0 ? (
-                  <tr><td colSpan={6} className="px-5 py-16 text-center text-[#8A817C] text-sm">No customers found.</td></tr>
-                ) : displayed.slice((currentPage - 1) * limit, currentPage * limit).map(c => {
-                  const av = avatar(c.name || '');
+                  <tr><td colSpan={6} className="px-6 py-4 text-center text-[#8A817C] text-sm">No customers found.</td></tr>
+                ) : displayed.slice((currentPage - 1) * limit, currentPage * limit).map((c, idx) => {
                   return (
-                    <tr key={c._id} className="hover:bg-[#FAF8F5] transition-colors">
+                    <tr key={c._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
                       {/* Name + Avatar */}
-                      <td className="p-4 text-left whitespace-nowrap">
+                      <td className="px-6 py-4 text-sm">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0" style={{ background: av.bg }}>
-                            {av.char}
-                          </div>
+                          <Avatar name={c.name} size={38} />
                           <div>
                             <p className="text-sm font-bold text-[#141225]">{c.name}</p>
                           </div>
                         </div>
                       </td>
                       {/* Contact */}
-                      <td className="p-4 text-center">
-                        <p className="text-xs font-semibold text-[#141225]">{c.email}</p>
-                        <p className="text-[11px] font-semibold text-[#8A817C] mt-0.5">{c.phone || 'No mobile'}</p>
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                        <p className="text-sm font-semibold text-[#141225]">{c.email}</p>
+                        <p className="text-sm font-semibold text-[#8A817C] mt-0.5">{c.phone || 'No mobile'}</p>
                       </td>
                       {/* Joined */}
-                      <td className="p-4 text-center whitespace-nowrap text-sm text-[#6D625C]">{fmtDate(c.createdAt)}</td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-sm text-[#6D625C]">{fmtDate(c.createdAt)}</td>
                       {/* Orders */}
-                      <td className="p-4 text-center whitespace-nowrap">
-                        <span className="text-xs font-semibold text-[#141225]">{c.totalOrders || 0}</span>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-sm">
+                        <span className="text-sm font-semibold text-[#141225]">{c.totalOrders || 0}</span>
                       </td>
                       {/* Spend */}
-                      <td className="p-4 text-center whitespace-nowrap">
-                        <span className="text-xs font-semibold text-[#9A6031]">{fmt(c.totalSpend)}</span>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-sm">
+                        <span className="text-sm font-semibold text-[#9A6031]">{fmt(c.totalSpend)}</span>
                       </td>
                       {/* View Button */}
-                      <td className="p-4 text-center whitespace-nowrap">
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-sm">
                         <div className="flex items-center justify-center">
                           <button
                             onClick={() => navigate(`/admin/customers/details/${c._id}`)}
-                            className="text-green-600 hover:text-green-700 transition-colors"
+                            className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors"
                             title="View"
                           >
-                            <Eye size={15} />
+                            <Eye className="w-[15px] h-[15px]" />
                           </button>
                         </div>
                       </td>

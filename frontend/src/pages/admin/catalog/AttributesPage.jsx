@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Download, Plus, SquarePen, Trash2, RefreshCw, X, PlusCircle, Settings2 } from 'lucide-react';
 import Pagination from '../../../components/common/Pagination';
-import { attributeV2API, categoryV2API, subCategoryV2API } from '../../../api/catalogV2Service';
+import { attributeV2API, categoryV2API, subCategoryV2API, clearCatalogCache } from '../../../api/catalogV2Service';
 import { downloadExcelFile } from '../../../utils/exportUtils';
 import { SearchBar, Button, Badge, Card } from '../../../components/admin/CommonComponents';
 import ConfirmDialog from '../../../components/admin/ConfirmDialog';
@@ -39,6 +39,7 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
     const [subCategoryFilter, setSubCategoryFilter] = useState('');
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     // Form/Modal state
     const [isFormOpen, setIsFormOpen] = useState(false);
@@ -73,7 +74,7 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
 
     useEffect(() => {
         fetchAttributes();
-    }, [search, categoryFilter, subCategoryFilter, page]);
+    }, [search, categoryFilter, subCategoryFilter, page, refreshKey]);
 
     useEffect(() => {
         fetchCategories();
@@ -131,8 +132,8 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
 
     const fetchCategories = async () => {
         try {
-            const res = await categoryV2API.getAll({ limit: 1000, isActive: 'true' });
-            if (res.success) setCategories(res.categories || []);
+            const res = await categoryV2API.getAll({ limit: 100 });
+            if (res.success) setCategories(res.data || res.categories || []);
         } catch (err) {
             console.error(err);
         }
@@ -140,8 +141,8 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
 
     const fetchSubCategories = async () => {
         try {
-            const res = await subCategoryV2API.getAll({ limit: 1000, isActive: 'true' });
-            if (res.success) setSubCategories(res.subCategories || []);
+            const res = await subCategoryV2API.getAll({ limit: 100 });
+            if (res.success) setSubCategories(res.data || res.subCategories || []);
         } catch (err) {
             console.error(err);
         }
@@ -357,6 +358,15 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
         setFormData(prev => ({ ...prev, code: candidate }));
     };
 
+    const handleRefresh = () => {
+        clearCatalogCache();
+        setSearch('');
+        setCategoryFilter('');
+        setSubCategoryFilter('');
+        setPage(1);
+        setRefreshKey(k => k + 1);
+    };
+
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -367,7 +377,7 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                     <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Attributes</h1>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button onClick={fetchAttributes} className="admin-secondary-btn">
+                    <button onClick={handleRefresh} className="admin-secondary-btn">
                         <RefreshCw size={16} /> Refresh
                     </button>
                     <button onClick={exportAttributesExcel} className="admin-export-btn">
@@ -448,29 +458,29 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                     <table className="w-full text-sm">
                         <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
                             <tr>
-                                <th className="px-4 py-3.5 w-10">
+                                <th className="px-6 py-3.5 w-10 text-center">
                                     <input
                                         type="checkbox"
                                         checked={attributes.length > 0 && selectedIds.length === attributes.length}
                                         onChange={e => toggleSelectAll(e.target.checked)}
-                                        className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                                        className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer mx-auto block"
                                     />
                                 </th>
                                 {['Attribute Name', 'Mapping', 'System Code', 'Type', 'Options/Values', 'Validation', 'Actions'].map(h => (
-                                    <th key={h} className={`px-4 py-3.5 text-[11px] font-bold uppercase tracking-widest text-gray-500 whitespace-nowrap ${['System Code', 'Type', 'Options/Values', 'Validation', 'Actions'].includes(h) ? 'text-center' : 'text-left'}`}>{h}</th>
+                                    <th key={h} className={`px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap ${['System Code', 'Type', 'Options/Values', 'Validation', 'Actions'].includes(h) ? 'text-center' : 'text-left'}`}>{h}</th>
                                 ))}
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="bg-white divide-y divide-[#E9DED3]">
                             {loading ? (
-                                <tr><td colSpan={8} className="text-center py-16 text-gray-400">
+                                <tr><td colSpan={8} className="px-6 py-4 text-center text-gray-400 text-sm">
                                     <div className="flex items-center justify-center gap-2">
                                         <div className="w-4 h-4 border-2 border-[#8B5E3C] border-t-transparent rounded-full animate-spin" />
                                         Loading attributes...
                                     </div>
                                 </td></tr>
                             ) : attributes.length === 0 ? (
-                                <tr><td colSpan={8} className="text-center py-16 text-gray-400">
+                                <tr><td colSpan={8} className="px-6 py-4 text-center text-gray-400 text-sm">
                                     <div className="flex flex-col items-center gap-3">
                                         <div className="w-12 h-12 bg-[#F8F4EC] rounded-full flex items-center justify-center text-2xl">🏷️</div>
                                         <p className="font-medium">No attributes configured yet.</p>
@@ -482,61 +492,61 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                                         key={attr._id}
                                         className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}
                                     >
-                                        <td className="px-4 py-3.5">
+                                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                                             <input
                                                 type="checkbox"
                                                 checked={selectedIds.includes(attr._id)}
                                                 onChange={e => toggleSelectOne(attr._id, e.target.checked)}
-                                                className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                                                className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer mx-auto block"
                                             />
                                         </td>
-                                        <td className="px-4 py-3.5">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
                                             <p className="font-bold text-sm text-gray-800">{attr.name}</p>
-                                            {attr.description && <p className="text-xs text-gray-400 mt-0.5">{attr.description}</p>}
+                                            {attr.description && <p className="text-sm text-gray-400 mt-0.5">{attr.description}</p>}
                                         </td>
-                                        <td className="px-4 py-3.5">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
                                             <p className="font-bold text-sm text-[#8B5E3C]">{attr.category?.name || 'Unmapped'}</p>
-                                            <p className="text-xs text-gray-500">{attr.subCategory?.name || '-'}</p>
+                                            <p className="text-sm text-gray-500">{attr.subCategory?.name || '-'}</p>
                                         </td>
-                                        <td className="px-4 py-3.5 text-center">
-                                            <span className="inline-block whitespace-nowrap bg-[#F8F4EC] text-[#8B5E3C] text-[11px] uppercase tracking-wider font-bold px-3 py-1.5 rounded-lg border border-[#E6DFD4] shadow-sm">{attr.code || '-'}</span>
+                                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                                            <span className="text-sm font-semibold text-gray-800">{attr.code || '-'}</span>
                                         </td>
-                                        <td className="px-4 py-3.5 text-center">
-                                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">{attr.type}</span>
+                                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                                            <span className="text-sm font-semibold text-gray-800">{attr.type}</span>
                                         </td>
-                                        <td className="px-4 py-3.5 text-center max-w-xs">
+                                        <td className="px-6 py-4 whitespace-nowrap text-center max-w-xs text-sm">
                                             {attr.values && attr.values.length > 0 ? (
                                                 <div className="flex flex-wrap items-center justify-center gap-1.5">
                                                     {attr.values.slice(0, 4).map((v, i) => (
-                                                        <span key={i} className="inline-flex items-center whitespace-nowrap bg-[#F8F4EC] text-gray-600 text-[11px] font-bold px-3 py-1.5 rounded-lg border border-[#E6DFD4] shadow-sm">
+                                                        <span key={i} className="flex items-center text-sm font-semibold text-gray-800">
                                                             {attr.type === 'ColorPicker' && (
-                                                                <span className="w-2.5 h-2.5 rounded-full mr-1.5 border border-black/10" style={{ backgroundColor: v.colorCode }} />
+                                                                <span className="w-2.5 h-2.5 mr-1.5 border border-black/10 rounded-full" style={{ backgroundColor: v.colorCode }} />
                                                             )}
-                                                            {v.value}
+                                                            {v.value}{i < Math.min(attr.values.length, 4) - 1 ? ',' : ''}
                                                         </span>
                                                     ))}
                                                     {attr.values.length > 4 && (
-                                                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-500">
+                                                        <span className="text-sm font-semibold text-gray-500">
                                                             +{attr.values.length - 4} more
                                                         </span>
                                                     )}
                                                 </div>
                                             ) : (
-                                                <span className="text-[#8B5E3C] text-xs italic opacity-70">No values defined</span>
+                                                <span className="text-[#8B5E3C] text-sm italic opacity-70">No values defined</span>
                                             )}
                                         </td>
-                                        <td className="px-4 py-3.5 text-center">
+                                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                                             <div className="flex flex-wrap items-center justify-center gap-1">
-                                                {attr.isRequired && <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">Required</span>}
-                                                {attr.isSearchable && <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">Searchable</span>}
-                                                {attr.isFilterable && <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">Filterable</span>}
+                                                {attr.isRequired && <span className="text-sm font-semibold text-gray-800">Required</span>}
+                                                {attr.isSearchable && <span className="text-sm font-semibold text-gray-800">Searchable</span>}
+                                                {attr.isFilterable && <span className="text-sm font-semibold text-gray-800">Filterable</span>}
                                             </div>
                                         </td>
-                                        <td className="px-4 py-3.5">
+                                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                                             <div className="flex items-center justify-center gap-2">
                                                 {canEdit && (
                                                     <button onClick={() => navigate(`/admin/catalog/attributes/edit/${attr._id}`)} className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors" title="Edit">
-                                                        <SquarePen size={15} />
+                                                        <SquarePen className="w-[15px] h-[15px]" />
                                                     </button>
                                                 )}
                                                 {canDelete && (
@@ -545,7 +555,7 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                                                         className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
                                                         title="Delete"
                                                     >
-                                                        <Trash2 size={15} />
+                                                        <Trash2 className="w-[15px] h-[15px]" />
                                                     </button>
                                                 )}
                                             </div>
@@ -591,7 +601,7 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                             {/* Classification */}
                             <div className="bg-[#FAFAFA] border border-[#F0EAE2] rounded-2xl p-6 space-y-5">
                                 <h3 className="text-[17px] font-serif font-bold text-[#3E2723] flex items-center gap-2">
-                                    <span className="w-6 h-6 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center text-xs">📂</span>
+                                    <span className="w-6 h-6 #E6DFD4] flex items-center justify-center text-sm font-semibold text-gray-800">📂</span>
                                     Classification
                                 </h3>
                                 <div className="grid grid-cols-2 gap-4">
@@ -613,7 +623,7 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                             {/* Basic Info */}
                             <div className="bg-[#FAFAFA] border border-[#F0EAE2] rounded-2xl p-6 space-y-5">
                                 <h3 className="text-[17px] font-serif font-bold text-[#3E2723] flex items-center gap-2">
-                                    <span className="w-6 h-6 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center text-xs">📦</span>
+                                    <span className="w-6 h-6 #E6DFD4] flex items-center justify-center text-sm font-semibold text-gray-800">📦</span>
                                     Attribute Details
                                 </h3>
                                 <div className="grid grid-cols-2 gap-4">
@@ -641,7 +651,7 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                             {/* Settings & Flags */}
                             <div className="bg-[#FAFAFA] border border-[#F0EAE2] rounded-2xl p-6 space-y-5">
                                 <h3 className="text-[17px] font-serif font-bold text-[#3E2723] flex items-center gap-2">
-                                    <span className="w-6 h-6 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center text-xs">⚙️</span>
+                                    <span className="w-6 h-6 #E6DFD4] flex items-center justify-center text-sm font-semibold text-gray-800">⚙️</span>
                                     Settings & Flags
                                 </h3>
                                 <div className="grid grid-cols-2 gap-4">
@@ -672,7 +682,7 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                             {hasOptionsList && (
                                 <div className="bg-[#FAFAFA] border border-[#F0EAE2] rounded-2xl p-6 space-y-5">
                                     <h3 className="text-[17px] font-serif font-bold text-[#3E2723] flex items-center gap-2">
-                                        <span className="w-6 h-6 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center text-xs">📋</span>
+                                        <span className="w-6 h-6 #E6DFD4] flex items-center justify-center text-sm font-semibold text-gray-800">📋</span>
                                         Value Options / Picklist
                                     </h3>
 

@@ -348,8 +348,16 @@ const addOrderItems = async (req, res) => {
         calculated_grand_total: pricing.total_amount,
       });
 
+      const mappedOrderItems = orderItems.map(item => ({
+        ...item,
+        giftMessage: item.giftMessage || '',
+        giftMessageStyle: item.giftMessageStyle || item.giftCardStyle || 'Classic',
+        deliveryDate: item.deliveryDate || item.scheduledDeliveryDate || normalizedDeliveryDate,
+        scheduledDeliveryDate: item.scheduledDeliveryDate || item.deliveryDate || normalizedDeliveryDate,
+      }));
+
       const order = new Order({
-        orderItems,
+        orderItems: mappedOrderItems,
         user: req.user._id,
         shippingAddress,
         paymentMethod,
@@ -364,7 +372,7 @@ const addOrderItems = async (req, res) => {
         couponCode: req.body.couponCode || null,
         discountAmount: pricing.coupon_discount,
         coupon: null,
-        isGiftOrder: isGiftOrder || false,
+        isGiftOrder: isGiftOrder === true || isGiftOrder === 'true' || giftToggle === true || giftToggle === 'true' || !!giftOrderItem || false,
         giftMessage: giftMessage ?? giftOrderItem?.giftMessage ?? '',
         giftMessageStyle: giftMessageStyle ?? giftOrderItem?.giftMessageStyle ?? 'Classic',
         deliveryDate: normalizedDeliveryDate,
@@ -406,6 +414,54 @@ const addOrderItems = async (req, res) => {
         } catch (err) {
           console.error('Failed to link coupon to order:', err.message || err);
         }
+      }
+
+      // ────────────────────────────────────────────────────────────────────────
+      // BELT + SUSPENDERS: Explicitly assign orderId BEFORE save().
+      // Uses raw request variables (NOT the Mongoose doc) to avoid any casting
+      // or schema-default interference.
+      // ────────────────────────────────────────────────────────────────────────
+      const Counter = require('../models/Counter');
+
+      // Check ALL gift signals from the raw request — same logic as line 367
+      const isGiftForId = !!(  
+        isGiftOrder === true ||
+        isGiftOrder === 'true' ||
+        giftToggle === true ||
+        giftToggle === 'true' ||
+        !!giftOrderItem ||
+        req.body.giftWrapping?.enabled === true ||
+        req.body.giftWrapping?.enabled === 'true' ||
+        req.body.gift_toggle === true
+      );
+
+      console.log('[ORDER CTRL] Gift detection:', {
+        isGiftOrder, giftToggle, hasGiftItem: !!giftOrderItem,
+        bodyGiftWrapping: req.body.giftWrapping?.enabled,
+        resolved: isGiftForId
+      });
+
+      if (isGiftForId) {
+        order.isGiftOrder = true; // ensure it is consistent in DB
+        const giftCounter = await Counter.findByIdAndUpdate(
+          'giftOrderId',
+          { $inc: { seq: 1 } },
+          { new: true, upsert: true }
+        );
+        const giftId = `MKG${String(giftCounter.seq - 1).padStart(5, '0')}`;
+        order.orderId = giftId;
+        order.invoiceId = giftId;
+        console.log('[ORDER CTRL] ✅ Gift order ID set:', giftId);
+      } else {
+        const orderCounter = await Counter.findByIdAndUpdate(
+          'orderId',
+          { $inc: { seq: 1 } },
+          { new: true, upsert: true }
+        );
+        const regularId = `MK${String(orderCounter.seq).padStart(5, '0')}`;
+        order.orderId = regularId;
+        order.invoiceId = regularId;
+        console.log('[ORDER CTRL] Regular order ID set:', regularId);
       }
 
       const createdOrder = await order.save();
@@ -1029,6 +1085,35 @@ const downloadInvoice = async (req, res) => {
   }
 };
 
+// @desc    Get counts for admin sidebar badges
+// @route   GET /api/orders/badges/counts
+// @access  Private/Admin
+const getBadgeCounts = async (req, res) => {
+  try {
+    const Order = require('../models/Order');
+    const BulkOrder = require('../models/BulkOrder');
+    const CustomizeOrder = require('../models/CustomizeRequest');
+    const AdvancedBooking = require('../models/AdvancedBooking');
+
+    const [orderCount, bulkOrderCount, customizeOrderCount, advancedBookingCount] = await Promise.all([
+      Order.countDocuments({ status: 'Pending' }),
+      BulkOrder.countDocuments({ status: 'Pending' }),
+      CustomizeOrder.countDocuments({ status: 'Pending' }),
+      AdvancedBooking.countDocuments({ bookingStatus: 'Pending' })
+    ]);
+
+    res.json({
+      orderCount,
+      bulkOrderCount,
+      customizeOrderCount,
+      advancedBookingCount
+    });
+  } catch (error) {
+    console.error('Error fetching badge counts:', error);
+    res.status(500).json({ message: 'Server error while fetching badge counts', error: error.message });
+  }
+};
+
 module.exports = {
   addOrderItems,
   getOrderById,
@@ -1043,5 +1128,6 @@ module.exports = {
   getCancellationPreview,
   deleteOrder,
   downloadInvoice,
+  getBadgeCounts,
 };
 

@@ -188,9 +188,9 @@ export default function CustomizeList() {
       <div className="bg-white rounded-3xl shadow-sm border border-[#E6DFD4] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-[#FAF4EF] text-[#8A817C] text-[11px] uppercase tracking-widest text-center">
-                <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] w-10 text-center">
+            <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
+              <tr>
+                <th className="px-6 py-3.5 w-10 text-center">
                   <input
                     type="checkbox"
                     checked={allChecked}
@@ -198,22 +198,22 @@ export default function CustomizeList() {
                     className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer mx-auto block"
                   />
                 </th>
-                <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] text-center">Date</th>
-                <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] text-center">Customer</th>
-                <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] text-center">Image</th>
-                <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] text-center">Product Name</th>
-                <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] text-center">Status</th>
-                <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] text-center">Actions</th>
+                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Date</th>
+                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Customer</th>
+                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Image</th>
+                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Product Name</th>
+                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Status</th>
+                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#E6DFD4]">
+            <tbody className="bg-white divide-y divide-[#E9DED3]">
               {paginatedRequests.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="p-8 text-center text-[#8A817C]">No requests found.</td>
+                  <td colSpan="7" className="px-6 py-4 text-center text-[#8A817C] text-sm">No requests found.</td>
                 </tr>
               ) : paginatedRequests.map((req, idx) => (
-                <tr key={req._id} className={`hover:bg-[#FAF4EF]/30 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
-                  <td className="p-4 text-center">
+                <tr key={req._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                     <input
                       type="checkbox"
                       checked={selectedIds.includes(req._id)}
@@ -221,40 +221,40 @@ export default function CustomizeList() {
                       className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer mx-auto block"
                     />
                   </td>
-                  <td className="p-4 text-left whitespace-nowrap text-sm font-bold text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-center font-bold text-sm text-gray-800">
                     {new Date(req.createdAt).toLocaleDateString()}
                   </td>
-                  <td className="p-4 text-left">
-                    <div className="text-xs font-semibold text-gray-900">{req.customerInfo.fullName}</div>
-                    <div className="text-[11px] text-gray-500">{req.customerInfo.email}</div>
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                    <div className="text-sm font-semibold text-gray-900">{req.customerInfo.fullName}</div>
+                    <div className="text-sm text-[#8B5E3C]">{req.customerInfo.email}</div>
                   </td>
-                  <td className="p-4 text-center">
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                     {req.images && req.images.length > 0 ? (
                       <div className="flex items-center justify-center gap-1 text-[#8B5E3C]">
                         <ImageIcon size={15} />
-                        <span className="text-xs font-medium">{req.images.length}</span>
+                        <span className="text-sm font-medium">{req.images.length}</span>
                       </div>
                     ) : (
-                      <span className="text-gray-400 text-xs">None</span>
+                      <span className="text-gray-400 text-sm">None</span>
                     )}
                   </td>
-                  <td className="p-4 text-left text-xs font-semibold text-gray-900">{getProductName(req.productDetails)}</td>
-                  <td className="p-4 text-center">
-                    <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${req.status === 'Approved' ? 'bg-green-100 text-green-800' :
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-semibold text-gray-600">{getProductName(req.productDetails)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                    <span className={`px-2.5 py-1 text-sm font-medium rounded-full ${req.status === 'Approved' ? 'bg-green-100 text-green-800' :
                         req.status === 'Rejected' ? 'bg-red-100 text-red-800' :
                           'bg-yellow-100 text-yellow-800'
                       }`}>
                       {req.status}
                     </span>
                   </td>
-                  <td className="p-4 text-center">
-                    <div className="flex items-center justify-center gap-3">
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                    <div className="flex items-center justify-center gap-2">
                       <button
                         onClick={() => setSelectedRequest(req)}
-                        className="text-green-600 hover:text-green-700 transition-colors"
+                        className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors"
                         title="View Details"
                       >
-                        <Eye size={15} />
+                        <Eye className="w-[15px] h-[15px]" />
                       </button>
                       {req.images && req.images.length > 0 && (
                         <button
@@ -262,24 +262,24 @@ export default function CustomizeList() {
                           className="p-1.5 text-[#8B5E3C] hover:bg-[#F8F4EC] rounded-lg transition-colors"
                           title="Export Images"
                         >
-                          <Download size={15} />
+                          <Download className="w-[15px] h-[15px]" />
                         </button>
                       )}
                       {req.status === 'Pending' && (
                         <>
                           <button
                             onClick={() => handleUpdateStatus(req._id, 'Approved')}
-                            className="text-green-600 hover:text-green-700 transition-colors"
+                            className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors"
                             title="Approve"
                           >
-                            <Check size={15} />
+                            <Check className="w-[15px] h-[15px]" />
                           </button>
                           <button
                             onClick={() => openRejectModal(req)}
-                            className="text-red-500 hover:text-red-600 transition-colors"
+                            className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
                             title="Reject"
                           >
-                            <X size={15} />
+                            <X className="w-[15px] h-[15px]" />
                           </button>
                         </>
                       )}

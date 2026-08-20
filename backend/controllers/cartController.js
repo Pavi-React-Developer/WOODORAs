@@ -1,5 +1,6 @@
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
+const GSTRule = require('../models/GSTRule');
 const ProductVariant = require('../models/ProductVariant');
 const ProductFeeRule = require('../models/ProductFeeRule');
 const GiftCardConfig = require('../models/GiftCardConfig');
@@ -90,13 +91,17 @@ const getCart = async (req, res) => {
                 obj.dimensions = { length: variant.length, width: variant.width, height: variant.height };
               }
             }
-          } else if (item.product) {
-            const product = await Product.findById(item.product).lean();
+          }
+          if (item.product) {
+            const product = await Product.findById(item.product).populate('gstRule').lean();
             if (product) {
-              obj.price = product.discountPrice ?? product.price ?? item.price;
-              obj.name = product.name ?? item.name;
+              obj.gstRule = product.gstRule || null;
               if (!obj.dimensions && product.dimensions) {
                 obj.dimensions = product.dimensions;
+              }
+              if (!item.variant) {
+                obj.price = product.discountPrice ?? product.price ?? item.price;
+                obj.name = product.name ?? item.name;
               }
             }
           }
@@ -166,7 +171,7 @@ const replaceCart = async (req, res) => {
       { user: req.user._id, items: validItems },
       { returnDocument: 'after', upsert: true, runValidators: true }
     );
-    res.json(cart);
+    return getCart(req, res);
   } catch (error) {
     res.status(500).json({ message: error.message || 'Failed to update cart' });
   }
@@ -243,7 +248,7 @@ const addCartItem = async (req, res) => {
     }
 
     await cart.save();
-    res.status(201).json(cart);
+    return getCart(req, res);
   } catch (error) {
     res.status(500).json({ message: error.message || 'Failed to add cart item' });
   }
@@ -291,7 +296,7 @@ const updateCartItem = async (req, res) => {
     item.qty = qty;
     item.maxStock = liveMaxStock; // Keep maxStock fresh
     await cart.save();
-    res.json(cart);
+    return getCart(req, res);
   } catch (error) {
     res.status(500).json({ message: error.message || 'Failed to update cart item' });
   }
@@ -316,7 +321,7 @@ const removeCartItem = async (req, res) => {
     );
 
     await cart.save();
-    res.json(cart);
+    return getCart(req, res);
   } catch (error) {
     res.status(500).json({ message: error.message || 'Failed to remove cart item' });
   }
@@ -343,7 +348,7 @@ const removeCartItemById = async (req, res) => {
     }
 
     await cart.save();
-    res.json({ success: true, cart });
+    return getCart(req, res);
   } catch (error) {
     res.status(500).json({ message: error.message || 'Failed to remove cart item' });
   }
@@ -395,13 +400,17 @@ const getCartSummary = async (req, res) => {
                 obj.dimensions = { length: variant.length, width: variant.width, height: variant.height };
               }
             }
-          } else if (item.product) {
-            const product = await Product.findById(item.product).lean();
+          }
+          if (item.product) {
+            const product = await Product.findById(item.product).populate('gstRule').lean();
             if (product) {
-              obj.price = product.discountPrice ?? product.price ?? item.price;
-              obj.name = product.name ?? item.name;
+              obj.gstRule = product.gstRule || null;
               if (!obj.dimensions && product.dimensions) {
                 obj.dimensions = product.dimensions;
+              }
+              if (!item.variant) {
+                obj.price = product.discountPrice ?? product.price ?? item.price;
+                obj.name = product.name ?? item.name;
               }
             }
           }

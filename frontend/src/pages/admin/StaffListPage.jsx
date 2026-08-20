@@ -1,18 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { staffAPI } from '../../api/staffService';
 import { authService } from '../../api/authService';
+import { Avatar, StatusBadge } from '../../components/admin/CommonComponents';
 import Pagination from '../../components/common/Pagination';
 import { roleAPI } from '../../api/roleService';
-import { Download, RefreshCw, Plus, Trash2 } from 'lucide-react';
+import { Download, RefreshCw, Plus, Trash2, SquarePen, ShieldCheck } from 'lucide-react';
 import { downloadExcelFile } from '../../utils/exportUtils';
-
-const Badge = ({ status }) => (
-  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-    }`}>
-    <span className={`w-1.5 h-1.5 rounded-full ${status === 'active' ? 'bg-green-500' : 'bg-gray-400'}`} />
-    {status === 'active' ? 'Active' : 'Inactive'}
-  </span>
-);
 
 export default function StaffListPage({ onAddStaff, onEditStaff, onRoleAssign, canCreate = true, canEdit = true, canDelete = true }) {
   const [staffList, setStaffList] = useState([]);
@@ -195,7 +188,7 @@ export default function StaffListPage({ onAddStaff, onEditStaff, onRoleAssign, c
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
               <tr>
-                <th className="px-4 py-3.5 w-10">
+                <th className="px-6 py-3.5 w-10">
                   <input
                     type="checkbox"
                     checked={staffList.length > 0 && selectedIds.length === staffList.length}
@@ -204,34 +197,34 @@ export default function StaffListPage({ onAddStaff, onEditStaff, onRoleAssign, c
                   />
                 </th>
                 {['Profile', 'Full Name', 'Email', 'Mobile', 'Role', 'Status', 'Created Date', 'Actions'].map(h => (
-                  <th key={h} className={`px-4 py-3.5 text-[11px] font-bold uppercase tracking-widest text-gray-500 whitespace-nowrap ${['Profile', 'Full Name', 'Email', 'Mobile', 'Role', 'Status', 'Created Date', 'Actions'].includes(h) ? 'text-center' : 'text-left'}`}>{h}</th>
+                  <th key={h} className={`px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap ${['Profile', 'Full Name', 'Email', 'Mobile', 'Role', 'Status', 'Created Date', 'Actions'].includes(h) ? 'text-center' : 'text-left'}`}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={9} className="text-center py-16 text-gray-400">
+                <tr><td colSpan={9} className="px-6 py-4 text-center text-gray-400 text-sm">
                   <div className="flex items-center justify-center gap-2">
                     <div className="w-4 h-4 border-2 border-[#8B5E3C] border-t-transparent rounded-full animate-spin" />
                     Loading staff...
                   </div>
                 </td></tr>
               ) : error ? (
-                <tr><td colSpan={9} className="text-center py-16">
+                <tr><td colSpan={9} className="px-6 py-4 text-center text-sm">
                   <div className="flex flex-col items-center gap-3">
                     <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
                       <svg className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                     </div>
                     <p className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">{error}</p>
-                    <button onClick={fetchStaff} className="px-4 py-2 bg-[#8B5E3C] text-white rounded-xl text-xs font-semibold">Retry</button>
+                    <button onClick={fetchStaff} className="px-4 py-2 bg-[#8B5E3C] text-white rounded-xl text-sm font-semibold">Retry</button>
                   </div>
                 </td></tr>
               ) : staffList.length === 0 ? (
-                <tr><td colSpan={9} className="text-center py-16 text-gray-400">No staff members found.</td></tr>
+                <tr><td colSpan={9} className="px-6 py-4 text-center text-gray-400 text-sm">No staff members found.</td></tr>
               ) : (
                 staffList.map((member, idx) => (
                   <tr key={member._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${typeof idx !== "undefined" ? (idx % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : typeof index !== "undefined" ? (index % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : "bg-white"}`}>
-                    <td className="px-4 py-3.5">
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                       <input
                         type="checkbox"
                         checked={selectedIds.includes(member._id)}
@@ -239,44 +232,42 @@ export default function StaffListPage({ onAddStaff, onEditStaff, onRoleAssign, c
                         className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
                       />
                     </td>
-                    <td className="px-4 py-3.5">
-                      <div className="w-9 h-9 rounded-full bg-[#8B5E3C] text-white flex items-center justify-center text-sm font-bold">
-                        {member.fullName?.charAt(0).toUpperCase()}
-                      </div>
+                    <td className="px-6 py-4 whitespace-nowrap flex justify-center text-sm">
+                      <Avatar name={member.fullName} size={36} />
                     </td>
-                    <td className="px-4 py-3.5 font-semibold text-gray-800 whitespace-nowrap">{member.fullName}</td>
-                    <td className="px-4 py-3.5 text-center text-gray-600">{member.email}</td>
-                    <td className="px-4 py-3.5 text-gray-500">{member.mobile || '—'}</td>
-                    <td className="px-4 py-3.5 text-center">
-                      <span className="inline-block whitespace-nowrap bg-[#F8F4EC] text-[#8B5E3C] text-[11px] uppercase tracking-wider font-bold px-3 py-1.5 rounded-lg border border-[#E6DFD4] shadow-sm">
+                    <td className="px-6 py-4 font-bold text-sm text-gray-800 whitespace-nowrap text-center">{member.fullName}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-600 text-center">{member.email}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-600 text-center">{member.mobile || '—'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                      <span className="text-sm font-semibold text-gray-800">
                         {member.role}
                       </span>
                     </td>
-                    <td className="px-4 py-3.5 text-center">
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                       {canEdit ? (
                         <button onClick={() => handleToggleStatus(member)} title="Toggle status">
-                          <Badge status={member.status} />
+                          <StatusBadge status={member.status} />
                         </button>
                       ) : (
-                        <Badge status={member.status} />
+                        <StatusBadge status={member.status} />
                       )}
                     </td>
-                    <td className="px-4 py-3.5 text-gray-500 whitespace-nowrap">{new Date(member.createdAt).toLocaleDateString('en-IN')}</td>
-                    <td className="px-4 py-3.5">
+                    <td className="px-6 py-4 text-sm font-semibold text-gray-600 whitespace-nowrap text-center">{new Date(member.createdAt).toLocaleDateString('en-IN')}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                       <div className="flex items-center justify-center gap-2">
                         {canEdit && (
                           <button onClick={() => onEditStaff(member)} className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors" title="Edit">
-                            <svg className="w-[15px] h-[15px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                            <SquarePen className="w-[15px] h-[15px]" />
                           </button>
                         )}
                         {canEdit && (
                           <button onClick={() => onRoleAssign(member)} className="p-1.5 rounded-lg text-[#8B5E3C] hover:bg-[#F8F4EC] transition-colors" title="Edit Permissions">
-                            <svg className="w-[15px] h-[15px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                            <ShieldCheck className="w-[15px] h-[15px]" />
                           </button>
                         )}
                         {canDelete && (
                           <button onClick={() => setDeleteId(member._id)} className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors" title="Delete">
-                            <Trash2 size={15} />
+                            <Trash2 className="w-[15px] h-[15px]" />
                           </button>
                         )}
                       </div>

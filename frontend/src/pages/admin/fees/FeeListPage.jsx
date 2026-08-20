@@ -1,3 +1,4 @@
+import { ActiveBadge, RequestBadge, OrderBadge } from '../../../components/admin/CommonComponents';
 import React, { useState, useEffect, useMemo } from 'react';
 import { Edit3, Trash2, Download, Plus, RefreshCw, Package , SquarePen } from 'lucide-react';
 import { feeAPI } from '../../../api/feeService';
@@ -323,9 +324,8 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
                       <button 
                         onClick={() => handleToggleStatus(fee)}
                         title="Click to toggle status"
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${fee.active ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-                      >
-                        {fee.active ? 'Active' : 'Inactive'}
+                        className="transition-colors hover:opacity-80" title={fee.active ? "Deactivate" : "Activate"}>
+                        <ActiveBadge status={fee.active} />
                       </button>
                     </td>
                     <td className="py-6 px-4 text-center whitespace-nowrap">

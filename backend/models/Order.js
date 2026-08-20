@@ -7,6 +7,8 @@ const orderItemSchema = new mongoose.Schema({
   image: { type: String, required: true },
   price: { type: Number, required: true },
   weight: { type: String }, // optional, for display
+  gstPercent: { type: Number, default: 0 },
+  gstAmount: { type: Number, default: 0 },
   product: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
@@ -18,6 +20,10 @@ const orderItemSchema = new mongoose.Schema({
   },
   isGift: { type: Boolean, default: false },
   isGiftWrapper: { type: Boolean, default: false },
+  giftMessage: { type: String },
+  giftMessageStyle: { type: String },
+  scheduledDeliveryDate: { type: Date },
+  deliveryDate: { type: Date },
 });
 
 const ORDER_STATUSES = [
@@ -107,6 +113,14 @@ const orderSchema = new mongoose.Schema(
       default: 0
     },
     delivery_charge: {
+      type: Number,
+      default: 0
+    },
+    walletAmountUsed: {
+      type: Number,
+      default: 0
+    },
+    totalGst: {
       type: Number,
       default: 0
     },
@@ -263,15 +277,33 @@ const orderSchema = new mongoose.Schema(
 );
 
 orderSchema.pre('save', async function () {
-  if (this.isNew) {
-    const orderCounter = await Counter.findByIdAndUpdate(
-      'orderId',
-      { $inc: { seq: 1 } },
-      { new: true, upsert: true }
-    );
-    const newId = `MK${String(orderCounter.seq).padStart(5, '0')}`;
-    this.orderId = newId;
-    this.invoiceId = newId;
+  // Check all possible gift indicators — isGiftOrder, gift_toggle, or giftWrapping.enabled
+  const isGift = !!(this.isGiftOrder || this.gift_toggle || this.giftWrapping?.enabled);
+  console.log('[DEBUG] pre-save hook running isNew:', this.isNew, '| orderId:', this.orderId, '| isGiftOrder:', this.isGiftOrder, '| gift_toggle:', this.gift_toggle, '| isGift resolved:', isGift);
+  if (this.isNew && !this.orderId) {
+    if (isGift) {
+      // Force isGiftOrder to true on the document so it's always consistent
+      this.isGiftOrder = true;
+      const giftCounter = await Counter.findByIdAndUpdate(
+        'giftOrderId',
+        { $inc: { seq: 1 } },
+        { new: true, upsert: true }
+      );
+      const newId = `MKG${String(giftCounter.seq - 1).padStart(5, '0')}`;
+      this.orderId = newId;
+      this.invoiceId = newId;
+      console.log('[ORDER] Gift order ID assigned:', newId);
+    } else {
+      const orderCounter = await Counter.findByIdAndUpdate(
+        'orderId',
+        { $inc: { seq: 1 } },
+        { new: true, upsert: true }
+      );
+      const newId = `MK${String(orderCounter.seq).padStart(5, '0')}`;
+      this.orderId = newId;
+      this.invoiceId = newId;
+      console.log('[ORDER] Regular order ID assigned:', newId);
+    }
   }
 });
 

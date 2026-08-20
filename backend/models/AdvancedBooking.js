@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const advancedBookingSchema = new mongoose.Schema({
+    orderId: {
+        type: String,
+        unique: true,
+        sparse: true
+    },
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',

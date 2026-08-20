@@ -1,3 +1,4 @@
+import { ActiveBadge, RequestBadge, OrderBadge, TypeBadge } from '../../components/admin/CommonComponents';
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, CheckCircle, XCircle, SquarePen, Trash, Check, X } from 'lucide-react';
 import { bulkOrderService } from '../../api/bulkOrderService';
@@ -220,7 +221,7 @@ export default function BulkOrderFieldsAdminPage({ canCreate = true, canEdit = t
             {canEdit && (
               <>
                 <button onClick={() => handleBulkStatus(true)} className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">Set Active</button>
-                <button onClick={() => handleBulkStatus(false)} className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">Set Inactive</button>
+                <button onClick={() => handleBulkStatus(false)} className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">Set Inactive</button>
               </>
             )}
             {canDelete && (
@@ -237,8 +238,8 @@ export default function BulkOrderFieldsAdminPage({ canCreate = true, canEdit = t
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-[#FAF4EF] text-[#8A817C] text-[11px] uppercase tracking-widest text-center">
-                <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] w-10 text-center">
+              <tr className="bg-[#FAF4EF] text-[#8A817C] text-xs uppercase tracking-wider text-center">
+                <th className="px-6 py-4 border-b border-[#E6DFD4] w-12 text-center">
                   <input
                     type="checkbox"
                     checked={allChecked}
@@ -246,11 +247,11 @@ export default function BulkOrderFieldsAdminPage({ canCreate = true, canEdit = t
                     className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer mx-auto block"
                   />
                 </th>
-                <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] text-center whitespace-nowrap">Label</th>
-                <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] text-center whitespace-nowrap">Type</th>
-                <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] text-center whitespace-nowrap">Required</th>
-                <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] text-center whitespace-nowrap">Status</th>
-                <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] text-center whitespace-nowrap">Actions</th>
+                <th className="px-6 py-4 font-bold border-b border-[#E6DFD4] text-[#8B5E3C] text-xs uppercase tracking-wider text-center whitespace-nowrap">LABEL</th>
+                <th className="px-6 py-4 font-bold border-b border-[#E6DFD4] text-[#8B5E3C] text-xs uppercase tracking-wider text-center whitespace-nowrap">TYPE</th>
+                <th className="px-6 py-4 font-bold border-b border-[#E6DFD4] text-[#8B5E3C] text-xs uppercase tracking-wider text-center whitespace-nowrap">REQUIRED</th>
+                <th className="px-6 py-4 font-bold border-b border-[#E6DFD4] text-[#8B5E3C] text-xs uppercase tracking-wider text-center whitespace-nowrap">STATUS</th>
+                <th className="px-6 py-4 font-bold border-b border-[#E6DFD4] text-[#8B5E3C] text-xs uppercase tracking-wider text-center whitespace-nowrap">ACTIONS</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E6DFD4]">
@@ -261,42 +262,40 @@ export default function BulkOrderFieldsAdminPage({ canCreate = true, canEdit = t
                   </td>
                 </tr>
               ) : (
-                paginatedFields.map(field => (
-                  <tr key={field._id} className="hover:bg-[#FAF4EF]/30 transition-colors">
-                    <td className="p-4 text-left">
+                paginatedFields.map((field, idx) => (
+                  <tr key={field._id} className={`hover:bg-[#FAF4EF]/30 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                       <input
                         type="checkbox"
                         checked={selectedIds.includes(field._id)}
                         onChange={() => toggleOne(field._id)}
-                        className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer"
+                        className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer mx-auto block"
                       />
                     </td>
-                    <td className="p-4 text-left">
-                      <p className="text-sm font-bold text-[#141225]">{field.label}</p>
+                    <td className="px-6 py-4 whitespace-nowrap text-left text-sm">
+                      <p className="font-bold text-sm text-gray-800">{field.label}</p>
                     </td>
-                    <td className="p-4 text-left">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#EBF3F8] text-[#1D4E89] uppercase tracking-wide">
-                        {field.type}
-                      </span>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                      <div className="flex justify-center">
+                        <TypeBadge type={field.type} />
+                      </div>
                       {field.type === 'dropdown' && field.options && (
-                        <div className="text-[10px] text-gray-500 mt-1 truncate max-w-[200px]">
+                        <div className="text-[10px] text-gray-500 mt-1 truncate max-w-[200px] text-center">
                           {field.options.join(', ')}
                         </div>
                       )}
                     </td>
-                    <td className="p-4 text-left">
-                      {field.isRequired ? (
-                        <span className="flex items-center gap-1 text-[#2E7D32] text-xs font-bold"><Check className="w-3.5 h-3.5" /> Yes</span>
-                      ) : (
-                        <span className="flex items-center gap-1 text-[#8A817C] text-xs"><X className="w-3.5 h-3.5" /> No</span>
-                      )}
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                      <div className="flex justify-center">
+                        <ActiveBadge status={field.isRequired ? 'Required' : 'Optional'} />
+                      </div>
                     </td>
-                    <td className="p-4 text-left">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${field.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                        {field.isActive ? 'Active' : 'Inactive'}
-                      </span>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                      <div className="flex justify-center">
+                        <ActiveBadge status={field.isActive} />
+                      </div>
                     </td>
-                    <td className="p-4 text-center">
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                       <div className="flex items-center justify-center gap-3">
                         {canEdit && (
                           <button

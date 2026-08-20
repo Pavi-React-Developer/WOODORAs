@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { categoryV2API } from '../../../api/catalogV2Service';
+import { categoryV2API, clearCatalogCache } from '../../../api/catalogV2Service';
 import { Plus, Download, RefreshCw, X, Image as ImageIcon, Trash2, SquarePen } from 'lucide-react';
 import Pagination from '../../../components/common/Pagination';
 import { downloadExcelFile } from '../../../utils/exportUtils';
@@ -8,9 +8,7 @@ import { API_BASE } from '../../../api/apiClient';
 
 // ─── Reusable Badge ───────────────────────────────────────────────────────────
 const StatusBadge = ({ active }) => (
-  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-    }`}>
-    <span className={`w-1.5 h-1.5 rounded-full ${active ? 'bg-green-500' : 'bg-gray-400'}`} />
+  <span className={`inline-block px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider ${active ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
     {active ? 'Active' : 'Inactive'}
   </span>
 );
@@ -37,6 +35,7 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Form / Drawer
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -73,7 +72,7 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
     } finally {
       setLoading(false);
     }
-  }, [search, statusFilter, page]);
+  }, [search, statusFilter, page, refreshKey]);
 
   useEffect(() => { fetchCategories(); }, [fetchCategories]);
 
@@ -285,6 +284,14 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
     return asset; // Return the full CloudinaryAsset object
   };
 
+  const handleRefresh = () => {
+    clearCatalogCache();
+    setSearch('');
+    setStatusFilter('');
+    setPage(1);
+    setRefreshKey(k => k + 1);
+  };
+
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <div className="flex-1 overflow-y-auto p-8">
@@ -297,7 +304,7 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
           <h1 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Categories</h1>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={fetchCategories} className="admin-secondary-btn">
+          <button onClick={handleRefresh} className="admin-secondary-btn">
             <RefreshCw size={16} /> Refresh
           </button>
           <button onClick={exportCategoriesExcel} className="admin-export-btn">
@@ -359,29 +366,29 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
               <tr>
-                <th className="px-4 py-3.5 w-10">
+                <th className="px-6 py-3.5 w-10 text-center">
                   <input
                     type="checkbox"
                     checked={selectedIds.length > 0 && selectedIds.length === categories.length}
                     onChange={e => toggleSelectAll(e.target.checked)}
-                    className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                    className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer mx-auto block"
                   />
                 </th>
                 {['Category Name', 'Slug', 'Display Order', 'Status', 'Created Date', 'Actions'].map(h => (
-                  <th key={h} className={`px-4 py-3.5 text-[11px] font-bold uppercase tracking-widest text-gray-500 whitespace-nowrap text-center`}>{h}</th>
+                  <th key={h} className={`px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center`}>{h}</th>
                 ))}
               </tr>
             </thead>
-            <tbody>
+            <tbody className="bg-white divide-y divide-[#E9DED3]">
               {loading ? (
-                <tr><td colSpan={7} className="text-center py-16 text-gray-400">
+                <tr><td colSpan={7} className="px-6 py-4 text-center text-gray-400 text-sm">
                   <div className="flex items-center justify-center gap-2">
                     <div className="w-4 h-4 border-2 border-[#8B5E3C] border-t-transparent rounded-full animate-spin" />
                     Loading categories...
                   </div>
                 </td></tr>
               ) : categories.length === 0 ? (
-                <tr><td colSpan={7} className="text-center py-16 text-gray-400">
+                <tr><td colSpan={7} className="px-6 py-4 text-center text-gray-400 text-sm">
                   <div className="flex flex-col items-center gap-3">
                     <div className="w-12 h-12 bg-[#F8F4EC] rounded-full flex items-center justify-center text-2xl">🗂️</div>
                     <p className="font-medium">No categories found.</p>
@@ -396,15 +403,15 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
                     key={cat._id}
                     className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}
                   >
-                    <td className="px-4 py-3.5">
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                       <input
                         type="checkbox"
                         checked={selectedIds.includes(cat._id)}
                         onChange={e => toggleSelectOne(cat._id, e.target.checked)}
-                        className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                        className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer mx-auto block"
                       />
                     </td>
-                    <td className="px-4 py-3.5">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-lg bg-[#F8F4EC] border border-[#E6DFD4] flex items-center justify-center text-xl overflow-hidden flex-shrink-0">
                           {cat.image ? (
@@ -414,17 +421,17 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
                         <span className="font-bold text-sm text-gray-800">{cat.name}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3.5 text-center">
-                      <span className="inline-block whitespace-nowrap bg-[#F8F4EC] text-[#8B5E3C] text-[11px] uppercase tracking-wider font-bold px-3 py-1.5 rounded-lg border border-[#E6DFD4] shadow-sm">
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                      <span className="text-sm font-semibold text-gray-800">
                         {cat.slug}
                       </span>
                     </td>
-                    <td className="px-4 py-3.5 text-center">
-                      <span className="inline-flex items-center justify-center w-7 h-7 bg-[#F8F4EC] text-[#8B5E3C] text-xs font-semibold rounded-full border border-[#E6DFD4]">
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                      <span className="text-sm font-semibold text-gray-800">
                         {cat.displayOrder}
                       </span>
                     </td>
-                    <td className="px-4 py-3.5 text-center">
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                       {canEdit ? (
                         <button onClick={() => handleToggleStatus(cat)} title="Click to toggle">
                           <StatusBadge active={cat.isActive} />
@@ -433,10 +440,10 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
                         <StatusBadge active={cat.isActive} />
                       )}
                     </td>
-                    <td className="px-4 py-3.5 text-gray-500 whitespace-nowrap text-center">
+                    <td className="px-6 py-4 text-gray-500 whitespace-nowrap text-center text-sm">
                       {new Date(cat.createdAt).toLocaleDateString('en-IN')}
                     </td>
-                    <td className="px-4 py-3.5">
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                       <div className="flex items-center justify-center gap-2">
                         {canEdit && (
                           <button
@@ -444,7 +451,7 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
                             className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
                             title="Edit"
                           >
-                            <SquarePen size={15} />
+                            <SquarePen className="w-[15px] h-[15px]" />
                           </button>
                         )}
                         {canDelete && (
@@ -453,7 +460,7 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
                             className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
                             title="Delete"
                           >
-                            <Trash2 size={15} />
+                            <Trash2 className="w-[15px] h-[15px]" />
                           </button>
                         )}
                       </div>
@@ -502,7 +509,7 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
               {/* Basic Info */}
               <div className="bg-[#FAFAFA] border border-[#F0EAE2] rounded-2xl p-6 space-y-5">
                 <h3 className="text-[17px] font-serif font-bold text-[#3E2723] flex items-center gap-2">
-                  <span className="w-6 h-6 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center text-xs">📦</span>
+                  <span className="w-6 h-6 #E6DFD4] flex items-center justify-center text-sm font-semibold text-gray-800">📦</span>
                   Basic Information
                 </h3>
                 <Field label="Category Name" required>
@@ -572,7 +579,7 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
               {/* SEO Settings */}
               <div className="bg-[#FAFAFA] border border-[#F0EAE2] rounded-2xl p-6 space-y-5">
                 <h3 className="text-[17px] font-serif font-bold text-[#3E2723] flex items-center gap-2">
-                  <span className="w-6 h-6 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center text-xs">🔍</span>
+                  <span className="w-6 h-6 #E6DFD4] flex items-center justify-center text-sm font-semibold text-gray-800">🔍</span>
                   SEO & Metadata
                 </h3>
                 <Field label="SEO Title">
@@ -589,7 +596,7 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
               {/* Preferences */}
               <div className="bg-[#FAFAFA] border border-[#F0EAE2] rounded-2xl p-6 space-y-5">
                 <h3 className="text-[17px] font-serif font-bold text-[#3E2723] flex items-center gap-2">
-                  <span className="w-6 h-6 bg-[#F8F4EC] border border-[#E6DFD4] rounded-lg flex items-center justify-center text-xs">🪵</span>
+                  <span className="w-6 h-6 #E6DFD4] flex items-center justify-center text-sm font-semibold text-gray-800">🪵</span>
                   Wood Preferences
                 </h3>
                 <Field label="Available Wood Types (comma separated)">

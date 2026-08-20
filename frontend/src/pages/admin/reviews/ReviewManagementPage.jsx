@@ -8,6 +8,8 @@ import {
   CheckCircle, XCircle, Award, Zap, ArrowUpRight, RotateCcw, Trash
 } from 'lucide-react';
 import { downloadExcelFile } from '../../../utils/exportUtils';
+import { adminService } from "../../../api/adminService";
+import { Avatar } from '../../../components/admin/CommonComponents';
 import Pagination from '../../../components/common/Pagination';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -51,16 +53,7 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-const Avatar = ({ name = "", size = 36 }) => {
-  const colors = ["#6366f1", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#3b82f6", "#ef4444", "#06b6d4"];
-  const bg = colors[(name.charCodeAt(0) || 0) % colors.length];
-  return (
-    <div className="rounded-full flex items-center justify-center text-white font-bold shrink-0"
-      style={{ width: size, height: size, background: bg, fontSize: size * 0.38 }}>
-      {name[0]?.toUpperCase() || "?"}
-    </div>
-  );
-};
+
 
 const Skeleton = ({ className = "" }) => (
   <div className={`animate-pulse bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 rounded-xl ${className}`} />
@@ -151,7 +144,7 @@ function ReviewDetailModal({ review, onClose, onStatusChange, onDelete, canEdit,
               </p>
             </div>
             {review.isVerifiedPurchase && (
-              <span className="flex items-center gap-1.5 text-[13px] text-[#00C48C] bg-[#00C48C]/10 border border-[#00C48C]/20 px-3 py-1.5 rounded-full font-bold mt-3">
+              <span className="flex text-[13px] text-[#00C48C] font-bold mt-3 text-sm font-semibold">
                 <Shield size={14} /> Verified
               </span>
             )}
@@ -533,7 +526,7 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
             <table className="w-full text-sm">
               <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
                 <tr>
-                  <th className="px-4 py-3.5 w-10">
+                  <th className="px-6 py-3.5 w-10">
                     <input
                       type="checkbox"
                       checked={reviews.length > 0 && selectedIds.length === reviews.length}
@@ -542,7 +535,7 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
                     />
                   </th>
                   {["Customer", "Product", "Rating", "Review", "Date", "Status", "Actions"].map(h => (
-                    <th key={h} className={`px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap ${h === 'Actions' ? 'text-center' : 'text-left'}`}>{h}</th>
+                    <th key={h} className={`px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap ${h === 'Actions' ? 'text-center' : 'text-left'}`}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -551,13 +544,13 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
                   Array.from({ length: 5 }).map((_, i) => (
                     <tr key={i} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${typeof idx !== "undefined" ? (idx % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : typeof index !== "undefined" ? (index % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : "bg-white"}`}>
                       {Array.from({ length: 7 }).map((__, j) => (
-                        <td key={j} className="px-5 py-4"><Skeleton className="h-5 w-full" /></td>
+                        <td key={j} className="px-6 py-4 text-sm"><Skeleton className="h-5 w-full" /></td>
                       ))}
                     </tr>
                   ))
                 ) : reviews.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-5 py-20 text-center">
+                    <td colSpan={8} className="px-6 py-4 text-center text-sm">
                       <div className="flex flex-col items-center gap-3">
                         <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center">
                           <MessageCircle size={28} className="text-gray-300" />
@@ -572,7 +565,7 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
                   const p = r.product || {};
                   return (
                     <tr key={r._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
-                      <td className="px-4 py-6">
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                         <input
                           type="checkbox"
                           checked={selectedIds.includes(r._id)}
@@ -580,16 +573,16 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
                           className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
                         />
                       </td>
-                      <td className="px-5 py-6">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <div className="flex items-center gap-3">
                           <Avatar name={u.name || "?"} size={36} />
                           <div>
-                            <p className="text-sm font-bold text-gray-900 leading-tight">{u.name || "Unknown"}</p>
-                            <p className="text-xs text-gray-400">{u.email}</p>
+                            <p className="font-bold text-sm text-gray-800 leading-tight">{u.name || "Unknown"}</p>
+                            <p className="text-sm font-semibold text-gray-600">{u.email}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-5 py-6">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <div className="flex items-center gap-2.5">
                           {p.images?.[0] ? (
                             <img src={p.images[0]} alt={p.name} className="w-12 h-12 rounded-lg object-cover border border-[#E6DFD4] shrink-0" />
@@ -598,55 +591,55 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
                               <Package size={14} className="text-[#8B5E3C]" />
                             </div>
                           )}
-                          <p className="text-sm font-bold text-gray-700 max-w-[130px] truncate">{p.name || "—"}</p>
+                          <p className="font-bold text-sm text-gray-800 max-w-[130px] truncate">{p.name || "—"}</p>
                         </div>
                       </td>
-                      <td className="px-5 py-6 whitespace-nowrap"><StarRating rating={r.rating} /></td>
-                      <td className="px-5 py-6 max-w-[200px]">
-                        {r.title && <p className="text-xs font-semibold text-gray-900 truncate mb-0.5">{r.title}</p>}
-                        <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm"><StarRating rating={r.rating} /></td>
+                      <td className="px-6 py-4 whitespace-nowrap max-w-[200px] text-sm">
+                        {r.title && <p className="font-bold text-sm text-gray-800 truncate mb-0.5">{r.title}</p>}
+                        <p className="text-sm font-semibold text-gray-600 line-clamp-2 leading-relaxed">
                           {r.description || <span className="italic">No text</span>}
                         </p>
                         {r.images?.length > 0 && (
-                          <span className="inline-flex items-center gap-1 text-[10px] text-indigo-500 mt-1 font-semibold">
+                          <span className="inline-flex items-center gap-1 text-sm text-indigo-500 mt-1 font-semibold">
                             {r.images.length} photo{r.images.length > 1 ? "s" : ""}
                           </span>
                         )}
                       </td>
-                      <td className="px-5 py-6 whitespace-nowrap">
-                        <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-600">
                           <Calendar size={14} />
                           {new Date(r.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
                         </div>
                         {r.isVerifiedPurchase && (
-                          <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 font-bold mt-0.5">
+                          <span className="inline-flex items-center gap-1 text-sm text-emerald-600 font-bold mt-0.5">
                             <Shield size={9} /> Verified
                           </span>
                         )}
                       </td>
-                      <td className="px-5 py-6 whitespace-nowrap"><StatusBadge status={r.status} /></td>
-                      <td className="px-5 py-6 whitespace-nowrap text-center">
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm"><StatusBadge status={r.status} /></td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                         <div className="flex items-center justify-center gap-2">
                           <button onClick={() => setDetail(r)} title="View"
-                            className="p-1.5 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors">
-                            <Eye size={15} />
+                            className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors">
+                            <Eye className="w-[15px] h-[15px]" />
                           </button>
                           {canEdit && r.status !== "approved" && (
                             <button onClick={() => handleStatusChange(r._id, "approved")} title="Approve"
-                              className="p-1.5 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors">
-                              <Check size={15} />
+                              className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors">
+                              <Check className="w-[15px] h-[15px]" />
                             </button>
                           )}
                           {canEdit && r.status !== "rejected" && (
                             <button onClick={() => handleStatusChange(r._id, "rejected")} title="Reject"
-                              className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors">
-                              <X size={15} />
+                              className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors">
+                              <X className="w-[15px] h-[15px]" />
                             </button>
                           )}
                           {canDelete && (
                             <button onClick={() => setConfirm({ id: r._id })} title="Delete"
-                              className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                              <Trash2 size={15} />
+                              className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors">
+                              <Trash2 className="w-[15px] h-[15px]" />
                             </button>
                           )}
                         </div>
@@ -705,7 +698,7 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full">
             <div className="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Trash size={22} className="text-red-500" />
+              <Trash size={16} className="text-red-500" />
             </div>
             <h3 className="text-center font-bold text-gray-900 text-lg mb-1">Delete Review?</h3>
             <p className="text-center text-sm text-gray-500 mb-6">This action cannot be undone.</p>
