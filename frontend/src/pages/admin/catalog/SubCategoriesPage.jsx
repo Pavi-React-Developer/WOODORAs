@@ -422,20 +422,20 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                                     />
                                 </th>
                                 {['Sub-Category Name', 'Parent Category', 'Slug', 'Status', 'Actions'].map(h => (
-                                    <th key={h} className={`px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap ${['Parent Category', 'Slug', 'Status', 'Actions'].includes(h) ? 'text-center' : 'text-left'}`}>{h}</th>
+                                    <th key={h} className={`px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap ${['Parent Category', 'Slug', 'Status', 'Actions'].includes(h) ? 'text-center' : 'text-left'}`}>{h}</th>
                                 ))}
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-[#E9DED3]">
                             {loading ? (
-                                <tr><td colSpan={6} className="px-6 py-4 text-center text-gray-400 text-sm">
+                                <tr><td colSpan={6} className="px-6 py-4 whitespace-nowrap text-[16px] font-bold text-black-400 text-center">
                                     <div className="flex items-center justify-center gap-2">
                                         <div className="w-4 h-4 border-2 border-[#8B5E3C] border-t-transparent rounded-full animate-spin" />
                                         Loading subcategories...
                                     </div>
                                 </td></tr>
                             ) : subCategories.length === 0 ? (
-                                <tr><td colSpan={6} className="px-6 py-4 text-center text-gray-400 text-sm">
+                                <tr><td colSpan={6} className="px-6 py-4 text-center text-gray-400 text-[16px]">
                                     <div className="flex flex-col items-center gap-3">
                                         <div className="w-12 h-12 bg-[#F8F4EC] rounded-full flex items-center justify-center text-2xl">🗂️</div>
                                         <p className="font-medium">No subcategories found.</p>
@@ -447,7 +447,7 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                                         key={sub._id}
                                         className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}
                                     >
-                                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                                        <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
                                             <input
                                                 type="checkbox"
                                                 checked={selectedIds.includes(sub._id)}
@@ -455,28 +455,28 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                                                 className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer mx-auto block"
                                             />
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                        <td className="px-6 py-4 whitespace-nowrap text-[16px] font-bold text-black-400 text-center">
                                             <div className="flex items-center gap-4">
                                                 <div className="w-12 h-12 rounded-lg bg-[#F8F4EC] border border-[#E6DFD4] flex items-center justify-center text-xl overflow-hidden flex-shrink-0">🗂️</div>
-                                                <span className="font-bold text-sm text-gray-800">{sub.name}</span>
+                                                <span className="font-bold text-[16px] text-gray-800">{sub.name}</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap font-bold text-sm text-[#8B5E3C] text-center">{sub.category?.name || 'Unknown'}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
-                                            <span className="text-sm font-semibold text-gray-800">
+                                        <td className="px-6 py-4 whitespace-nowrap font-bold text-[16px] text-[#8B5E3C] text-center">{sub.category?.name || 'Unknown'}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
+                                            <span className="font-bold text-[16px] text-gray-800">
                                                 {sub.slug}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                                        <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
                                             {canEdit ? (
                                                 <button onClick={() => handleToggleStatus(sub)} title="Click to toggle">
-                                                    <StatusBadge status={sub.isActive ? "Active" : "Inactive"} />
+                                                    <StatusBadge status={sub.isActive ? "Active" : "Inactive"} size={16} />
                                                 </button>
                                             ) : (
-                                                <StatusBadge status={sub.isActive ? "Active" : "Inactive"} />
+                                                <StatusBadge status={sub.isActive ? "Active" : "Inactive"} size={16} />
                                             )}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                                        <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
                                             <div className="flex items-center justify-center gap-2">
                                                 {canEdit && (
                                                     <button
@@ -484,7 +484,7 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                                                         className="p-1.5 rounded-lg text-amber-700 hover:bg-amber-50 transition-colors"
                                                         title="Map Fields/Attributes"
                                                     >
-                                                        <Settings className="w-[15px] h-[15px]" />
+                                                        <Settings size={16} />
                                                     </button>
                                                 )}
                                                 {canEdit && (
@@ -493,7 +493,7 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                                                         className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
                                                         title="Edit"
                                                     >
-                                                        <SquarePen className="w-[15px] h-[15px]" />
+                                                        <SquarePen size={16} />
                                                     </button>
                                                 )}
                                                 {canDelete && (
@@ -502,7 +502,7 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                                                         className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
                                                         title="Delete"
                                                     >
-                                                        <Trash2 className="w-[15px] h-[15px]" />
+                                                        <Trash2 size={16} />
                                                     </button>
                                                 )}
                                             </div>

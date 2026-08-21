@@ -320,7 +320,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
             }
           })
           .catch(err => console.error("Failed to load admin logo", err)),
-          
+
         apiClient.get('/orders/badges/counts')
           .then(res => {
             if (res.data) setBadgeCounts(res.data);
@@ -378,7 +378,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
 
   useEffect(() => {
     const normalizedPath = location.pathname.replace(/\/+$/, '') || '/admin';
-    
+
     let routeState = adminRouteState[normalizedPath];
     let staffEditId = null;
     let parsedCustomerEditId = null;
@@ -406,7 +406,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
         routeState = adminRouteState['/admin'];
       }
     }
-    
+
     setCustomerEditId(parsedCustomerEditId);
     setCurrentTab(routeState.tab);
     if (routeState.staffSubTab) setStaffSubTab(routeState.staffSubTab);
@@ -1347,16 +1347,16 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                   <h2 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Dashboard Overview</h2>
                 </div>
                 <div className="flex items-center gap-3">
-                  <button 
-                    onClick={() => { loadData(); fetchDashboardStats(); }} 
-                    disabled={isRefreshing || isStatsLoading} 
+                  <button
+                    onClick={() => { loadData(); fetchDashboardStats(); }}
+                    disabled={isRefreshing || isStatsLoading}
                     className="bg-white border border-[#E6DFD4] text-brand-dark text-[13px] font-bold uppercase rounded-full h-[40px] px-6 shadow-sm flex items-center gap-2 hover:border-[#C8B9A5] transition-colors disabled:opacity-60"
                   >
-                    <RefreshCw size={15} strokeWidth={2.5} className={(isRefreshing || isStatsLoading) ? 'animate-spin' : ''} /> 
+                    <RefreshCw size={15} strokeWidth={2.5} className={(isRefreshing || isStatsLoading) ? 'animate-spin' : ''} />
                     {(isRefreshing || isStatsLoading) ? 'REFRESHING...' : 'REFRESH'}
                   </button>
                   <div className="relative">
-                    <button 
+                    <button
                       onClick={() => setIsDateDropdownOpen(!isDateDropdownOpen)}
                       className="bg-white border border-[#E6DFD4] text-brand-dark text-sm rounded-full h-[40px] px-4 py-2 focus:outline-none focus:ring-1 focus:ring-[#8B5E3C] cursor-pointer shadow-sm flex items-center justify-between min-w-[140px] hover:border-[#C8B9A5] transition-colors"
                     >
@@ -1380,8 +1380,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                       </>
                     )}
                   </div>
-                  <button 
-                    onClick={handleExportCSV} 
+                  <button
+                    onClick={handleExportCSV}
                     disabled={isStatsLoading}
                     className="admin-export-btn flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
@@ -1395,7 +1395,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-5">
                 <div className="bg-white rounded-2xl p-5 border border-[#E6DFD4] shadow-sm">
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-xs font-semibold text-brand-medium uppercase tracking-widest">Total Revenue</h3>
+                    <h3 className="text-[14px] font-serif font-bold text-brand-medium uppercase tracking-wider">Total Revenue</h3>
                     <span className="text-brand-medium text-sm">₹</span>
                   </div>
                   <p className="text-2xl font-bold text-brand-dark mb-4">₹{totalRevenue.toFixed(2)}</p>
@@ -1407,7 +1407,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
 
                 <div className="bg-white rounded-2xl p-5 border border-[#E6DFD4] shadow-sm">
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-xs font-semibold text-brand-medium uppercase tracking-widest">Total Orders</h3>
+                    <h3 className="text-[14px] font-serif font-bold text-brand-medium uppercase tracking-wider">Total Orders</h3>
                     <svg className="w-4 h-4 text-brand-medium" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
                   </div>
                   <p className="text-2xl font-bold text-brand-dark mb-4">{totalOrders}</p>
@@ -1419,7 +1419,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
 
                 <div className="bg-white rounded-2xl p-5 border border-[#E6DFD4] shadow-sm">
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-xs font-semibold text-brand-medium uppercase tracking-widest">Total Customers</h3>
+                    <h3 className="text-[14px] font-serif font-bold text-brand-medium uppercase tracking-wider">Total Customers</h3>
                     <svg className="w-4 h-4 text-brand-medium" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                   </div>
                   <p className="text-2xl font-bold text-brand-dark mb-4">{totalCustomers}</p>
@@ -1431,7 +1431,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
 
                 <div className="bg-white rounded-2xl p-5 border border-[#E6DFD4] shadow-sm">
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-xs font-semibold text-brand-medium uppercase tracking-widest">Total Products</h3>
+                    <h3 className="text-[14px] font-serif font-bold text-brand-medium uppercase tracking-wider">Total Products</h3>
                     <svg className="w-4 h-4 text-brand-medium" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
                   </div>
                   <p className="text-2xl font-bold text-brand-dark mb-4">{totalProducts}</p>
@@ -1447,8 +1447,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
                 <div className="lg:col-span-2 bg-white rounded-2xl p-6 border border-[#E6DFD4] shadow-sm min-h-[300px] flex flex-col">
                   <div className="flex justify-between items-start mb-6">
                     <div>
-                      <h3 className="text-sm font-bold text-brand-dark">Revenue Analytics</h3>
-                      <p className="text-xs text-brand-medium mt-1">Daily revenue over the last 30 days</p>
+                      <h3 className="text-[22px] font-serif font-bold text-brand-dark">Revenue Analytics</h3>
+                      <p className="text-[15px] font-serif text-brand-medium mt-1">Daily revenue over the last 30 days</p>
                     </div>
                   </div>
                   <div className="flex-1 w-full h-full min-h-[220px]">
@@ -1475,8 +1475,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
 
                 <div className="bg-white rounded-2xl p-6 border border-[#E6DFD4] shadow-sm min-h-[300px] flex flex-col">
                   <div className="mb-6">
-                    <h3 className="text-sm font-bold text-brand-dark">Order Volume</h3>
-                    <p className="text-xs text-brand-medium mt-1">Orders by day of week</p>
+                    <h3 className="text-[22px] font-serif font-bold text-brand-dark">Order Volume</h3>
+                    <p className="text-[15px] font-serif text-brand-medium mt-1">Orders by day of week</p>
                   </div>
                   <div className="flex-1 w-full h-full min-h-[220px]">
                     <ResponsiveContainer width="100%" height="100%">
@@ -2377,7 +2377,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
           {canAccessCatalog && currentTab === 'v2-categories' && <CategoriesPage canCreate={hasPermission('catalog', 'create')} canEdit={hasPermission('catalog', 'edit')} canDelete={hasPermission('catalog', 'delete')} />}
           {canAccessCatalog && currentTab === 'v2-subcategories' && <SubCategoriesPage canCreate={hasPermission('catalog', 'create')} canEdit={hasPermission('catalog', 'edit')} canDelete={hasPermission('catalog', 'delete')} />}
           {canAccessCatalog && currentTab === 'v2-attributes' && <AttributesPage canCreate={hasPermission('catalog', 'create')} canEdit={hasPermission('catalog', 'edit')} canDelete={hasPermission('catalog', 'delete')} />}
-          {canAccessCatalog && currentTab === 'v2-gst-rules' && <GSTRulesPage />}
+          {canAccessCatalog && currentTab === 'v2-gst-rules' && <GSTRulesPage canCreate={hasPermission('catalog', 'create')} canEdit={hasPermission('catalog', 'edit')} canDelete={hasPermission('catalog', 'delete')} />}
           {canAccessCatalog && currentTab === 'v2-products' && <ProductsPage canCreate={hasPermission('products', 'create') || hasPermission('catalog', 'create')} canEdit={hasPermission('products', 'edit') || hasPermission('catalog', 'edit')} canDelete={hasPermission('products', 'delete') || hasPermission('catalog', 'delete')} isAddMode={productSubTab === 'add'} onCancelAdd={() => openAdminTab('v2-products', { productSubTab: 'list', path: '/admin/products' })} />}
 
           {/* ── STAFF MANAGEMENT ── */}
@@ -2428,7 +2428,11 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
 
           {/* ── ADVANCED BOOKING MANAGEMENT ── */}
           {(isAdmin || canView('advanced_booking')) && currentTab === 'advanced_booking' && (
-            <AdvancedBookingManagement />
+            <AdvancedBookingManagement
+              canCreate={hasPermission('advanced_booking', 'create')}
+              canEdit={hasPermission('advanced_booking', 'edit')}
+              canDelete={hasPermission('advanced_booking', 'delete')}
+            />
           )}
 
           {/* ── FEE MANAGEMENT ── */}
@@ -2499,7 +2503,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
 
           {/* ── CMS MANAGEMENT ── */}
           {(isAdmin || canView('cms')) && currentTab === 'cms' && (
-            <HomePageCMS 
+            <HomePageCMS
               canCreate={hasPermission('cms', 'create')}
               canEdit={hasPermission('cms', 'edit')}
               canDelete={hasPermission('cms', 'delete')}

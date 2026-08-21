@@ -125,6 +125,9 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
     const searchLower = searchTerm.toLowerCase();
     const matchesSearch =
       searchTerm === '' ||
+      (order.displayId || '').toLowerCase().includes(searchLower) ||
+      (order.product?.name || '').toLowerCase().includes(searchLower) ||
+      (order.category?.name || '').toLowerCase().includes(searchLower) ||
       (order.customFields &&
         order.customFields.some(
           cf => cf.value && typeof cf.value === 'string' && cf.value.toLowerCase().includes(searchLower)
@@ -190,7 +193,7 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A817C]" />
           <input
             type="text"
-            placeholder="Search custom fields..."
+            placeholder="Search orders, products, or custom fields..."
             value={searchTerm}
             onChange={(e) => handleSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2.5 bg-white border border-[#E9DED3] rounded-[10px] text-sm focus:outline-none focus:border-[#9A6031] focus:ring-1 focus:ring-[#9A6031] transition-all"
@@ -239,7 +242,7 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
           ) : (
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-[#FAF4EF] text-[#8B5E3C] text-[11px] uppercase tracking-widest text-center">
+                <tr className="bg-[#FAF4EF] text-[#8B5E3C] text-[14px] uppercase tracking-widest text-center">
                   <th className="py-4 px-2 font-bold border-b border-[#E6DFD4] w-10 text-center">
                     <input
                       type="checkbox"
@@ -262,7 +265,7 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                     key={order._id}
                     className="bg-white transition-colors"
                   >
-                    <td className="p-4 border-b border-[#E6DFD4] text-left">
+                    <td className="text-[16px] p-4 border-b border-[#E6DFD4] text-left">
                       <input
                         type="checkbox"
                         checked={selectedIds.includes(order._id)}
@@ -270,33 +273,33 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                         className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer"
                       />
                     </td>
-                    <td className="p-4 border-b border-[#E6DFD4] text-center">
-                      <p className="text-sm font-bold text-[#141225]">
+                    <td className="text-[16px] p-4 border-b border-[#E6DFD4] text-center">
+                      <p className="text-[16px] font-bold text-[#141225]">
                         {order.displayId}
                       </p>
                     </td>
-                    <td className="p-4 border-b border-[#E6DFD4] text-center">
-                      <p className="text-sm font-semibold text-[#6D625C]">
+                    <td className="text-[16px] p-4 border-b border-[#E6DFD4] text-center">
+                      <p className="text-[16px] font-semibold text-[#8B5E3C]">
                         {new Date(order.createdAt).toLocaleDateString()}
                       </p>
                     </td>
-                    <td className="p-4 border-b border-[#E6DFD4] text-left">
+                    <td className="text-[16px] p-4 border-b border-[#E6DFD4] text-left">
                       {order.product ? (
                         <>
-                          <p className="text-sm font-bold text-[#4A3326] max-w-[150px] truncate" title={order.product?.name}>
+                          <p className="text-[16px] font-bold text-[#4A3326] max-w-[150px] truncate" title={order.product?.name}>
                             {order.product?.name}
                           </p>
-                          <p className="text-xs text-[#8A817C]">{order.category?.name || 'N/A'}</p>
+                          <p className="text-sm text-[#8A817C]">{order.category?.name || 'N/A'}</p>
                         </>
                       ) : (
-                        <span className="text-xs text-[#8A817C]">Not Specified</span>
+                        <span className="text-sm text-[#8A817C]">Not Specified</span>
                       )}
                     </td>
-                    <td className="p-4 border-b border-[#E6DFD4] whitespace-normal min-w-[200px] text-left">
+                    <td className="text-[16px] p-4 border-b border-[#E6DFD4] whitespace-normal min-w-[200px] text-left">
                       <div className="space-y-1">
                         {order.customFields &&
                           order.customFields.slice(0, 2).map((cf, idx) => (
-                            <p key={idx} className="text-xs font-semibold text-[#6D625C] truncate max-w-[250px]">
+                            <p key={idx} className="text-[14px] font-semibold text-[#6D625C] truncate max-w-[250px]">
                               <span className="font-bold text-[#4A403B]">{cf.label}:</span>{' '}
                               {typeof cf.value === 'boolean' ? (cf.value ? 'Yes' : 'No') : cf.value}
                             </p>
@@ -308,22 +311,22 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                         )}
                       </div>
                     </td>
-                    <td className="p-4 border-b border-[#E6DFD4] text-left">
-                      <RequestBadge status={order.status || 'Pending'} />
+                    <td className="text-[16px] p-4 border-b border-[#E6DFD4] text-left">
+                      <RequestBadge status={order.status || 'Pending'} size={16} />
                       {order.status === 'Rejected' && order.rejectionReason && (
                         <p className="text-[10px] text-red-600 mt-1 max-w-[150px] truncate" title={order.rejectionReason}>
                           {order.rejectionReason}
                         </p>
                       )}
                     </td>
-                    <td className="p-4 border-b border-[#E6DFD4] text-left">
+                    <td className="text-[16px] p-4 border-b border-[#E6DFD4] text-left">
                       <div className="flex items-center gap-4">
                         <button
                           onClick={() => handleViewClick(order)}
                           className="text-emerald-600 hover:text-emerald-700 transition-colors flex items-center justify-center"
                           title="View Details"
                         >
-                          <Eye className="w-[15px] h-[15px]" />
+                          <Eye size={16} />
                         </button>
                         {(!order.status || order.status === 'Pending') && canEdit && (
                           <>
@@ -332,14 +335,14 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                               className="text-emerald-500 hover:text-emerald-700 transition-colors flex items-center justify-center"
                               title="Approve"
                             >
-                              <Check className="w-[15px] h-[15px] stroke-[3]" />
+                              <Check className="stroke-[3]" size={16} />
                             </button>
                             <button
                               onClick={() => handleRejectClick(order)}
                               className="text-red-500 hover:text-red-700 transition-colors flex items-center justify-center"
                               title="Reject"
                             >
-                              <X className="w-[15px] h-[15px] stroke-[3]" />
+                              <X className="stroke-[3]" size={16} />
                             </button>
                           </>
                         )}

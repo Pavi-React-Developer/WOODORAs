@@ -197,20 +197,20 @@ export default function StaffListPage({ onAddStaff, onEditStaff, onRoleAssign, c
                   />
                 </th>
                 {['Profile', 'Full Name', 'Email', 'Mobile', 'Role', 'Status', 'Created Date', 'Actions'].map(h => (
-                  <th key={h} className={`px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap ${['Profile', 'Full Name', 'Email', 'Mobile', 'Role', 'Status', 'Created Date', 'Actions'].includes(h) ? 'text-center' : 'text-left'}`}>{h}</th>
+                  <th key={h} className={`px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap ${['Profile', 'Full Name', 'Email', 'Mobile', 'Role', 'Status', 'Created Date', 'Actions'].includes(h) ? 'text-center' : 'text-left'}`}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={9} className="px-6 py-4 text-center text-gray-400 text-sm">
+                <tr><td colSpan={9} className="px-6 py-4 text-center text-gray-400 text-[16px]">
                   <div className="flex items-center justify-center gap-2">
                     <div className="w-4 h-4 border-2 border-[#8B5E3C] border-t-transparent rounded-full animate-spin" />
                     Loading staff...
                   </div>
                 </td></tr>
               ) : error ? (
-                <tr><td colSpan={9} className="px-6 py-4 text-center text-sm">
+                <tr><td colSpan={9} className="px-6 py-4 text-center text-[16px]">
                   <div className="flex flex-col items-center gap-3">
                     <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
                       <svg className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
@@ -220,11 +220,11 @@ export default function StaffListPage({ onAddStaff, onEditStaff, onRoleAssign, c
                   </div>
                 </td></tr>
               ) : staffList.length === 0 ? (
-                <tr><td colSpan={9} className="px-6 py-4 text-center text-gray-400 text-sm">No staff members found.</td></tr>
+                <tr><td colSpan={9} className="px-6 py-4 text-center text-gray-400 text-[16px]">No staff members found.</td></tr>
               ) : (
                 staffList.map((member, idx) => (
                   <tr key={member._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${typeof idx !== "undefined" ? (idx % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : typeof index !== "undefined" ? (index % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : "bg-white"}`}>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
                       <input
                         type="checkbox"
                         checked={selectedIds.includes(member._id)}
@@ -232,42 +232,42 @@ export default function StaffListPage({ onAddStaff, onEditStaff, onRoleAssign, c
                         className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
                       />
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap flex justify-center text-sm">
-                      <Avatar name={member.fullName} size={36} />
+                    <td className="px-6 py-4 whitespace-nowrap flex justify-center text-[16px]">
+                      <Avatar name={member.fullName} size={38} />
                     </td>
-                    <td className="px-6 py-4 font-bold text-sm text-gray-800 whitespace-nowrap text-center">{member.fullName}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-600 text-center">{member.email}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-600 text-center">{member.mobile || '—'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
-                      <span className="text-sm font-semibold text-gray-800">
+                    <td className="px-6 py-4 font-bold text-[16px] text-gray-800 whitespace-nowrap text-center">{member.fullName}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-[16px] font-semibold text-[#D88F5B] text-center">{member.email}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-[16px] font-semibold text-[#D88F5B] text-center">{member.mobile || '—'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
+                      <span className="font-semibold text-[16px] text-gray-800">
                         {member.role}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
                       {canEdit ? (
                         <button onClick={() => handleToggleStatus(member)} title="Toggle status">
-                          <StatusBadge status={member.status} />
+                          <StatusBadge status={member.status} size={16} />
                         </button>
                       ) : (
-                        <StatusBadge status={member.status} />
+                        <StatusBadge status={member.status} size={16} />
                       )}
                     </td>
-                    <td className="px-6 py-4 text-sm font-semibold text-gray-600 whitespace-nowrap text-center">{new Date(member.createdAt).toLocaleDateString('en-IN')}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                    <td className="px-6 py-4 text-[16px] font-semibold text-[#8B5E3C] whitespace-nowrap text-center">{new Date(member.createdAt).toLocaleDateString('en-IN')}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
                       <div className="flex items-center justify-center gap-2">
                         {canEdit && (
                           <button onClick={() => onEditStaff(member)} className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors" title="Edit">
-                            <SquarePen className="w-[15px] h-[15px]" />
+                            <SquarePen size={16} />
                           </button>
                         )}
                         {canEdit && (
                           <button onClick={() => onRoleAssign(member)} className="p-1.5 rounded-lg text-[#8B5E3C] hover:bg-[#F8F4EC] transition-colors" title="Edit Permissions">
-                            <ShieldCheck className="w-[15px] h-[15px]" />
+                            <ShieldCheck size={16} />
                           </button>
                         )}
                         {canDelete && (
                           <button onClick={() => setDeleteId(member._id)} className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors" title="Delete">
-                            <Trash2 className="w-[15px] h-[15px]" />
+                            <Trash2 size={16} />
                           </button>
                         )}
                       </div>
@@ -299,8 +299,8 @@ export default function StaffListPage({ onAddStaff, onEditStaff, onRoleAssign, c
             <h3 className="text-lg font-bold text-gray-800 text-center mb-2">Delete Staff Member</h3>
             <p className="text-sm text-gray-500 text-center mb-6">This action cannot be undone. Are you sure?</p>
             <div className="flex gap-3">
-              <button onClick={() => setDeleteId(null)} className="admin-cancel-btn">CANCEL</button>
-              <button onClick={handleDelete} className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-semibold transition-colors">Delete</button>
+              <button onClick={() => setDeleteId(null)} className="flex-1 px-8 py-3 border border-red-200 rounded-full text-[15px] font-bold text-red-600 bg-white hover:bg-red-50 transition-colors shadow-sm uppercase tracking-wide">Cancel</button>
+              <button onClick={handleDelete} className="flex-1 px-8 py-3 rounded-full bg-red-600 hover:bg-red-700 text-white text-[15px] font-bold transition-colors shadow-sm">Delete</button>
             </div>
           </div>
         </div>

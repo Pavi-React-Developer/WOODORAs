@@ -1,4 +1,4 @@
-import { ActiveBadge, RequestBadge, OrderBadge, TypeBadge } from '../../components/admin/CommonComponents';
+import { ActiveBadge, RequestBadge, OrderBadge, TypeBadge, StatusBadge } from '../../components/admin/CommonComponents';
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, CheckCircle, XCircle, SquarePen, Trash, Check, X } from 'lucide-react';
 import { bulkOrderService } from '../../api/bulkOrderService';
@@ -247,24 +247,24 @@ export default function BulkOrderFieldsAdminPage({ canCreate = true, canEdit = t
                     className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer mx-auto block"
                   />
                 </th>
-                <th className="px-6 py-4 font-bold border-b border-[#E6DFD4] text-[#8B5E3C] text-xs uppercase tracking-wider text-center whitespace-nowrap">LABEL</th>
-                <th className="px-6 py-4 font-bold border-b border-[#E6DFD4] text-[#8B5E3C] text-xs uppercase tracking-wider text-center whitespace-nowrap">TYPE</th>
-                <th className="px-6 py-4 font-bold border-b border-[#E6DFD4] text-[#8B5E3C] text-xs uppercase tracking-wider text-center whitespace-nowrap">REQUIRED</th>
-                <th className="px-6 py-4 font-bold border-b border-[#E6DFD4] text-[#8B5E3C] text-xs uppercase tracking-wider text-center whitespace-nowrap">STATUS</th>
-                <th className="px-6 py-4 font-bold border-b border-[#E6DFD4] text-[#8B5E3C] text-xs uppercase tracking-wider text-center whitespace-nowrap">ACTIONS</th>
+                <th className="px-6 py-4 font-bold border-b border-[#E6DFD4] text-[#8B5E3C] text-[14px] font-serif uppercase tracking-wider text-center whitespace-nowrap">LABEL</th>
+                <th className="px-6 py-4 font-bold border-b border-[#E6DFD4] text-[#8B5E3C] text-[14px] font-serif uppercase tracking-wider text-center whitespace-nowrap">TYPE</th>
+                <th className="px-6 py-4 font-bold border-b border-[#E6DFD4] text-[#8B5E3C] text-[14px] font-serif uppercase tracking-wider text-center whitespace-nowrap">REQUIRED</th>
+                <th className="px-6 py-4 font-bold border-b border-[#E6DFD4] text-[#8B5E3C] text-[14px] font-serif uppercase tracking-wider text-center whitespace-nowrap">STATUS</th>
+                <th className="px-6 py-4 font-bold border-b border-[#E6DFD4] text-[#8B5E3C] text-[14px] font-serif uppercase tracking-wider text-center whitespace-nowrap">ACTIONS</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E6DFD4]">
               {fields.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="p-8 text-center text-[#8A817C]">
+                  <td colSpan="6" className="text-[16px] p-8 text-center text-[#8A817C]">
                     No custom fields defined yet.
                   </td>
                 </tr>
               ) : (
                 paginatedFields.map((field, idx) => (
                   <tr key={field._id} className={`hover:bg-[#FAF4EF]/30 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
                       <input
                         type="checkbox"
                         checked={selectedIds.includes(field._id)}
@@ -272,12 +272,12 @@ export default function BulkOrderFieldsAdminPage({ canCreate = true, canEdit = t
                         className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer mx-auto block"
                       />
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-left text-sm">
-                      <p className="font-bold text-sm text-gray-800">{field.label}</p>
+                    <td className="px-6 py-4 whitespace-nowrap text-left text-[16px]">
+                      <p className="font-bold text-[16px] font-serif text-gray-800">{field.label}</p>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
                       <div className="flex justify-center">
-                        <TypeBadge type={field.type} />
+                        <TypeBadge type={field.type} size={16} />
                       </div>
                       {field.type === 'dropdown' && field.options && (
                         <div className="text-[10px] text-gray-500 mt-1 truncate max-w-[200px] text-center">
@@ -285,17 +285,17 @@ export default function BulkOrderFieldsAdminPage({ canCreate = true, canEdit = t
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
                       <div className="flex justify-center">
-                        <ActiveBadge status={field.isRequired ? 'Required' : 'Optional'} />
+                        <StatusBadge status={field.isRequired ? 'Required' : 'Optional'} size={16} />
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
                       <div className="flex justify-center">
-                        <ActiveBadge status={field.isActive} />
+                        <StatusBadge status={field.isActive ? 'Active' : 'Inactive'} size={16} />
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
                       <div className="flex items-center justify-center gap-3">
                         {canEdit && (
                           <button
@@ -303,7 +303,7 @@ export default function BulkOrderFieldsAdminPage({ canCreate = true, canEdit = t
                             className="text-blue-600 hover:text-blue-700 transition-colors flex items-center justify-center"
                             title="Edit"
                           >
-                            <SquarePen className="w-[15px] h-[15px]" />
+                            <SquarePen size={16} />
                           </button>
                         )}
                         {canDelete && (
@@ -312,7 +312,7 @@ export default function BulkOrderFieldsAdminPage({ canCreate = true, canEdit = t
                             className="text-red-500 hover:text-red-600 transition-colors flex items-center justify-center"
                             title="Delete"
                           >
-                            <Trash2 className="w-[15px] h-[15px]" />
+                            <Trash2 size={16} />
                           </button>
                         )}
                       </div>

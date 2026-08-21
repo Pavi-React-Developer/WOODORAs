@@ -198,22 +198,23 @@ export default function CustomizeList() {
                     className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer mx-auto block"
                   />
                 </th>
-                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Date</th>
-                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Customer</th>
-                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Image</th>
-                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Product Name</th>
-                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Status</th>
-                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Actions</th>
+                <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Order ID</th>
+                <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Date</th>
+                <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Customer</th>
+                <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Image</th>
+                <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Product Name</th>
+                <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Status</th>
+                <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-[#E9DED3]">
               {paginatedRequests.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-6 py-4 text-center text-[#8A817C] text-sm">No requests found.</td>
+                  <td colSpan="8" className="px-6 py-4 text-center text-[#8A817C] text-[16px]">No requests found.</td>
                 </tr>
               ) : paginatedRequests.map((req, idx) => (
                 <tr key={req._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
-                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
                     <input
                       type="checkbox"
                       checked={selectedIds.includes(req._id)}
@@ -221,40 +222,49 @@ export default function CustomizeList() {
                       className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer mx-auto block"
                     />
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center font-bold text-sm text-gray-800">
+                  <td className="px-6 py-4 whitespace-nowrap text-center font-bold text-[16px] text-[#141225]">
+                    {req.displayId || '—'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center font-bold text-[16px] text-[#8B5E3C]">
                     {new Date(req.createdAt).toLocaleDateString()}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
-                    <div className="text-sm font-semibold text-gray-900">{req.customerInfo.fullName}</div>
-                    <div className="text-sm text-[#8B5E3C]">{req.customerInfo.email}</div>
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
+                    <div className="text-[16px] font-semibold text-gray-900">{req.customerInfo.fullName}</div>
+                    <div className="text-[14px] font-semibold text-[#D88F5B]">{req.customerInfo.email}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
                     {req.images && req.images.length > 0 ? (
-                      <div className="flex items-center justify-center gap-1 text-[#8B5E3C]">
-                        <ImageIcon size={15} />
-                        <span className="text-sm font-medium">{req.images.length}</span>
+                      <div className="flex items-center justify-center">
+                        <div className="relative">
+                          <img src={req.images[0].url} className="w-12 h-12 object-cover rounded-lg border border-[#E6DFD4]" alt="Ref" />
+                          {req.images.length > 1 && (
+                            <div className="absolute -top-2 -right-2 bg-[#8B5E3C] text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                              +{req.images.length - 1}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     ) : (
-                      <span className="text-gray-400 text-sm">None</span>
+                      <span className="text-gray-400 text-[16px]">None</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-semibold text-gray-600">{getProductName(req.productDetails)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-[16px] font-semibold text-gray-600">{getProductName(req.productDetails)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
                     <span className={`px-2.5 py-1 text-sm font-medium rounded-full ${req.status === 'Approved' ? 'bg-green-100 text-green-800' :
-                        req.status === 'Rejected' ? 'bg-red-100 text-red-800' :
-                          'bg-yellow-100 text-yellow-800'
+                      req.status === 'Rejected' ? 'bg-red-100 text-red-800' :
+                        'bg-yellow-100 text-yellow-800'
                       }`}>
                       {req.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
                     <div className="flex items-center justify-center gap-2">
                       <button
                         onClick={() => setSelectedRequest(req)}
                         className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors"
                         title="View Details"
                       >
-                        <Eye className="w-[15px] h-[15px]" />
+                        <Eye size={16} />
                       </button>
                       {req.images && req.images.length > 0 && (
                         <button
@@ -262,24 +272,24 @@ export default function CustomizeList() {
                           className="p-1.5 text-[#8B5E3C] hover:bg-[#F8F4EC] rounded-lg transition-colors"
                           title="Export Images"
                         >
-                          <Download className="w-[15px] h-[15px]" />
+                          <Download size={16} />
                         </button>
                       )}
                       {req.status === 'Pending' && (
                         <>
                           <button
                             onClick={() => handleUpdateStatus(req._id, 'Approved')}
-                            className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors"
+                            className="text-emerald-500 hover:text-emerald-700 transition-colors flex items-center justify-center"
                             title="Approve"
                           >
-                            <Check className="w-[15px] h-[15px]" />
+                            <Check className="stroke-[3]" size={16} />
                           </button>
                           <button
                             onClick={() => openRejectModal(req)}
-                            className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
+                            className="text-red-500 hover:text-red-700 transition-colors flex items-center justify-center"
                             title="Reject"
                           >
-                            <X className="w-[15px] h-[15px]" />
+                            <X className="stroke-[3]" size={16} />
                           </button>
                         </>
                       )}
@@ -315,8 +325,8 @@ export default function CustomizeList() {
             <div className="p-6 overflow-y-auto space-y-6">
               <div className="flex justify-between items-center">
                 <span className={`px-3 py-1 text-sm font-medium rounded-full ${selectedRequest.status === 'Approved' ? 'bg-green-100 text-green-800' :
-                    selectedRequest.status === 'Rejected' ? 'bg-red-100 text-red-800' :
-                      'bg-yellow-100 text-yellow-800'
+                  selectedRequest.status === 'Rejected' ? 'bg-red-100 text-red-800' :
+                    'bg-yellow-100 text-yellow-800'
                   }`}>
                   Status: {selectedRequest.status}
                 </span>

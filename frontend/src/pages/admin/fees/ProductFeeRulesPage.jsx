@@ -325,18 +325,18 @@ export default function ProductFeeRulesPage() {
                     className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
                   />
                 </th>
-                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Min Vol (cm³)</th>
-                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Max Vol (cm³)</th>
-                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Box Size</th>
-                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Fee (₹)</th>
-                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Status</th>
-                <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Action</th>
+                <th className="px-4 py-3.5 text-center text-[14px] font-bold uppercase tracking-wider text-[#8B5E3C] whitespace-nowrap">Min Vol (cm³)</th>
+                <th className="px-4 py-3.5 text-center text-[14px] font-bold uppercase tracking-wider text-[#8B5E3C] whitespace-nowrap">Max Vol (cm³)</th>
+                <th className="px-4 py-3.5 text-center text-[14px] font-bold uppercase tracking-wider text-[#8B5E3C] whitespace-nowrap">Box Size</th>
+                <th className="px-4 py-3.5 text-center text-[14px] font-bold uppercase tracking-wider text-[#8B5E3C] whitespace-nowrap">Fee (₹)</th>
+                <th className="px-4 py-3.5 text-center text-[14px] font-bold uppercase tracking-wider text-[#8B5E3C] whitespace-nowrap">Status</th>
+                <th className="px-4 py-3.5 text-center text-[14px] font-bold uppercase tracking-wider text-[#8B5E3C] whitespace-nowrap">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#E6DFD4] text-sm text-brand-dark">
+            <tbody className="divide-y divide-[#E6DFD4] text-[16px] text-brand-dark">
               {rules.map((rule) => (
                 <tr key={rule._id} className="transition-colors hover:bg-[#FDF9F5] bg-white">
-                  <td className="py-6 px-4 text-center">
+                  <td className="text-[16px] py-6 px-4 text-center">
                     <input
                       type="checkbox"
                       checked={selectedIds.includes(rule._id)}
@@ -344,33 +344,33 @@ export default function ProductFeeRulesPage() {
                       className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
                     />
                   </td>
-                  <td className="py-6 px-4 text-sm font-bold text-center text-gray-900">{rule.minVolume}</td>
-                  <td className="py-6 px-4 text-sm font-bold text-center text-gray-900">{rule.maxVolume}</td>
-                  <td className="py-6 px-4 text-xs font-semibold text-center text-gray-700">{rule.boxSize}</td>
-                  <td className="py-6 px-4 text-sm font-bold text-center text-gray-900">₹{rule.productFee}</td>
-                  <td className="py-6 px-4 text-center">
-                    <ActiveBadge status={rule.isActive} />
+                  <td className="py-6 px-4 text-[16px] font-bold text-center text-gray-900">{rule.minVolume}</td>
+                  <td className="py-6 px-4 text-[16px] font-bold text-center text-gray-900">{rule.maxVolume}</td>
+                  <td className="py-6 px-4 text-[16px] font-semibold text-center text-gray-700">{rule.boxSize}</td>
+                  <td className="py-6 px-4 text-[16px] font-bold text-center text-gray-900">₹{rule.productFee}</td>
+                  <td className="text-[16px] py-6 px-4 text-center">
+                    <ActiveBadge status={rule.isActive} size={16}/>
                   </td>
-                  <td className="py-6 px-4 text-center whitespace-nowrap">
+                  <td className="text-[16px] py-6 px-4 text-center whitespace-nowrap">
                     <div className="flex items-center justify-center gap-2">
                       <button 
                         onClick={() => handleEdit(rule)} 
                         className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors" 
                         title="Edit Rule"
                       >
-                        <SquarePen size={15} />
+                        <SquarePen size={16} />
                       </button>
                       <button 
                         onClick={() => handleToggleStatus(rule)} 
                         title={rule.isActive ? "Deactivate" : "Activate"}>
-                            <ActiveBadge status={rule.isActive} />
+                            <ActiveBadge status={rule.isActive} size={16}/>
                       </button>
                       <button 
                         onClick={() => handleDelete(rule._id)} 
                         className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" 
                         title="Delete Rule"
                       >
-                        <Trash2 size={15} />
+                        <Trash2 size={16} />
                       </button>
                     </div>
                   </td>
@@ -378,7 +378,7 @@ export default function ProductFeeRulesPage() {
               ))}
               {rules.length === 0 && (
                 <tr>
-                  <td colSpan="7" className="px-6 py-12 text-center text-gray-500">No product fee rules configured.</td>
+                  <td colSpan="7" className="text-[16px] px-6 py-12 text-center text-gray-500">No product fee rules configured.</td>
                 </tr>
               )}
             </tbody>

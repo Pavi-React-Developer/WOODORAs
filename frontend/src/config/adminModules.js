@@ -94,6 +94,11 @@ export const ADMIN_MODULES = [
     key: 'cms',
     label: 'CMS Management',
     icon: '📝',
+  },
+  {
+    key: 'advanced_booking',
+    label: 'Advanced Booking',
+    icon: '📅',
   }
 ];
 

@@ -5,7 +5,7 @@ const PERMISSION_MODULES = [
   'dashboard', 'staff_management', 'catalog', 'users', 'products', 'categories',
   'brands', 'orders', 'inventory', 'coupons', 'reviews', 'customers',
   'reports', 'settings', 'fees', 'cancellation', 'refund', 'bulk_orders',
-  'gift_and_card', 'customize_order', 'cms'
+  'gift_and_card', 'customize_order', 'cms', 'advanced_booking'
 ];
 
 const permissionSchema = new mongoose.Schema({

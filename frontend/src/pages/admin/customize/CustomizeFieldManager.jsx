@@ -222,8 +222,8 @@ export default function CustomizeFieldManager({ canCreate = true, canEdit = true
 
       <div className="bg-white rounded-3xl shadow-sm border border-[#E6DFD4] overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-[#FAF4EF] text-[#8B5E3C] text-xs uppercase tracking-wider text-center">
+          <table className="w-full text-[16px] text-left">
+            <thead className="bg-[#FAF4EF] text-[#8B5E3C] text-[14px] uppercase tracking-wider text-center">
               <tr>
                 <th className="px-6 py-4 border-b border-[#E6DFD4] w-12 text-center">
                   <input
@@ -243,7 +243,7 @@ export default function CustomizeFieldManager({ canCreate = true, canEdit = true
             <tbody className="divide-y divide-[#E6DFD4]">
               {fields.map((field, idx) => (
                   <tr key={field._id} className={`hover:bg-[#FAF4EF]/30 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
                       <input
                         type="checkbox"
                         checked={selectedIds.includes(field._id)}
@@ -257,25 +257,25 @@ export default function CustomizeFieldManager({ canCreate = true, canEdit = true
                         className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer mx-auto block"
                       />
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-left text-sm">
-                      <p className="font-bold text-sm text-gray-800">{field.label}</p>
+                    <td className="px-6 py-4 whitespace-nowrap text-left text-[16px]">
+                      <p className="font-bold text-[16px] text-gray-800">{field.label}</p>
                       {field.type === 'dropdown' && (
-                        <div className="text-[10px] text-gray-500 mt-1 truncate max-w-[200px]">
+                        <div className="text-[14px] text-gray-500 mt-1 truncate max-w-[200px]">
                           {field.options.join(', ')}
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
                       <div className="flex justify-center">
                         <TypeBadge type={field.type} />
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
                       <div className="flex justify-center">
                         <ActiveBadge status={field.isRequired ? 'Required' : 'Optional'} />
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
                       <div className="flex justify-center">
                         {canEdit ? (
                           <button onClick={() => handleToggleStatus(field._id, field.isActive)} title="Click to toggle">
@@ -286,16 +286,16 @@ export default function CustomizeFieldManager({ canCreate = true, canEdit = true
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
                       <div className="flex items-center justify-center gap-3">
                       {canEdit && (
                         <button onClick={() => openEditModal(field)} className="text-blue-600 hover:text-blue-700 transition-colors" title="Edit Field">
-                          <Edit size={15} />
+                          <Edit size={16} />
                         </button>
                       )}
                       {canDelete && (
                         <button onClick={() => handleDelete(field._id)} className="text-red-500 hover:text-red-600 transition-colors" title="Delete Field">
-                          <Trash2 size={15} />
+                          <Trash2 size={16} />
                         </button>
                       )}
                     </div>
@@ -304,7 +304,7 @@ export default function CustomizeFieldManager({ canCreate = true, canEdit = true
               ))}
               {fields.length === 0 && (
                 <tr>
-                  <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan="6" className="text-[16px] px-6 py-8 text-center text-gray-500">
                     No custom fields found. Click "Add Field" to create one.
                   </td>
                 </tr>

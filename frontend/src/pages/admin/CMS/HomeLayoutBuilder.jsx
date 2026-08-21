@@ -36,7 +36,7 @@ function SortableItem({ id, visible, label, canEdit }) {
                     className="text-green-600 hover:text-green-700 transition-colors"
                     title={visible ? 'Hide section' : 'Show section'}
                 >
-                    {visible ? <Eye size={15} /> : <EyeOff size={15} />}
+                    {visible ? <Eye size={16} /> : <EyeOff size={16} />}
                 </button>
             )}
         </div>

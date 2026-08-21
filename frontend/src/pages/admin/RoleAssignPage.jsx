@@ -53,12 +53,12 @@ const PermissionTable = ({ modules, permissions, onToggle, onToggleRow, onToggle
       <table className="w-full text-sm border border-[#E6DFD4] rounded-xl overflow-hidden">
         <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
           <tr>
-            <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-left w-48">Module</th>
+            <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-left w-48">Module</th>
             {ACTIONS.map(action => {
               const allowedModules = visibleModules.filter((m) => canToggleActionForModule(m.key || m, action));
               const allChecked = allowedModules.length > 0 && allowedModules.every(mod => permissions[mod.key || mod]?.[action]);
               return (
-                <th key={action} className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">
+                <th key={action} className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">
                   <div className="flex items-center justify-center gap-2 cursor-pointer" onClick={() => onToggleColumn(action)}>
                     <input 
                       type="checkbox" 
@@ -71,7 +71,7 @@ const PermissionTable = ({ modules, permissions, onToggle, onToggleRow, onToggle
                 </th>
               );
             })}
-            <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">
+            <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">
               <div className="flex items-center justify-center gap-2 cursor-pointer" onClick={(e) => {
                 const allChecked = visibleModules.length > 0 && visibleModules.every(mod => ACTIONS.every(a => permissions[mod.key || mod]?.[a]));
                 allChecked ? onClearAll() : onSelectAll();
@@ -95,11 +95,11 @@ const PermissionTable = ({ modules, permissions, onToggle, onToggleRow, onToggle
             const canToggleRowForModule = ACTIONS.some((action) => canToggleActionForModule(moduleKey, action));
             return (
               <tr key={moduleKey} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
-                <td className="px-6 py-4 whitespace-nowrap font-bold text-sm text-gray-800">
+                <td className="px-6 py-4 whitespace-nowrap font-bold text-[16px] text-gray-800">
                   <span className="mr-2">{mod.icon}</span>{mod.label}
                 </td>
                 {ACTIONS.map(action => (
-                  <td key={action} className="px-6 py-4 text-center text-sm">
+                  <td key={action} className="px-6 py-4 text-center text-[16px]">
                     <input
                       type="checkbox"
                       checked={!!perm[action]}
@@ -109,7 +109,7 @@ const PermissionTable = ({ modules, permissions, onToggle, onToggleRow, onToggle
                     />
                   </td>
                 ))}
-                <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
                   <input
                     type="checkbox"
                     checked={allOn}

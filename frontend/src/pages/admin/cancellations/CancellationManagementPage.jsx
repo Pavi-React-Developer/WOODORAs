@@ -258,7 +258,7 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
               <div className="bg-white rounded-[14px] border border-[#E9DED3] p-5 flex flex-col justify-between shadow-sm">
                 <div className="flex items-start justify-between">
                   <div className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors">
-                    <Check size={20} />
+                    <Check size={16} />
                   </div>
                 </div>
                 <div className="mt-4">
@@ -273,7 +273,7 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
               <div className="bg-white rounded-[14px] border border-[#E9DED3] p-5 flex flex-col justify-between shadow-sm">
                 <div className="flex items-start justify-between">
                   <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-600">
-                    <Check size={20} />
+                    <Check size={16} />
                   </div>
                 </div>
                 <div className="mt-4">
@@ -338,26 +338,26 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
                           className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
                         />
                       </th>
-                      <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Order Status</th>
-                      <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Cancellation Fee (₹)</th>
-                      <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Refund %</th>
-                      <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Time Limit</th>
-                      <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Allowed</th>
-                      <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Status</th>
-                      <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Actions</th>
+                      <th className="px-4 py-3.5 text-center text-[14px] font-bold uppercase tracking-wider text-[#8B5E3C] whitespace-nowrap">Order Status</th>
+                      <th className="px-4 py-3.5 text-center text-[14px] font-bold uppercase tracking-wider text-[#8B5E3C] whitespace-nowrap">Cancellation Fee (₹)</th>
+                      <th className="px-4 py-3.5 text-center text-[14px] font-bold uppercase tracking-wider text-[#8B5E3C] whitespace-nowrap">Refund %</th>
+                      <th className="px-4 py-3.5 text-center text-[14px] font-bold uppercase tracking-wider text-[#8B5E3C] whitespace-nowrap">Time Limit</th>
+                      <th className="px-4 py-3.5 text-center text-[14px] font-bold uppercase tracking-wider text-[#8B5E3C] whitespace-nowrap">Allowed</th>
+                      <th className="px-4 py-3.5 text-center text-[14px] font-bold uppercase tracking-wider text-[#8B5E3C] whitespace-nowrap">Status</th>
+                      <th className="px-4 py-3.5 text-center text-[14px] font-bold uppercase tracking-wider text-[#8B5E3C] whitespace-nowrap">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#E9DED3] text-sm text-brand-dark">
                     {loading ? (
                       <tr>
-                        <td colSpan="7" className="text-center py-12 text-[#8A817C] text-sm">
+                        <td colSpan="7" className="text-center py-12 text-[#8A817C] text-[16px]">
                           <div className="w-8 h-8 border-4 border-[#8B5E3C] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
                           Loading rules...
                         </td>
                       </tr>
                     ) : filteredRules.map((rule, idx) => (
                       <tr key={idx} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]"}`}>
-                        <td className="px-4 py-6 text-center">
+                        <td className="text-[16px] px-4 py-6 text-center">
                           <input
                             type="checkbox"
                             checked={selectedIds.includes(rule._id)}
@@ -365,19 +365,19 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
                             className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
                           />
                         </td>
-                        <td className="px-4 py-6 text-center">
+                        <td className="text-[16px] px-4 py-6 text-center">
                           <span className="text-sm font-bold text-[#141225]">{rule.orderStatus}</span>
                         </td>
-                        <td className="px-4 py-6 text-center">
+                        <td className="text-[16px] px-4 py-6 text-center">
                           <span className="text-xs font-semibold text-[#141225]">{rule.cancellationFee > 0 ? rule.cancellationFee : '-'}</span>
                         </td>
-                        <td className="px-4 py-6 text-center">
+                        <td className="text-[16px] px-4 py-6 text-center">
                           <span className="text-xs font-semibold text-[#141225]">{rule.refundPercentage > 0 ? `${rule.refundPercentage}%` : '-'}</span>
                         </td>
-                        <td className="px-4 py-6 text-center">
-                          <span className="text-sm text-[#141225]">{rule.timeLimit}</span>
+                        <td className="text-[16px] px-4 py-6 text-center">
+                          <span className="text-sm font-semibold text-[#8B5E3C]">{rule.timeLimit}</span>
                         </td>
-                        <td className="px-4 py-6 text-center">
+                        <td className="text-[16px] px-4 py-6 text-center">
                           <button
                             onClick={() => handleToggleAllowed(rule)}
                             disabled={!canEdit || rule.status === 'Locked'}
@@ -391,20 +391,20 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
                             />
                           </button>
                         </td>
-                        <td className="px-4 py-6 text-center">
+                        <td className="text-[16px] px-4 py-6 text-center">
                           <RequestBadge status={rule.status} />
                         </td>
-                        <td className="px-4 py-6 text-center whitespace-nowrap">
+                        <td className="text-[16px] px-4 py-6 text-center whitespace-nowrap">
                           {rule.status !== 'Locked' ? (
                             <div className="flex items-center justify-center gap-2">
                               {canEdit && (
                                 <button onClick={() => handleEditRule(rule)} className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors">
-                                  <SquarePen size={15} />
+                                  <SquarePen size={16} />
                                 </button>
                               )}
                               {canDelete && (
                                 <button onClick={() => handleDeleteRule(rule._id)} className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                                  <Trash2 size={15} />
+                                  <Trash2 size={16} />
                                 </button>
                               )}
                             </div>
@@ -416,7 +416,7 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
                     ))}
                     {!loading && filteredRules.length === 0 && (
                       <tr>
-                        <td colSpan="7" className="px-6 py-8 text-center text-[#6D625C] text-sm">
+                        <td colSpan="7" className="px-6 py-8 text-center text-[#6D625C] text-[16px]">
                           No rules configured for {activeTab}. Click "Export" &gt; "Seed Rules" or "Add Rule".
                         </td>
                       </tr>

@@ -106,4 +106,7 @@ export const cmsService = {
     const uploadUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/catalog/upload`;
     return requestForm(uploadUrl, formData);
   },
+
+  // Bust the in-memory GET cache (call before refresh)
+  clearCache: () => cache.clear(),
 };

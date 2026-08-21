@@ -58,9 +58,10 @@ const authenticatedRequest = async (url, options = {}) => {
 
 export const catalogService = {
   // Get all products
-  getProducts: async () => {
+  getProducts: async (params = {}) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/product`, {
+      const queryParams = new URLSearchParams({ limit: 1000, ...params }).toString();
+      const response = await fetch(`${API_BASE_URL}/product?${queryParams}`, {
         method: 'GET',
         cache: 'no-store',
         headers: {

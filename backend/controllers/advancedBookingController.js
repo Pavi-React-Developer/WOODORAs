@@ -4,7 +4,7 @@ const Counter = require('../models/Counter');
 // Create a new advanced booking
 exports.createBooking = async (req, res) => {
     try {
-        const { product, category, subCategory, productName, productImage, price, variants, quantity, customerName, phoneNo } = req.body;
+        const { product, category, subCategory, productName, productImage, price, variants, quantity, customerName, phoneNo, address } = req.body;
 
         const counter = await Counter.findByIdAndUpdate(
             { _id: 'advancedBookingId' },
@@ -26,6 +26,7 @@ exports.createBooking = async (req, res) => {
             quantity,
             customerName,
             phoneNo,
+            address,
             totalAmount: price * quantity, // Initial calculation
             balanceAmount: price * quantity
         });

@@ -501,27 +501,27 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
                       className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
                     />
                   </th>
-                  <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Order ID</th>
-                  <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Customer</th>
-                  <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Amount</th>
-                  <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Payment Type</th>
-                  <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">SLA Timeline</th>
-                  <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Status</th>
-                  <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Refund</th>
-                  <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Action</th>
+                  <th className="px-4 py-3.5 text-center text-[14px] font-bold uppercase tracking-wider text-[#8B5E3C] whitespace-nowrap">Order ID</th>
+                  <th className="px-4 py-3.5 text-center text-[14px] font-bold uppercase tracking-wider text-[#8B5E3C] whitespace-nowrap">Customer</th>
+                  <th className="px-4 py-3.5 text-center text-[14px] font-bold uppercase tracking-wider text-[#8B5E3C] whitespace-nowrap">Amount</th>
+                  <th className="px-4 py-3.5 text-center text-[14px] font-bold uppercase tracking-wider text-[#8B5E3C] whitespace-nowrap">Payment Type</th>
+                  <th className="px-4 py-3.5 text-center text-[14px] font-bold uppercase tracking-wider text-[#8B5E3C] whitespace-nowrap">SLA Timeline</th>
+                  <th className="px-4 py-3.5 text-center text-[14px] font-bold uppercase tracking-wider text-[#8B5E3C] whitespace-nowrap">Status</th>
+                  <th className="px-4 py-3.5 text-center text-[14px] font-bold uppercase tracking-wider text-[#8B5E3C] whitespace-nowrap">Refund</th>
+                  <th className="px-4 py-3.5 text-center text-[14px] font-bold uppercase tracking-wider text-[#8B5E3C] whitespace-nowrap">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E9DED3] text-sm text-brand-dark">
                 {loading ? (
                   <tr>
-                    <td colSpan="9" className="text-center py-12 text-[#8A817C] text-sm">
+                    <td colSpan="9" className="text-center py-12 text-[#8A817C] text-[16px]">
                       <div className="w-8 h-8 border-4 border-[#8B5E3C] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
                       Loading refunds...
                     </td>
                   </tr>
                 ) : currentRefunds.map((refund, idx) => (
                   <tr key={idx} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]"}`}>
-                    <td className="px-4 py-6 text-center">
+                    <td className="text-[16px] px-4 py-6 text-center">
                       <input
                         type="checkbox"
                         checked={selectedIds.includes(refund._id)}
@@ -529,23 +529,23 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
                         className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
                       />
                     </td>
-                    <td className="px-4 py-6 text-center text-sm font-bold text-[#141225]">{refund.orderId}</td>
-                    <td className="px-4 py-6 text-center text-sm font-bold text-[#141225]">{refund.customerName}</td>
-                    <td className="px-4 py-6 text-center text-xs font-semibold text-[#141225]">₹{refund.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                    <td className="px-4 py-6 text-center">
+                    <td className="px-4 py-6 text-center text-[16px] font-bold text-[#141225]">{refund.orderId}</td>
+                    <td className="px-4 py-6 text-center text-[16px] font-bold text-[#141225]">{refund.customerName}</td>
+                    <td className="px-4 py-6 text-center text-[16px] font-semibold text-[#141225]">₹{refund.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="text-[16px] px-4 py-6 text-center">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tracking-wide ${refund.paymentType === 'Cashfree' ? 'text-blue-500 bg-blue-50' : 'text-purple-500 bg-purple-50'}`}>
                         {refund.paymentType}
                       </span>
                     </td>
-                    <td className="px-4 py-6 text-center">
-                      <span className={`text-sm font-bold ${refund.slaTimeline !== '-' ? 'text-orange-400' : 'text-gray-400'}`}>
+                    <td className="text-[16px] px-4 py-6 text-center">
+                      <span className="text-sm font-bold text-[#8B5E3C]">
                         {refund.slaTimeline}
                       </span>
                     </td>
-                    <td className="px-4 py-6 text-center">
+                    <td className="text-[16px] px-4 py-6 text-center">
                       <RequestBadge status={refund.status} />
                     </td>
-                    <td className="px-4 py-6 text-center">
+                    <td className="text-[16px] px-4 py-6 text-center">
                       {/* Step 2: Approve button (only for Approval Pending) */}
                       {(refund.status === 'Approval Pending' || refund.status === 'Pending') && canEdit && (
                         <button
@@ -571,10 +571,10 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-6 text-center whitespace-nowrap">
+                    <td className="text-[16px] px-4 py-6 text-center whitespace-nowrap">
                       <div className="flex items-center justify-center gap-2">
                         <button onClick={() => openViewModal(refund)} className="p-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors">
-                          <Eye size={15} />
+                          <Eye size={16} />
                         </button>
                       </div>
                     </td>
@@ -582,7 +582,7 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
                 ))}
                 {!loading && currentRefunds.length === 0 && (
                   <tr>
-                    <td colSpan="9" className="px-6 py-12 text-center text-[#6D625C] text-sm">
+                    <td colSpan="9" className="px-6 py-12 text-center text-[#6D625C] text-[16px]">
                       No refunds found matching the filters.
                     </td>
                   </tr>

@@ -7,7 +7,8 @@ export default function AdvancedBookingModal({ isOpen, onClose, product, selecte
   const [formData, setFormData] = useState({
     quantity: 1,
     customerName: '',
-    phoneNo: ''
+    phoneNo: '',
+    address: ''
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -31,6 +32,7 @@ export default function AdvancedBookingModal({ isOpen, onClose, product, selecte
     } else if (!/^\d{10,15}$/.test(formData.phoneNo.replace(/\D/g, ''))) {
       newErrors.phoneNo = 'Please enter a valid phone number';
     }
+    if (!formData.address.trim()) newErrors.address = 'Address is required';
     if (formData.quantity < 1) newErrors.quantity = 'Quantity must be at least 1';
 
     setErrors(newErrors);
@@ -53,7 +55,8 @@ export default function AdvancedBookingModal({ isOpen, onClose, product, selecte
         variants: selectedVariants,
         quantity: parseInt(formData.quantity, 10),
         customerName: formData.customerName,
-        phoneNo: formData.phoneNo
+        phoneNo: formData.phoneNo,
+        address: formData.address
       };
 
       await advancedBookingService.createBooking(payload);
@@ -166,6 +169,19 @@ export default function AdvancedBookingModal({ isOpen, onClose, product, selecte
                 className={`w-full rounded-[10px] border ${errors.phoneNo ? 'border-red-300 focus:border-red-500' : 'border-[#E9DED3] focus:border-[#9A6031]'} px-4 py-3 text-sm text-[#141225] bg-white placeholder:text-[#A9A09B] focus:outline-none focus:ring-1 focus:ring-[#9A6031] transition-colors`}
               />
               {errors.phoneNo && <p className="text-xs text-red-500 mt-1">{errors.phoneNo}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-[#4A403B] mb-1.5">Shipping Address <span className="text-red-500">*</span></label>
+              <textarea
+                name="address"
+                value={formData.address}
+                onChange={handleInputChange}
+                placeholder="Enter full shipping address"
+                rows="3"
+                className={`w-full rounded-[10px] border ${errors.address ? 'border-red-300 focus:border-red-500' : 'border-[#E9DED3] focus:border-[#9A6031]'} px-4 py-3 text-sm text-[#141225] bg-white placeholder:text-[#A9A09B] focus:outline-none focus:ring-1 focus:ring-[#9A6031] transition-colors resize-none`}
+              />
+              {errors.address && <p className="text-xs text-red-500 mt-1">{errors.address}</p>}
             </div>
 
             <div className="pt-4 flex items-center gap-4">

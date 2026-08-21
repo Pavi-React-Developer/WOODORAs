@@ -109,7 +109,7 @@ export const PackingSlip = forwardRef(({ orders }, ref) => {
             {orders.map((order, idx) => {
                 const isCOD = order.paymentMethod === 'COD' && !order.isPaid;
                 const trackingId = order.trackingId || order.orderId || order._id.substring(order._id.length - 8);
-                const address = order.shippingAddress || { address: 'Address not provided (Advanced Booking)', city: 'N/A', state: 'N/A', pinCode: 'N/A' };
+                const address = order.shippingAddress || { address: order.address || 'Address not provided', city: '', state: '', pinCode: '' };
                 const user = order.user || {};
                 const name = address.fullName || user.name || order.customerName || 'Customer';
 
@@ -124,19 +124,23 @@ export const PackingSlip = forwardRef(({ orders }, ref) => {
 
 
                         {/* Top Section: Address & Courier */}
-                        <div className="ps-flex ps-border" style={{ marginTop: '50mm' }}>
+                        <div className="ps-flex ps-border" style={{ marginTop: '30mm' }}>
                             {/* Left Side: Address */}
                             <div className="ps-border-r" style={{ flex: '1', width: '50%', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-                                <div className="ps-bold ps-border-b" style={{ padding: '2mm', fontSize: '18px' }}>Ship to Address</div>
+                                <div className="ps-bold ps-border-b" style={{ padding: '2mm', fontSize: '22px' }}>Ship to Address</div>
                                 <div style={{ padding: '2mm', flex: 1, overflowWrap: 'break-word', wordWrap: 'break-word', wordBreak: 'normal' }}>
-                                    <div className="ps-bold" style={{ fontSize: '20px' }}>{name}</div>
-                                    <div style={{ marginTop: '2mm', fontSize: '20px' }}>{address.address}</div>
-                                    <div style={{ fontSize: '20px' }}>{address.city}, {address.state}, {address.pinCode}</div>
+                                    <div className="ps-bold" style={{ fontSize: '22px' }}>{name}</div>
+                                    <div style={{ marginTop: '2mm', fontSize: '22px' }}>{address.address}</div>
+                                    {(address.city || address.state || address.pinCode) && (
+                                        <div style={{ fontSize: '22px' }}>
+                                            {[address.city, address.state, address.pinCode].filter(Boolean).join(', ')}
+                                        </div>
+                                    )}
                                     {(address.phone || order.phoneNo) && <div style={{ fontSize: '20 px' }}>Ph: {address.phone || order.phoneNo}</div>}
                                 </div>
 
-                                <div className="ps-border-t" style={{ padding: '2mm', fontSize: '20px' }}>
-                                    <div className="ps-bold" style={{ fontSize: '18px' }}>If undelivered, return to:</div>
+                                <div className="ps-border-t" style={{ padding: '2mm', fontSize: '22px' }}>
+                                    <div className="ps-bold" style={{ fontSize: '22px' }}>If undelivered, return to:</div>
                                     <div>Marakathai Warehouse</div>
                                     <div>Sengathurai Road,Kadampadi,</div>
                                     <div>Sulur Maingate, Coimbatore,</div>
@@ -156,20 +160,20 @@ export const PackingSlip = forwardRef(({ orders }, ref) => {
                                         </div>
                                     )}
 
-                                    <div style={{ fontSize: '16px', marginTop: '4mm', width: '100%' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2mm' }}>
+                                    <div style={{ fontSize: '22px', marginTop: '4mm', width: '100%' }}>
+                                        <div style={{ fontSize: '22px', display: 'flex', justifyContent: 'space-between', marginBottom: '2mm' }}>
                                             <span>Sold by:</span>
                                             <span className="ps-bold">Marakathai Warehouse</span>
                                         </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2mm' }}>
+                                        <div style={{ fontSize: '22px', display: 'flex', justifyContent: 'space-between', marginBottom: '2mm' }}>
                                             <span>GSTIN:</span>
                                             <span className="ps-bold">33ABCDE1234F1Z5</span>
                                         </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2mm' }}>
+                                        <div style={{ fontSize: '22px', display: 'flex', justifyContent: 'space-between', marginBottom: '2mm' }}>
                                             <span>Order No.</span>
                                             <span className="ps-bold">{order.orderId || order._id.substring(order._id.length - 8)}</span>
                                         </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <div style={{ fontSize: '22px', display: 'flex', justifyContent: 'space-between' }}>
                                             <span>Order Date</span>
                                             <span className="ps-bold">{new Date(order.createdAt).toLocaleDateString('en-IN')}</span>
                                         </div>

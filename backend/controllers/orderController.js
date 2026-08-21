@@ -31,7 +31,7 @@ const feeAmount = (fees, ...tokens) => (Array.isArray(fees) ? fees : [])
 
 // The checkout sends one pricing snapshot.  We only derive its total from its
 // components, never from current fee rules, so the saved order is immutable.
-const buildPricingSnapshot = ({ pricing = {}, subtotal, discountAmount, fees, shippingPrice, codAdvance, paymentMethod }) => {
+const buildPricingSnapshot = ({ pricing = {}, subtotal, discountAmount, fees, shippingPrice, codAdvance, paymentMethod, gstAmount = 0 }) => {
   const weightFee = amount(pricing.weight_fee ?? pricing.weightFee ?? shippingPrice);
   // A weight fee is this storefront's shipping charge. Never store/add the
   // same charge in both fields, even if an older client sends both values.
@@ -45,6 +45,7 @@ const buildPricingSnapshot = ({ pricing = {}, subtotal, discountAmount, fees, sh
     weight_fee: weightFee,
     platform_fee: amount(pricing.platform_fee ?? pricing.platformFee ?? feeAmount(fees, 'platform', 'plaftform')),
     advance_payment: amount(pricing.advance_payment ?? pricing.advancePayment ?? codAdvance),
+    gst_amount: amount(pricing.gst_amount ?? pricing.gstAmount ?? gstAmount),
   };
   const ADVANCE_KEYWORDS = ['advance', 'advance payment', 'cod advance'];
   const isAdvanceFee = (name) => ADVANCE_KEYWORDS.some(kw => String(name || '').toLowerCase().includes(kw));
@@ -56,7 +57,7 @@ const buildPricingSnapshot = ({ pricing = {}, subtotal, discountAmount, fees, sh
     ? dynamicFeesTotal
     : (snapshot.product_fee + snapshot.gift_fee + snapshot.shipping_fee + snapshot.weight_fee + snapshot.platform_fee);
 
-  snapshot.total_amount = Math.max(0, snapshot.subtotal - snapshot.coupon_discount + totalFees);
+  snapshot.total_amount = Math.max(0, snapshot.subtotal - snapshot.coupon_discount + totalFees + snapshot.gst_amount);
   snapshot.paid_amount = paymentMethod === 'COD' ? Math.min(snapshot.advance_payment, snapshot.total_amount) : 0;
   snapshot.balance_amount = Math.max(0, snapshot.total_amount - snapshot.paid_amount);
   return snapshot;
@@ -325,6 +326,8 @@ const addOrderItems = async (req, res) => {
         feeSummary.giftFee = giftFee;
       }
 
+      const totalGstAmount = orderItems.reduce((acc, item) => acc + (Number(item.gstAmount) || 0), 0);
+
       // Always use backend-calculated fees from resolvedFees — never trust the
       // client-supplied pricing snapshot, which could cause double-counting of
       // the weight/shipping fee (Cashfree amount mismatch).
@@ -336,6 +339,7 @@ const addOrderItems = async (req, res) => {
         shippingPrice: 0,
         codAdvance: req.body.codAdvance ?? feeSummary.codAdvance,
         paymentMethod,
+        gstAmount: totalGstAmount,
       });
       console.debug('[order pricing]', {
         subtotal: pricing.subtotal,
@@ -362,7 +366,9 @@ const addOrderItems = async (req, res) => {
         shippingAddress,
         paymentMethod,
         itemsPrice: pricing.subtotal,
-        taxPrice,
+        taxPrice: pricing.gst_amount,
+        gstAmount: pricing.gst_amount,
+        totalGst: pricing.gst_amount,
         shippingPrice: pricing.shipping_fee + pricing.weight_fee,
         totalPrice: pricing.total_amount,
         codAdvance: pricing.advance_payment,

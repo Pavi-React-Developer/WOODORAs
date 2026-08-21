@@ -1,20 +1,24 @@
 import { ActiveBadge, RequestBadge, OrderBadge } from '../../../components/admin/CommonComponents';
-import React, { useState, useEffect, useMemo } from 'react';
-import { RefreshCw, Search, Eye, X, Check, XCircle, Edit, Bell, FileText, Upload, Loader, Plus } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { RefreshCw, Search, Eye, X, Check, XCircle, Edit, Bell, FileText, Upload, Loader, Plus, Printer } from 'lucide-react';
 import { advancedBookingService } from '../../../api/advancedBookingService';
 import { uploadAPI } from '../../../api/catalogAdminService';
 import { courierService } from '../../../api/courierService';
 import toast from 'react-hot-toast';
 import BulkActions from '../../../components/admin/BulkActions';
-import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from 'recharts';
+import { PackingSlip } from '../../../components/admin/PackingSlip';
+import { useReactToPrint } from 'react-to-print';
+import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from 'recharts';
+import Pagination from '../../../components/common/Pagination';
 
-export default function AdvancedBookingManagement() {
+export default function AdvancedBookingManagement({ canCreate = true, canEdit = true, canDelete = true }) {
   const [bookings, setBookings] = useState([]);
   const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [selectedBookings, setSelectedBookings] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
   
   const parseScreenshots = (data) => {
     if (!data) return [];
@@ -45,6 +49,22 @@ export default function AdvancedBookingManagement() {
   const [selectedNextStatus, setSelectedNextStatus] = useState('');
   
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showPackingSlipModal, setShowPackingSlipModal] = useState(false);
+  
+  const printRef = useRef();
+  
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: 'Advanced_Booking_Packing_Slips',
+    pageStyle: `
+      @page { size: A4 portrait; margin: 0mm; }
+      @media print {
+        html, body { margin: 0 !important; padding: 0 !important; background: white !important; }
+        body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        .packing-slip-container { margin: 0 !important; padding: 0 !important; background: white !important; }
+      }
+    `
+  });
 
   const fetchBookingsAndMetrics = async () => {
     setLoading(true);
@@ -104,14 +124,40 @@ export default function AdvancedBookingManagement() {
     return notifs;
   }, [bookings]);
 
+  const handleBulkStatus = async (isActive) => {
+    const status = isActive ? 'Approved' : 'Rejected';
+    if (!selectedBookings.length) return;
+    try {
+      setLoading(true);
+      await Promise.all(
+        selectedBookings.map(id => advancedBookingService.updateBookingStatus(id, status))
+      );
+      toast.success(`Successfully updated ${selectedBookings.length} bookings`);
+      setSelectedBookings([]);
+      fetchBookingsAndMetrics();
+    } catch (e) {
+      toast.error('Failed to update bookings');
+      setLoading(false);
+    }
+  };
+
   const filteredBookings = bookings.filter(b => {
     const matchesSearch =
       b.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       b.phoneNo.includes(searchTerm) ||
       b.productName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'All' || b.bookingStatus === statusFilter || b.orderStatus === statusFilter;
+      
+    const matchesStatus = 
+      statusFilter === 'All' ? true : 
+      ['Pending', 'Approved', 'Rejected'].includes(statusFilter) ? b.bookingStatus === statusFilter :
+      b.orderStatus === statusFilter;
+
     return matchesSearch && matchesStatus;
   });
+
+  const ITEMS_PER_PAGE = 10;
+  const totalPages = Math.ceil(filteredBookings.length / ITEMS_PER_PAGE);
+  const paginatedBookings = filteredBookings.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   const getOrderStatusStyle = (status) => {
     switch (status) {
@@ -315,29 +361,51 @@ export default function AdvancedBookingManagement() {
       {/* Charts */}
       {metrics && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-[20px] shadow-sm border border-[#E6DFD4] h-[300px]">
-            <h3 className="text-sm font-bold text-gray-500 mb-4 uppercase tracking-wider">Revenue Analytics (30 Days)</h3>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={metrics.dailyRevenue}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E6DFD4" />
-                <XAxis dataKey="date" tick={{fontSize: 10}} tickMargin={10} axisLine={false} tickLine={false} />
-                <YAxis tick={{fontSize: 10}} axisLine={false} tickLine={false} tickFormatter={val => `₹${val}`} />
-                <RechartsTooltip formatter={(value) => [`₹${value}`, 'Revenue']} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                <Line type="monotone" dataKey="revenue" stroke="#8B5E3C" strokeWidth={3} dot={false} activeDot={{ r: 6, fill: '#8B5E3C', stroke: '#fff', strokeWidth: 2 }} />
-              </LineChart>
-            </ResponsiveContainer>
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-[#E6DFD4] h-[350px] flex flex-col">
+            <div className="mb-6">
+              <h3 className="text-[22px] font-serif font-bold text-[#141225]">Revenue Analytics (30 Days)</h3>
+              <p className="text-[15px] font-serif text-gray-500 mt-1">Daily revenue over the last 30 days</p>
+            </div>
+            <div className="flex-1 w-full h-full min-h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={metrics.dailyRevenue} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#8B5E3C" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#8B5E3C" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="date" tick={{fontSize: 10, fill: '#8A817C'}} tickMargin={10} axisLine={false} tickLine={false} minTickGap={20} />
+                  <YAxis tick={{fontSize: 10, fill: '#8A817C'}} axisLine={false} tickLine={false} tickFormatter={val => `₹${val}`} />
+                  <RechartsTooltip 
+                    formatter={(value) => [`₹${value}`, 'Revenue']} 
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} 
+                    labelStyle={{ color: '#8A817C', fontSize: '12px', marginBottom: '4px' }}
+                  />
+                  <Area type="monotone" dataKey="revenue" stroke="#8B5E3C" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           </div>
-          <div className="bg-white p-6 rounded-[20px] shadow-sm border border-[#E6DFD4] h-[300px]">
-            <h3 className="text-sm font-bold text-gray-500 mb-4 uppercase tracking-wider">Order Volume</h3>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={metrics.ordersDayOfWeek}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E6DFD4" />
-                <XAxis dataKey="day" tick={{fontSize: 10}} tickMargin={10} axisLine={false} tickLine={false} />
-                <YAxis tick={{fontSize: 10}} axisLine={false} tickLine={false} allowDecimals={false} />
-                <RechartsTooltip formatter={(value) => [value, 'Orders']} cursor={{fill: '#F8F4EC'}} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                <Bar dataKey="orders" fill="#D3A977" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-[#E6DFD4] h-[350px] flex flex-col">
+            <div className="mb-6">
+              <h3 className="text-[22px] font-serif font-bold text-[#141225]">Order Volume</h3>
+              <p className="text-[15px] font-serif text-gray-500 mt-1">Orders by day of week</p>
+            </div>
+            <div className="flex-1 w-full h-full min-h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={metrics.ordersDayOfWeek} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <XAxis dataKey="day" tick={{fontSize: 10, fill: '#8A817C'}} tickMargin={10} axisLine={false} tickLine={false} />
+                  <YAxis tick={{fontSize: 10, fill: '#8A817C'}} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <RechartsTooltip 
+                    formatter={(value) => [value, 'Orders']} 
+                    cursor={{fill: '#F8F4EC'}} 
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} 
+                  />
+                  <Bar dataKey="orders" fill="#141225" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
       )}
@@ -376,6 +444,30 @@ export default function AdvancedBookingManagement() {
             </optgroup>
           </select>
           <button
+            onClick={() => {
+              if (selectedBookings.length === 0 && filteredBookings.length === 0) {
+                 toast.error("No bookings to print");
+                 return;
+              }
+              setShowPackingSlipModal(true);
+            }}
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#F8F4EC] text-[#8B5E3C] border border-[#E6DFD4] rounded-xl text-sm font-bold hover:bg-[#F0EAE2] transition-colors"
+          >
+            <FileText size={16} /> Packing Slip
+          </button>
+          <button
+            onClick={() => {
+              if (selectedBookings.length === 0 && filteredBookings.length === 0) {
+                 toast.error("No bookings to print");
+                 return;
+              }
+              setTimeout(() => handlePrint(), 100);
+            }}
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#8B5E3C] text-white border border-[#8B5E3C] rounded-xl text-sm font-bold hover:bg-[#7a5234] transition-colors shadow-sm"
+          >
+            <Printer size={16} /> Print
+          </button>
+          <button
             onClick={fetchBookingsAndMetrics}
             className="p-3 bg-white border border-[#E6DFD4] rounded-full hover:bg-[#F8F4EC] transition-colors text-gray-600 shadow-sm"
             title="Refresh Bookings"
@@ -385,11 +477,14 @@ export default function AdvancedBookingManagement() {
         </div>
       </div>
 
-      <BulkActions
-        selectedIds={selectedBookings}
-        onBulkDelete={handleBulkDelete}
-        onClear={() => setSelectedBookings([])}
-      />
+      {canDelete && (
+        <BulkActions
+          selectedIds={selectedBookings}
+          onBulkDelete={handleBulkDelete}
+          onBulkStatusChange={handleBulkStatus}
+          onClear={() => setSelectedBookings([])}
+        />
+      )}
 
       {/* Table */}
       <div className="bg-white rounded-[20px] border border-[#E6DFD4] shadow-sm overflow-hidden mb-8">
@@ -397,34 +492,34 @@ export default function AdvancedBookingManagement() {
           <table className="w-full text-sm text-left">
             <thead className="bg-[#F8F4EC] border-b border-[#E6DFD4]">
               <tr>
-                <th className="px-5 py-4 w-12"><input type="checkbox" checked={filteredBookings.length > 0 && selectedBookings.length === filteredBookings.length} onChange={(e) => setSelectedBookings(e.target.checked ? filteredBookings.map(b => b._id) : [])} className="w-4 h-4 text-[#8B5E3C] rounded cursor-pointer border-gray-300"/></th>
-                <th className="px-4 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Date</th>
-                <th className="px-4 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Customer Info</th>
-                <th className="px-4 py-4 text-left text-[11px] font-bold text-gray-500 uppercase tracking-wider">Product Details</th>
-                <th className="px-4 py-4 text-center text-[11px] font-bold text-gray-500 uppercase tracking-wider">Qty</th>
-                <th className="px-4 py-4 text-left text-[11px] font-bold text-gray-500 uppercase tracking-wider">Product Amount</th>
-                <th className="px-4 py-4 text-left text-[11px] font-bold text-gray-500 uppercase tracking-wider">Paid Amount</th>
-                <th className="px-4 py-4 text-center text-[11px] font-bold text-gray-500 uppercase tracking-wider">Expected Date</th>
-                <th className="px-4 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap text-center">Status</th>
-                <th className="px-4 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap text-center">Order Status</th>
-                <th className="px-4 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap text-center">Action</th>
+                {canDelete && <th className="px-5 py-4 w-12"><input type="checkbox" checked={filteredBookings.length > 0 && selectedBookings.length === filteredBookings.length} onChange={(e) => setSelectedBookings(e.target.checked ? filteredBookings.map(b => b._id) : [])} className="w-4 h-4 text-[#8B5E3C] rounded cursor-pointer border-gray-300"/></th>}
+                <th className="px-4 py-4 text-[14px] font-bold uppercase tracking-wider text-[#8B5E3C] whitespace-nowrap">Date</th>
+                <th className="px-4 py-4 text-[14px] font-bold uppercase tracking-wider text-[#8B5E3C] whitespace-nowrap min-w-[200px]">Customer Info</th>
+                <th className="px-4 py-4 text-left text-[14px] font-bold text-[#8B5E3C] uppercase tracking-wider min-w-[250px]">Product Details</th>
+                <th className="px-4 py-4 text-center text-[14px] font-bold text-[#8B5E3C] uppercase tracking-wider whitespace-nowrap">Qty</th>
+                <th className="px-4 py-4 text-left text-[14px] font-bold text-[#8B5E3C] uppercase tracking-wider whitespace-nowrap">Product Amount</th>
+                <th className="px-4 py-4 text-left text-[14px] font-bold text-[#8B5E3C] uppercase tracking-wider whitespace-nowrap min-w-[150px]">Paid Amount</th>
+                <th className="px-4 py-4 text-center text-[14px] font-bold text-[#8B5E3C] uppercase tracking-wider whitespace-nowrap">Expected Date</th>
+                <th className="px-4 py-4 text-[14px] font-bold uppercase tracking-wider text-[#8B5E3C] whitespace-nowrap text-center">Status</th>
+                <th className="px-4 py-4 text-[14px] font-bold uppercase tracking-wider text-[#8B5E3C] whitespace-nowrap text-center">Order Status</th>
+                <th className="px-4 py-4 text-[14px] font-bold uppercase tracking-wider text-[#8B5E3C] whitespace-nowrap text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E9DED3]">
               {loading ? (
-                <tr><td colSpan="10" className="text-center py-12 text-[#8A817C]">Loading...</td></tr>
-              ) : filteredBookings.length === 0 ? (
-                <tr><td colSpan="10" className="text-center py-12 text-[#8A817C]">No bookings found.</td></tr>
+                <tr><td colSpan="10" className="text-[16px] text-center py-12 text-[#8A817C]">Loading...</td></tr>
+              ) : paginatedBookings.length === 0 ? (
+                <tr><td colSpan="10" className="text-[16px] text-center py-12 text-[#8A817C]">No bookings found.</td></tr>
               ) : (
-                filteredBookings.map((booking) => {
+                paginatedBookings.map((booking) => {
                   const displayTotal = booking.totalAmount || ((booking.price || 0) * (booking.quantity || 1));
                   const displayBal = displayTotal - (booking.paidAmount || 0);
 
                   return (
                   <tr key={booking._id} className="transition-colors hover:bg-[#FDF9F5] bg-white group">
-                    <td className="px-5 py-5"><input type="checkbox" checked={selectedBookings.includes(booking._id)} onChange={() => setSelectedBookings(prev => prev.includes(booking._id) ? prev.filter(id => id !== booking._id) : [...prev, booking._id])} className="w-4 h-4 text-[#8B5E3C] rounded cursor-pointer border-gray-300"/></td>
-                    <td className="px-4 py-5 whitespace-nowrap font-medium text-gray-600">{new Date(booking.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
-                    <td className="px-4 py-5">
+                    {canDelete && <td className="text-[16px] px-5 py-5"><input type="checkbox" checked={selectedBookings.includes(booking._id)} onChange={() => setSelectedBookings(prev => prev.includes(booking._id) ? prev.filter(id => id !== booking._id) : [...prev, booking._id])} className="w-4 h-4 text-[#8B5E3C] rounded cursor-pointer border-gray-300"/></td>}
+                    <td className="text-[16px] px-4 py-5 whitespace-nowrap font-medium text-gray-600">{new Date(booking.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                    <td className="text-[16px] px-4 py-5">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-[#8B5E3C] flex items-center justify-center text-white font-bold">{booking.customerName.charAt(0).toUpperCase()}</div>
                         <div>
@@ -433,7 +528,7 @@ export default function AdvancedBookingManagement() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-5">
+                    <td className="text-[16px] px-4 py-5">
                       <div className="flex items-center gap-3">
                         {booking.productImage && <img src={booking.productImage.startsWith('http') ? booking.productImage : `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}${booking.productImage.startsWith('/') ? '' : '/'}${booking.productImage}`} alt="" className="w-10 h-10 rounded-lg object-cover border border-[#E6DFD4]"/>}
                         <div>
@@ -442,43 +537,45 @@ export default function AdvancedBookingManagement() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-5 text-center font-bold text-gray-700">{booking.quantity}</td>
+                    <td className="text-[16px] px-4 py-5 text-center font-bold text-gray-700">{booking.quantity}</td>
                     
-                    <td className="px-4 py-5 text-sm font-bold text-gray-800">
+                    <td className="px-4 py-5 text-[16px] font-bold text-gray-800">
                        ₹{displayTotal}
                     </td>
 
-                    <td className="px-4 py-5 text-xs">
+                    <td className="px-4 py-5 text-[16px]">
                        {displayBal <= 0 && booking.paidAmount > 0 && <span className="text-green-600 font-semibold">Fully Paid</span>}
                        {displayBal > 0 && booking.paidAmount > 0 && <span className="text-orange-600 font-semibold">Partially Paid</span>}
                        {(!booking.paidAmount || booking.paidAmount === 0) && <span className="text-red-600 font-semibold">Unpaid</span>}
                        <div className="mt-1 text-gray-500">Paid: ₹{booking.paidAmount || 0} | Bal: ₹{displayBal > 0 ? displayBal : 0}</div>
                     </td>
-                    <td className="px-4 py-5 text-center whitespace-nowrap text-gray-700 font-medium">
+                    <td className="text-[16px] px-4 py-5 text-center whitespace-nowrap text-gray-700 font-medium">
                       {booking.expectedDate ? new Date(booking.expectedDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}
                     </td>
-                    <td className="px-4 py-5 text-center">
+                    <td className="text-[16px] px-4 py-5 text-center">
                       <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${getBookingStatusStyle(booking.bookingStatus)}`}>{booking.bookingStatus}</span>
                     </td>
-                    <td className="px-4 py-5 text-center">
+                    <td className="text-[16px] px-4 py-5 text-center">
                       <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${getOrderStatusStyle(booking.orderStatus)}`}>{booking.orderStatus}</span>
                     </td>
-                    <td className="px-4 py-5 text-center">
+                    <td className="text-[16px] px-4 py-5 text-center">
                       <div className="flex justify-center gap-2">
-                        <button onClick={() => setViewBooking(booking)} className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors" title="View"><Eye size={18} /></button>
-                        {booking.bookingStatus === 'Pending' && (
+                        <button onClick={() => setViewBooking(booking)} className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="View"><Eye size={16} /></button>
+                        {canEdit && booking.bookingStatus === 'Pending' && (
                           <>
-                            <button onClick={() => { setApproveBookingData(booking); setScreenshotUrls([]); }} className="p-1.5 text-green-500 hover:bg-green-50 rounded-lg transition-colors" title="Approve"><Check size={18} /></button>
-                            <button onClick={() => setRejectBookingData(booking)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Reject"><XCircle size={18} /></button>
+                            <button onClick={() => { setApproveBookingData(booking); setScreenshotUrls([]); }} className="p-1.5 text-green-500 hover:bg-green-50 rounded-lg transition-colors" title="Approve"><Check size={16} /></button>
+                            <button onClick={() => setRejectBookingData(booking)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Reject"><X size={18} strokeWidth={3} /></button>
                           </>
                         )}
-                        <button onClick={() => { 
-                          setEditBookingData(booking); 
-                          setBalanceInput(0); 
-                          setSelectedNextStatus(booking.orderStatus); 
-                          setSelectedCourierName(booking.shippingDetails?.courierName || '');
-                          setScreenshotUrls(parseScreenshots(booking.paymentScreenshot)); 
-                        }} className="p-1.5 text-[#8B5E3C] hover:bg-[#8B5E3C]/10 rounded-lg transition-colors" title="Edit Status"><Edit size={18} /></button>
+                        {canEdit && (
+                          <button onClick={() => { 
+                            setEditBookingData(booking); 
+                            setBalanceInput(0); 
+                            setSelectedNextStatus(booking.orderStatus); 
+                            setSelectedCourierName(booking.shippingDetails?.courierName || '');
+                            setScreenshotUrls(parseScreenshots(booking.paymentScreenshot)); 
+                          }} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Edit Status"><Edit size={16} /></button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -487,6 +584,13 @@ export default function AdvancedBookingManagement() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="px-5 py-6 border-t border-[#E6DFD4] flex justify-center bg-white rounded-b-[20px]">
+            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+          </div>
+        )}
       </div>
 
       {/* --- MODALS --- */}
@@ -510,6 +614,13 @@ export default function AdvancedBookingManagement() {
                     <p className="font-semibold">{viewBooking.productName} (x{viewBooking.quantity})</p>
                  </div>
               </div>
+
+              {viewBooking.address && (
+                 <div className="pt-4 border-t border-gray-100">
+                    <p className="text-xs text-gray-500 uppercase font-bold mb-1">Shipping Address</p>
+                    <p className="font-semibold text-sm">{viewBooking.address}</p>
+                 </div>
+              )}
               
               <div className="grid grid-cols-2 gap-6 pt-4 border-t border-gray-100">
                  <div>
@@ -646,8 +757,8 @@ export default function AdvancedBookingManagement() {
                </div>
             </div>
             <div className="p-6 bg-gray-50 border-t border-gray-200 flex justify-end gap-3 shrink-0">
-               <button type="button" onClick={() => setApproveBookingData(null)} className="px-6 py-2.5 rounded-full border border-gray-300 text-gray-700 hover:bg-gray-100 font-medium">Cancel</button>
-               <button type="submit" className="px-6 py-2.5 rounded-full bg-green-600 hover:bg-green-700 text-white font-medium">Approve Booking</button>
+               <button type="button" onClick={() => setApproveBookingData(null)} className="px-8 py-3 border border-red-200 rounded-full text-[15px] font-bold text-red-600 bg-white hover:bg-red-50 transition-colors shadow-sm uppercase tracking-wide">Cancel</button>
+               <button type="submit" className="px-8 py-3 rounded-full bg-green-600 hover:bg-green-700 text-white text-[15px] font-bold transition-colors shadow-sm">Approve Booking</button>
             </div>
           </form>
         </div>
@@ -666,8 +777,8 @@ export default function AdvancedBookingManagement() {
                <textarea name="reason" required className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:ring-red-500" rows="4"></textarea>
             </div>
             <div className="p-6 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
-               <button type="button" onClick={() => setRejectBookingData(null)} className="px-6 py-2.5 rounded-full border border-gray-300 text-gray-700 hover:bg-gray-100 font-medium">Cancel</button>
-               <button type="submit" className="px-5 py-2.5 bg-[#8B5E3C] text-white font-medium rounded-xl hover:bg-[#7A5234] transition-colors shadow-sm">Save & Update Status</button>
+               <button type="button" onClick={() => setRejectBookingData(null)} className="px-8 py-3 border border-red-200 rounded-full text-[15px] font-bold text-red-600 bg-white hover:bg-red-50 transition-colors shadow-sm uppercase tracking-wide">Cancel</button>
+               <button type="submit" className="px-8 py-3 rounded-full bg-red-600 hover:bg-red-700 text-white text-[15px] font-bold transition-colors shadow-sm">Save & Update Status</button>
             </div>
           </form>
         </div>
@@ -684,6 +795,12 @@ export default function AdvancedBookingManagement() {
               <button type="button" onClick={() => setEditBookingData(null)} className="text-gray-500 hover:text-gray-800"><X size={24} /></button>
             </div>
             <div className="p-6 space-y-6 overflow-y-auto flex-1">
+               {editBookingData.address && (
+                  <div className="bg-[#FDF9F5] border border-[#E9DED3] p-4 rounded-xl">
+                     <p className="text-xs text-gray-500 uppercase font-bold mb-1">Shipping Address</p>
+                     <p className="font-semibold text-sm">{editBookingData.address}</p>
+                  </div>
+               )}
                <div className="grid grid-cols-3 gap-4">
                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
@@ -890,16 +1007,9 @@ export default function AdvancedBookingManagement() {
                  </div>
                )}
             </div>
-            <div className="p-6 bg-gray-50 border-t border-gray-200 flex justify-between items-center shrink-0">
-               <button type="button" onClick={() => window.print()} className="flex items-center gap-2 text-[#8B5E3C] hover:underline text-sm font-semibold">
-                 <FileText size={16} /> Print Packing Slip
-               </button>
-               <div className="flex gap-3">
-                 <button type="button" onClick={() => setEditBookingData(null)} className="px-6 py-2.5 rounded-full border border-gray-300 text-gray-700 hover:bg-gray-100 font-medium">Cancel</button>
-                 <button type="submit" className="px-6 py-2.5 rounded-full bg-[#8B5E3C] hover:bg-[#724C30] text-white font-medium">
-                   Save & Update
-                 </button>
-               </div>
+            <div className="p-6 bg-gray-50 border-t border-gray-200 flex justify-end shrink-0 gap-3">
+               <button type="button" onClick={() => setEditBookingData(null)} className="px-8 py-3 border border-red-200 rounded-full text-[15px] font-bold text-red-600 bg-white hover:bg-red-50 transition-colors shadow-sm uppercase tracking-wide">Cancel</button>
+               <button type="submit" className="px-8 py-3 bg-[#8B5E3C] hover:bg-[#7A5234] text-white rounded-full text-[15px] font-bold transition-colors shadow-sm">Save Changes</button>
             </div>
           </form>
         </div>
@@ -924,6 +1034,48 @@ export default function AdvancedBookingManagement() {
           </form>
         </div>
       )}
+      {/* Packing Slip Modal */}
+      {showPackingSlipModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-[#E6DFD4] bg-[#F8F4EC]">
+              <h2 className="text-xl font-serif font-bold text-[#8B5E3C]">Print Packing Slips</h2>
+              <button onClick={() => setShowPackingSlipModal(false)} className="p-2 hover:bg-black/5 rounded-full transition-colors">
+                <X size={24} className="text-gray-500" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-8 bg-gray-50">
+              <div className="bg-white mx-auto shadow-sm" style={{ width: '100%', maxWidth: '800px' }}>
+                <PackingSlip 
+                   orders={selectedBookings.length > 0 ? filteredBookings.filter(b => selectedBookings.includes(b._id)) : filteredBookings} 
+                />
+              </div>
+            </div>
+            
+            <div className="p-6 border-t border-[#E6DFD4] bg-white flex justify-end gap-3">
+              <button onClick={() => setShowPackingSlipModal(false)} className="px-6 py-2.5 border border-[#E6DFD4] text-[#6D625C] font-bold text-sm rounded-full hover:bg-gray-50 transition-colors">
+                Cancel
+              </button>
+              <button 
+                onClick={() => {
+                  handlePrint();
+                  setShowPackingSlipModal(false);
+                }} 
+                className="px-6 py-2.5 bg-[#8B5E3C] text-white font-bold text-sm rounded-full hover:bg-[#7A5234] transition-colors"
+              >
+                Print Slips
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: 'none' }}>
+        <div ref={printRef}>
+          <PackingSlip orders={selectedBookings.length > 0 ? filteredBookings.filter(b => selectedBookings.includes(b._id)) : filteredBookings} />
+        </div>
+      </div>
     </div>
   );
 }

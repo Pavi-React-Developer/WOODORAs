@@ -162,7 +162,7 @@ export default function FooterAdmin({ canCreate, canEdit, canDelete }) {
             <h4 className="font-semibold text-brand-dark">Footer Columns</h4>
             {canCreate && (
               <button type="button" onClick={() => setForm(f => ({ ...f, columns: [...(f.columns || []), { title: '', links: [] }] }))} className="px-4 py-1.5 border border-[#8B5E3C] text-[#8B5E3C] rounded-full text-xs font-bold flex items-center gap-1 hover:bg-[#F8F4EC] transition-colors bg-white">
-                <Plus size={15} /> Add Column
+                <Plus size={16} /> Add Column
               </button>
             )}
           </div>
@@ -184,7 +184,7 @@ export default function FooterAdmin({ canCreate, canEdit, canDelete }) {
                       const newCols = form.columns.filter((_, i) => i !== cIdx);
                       setForm(f => ({ ...f, columns: newCols }));
                     }} className="text-red-500 hover:text-red-600 transition-colors">
-                      <Trash2 size={15} />
+                      <Trash2 size={16} />
                     </button>
                   )}
                 </div>
@@ -220,7 +220,7 @@ export default function FooterAdmin({ canCreate, canEdit, canDelete }) {
                       newCols[cIdx].links.push({ label: '', url: '' });
                       setForm(f => ({ ...f, columns: newCols }));
                     }} className="text-xs font-semibold text-brand-medium flex items-center gap-1 hover:text-brand-dark">
-                      <Plus size={15} /> Add Link
+                      <Plus size={16} /> Add Link
                     </button>
                   )}
                 </div>

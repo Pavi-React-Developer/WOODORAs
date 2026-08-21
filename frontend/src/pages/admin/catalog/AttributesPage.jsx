@@ -467,20 +467,20 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                                     />
                                 </th>
                                 {['Attribute Name', 'Mapping', 'System Code', 'Type', 'Options/Values', 'Validation', 'Actions'].map(h => (
-                                    <th key={h} className={`px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap ${['System Code', 'Type', 'Options/Values', 'Validation', 'Actions'].includes(h) ? 'text-center' : 'text-left'}`}>{h}</th>
+                                    <th key={h} className={`px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap ${['System Code', 'Type', 'Options/Values', 'Validation', 'Actions'].includes(h) ? 'text-center' : 'text-left'}`}>{h}</th>
                                 ))}
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-[#E9DED3]">
                             {loading ? (
-                                <tr><td colSpan={8} className="px-6 py-4 text-center text-gray-400 text-sm">
+                                <tr><td colSpan={8} className="px-6 py-4 text-center text-gray-400 text-[16px]">
                                     <div className="flex items-center justify-center gap-2">
                                         <div className="w-4 h-4 border-2 border-[#8B5E3C] border-t-transparent rounded-full animate-spin" />
                                         Loading attributes...
                                     </div>
                                 </td></tr>
                             ) : attributes.length === 0 ? (
-                                <tr><td colSpan={8} className="px-6 py-4 text-center text-gray-400 text-sm">
+                                <tr><td colSpan={8} className="px-6 py-4 text-center text-gray-400 text-[16px]">
                                     <div className="flex flex-col items-center gap-3">
                                         <div className="w-12 h-12 bg-[#F8F4EC] rounded-full flex items-center justify-center text-2xl">🏷️</div>
                                         <p className="font-medium">No attributes configured yet.</p>
@@ -492,7 +492,7 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                                         key={attr._id}
                                         className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}
                                     >
-                                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                                        <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
                                             <input
                                                 type="checkbox"
                                                 checked={selectedIds.includes(attr._id)}
@@ -500,25 +500,25 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                                                 className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer mx-auto block"
                                             />
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                            <p className="font-bold text-sm text-gray-800">{attr.name}</p>
-                                            {attr.description && <p className="text-sm text-gray-400 mt-0.5">{attr.description}</p>}
+                                        <td className="px-6 py-4 whitespace-nowrap text-[16px]">
+                                            <p className="font-bold text-[16px] text-gray-800">{attr.name}</p>
+                                            {attr.description && <p className="text-[16px] text-gray-400 mt-0.5">{attr.description}</p>}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                            <p className="font-bold text-sm text-[#8B5E3C]">{attr.category?.name || 'Unmapped'}</p>
-                                            <p className="text-sm text-gray-500">{attr.subCategory?.name || '-'}</p>
+                                        <td className="px-6 py-4 whitespace-nowrap text-[16px]">
+                                            <p className="font-bold text-[16px] text-[#8B5E3C]">{attr.category?.name || 'Unmapped'}</p>
+                                            <p className="text-[16px] text-gray-500">{attr.subCategory?.name || '-'}</p>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
-                                            <span className="text-sm font-semibold text-gray-800">{attr.code || '-'}</span>
+                                        <td className="px-6 py-4 whitespace-nowrap text-[16px] font-bold text-black-400 text-center">
+                                            <span className="text-[16px] font-semibold text-gray-800">{attr.code || '-'}</span>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
-                                            <span className="text-sm font-semibold text-gray-800">{attr.type}</span>
+                                        <td className="px-6 py-4 whitespace-nowrap text-[16px] font-bold text-black-400 text-center">
+                                            <span className="text-[16px] font-semibold text-gray-800">{attr.type}</span>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-center max-w-xs text-sm">
+                                        <td className="px-6 py-4 whitespace-nowrap text-center max-w-xs text-[16px]">
                                             {attr.values && attr.values.length > 0 ? (
                                                 <div className="flex flex-wrap items-center justify-center gap-1.5">
                                                     {attr.values.slice(0, 4).map((v, i) => (
-                                                        <span key={i} className="flex items-center text-sm font-semibold text-gray-800">
+                                                        <span key={i} className="flex items-center text-[16px] font-semibold text-gray-800">
                                                             {attr.type === 'ColorPicker' && (
                                                                 <span className="w-2.5 h-2.5 mr-1.5 border border-black/10 rounded-full" style={{ backgroundColor: v.colorCode }} />
                                                             )}
@@ -526,27 +526,27 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                                                         </span>
                                                     ))}
                                                     {attr.values.length > 4 && (
-                                                        <span className="text-sm font-semibold text-gray-500">
+                                                        <span className="text-[16px] font-semibold text-gray-500">
                                                             +{attr.values.length - 4} more
                                                         </span>
                                                     )}
                                                 </div>
                                             ) : (
-                                                <span className="text-[#8B5E3C] text-sm italic opacity-70">No values defined</span>
+                                                <span className="text-[#8B5E3C] text-[16px] italic opacity-70">No values defined</span>
                                             )}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                                        <td className="px-6 py-4 whitespace-nowrap text-[16px] font-bold text-black-400 text-center">
                                             <div className="flex flex-wrap items-center justify-center gap-1">
-                                                {attr.isRequired && <span className="text-sm font-semibold text-gray-800">Required</span>}
-                                                {attr.isSearchable && <span className="text-sm font-semibold text-gray-800">Searchable</span>}
-                                                {attr.isFilterable && <span className="text-sm font-semibold text-gray-800">Filterable</span>}
+                                                {attr.isRequired && <span className="text-[16px] font-semibold text-gray-800">Required</span>}
+                                                {attr.isSearchable && <span className="text-[16px] font-semibold text-gray-800">Searchable</span>}
+                                                {attr.isFilterable && <span className="text-[16px] font-semibold text-gray-800">Filterable</span>}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                                        <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
                                             <div className="flex items-center justify-center gap-2">
                                                 {canEdit && (
                                                     <button onClick={() => navigate(`/admin/catalog/attributes/edit/${attr._id}`)} className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors" title="Edit">
-                                                        <SquarePen className="w-[15px] h-[15px]" />
+                                                        <SquarePen size={16} />
                                                     </button>
                                                 )}
                                                 {canDelete && (
@@ -555,7 +555,7 @@ export const AttributesPage = ({ canCreate = true, canEdit = true, canDelete = t
                                                         className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
                                                         title="Delete"
                                                     >
-                                                        <Trash2 className="w-[15px] h-[15px]" />
+                                                        <Trash2 size={16} />
                                                     </button>
                                                 )}
                                             </div>

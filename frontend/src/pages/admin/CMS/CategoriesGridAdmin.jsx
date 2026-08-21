@@ -299,16 +299,16 @@ export default function CategoriesGridAdmin({ canCreate, canEdit, canDelete }) {
                 {canEdit && (
                   <>
                     <button onClick={() => handleToggle(item)} className="text-green-600 hover:text-green-700 transition-colors">
-                      {item.status ? <EyeOff size={15} /> : <Eye size={15} />}
+                      {item.status ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                     <button onClick={() => handleEdit(item)} className="text-blue-600 hover:text-blue-700 transition-colors">
-                      <SquarePen size={15} />
+                      <SquarePen size={16} />
                     </button>
                   </>
                 )}
                 {canDelete && (
                   <button onClick={() => handleDelete(item._id)} className="text-red-500 hover:text-red-600 transition-colors">
-                    <Trash2 size={15} />
+                    <Trash2 size={16} />
                   </button>
                 )}
               </div>

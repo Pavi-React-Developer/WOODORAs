@@ -126,7 +126,7 @@ export default function ThirdBannerAdmin({ canCreate, canEdit, canDelete }) {
         {canCreate && (
           <button onClick={() => { window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowForm(true); setEditId(null); setForm(emptyForm); }}
             className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60">
-            <Plus size={15} /> Add Split Banner
+            <Plus size={16} /> Add Split Banner
           </button>
         )}
       </div>
@@ -261,16 +261,16 @@ export default function ThirdBannerAdmin({ canCreate, canEdit, canDelete }) {
               {canEdit && (
                 <>
                   <button onClick={() => handleToggle(item)} className="text-green-600 hover:text-green-700 transition-colors">
-                    {item.status ? <EyeOff size={15} /> : <Eye size={15} />}
+                    {item.status ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                   <button onClick={() => handleEdit(item)} className="text-blue-600 hover:text-blue-700 transition-colors">
-                    <SquarePen size={15} />
+                    <SquarePen size={16} />
                   </button>
                 </>
               )}
               {canDelete && (
                 <button onClick={() => handleDelete(item._id)} className="text-red-500 hover:text-red-600 transition-colors">
-                  <Trash2 size={15} />
+                  <Trash2 size={16} />
                 </button>
               )}
             </div>

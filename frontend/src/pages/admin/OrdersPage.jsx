@@ -12,6 +12,7 @@ import CustomDropdown from '../../components/admin/CustomDropdown';
 import { OrderBadge } from '../../components/admin/CommonComponents';
 import { saveAs } from 'file-saver';
 import { formatOrderId, formatPaymentMethod } from '../../utils/formatters';
+import { getOrderPricing } from '../../utils/orderPricing';
 
 export default function OrdersPage({ canView = true, canEdit = true, canDelete = true }) {
   const location = useLocation();
@@ -526,138 +527,141 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                         className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
                       />
                     </th>
-                    <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Order ID</th>
-                    <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Date</th>
-                    <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Customer</th>
-                    <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Total</th>
-                    <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Payment</th>
-                    <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Order Status</th>
-                    <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Status</th>
-                    <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Actions</th>
+                    <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Order ID</th>
+                    <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Date</th>
+                    <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Customer</th>
+                    <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Total</th>
+                    <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Payment</th>
+                    <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Order Status</th>
+                    <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Status</th>
+                    <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E6DFD4]">
                   {paginatedOrders.length === 0 ? (
                     <tr>
-                      <td colSpan="8" className="px-6 py-4 text-center text-sm">
+                      <td colSpan="8" className="px-6 py-4 text-center text-[16px]">
                         <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                         <p className="text-[#8B5E3C] font-medium">No orders found</p>
                       </td>
                     </tr>
-                  ) : paginatedOrders.map((order, idx) => (
-                    <tr key={order._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
-                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.includes(order._id)}
-                          onChange={e => toggleSelectOne(order._id, e.target.checked)}
-                          className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
-                        />
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
-                        <div className="font-bold text-sm text-gray-800 mb-1">{formatOrderId(order)}</div>
-                        {order.isGiftOrder && (() => {
-                          const giftItems = (order.orderItems || []).filter(item => item.isGift);
-                          const noWrapperFee = (order.gift_fee || 0) === 0;
-                          const allNoWrapper = (giftItems.length > 0 && giftItems.every(item => item.isGiftWrapper === false)) || noWrapperFee;
-                          return (
-                            <span className="inline-flex items-center justify-center gap-1.5 px-2 py-1 mt-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-[#FFF2ED] text-[#D04E26] border border-[#FADCD0] mx-auto">
-                              <Gift className="w-3 h-3" />
-                              GIFT &amp; CARD {allNoWrapper ? '(NO WRAP)' : ''}
+                  ) : paginatedOrders.map((order, idx) => {
+                    const pricing = getOrderPricing(order);
+                    return (
+                      <tr key={order._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
+                        <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.includes(order._id)}
+                            onChange={e => toggleSelectOne(order._id, e.target.checked)}
+                            className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
+                          />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
+                          <div className="font-bold text-[16px] text-gray-800 mb-1">{formatOrderId(order)}</div>
+                          {order.isGiftOrder && (() => {
+                            const giftItems = (order.orderItems || []).filter(item => item.isGift);
+                            const noWrapperFee = (order.gift_fee || 0) === 0;
+                            const allNoWrapper = (giftItems.length > 0 && giftItems.every(item => item.isGiftWrapper === false)) || noWrapperFee;
+                            return (
+                              <span className="inline-flex items-center justify-center gap-1.5 px-2 py-1 mt-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-[#FFF2ED] text-[#D04E26] border border-[#FADCD0] mx-auto">
+                                <Gift className="w-3 h-3" />
+                                GIFT &amp; CARD {allNoWrapper ? '(NO WRAP)' : ''}
+                              </span>
+                            );
+                          })()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
+                          <div className="text-[16px] font-semibold text-[#8B5E3C] flex items-center justify-center gap-1 mt-0.5">
+                            {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
+                          <div className="font-bold text-[16px] text-gray-800">{order.user?.name || order.shippingAddress?.fullName}</div>
+                          <div className="text-[16px] font-semibold text-gray-600 flex items-center justify-center gap-1 mt-1">
+                            <MapPin className="w-4 h-4" />
+                            {order.shippingAddress?.city}, {order.shippingAddress?.state}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
+                          <div className="text-[16px] font-bold text-gray-800">₹{pricing.total.toLocaleString()}</div>
+                          <div className="text-[16px] font-semibold text-gray-600">{(order.orderItems || []).reduce((acc, item) => acc + (item.qty || 0), 0)} items</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
+                          {order.paymentMethod === 'COD' ? (
+                            <div className="space-y-1">
+                              <span className={`px-2.5 py-1 rounded-full text-[14px] font-bold ${normalizeOrderStatus(order.status) === 'Delivered' || order.isPaid ? 'bg-green-100 text-green-700' : order.codAdvance > 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-700'}`}>
+                                COD{normalizeOrderStatus(order.status) === 'Delivered' || order.isPaid ? ' (Paid)' : order.codAdvance > 0 ? ' (Partially Paid)' : ' (Unpaid)'}
+                              </span>
+                              {(order.codAdvance > 0 && normalizeOrderStatus(order.status) !== 'Delivered' && !order.isPaid) && (
+                                <div className="text-[16px] font-semibold text-gray-600 space-y-0.5 mt-1">
+                                  <div>Paid online: ₹{pricing.advancePayment.toLocaleString()}</div>
+                                  <div>Balance due: ₹{pricing.balanceAmount.toLocaleString()}</div>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <span className={`px-2.5 py-1 rounded-full text-[14px] font-bold ${order.isPaid ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                              {formatPaymentMethod(order.paymentMethod)} {order.isPaid ? '(Paid)' : '(Unpaid)'}
                             </span>
-                          );
-                        })()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
-                        <div className="text-sm font-semibold text-gray-600 flex items-center justify-center gap-1 mt-0.5">
-                          {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
-                        <div className="font-bold text-sm text-gray-800">{order.user?.name || order.shippingAddress?.fullName}</div>
-                        <div className="text-sm font-semibold text-gray-600 flex items-center justify-center gap-1 mt-1">
-                          <MapPin className="w-3 h-3" />
-                          {order.shippingAddress?.city}, {order.shippingAddress?.state}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
-                        <div className="text-sm font-bold text-gray-800">₹{(order.totalPrice || 0).toLocaleString()}</div>
-                        <div className="text-sm font-semibold text-gray-600">{(order.orderItems || []).reduce((acc, item) => acc + (item.qty || 0), 0)} items</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
-                        {order.paymentMethod === 'COD' ? (
-                          <div className="space-y-1">
-                            <span className={`px-2.5 py-1 rounded-full text-sm font-semibold ${normalizeOrderStatus(order.status) === 'Delivered' || order.isPaid ? 'bg-green-100 text-green-700' : order.codAdvance > 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-700'}`}>
-                              COD{normalizeOrderStatus(order.status) === 'Delivered' || order.isPaid ? ' (Paid)' : order.codAdvance > 0 ? ' (Partially Paid)' : ' (Unpaid)'}
-                            </span>
-                            {(order.codAdvance > 0 && normalizeOrderStatus(order.status) !== 'Delivered' && !order.isPaid) && (
-                              <div className="text-sm font-semibold text-gray-600 space-y-0.5 mt-1">
-                                <div>Paid online: ₹{(order.codAdvance || 0).toLocaleString()}</div>
-                                <div>Balance due: ₹{(order.balanceAmount ?? 0).toLocaleString()}</div>
-                              </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
+                          <OrderBadge status={normalizeOrderStatus(order.status)} size={16} />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
+                          <CustomDropdown
+                            disabled={!canEdit || normalizeOrderStatus(order.status) === 'Delivered'}
+                            buttonClassName={`px-4 py-1.5 text-sm font-semibold rounded-full border border-[#E6DFD4] ${!canEdit || normalizeOrderStatus(order.status) === 'Delivered' ? 'cursor-not-allowed opacity-50 bg-gray-50' : 'bg-white shadow-sm'}`}
+                            dropdownClassName="min-w-[140px] text-left"
+                            options={getOrderStatusSelectOptions(order.status).map(status => ({ label: status, value: status }))}
+                            value={normalizeOrderStatus(order.status)}
+                            onChange={(val) => {
+                              if (val) {
+                                handleStatusSelectChange(order, val);
+                              }
+                            }}
+                          />
+                          {order.courierName && (
+                            <div className="mt-2 text-sm font-bold text-[#8B5E3C]">
+                              {order.courierName}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
+                          <div className="flex gap-2 justify-center items-center">
+                            {canView && (
+                              <button
+                                onClick={() => handleViewOrder(order)}
+                                className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors"
+                                title="View"
+                              >
+                                <Eye size={16} />
+                              </button>
+                            )}
+                            {canEdit && (
+                              <button
+                                onClick={() => handleEditOrder(order)}
+                                className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
+                                title="Edit"
+                              >
+                                <SquarePen size={16} />
+                              </button>
+                            )}
+                            {canDelete && (
+                              <button
+                                onClick={() => handleDeleteOrder(order._id)}
+                                className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                                title="Delete"
+                              >
+                                <Trash2 size={16} />
+                              </button>
                             )}
                           </div>
-                        ) : (
-                          <span className={`px-2.5 py-1 rounded-full text-sm font-semibold ${order.isPaid ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                            {formatPaymentMethod(order.paymentMethod)} {order.isPaid ? '(Paid)' : '(Unpaid)'}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
-                        <OrderBadge status={normalizeOrderStatus(order.status)} />
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
-                        <CustomDropdown
-                          disabled={!canEdit || normalizeOrderStatus(order.status) === 'Delivered'}
-                          buttonClassName={`px-4 py-1.5 text-sm font-semibold rounded-full border border-[#E6DFD4] ${!canEdit || normalizeOrderStatus(order.status) === 'Delivered' ? 'cursor-not-allowed opacity-50 bg-gray-50' : 'bg-white shadow-sm'}`}
-                          dropdownClassName="min-w-[140px] text-left"
-                          options={getOrderStatusSelectOptions(order.status).map(status => ({ label: status, value: status }))}
-                          value={normalizeOrderStatus(order.status)}
-                          onChange={(val) => {
-                            if (val) {
-                              handleStatusSelectChange(order, val);
-                            }
-                          }}
-                        />
-                        {order.courierName && (
-                          <div className="mt-2 text-sm font-bold text-[#8B5E3C]">
-                            {order.courierName}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
-                        <div className="flex gap-2 justify-center items-center">
-                          {canView && (
-                            <button
-                              onClick={() => handleViewOrder(order)}
-                              className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors"
-                              title="View"
-                            >
-                              <Eye className="w-[15px] h-[15px]" />
-                            </button>
-                          )}
-                          {canEdit && (
-                            <button
-                              onClick={() => handleEditOrder(order)}
-                              className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
-                              title="Edit"
-                            >
-                              <SquarePen className="w-[15px] h-[15px]" />
-                            </button>
-                          )}
-                          {canDelete && (
-                            <button
-                              onClick={() => handleDeleteOrder(order._id)}
-                              className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
-                              title="Delete"
-                            >
-                              <Trash2 className="w-[15px] h-[15px]" />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
@@ -753,7 +757,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                 </div>
                 <div className="rounded-3xl bg-[#F8F4EC] p-4">
                   <p className="text-xs uppercase tracking-widest text-gray-500">Payment Status</p>
-                  <p className="mt-2 font-semibold text-gray-900">{selectedOrder.isPaid ? (selectedOrder.paymentMethod === 'COD' && selectedOrder.balanceAmount > 0 ? 'Partially Paid' : 'Paid') : 'Not paid'}</p>
+                  <p className="mt-2 font-semibold text-gray-900">{selectedOrder.isPaid ? (selectedOrder.paymentMethod === 'COD' && getOrderPricing(selectedOrder).balanceAmount > 0 ? 'Partially Paid' : 'Paid') : 'Not paid'}</p>
                 </div>
               </div>
 
@@ -1022,20 +1026,20 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                           <p className="font-semibold text-gray-900">₹{(item.price || 0).toLocaleString()}</p>
                         </div>
                       </div>
-                      
+
                       {item.isGift && (
                         <div className="bg-[#FAF4EF] p-4 border-t border-[#E6DFD4]">
                           <h4 className="text-[11px] font-bold text-[#141225] uppercase tracking-widest mb-3">GIFT PREFERENCES</h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                              <p className="text-sm"><span className="font-bold text-[#6D625C]">Order Date:</span> {formatDate(selectedOrder.createdAt)}</p>
-                              <p className="text-sm"><span className="font-bold text-[#6D625C]">Delivery Date:</span> {formatDeliveryDate(item.deliveryDate || getDeliveryDate(selectedOrder))}</p>
-                              <p className="text-sm"><span className="font-bold text-[#6D625C]">Style:</span> {item.giftMessageStyle || 'Classic'}</p>
-                              <p className="text-sm"><span className="font-bold text-[#6D625C]">Wrapper:</span> {item.isGiftWrapper ? 'Premium Wrapping' : 'No Wrapper'}</p>
+                              <p className="text-[16px]"><span className="font-bold text-[#6D625C]">Order Date:</span> {selectedOrder?.createdAt ? new Date(selectedOrder.createdAt).toLocaleDateString() : 'N/A'}</p>
+                              <p className="text-[16px]"><span className="font-bold text-[#6D625C]">Delivery Date:</span> {(item.deliveryDate || selectedOrder?.deliveryDate) ? new Date(item.deliveryDate || selectedOrder.deliveryDate).toLocaleDateString() : 'Standard'}</p>
+                              <p className="text-[16px]"><span className="font-bold text-[#6D625C]">Style:</span> {item.giftMessageStyle || 'Classic'}</p>
+                              <p className="text-[16px]"><span className="font-bold text-[#6D625C]">Wrapper:</span> {item.isGiftWrapper ? 'Premium Wrapping' : 'No Wrapper'}</p>
                             </div>
                             <div>
-                              <p className="text-sm font-bold text-[#6D625C] mb-1">Message:</p>
-                              <div className={`w-full bg-white border border-[#E9DED3] p-3 rounded-sm min-h-[60px] text-gray-700 ${item.giftMessageStyle === 'Classic' ? 'font-serif text-sm' : item.giftMessageStyle === 'Elegant' ? 'font-script italic text-base' : 'font-sans tracking-wide text-sm'}`}>
+                              <p className="text-[16px] font-bold text-[#6D625C] mb-1">Message:</p>
+                              <div className={`w-full bg-white border border-[#E9DED3] p-3 rounded-sm min-h-[60px] text-gray-700 ${item.giftMessageStyle === 'Classic' ? 'font-serif text-[16px]' : item.giftMessageStyle === 'Elegant' ? 'font-script italic text-base' : 'font-sans tracking-wide text-[16px]'}`}>
                                 {item.giftMessage || 'No message provided'}
                               </div>
                             </div>
@@ -1058,25 +1062,21 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
               <div className="space-y-4">
                 <div>
                   <h3 className="text-sm font-bold text-gray-900 mb-3">Update Order Status</h3>
-                  <select
-                    className="w-full px-4 py-2 rounded-xl border border-[#E6DFD4] focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 bg-white"
+                  <CustomDropdown
+                    disabled={normalizeOrderStatus(selectedOrder?.status || editFormData.status) === 'Delivered' || normalizeOrderStatus(selectedOrder?.status || editFormData.status) === 'Cancelled'}
+                    buttonClassName="w-full px-4 py-2.5 rounded-xl border border-[#E6DFD4] bg-white text-left text-[16px] text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30"
+                    dropdownClassName="w-full mt-1 text-left"
                     value={normalizeOrderStatus(editFormData.status || selectedOrder?.status)}
-                    onChange={(e) => {
-                      const selectedStatus = e.target.value;
-                      if (!canAdvanceToStatus(selectedOrder?.status || editFormData.status, selectedStatus)) {
+                    options={getOrderStatusSelectOptions(selectedOrder?.status || editFormData.status).map(statusOption => ({ label: statusOption, value: statusOption }))}
+                    onChange={(val) => {
+                      if (!val) return;
+                      if (!canAdvanceToStatus(selectedOrder?.status || editFormData.status, val)) {
                         toast.error('Please update the order status step by step.');
                         return;
                       }
-                      setEditFormData({ ...editFormData, status: selectedStatus });
+                      setEditFormData({ ...editFormData, status: val });
                     }}
-                    disabled={normalizeOrderStatus(selectedOrder?.status || editFormData.status) === 'Delivered' || normalizeOrderStatus(selectedOrder?.status || editFormData.status) === 'Cancelled'}
-                  >
-                    {getOrderStatusSelectOptions(selectedOrder?.status || editFormData.status).map((statusOption) => (
-                      <option key={statusOption} value={statusOption}>
-                        {statusOption}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </div>
 
                 {editFormData.status === 'Shipping' && (
@@ -1221,14 +1221,14 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                       />
                     </div>
                     <div className="flex justify-center gap-3 mt-2">
-                      <button 
-                        onClick={() => { setShowNewCourierInput(false); setNewCourierName(''); setNewCourierTrackingUrl(''); }} 
+                      <button
+                        onClick={() => { setShowNewCourierInput(false); setNewCourierName(''); setNewCourierTrackingUrl(''); }}
                         className="px-6 py-2.5 border border-red-200 rounded-full text-[13px] font-bold text-red-600 bg-white hover:bg-red-50 transition-colors shadow-sm uppercase tracking-wide"
                       >
                         CANCEL
                       </button>
-                      <button 
-                        onClick={handleAddCourier} 
+                      <button
+                        onClick={handleAddCourier}
                         className="px-6 py-2.5 rounded-full bg-[#8B5E3C] hover:bg-[#724C30] text-white text-[13px] font-bold uppercase tracking-wide transition-colors shadow-sm flex items-center gap-1.5"
                       >
                         <Save className="w-4 h-4" /> Save

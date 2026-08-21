@@ -216,7 +216,7 @@ function ReviewDetailModal({ review, onClose, onStatusChange, onDelete, canEdit,
             {canEdit && review.status !== 'approved' && (
               <button onClick={() => onStatusChange(review._id, "approved")}
                 className="flex items-center gap-2 px-8 py-3 border border-green-200 rounded-full text-[15px] font-bold text-green-600 bg-white hover:bg-green-50 transition-colors shadow-sm uppercase tracking-wide">
-                <Check size={18} /> Approve
+                <Check size={16} /> Approve
               </button>
             )}
             {canEdit && review.status !== 'rejected' && (
@@ -535,7 +535,7 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
                     />
                   </th>
                   {["Customer", "Product", "Rating", "Review", "Date", "Status", "Actions"].map(h => (
-                    <th key={h} className={`px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap ${h === 'Actions' ? 'text-center' : 'text-left'}`}>{h}</th>
+                    <th key={h} className={`px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap ${h === 'Actions' ? 'text-center' : 'text-left'}`}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -544,13 +544,13 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
                   Array.from({ length: 5 }).map((_, i) => (
                     <tr key={i} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${typeof idx !== "undefined" ? (idx % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : typeof index !== "undefined" ? (index % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : "bg-white"}`}>
                       {Array.from({ length: 7 }).map((__, j) => (
-                        <td key={j} className="px-6 py-4 text-sm"><Skeleton className="h-5 w-full" /></td>
+                        <td key={j} className="px-6 py-4 text-[16px]"><Skeleton className="h-5 w-full" /></td>
                       ))}
                     </tr>
                   ))
                 ) : reviews.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-6 py-4 text-center text-sm">
+                    <td colSpan={8} className="px-6 py-4 text-center text-[16px]">
                       <div className="flex flex-col items-center gap-3">
                         <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center">
                           <MessageCircle size={28} className="text-gray-300" />
@@ -565,7 +565,7 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
                   const p = r.product || {};
                   return (
                     <tr key={r._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
-                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
                         <input
                           type="checkbox"
                           checked={selectedIds.includes(r._id)}
@@ -573,16 +573,16 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
                           className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
                         />
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <td className="px-6 py-4 whitespace-nowrap text-[16px]">
                         <div className="flex items-center gap-3">
                           <Avatar name={u.name || "?"} size={36} />
                           <div>
                             <p className="font-bold text-sm text-gray-800 leading-tight">{u.name || "Unknown"}</p>
-                            <p className="text-sm font-semibold text-gray-600">{u.email}</p>
+                            <p className="text-sm font-semibold text-[#D88F5B]">{u.email}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <td className="px-6 py-4 whitespace-nowrap text-[16px]">
                         <div className="flex items-center gap-2.5">
                           {p.images?.[0] ? (
                             <img src={p.images[0]} alt={p.name} className="w-12 h-12 rounded-lg object-cover border border-[#E6DFD4] shrink-0" />
@@ -594,8 +594,8 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
                           <p className="font-bold text-sm text-gray-800 max-w-[130px] truncate">{p.name || "—"}</p>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm"><StarRating rating={r.rating} /></td>
-                      <td className="px-6 py-4 whitespace-nowrap max-w-[200px] text-sm">
+                      <td className="px-6 py-4 whitespace-nowrap text-[16px]"><StarRating rating={r.rating} /></td>
+                      <td className="px-6 py-4 whitespace-nowrap max-w-[200px] text-[16px]">
                         {r.title && <p className="font-bold text-sm text-gray-800 truncate mb-0.5">{r.title}</p>}
                         <p className="text-sm font-semibold text-gray-600 line-clamp-2 leading-relaxed">
                           {r.description || <span className="italic">No text</span>}
@@ -606,9 +606,8 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
                           </span>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-600">
-                          <Calendar size={14} />
+                      <td className="px-6 py-4 whitespace-nowrap text-[16px]">
+                        <div className="text-sm font-semibold text-[#8B5E3C] flex items-center gap-1.5">
                           {new Date(r.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
                         </div>
                         {r.isVerifiedPurchase && (
@@ -617,29 +616,29 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
                           </span>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm"><StatusBadge status={r.status} /></td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]"><StatusBadge status={r.status} /></td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
                         <div className="flex items-center justify-center gap-2">
                           <button onClick={() => setDetail(r)} title="View"
                             className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors">
-                            <Eye className="w-[15px] h-[15px]" />
+                            <Eye className="w-4 h-4" />
                           </button>
                           {canEdit && r.status !== "approved" && (
                             <button onClick={() => handleStatusChange(r._id, "approved")} title="Approve"
                               className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors">
-                              <Check className="w-[15px] h-[15px]" />
+                              <Check className="w-4 h-4" />
                             </button>
                           )}
                           {canEdit && r.status !== "rejected" && (
                             <button onClick={() => handleStatusChange(r._id, "rejected")} title="Reject"
                               className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors">
-                              <X className="w-[15px] h-[15px]" />
+                              <X className="w-4 h-4" />
                             </button>
                           )}
                           {canDelete && (
                             <button onClick={() => setConfirm({ id: r._id })} title="Delete"
                               className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors">
-                              <Trash2 className="w-[15px] h-[15px]" />
+                              <Trash2 className="w-4 h-4" />
                             </button>
                           )}
                         </div>

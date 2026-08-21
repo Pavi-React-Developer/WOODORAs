@@ -1,8 +1,6 @@
 import React from 'react';
 
 export default function Pagination({ currentPage, totalPages, onPageChange, className = "mt-6 flex items-center justify-center gap-1 flex-wrap" }) {
-  if (totalPages <= 1) return null;
-
   const getPageNumbers = () => {
     const pages = [];
     if (totalPages <= 5) {

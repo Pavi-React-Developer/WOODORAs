@@ -257,16 +257,22 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
 
   products.forEach(p => {
     const productVariants = variants.filter(v => v.product === p._id || v.productName === p.name);
-    let pStock = 0;
+    
     if (productVariants.length > 0) {
-      pStock = productVariants.reduce((acc, v) => acc + Math.max(0, (v.inventory || 0) - (v.reserveStock || 0)), 0);
+      productVariants.forEach(v => {
+        const vStock = Math.max(0, (v.inventory || 0) - (v.reserveStock || 0));
+        totalStock += vStock;
+        const threshold = v.lowStockAlert ?? p.inventory?.lowStockThreshold ?? 5;
+        if (vStock > 0 && vStock <= threshold) lowStockCount++;
+        if (vStock === 0) outOfStockCount++;
+      });
     } else {
-      pStock = p.inventory?.stockQuantity || 0;
+      const pStock = p.inventory?.stockQuantity || 0;
+      totalStock += pStock;
+      const threshold = p.inventory?.lowStockThreshold || 5;
+      if (pStock > 0 && pStock <= threshold) lowStockCount++;
+      if (pStock === 0) outOfStockCount++;
     }
-
-    totalStock += pStock;
-    if (p.isLowStock && pStock > 0) lowStockCount++;
-    if (pStock === 0) outOfStockCount++;
   });
 
   if (loading) {
@@ -329,6 +335,68 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
           <div className="card-content">
             <p className="card-title text-red-100">Out of Stock</p>
             <h3 className="card-value text-white">{outOfStockCount}</h3>
+          </div>
+        </div>
+      </div>
+
+      {/* LOW STOCK ALERT PANEL */}
+      <div className="alert-panel-section-top mb-6">
+        <div className="alert-widget" style={{ position: 'static' }}>
+          <div className="alert-widget-header">
+            <AlertTriangle className="text-orange-500" size={20} />
+            <h3 className="alert-title">Low Stock Alerts</h3>
+          </div>
+          <div className="alert-list" style={{ display: 'flex', flexDirection: 'row', gap: '1rem', overflowX: 'auto', padding: '1rem' }}>
+            {(() => {
+              const alertItems = [];
+              products.forEach(p => {
+                const pVariants = getProductVariants(p);
+                if (pVariants.length > 0) {
+                  pVariants.forEach(v => {
+                    const currentStock = Math.max(0, (v.inventory || 0) - (v.reserveStock || 0));
+                    const threshold = v.lowStockAlert ?? p.inventory?.lowStockThreshold ?? 5;
+                    if (currentStock > 0 && currentStock <= threshold) {
+                      alertItems.push({
+                        id: v._id,
+                        name: `${p.name} - ${v.variantCombination}`,
+                        sku: v.sku || 'No SKU',
+                        computedStock: currentStock,
+                        threshold
+                      });
+                    }
+                  });
+                } else {
+                  const currentStock = p.inventory?.stockQuantity || 0;
+                  const threshold = p.inventory?.lowStockThreshold || 5;
+                  if (currentStock > 0 && currentStock <= threshold) {
+                    alertItems.push({
+                      id: p._id,
+                      name: p.name,
+                      sku: p.inventory?.sku || p.sku || 'No SKU',
+                      computedStock: currentStock,
+                      threshold
+                    });
+                  }
+                }
+              });
+
+              if (alertItems.length === 0) {
+                return <div className="p-4 text-sm text-gray-500">All products and variants are well stocked.</div>;
+              }
+
+              return alertItems.slice(0, 10).map(item => (
+                <div key={item.id} className={`alert-item ${item.computedStock === 0 ? 'danger' : 'warning'}`} style={{ minWidth: '250px', flexShrink: 0 }}>
+                  <div className="alert-item-info">
+                    <p className="alert-item-name">{item.name}</p>
+                    <p className="alert-item-variant">SKU: {item.sku}</p>
+                  </div>
+                  <div className="alert-item-stock">
+                    <span className="label">Remaining</span>
+                    <span className="value">{item.computedStock}</span>
+                  </div>
+                </div>
+              ));
+            })()}
           </div>
         </div>
       </div>
@@ -446,11 +514,11 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
                 {/* MAIN INVENTORY TABLE */}
                 <div className="bg-white rounded-2xl border border-[#E6DFD4] shadow-sm overflow-hidden mb-6">
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
+                    <table className="w-full text-[16px]">
                       <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
                         <tr>
                           {['Product', 'Category', 'SKU', 'Stock', 'Status', 'Action'].map((h) => (
-                            <th key={h} className={`px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap ${h === 'Product' ? 'text-left' : 'text-center'}`}>
+                            <th key={h} className={`px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap ${h === 'Product' ? 'text-left' : 'text-center'}`}>
                               {h}
                             </th>
                           ))}
@@ -468,41 +536,37 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
                           if (currentStock === 0) {
                             statusColor = 'bg-red-100 text-red-700';
                             statusLabel = 'Out of Stock';
-                          } else if (item.isLowStock) {
-                            statusColor = 'bg-orange-100 text-orange-700';
-                            statusLabel = 'Low Stock';
                           }
 
                           return (
                             <React.Fragment key={item._id}>
                               <tr className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
-                                <td className="px-6 py-4 whitespace-nowrap text-left text-sm">
+                                <td className="px-6 py-4 whitespace-nowrap text-left text-[16px]">
                                   <div className="flex items-center gap-3">
                                     <ProductThumbnail src={getInventoryImage(item, productVariants)} alt={item.name} className="w-12 h-12 object-cover rounded-lg border border-[#E6DFD4]" />
-                                    <span className="font-bold text-sm text-gray-800">{item.name}</span>
+                                    <span className="font-bold text-[16px] text-gray-800">{item.name}</span>
                                   </div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-center capitalize text-sm font-semibold text-gray-600">{item.category?.name || 'General'}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
-                                  <span className="text-gray-600 text-sm font-bold font-semibold">
+                                <td className="px-6 py-4 whitespace-nowrap text-center capitalize text-[16px] font-semibold text-black-600">{item.category?.name || 'General'}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
+                                  <span className="text-black-600 text-[16px] font-bold font-semibold">
                                     {getInventorySku(item, productVariants)}
                                   </span>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-center font-bold text-sm text-gray-800">{currentStock}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
-                                  <span className={`px-3 py-1 rounded-full text-sm font-semibold flex items-center justify-center gap-1.5 w-fit mx-auto ${statusColor}`}>
-                                    <span className={`w-1.5 h-1.5 rounded-full ${statusColor.replace('bg-', 'bg-').replace('100', '500').split(' ')[0]}`}></span>
+                                <td className="px-6 py-4 whitespace-nowrap text-center font-bold text-[16px] text-gray-800">{currentStock}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
+                                  <span className={`px-4 py-1.5 rounded-full text-[13px] font-bold flex items-center justify-center w-fit mx-auto ${statusColor}`}>
                                     {statusLabel}
                                   </span>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                                <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
                                   <div className="flex items-center justify-center gap-3">
                                     <button className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors" title="View" onClick={() => openViewModal(item)}>
-                                      <Eye className="w-[15px] h-[15px]" />
+                                      <Eye size={16} />
                                     </button>
                                     {canEdit && (
                                       <button className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors" title="Edit Stock" onClick={() => openEditModal(item, 'product')}>
-                                        <SquarePen className="w-[15px] h-[15px]" />
+                                        <SquarePen size={16} />
                                       </button>
                                     )}
                                   </div>
@@ -526,32 +590,7 @@ export default function InventoryManagement({ canEdit = true, canDelete = true }
 
           </div>
 
-          {/* LOW STOCK ALERT PANEL */}
-          <div className="alert-panel-section">
-            <div className="alert-widget">
-              <div className="alert-widget-header">
-                <AlertTriangle className="text-orange-500" size={20} />
-                <h3 className="alert-title">Low Stock Alerts</h3>
-              </div>
-              <div className="alert-list">
-                {products.filter(p => p.inventory?.stockQuantity <= 5).slice(0, 5).map(p => (
-                  <div key={p._id} className={`alert-item ${p.inventory?.stockQuantity === 0 ? 'danger' : 'warning'}`}>
-                    <div className="alert-item-info">
-                      <p className="alert-item-name">{p.name}</p>
-                      <p className="alert-item-variant">SKU: {getInventorySku(p, getProductVariants(p))}</p>
-                    </div>
-                    <div className="alert-item-stock">
-                      <span className="label">Remaining</span>
-                      <span className="value">{p.inventory?.stockQuantity || 0}</span>
-                    </div>
-                  </div>
-                ))}
-                {products.filter(p => p.inventory?.stockQuantity <= 5).length === 0 && (
-                  <div className="p-4 text-sm text-gray-500">All products are well stocked.</div>
-                )}
-              </div>
-            </div>
-          </div>
+
         </div>
       )}
       {/* EDIT MODAL */}

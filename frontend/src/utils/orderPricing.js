@@ -124,8 +124,9 @@ export const getOrderPricing = (order = {}) => {
       : (order.isPaid ? total : 0));
 
   // Remaining amount owed after deducting what has been paid.
-  const balanceAmount = number(order.balance_amount) || number(order.balanceAmount)
-    || Math.max(0, total - paidAmount);
+  // We MUST calculate this from the final adjusted 'total' so it remains mathematically
+  // consistent, especially if we added missing GST to the total above.
+  const balanceAmount = Math.max(0, total - paidAmount);
 
   return {
     subtotal,

@@ -1,5 +1,6 @@
 const CustomizeField = require('../models/CustomizeField');
 const CustomizeRequest = require('../models/CustomizeRequest');
+const Counter = require('../models/Counter');
 
 // ========================
 // Customize Field Controllers
@@ -87,8 +88,17 @@ const submitRequest = async (req, res) => {
   try {
     const { customerInfo, shippingAddress, productDetails, images } = req.body;
     
+    // Generate MKC display ID
+    const counter = await Counter.findByIdAndUpdate(
+      'customize_request',
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true }
+    );
+    const displayId = `MKC${String(counter.seq).padStart(5, '0')}`;
+
     // Create new request
     const newRequest = await CustomizeRequest.create({
+      displayId,
       user: req.user ? req.user._id : undefined,
       customerInfo,
       shippingAddress,

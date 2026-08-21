@@ -12,6 +12,7 @@ import FooterAdmin from './FooterAdmin';
 import ReviewAdmin from './ReviewAdmin';
 import HomeLayoutBuilder from './HomeLayoutBuilder';
 import { RefreshCw } from 'lucide-react';
+import { cmsService } from '../../../api/cmsService';
 
 const TABS = [
   { id: 'layout', label: '🛠️ Layout Builder' },
@@ -59,7 +60,13 @@ export default function HomePageCMS({ canCreate, canEdit, canDelete }) {
           </p>
           <h2 className="text-4xl md:text-[42px] font-serif font-bold text-[#141225] leading-tight tracking-tight">Home Page CMS</h2>
         </div>
-        <button onClick={() => setRefreshKey(prev => prev + 1)} className="admin-secondary-btn flex items-center gap-2">
+        <button
+          onClick={() => {
+            cmsService.clearCache();
+            setRefreshKey(prev => prev + 1);
+          }}
+          className="admin-secondary-btn flex items-center gap-2"
+        >
           <RefreshCw size={16} /> Refresh
         </button>
       </div>

@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { adminService } from '../../api/adminService';
 import { toast } from 'react-hot-toast';
 import CustomCalendar from '../../components/CustomCalendar';
-import { Eye, X, Edit2, ToggleLeft, ToggleRight, Trash2, SquarePen, Trash, RefreshCw } from 'lucide-react';
+import { Eye, EyeOff, X, Edit2, ToggleLeft, ToggleRight, Trash2, SquarePen, Trash, RefreshCw } from 'lucide-react';
 import { getImageSrc } from '../../utils/imageUtils';
-import { ActiveBadge, RequestBadge, OrderBadge } from '../../components/admin/CommonComponents';
+import { ActiveBadge, RequestBadge, OrderBadge, StatusBadge } from '../../components/admin/CommonComponents';
 import { formatDeliveryDate, getDeliveryDate } from '../../utils/deliveryDate';
 import EditGiftBoxRulePage from './fees/EditGiftBoxRulePage';
 import Pagination from '../../components/common/Pagination';
@@ -319,10 +319,10 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
               )}
 
               <div className="bg-white rounded-3xl shadow-sm border border-[#E6DFD4] overflow-hidden">
-                <table className="w-full text-sm">
+                <table className="w-full text-[16px]">
                   <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
                     <tr>
-                      <th className="py-4 px-2 font-bold w-10 text-center text-[11px] uppercase tracking-widest text-gray-500 whitespace-nowrap">
+                      <th className="py-4 px-2 font-bold w-10 text-center text-[14px] uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap">
                         <input
                           type="checkbox"
                           checked={paginatedRules.length > 0 && paginatedRules.every(r => selectedIds.includes(r._id))}
@@ -330,18 +330,18 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
                           className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer mx-auto block"
                         />
                       </th>
-                      <th className="py-4 px-2 font-bold text-[11px] uppercase tracking-widest text-gray-500 whitespace-nowrap text-center">Min Vol (cm³)</th>
-                      <th className="py-4 px-2 font-bold text-[11px] uppercase tracking-widest text-gray-500 whitespace-nowrap text-center">Max Vol (cm³)</th>
-                      <th className="py-4 px-2 font-bold text-[11px] uppercase tracking-widest text-gray-500 whitespace-nowrap text-center">Box Size</th>
-                      <th className="py-4 px-2 font-bold text-[11px] uppercase tracking-widest text-gray-500 whitespace-nowrap text-center">Fee (₹)</th>
-                      <th className="py-4 px-2 font-bold text-[11px] uppercase tracking-widest text-gray-500 whitespace-nowrap text-center">Status</th>
-                      <th className="py-4 px-2 font-bold text-[11px] uppercase tracking-widest text-gray-500 whitespace-nowrap text-center">Action</th>
+                      <th className="py-4 px-2 font-bold text-[14px] uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Min Vol (cm³)</th>
+                      <th className="py-4 px-2 font-bold text-[14px] uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Max Vol (cm³)</th>
+                      <th className="py-4 px-2 font-bold text-[14px] uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Box Size</th>
+                      <th className="py-4 px-2 font-bold text-[14px] uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Fee (₹)</th>
+                      <th className="py-4 px-2 font-bold text-[14px] uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Status</th>
+                      <th className="py-4 px-2 font-bold text-[14px] uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Action</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {paginatedRules.map((rule, idx) => (
                       <tr key={rule._id || idx} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
-                        <td className="p-4 text-center">
+                        <td className="text-[16px] p-4 text-center">
                           <input
                             type="checkbox"
                             checked={selectedIds.includes(rule._id)}
@@ -349,17 +349,15 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
                             className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer mx-auto block"
                           />
                         </td>
-                        <td className="p-4 text-center whitespace-nowrap text-sm font-bold text-gray-900">{rule.minVolume}</td>
-                        <td className="p-4 text-center whitespace-nowrap text-sm font-bold text-gray-900">{rule.maxVolume}</td>
-                        <td className="p-4 text-center whitespace-nowrap text-xs font-semibold text-gray-900">{rule.boxSize}</td>
-                        <td className="p-4 text-center whitespace-nowrap text-xs font-semibold text-green-600">₹{rule.fee}</td>
-                        <td className="p-4 text-center">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${rule.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
-                            {rule.isActive ? 'Active' : 'Inactive'}
-                          </span>
+                        <td className="p-4 text-center whitespace-nowrap text-[16px] font-bold text-gray-900">{rule.minVolume}</td>
+                        <td className="p-4 text-center whitespace-nowrap text-[16px] font-bold text-gray-900">{rule.maxVolume}</td>
+                        <td className="p-4 text-center whitespace-nowrap text-[16px] font-semibold text-gray-900">{rule.boxSize}</td>
+                        <td className="p-4 text-center whitespace-nowrap text-[16px] font-bold text-green-600">₹{rule.fee}</td>
+                        <td className="text-[16px] p-4 text-center">
+                          <StatusBadge status={rule.isActive ? 'Active' : 'Inactive'} />
                         </td>
-                        <td className="p-4 text-center">
-                          <div className="flex items-center justify-center gap-3">
+                        <td className="text-[16px] p-4 text-center">
+                          <div className="flex items-center justify-center gap-2">
                             {canEdit && (
                               <>
                                 <button onClick={() => {
@@ -372,8 +370,8 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
                                     isActive: rule.isActive
                                   });
                                   window.scrollTo({ top: 0, behavior: 'smooth' });
-                                }} className="text-blue-600 hover:text-blue-700 transition-colors" title="Edit Rule">
-                                  <SquarePen size={15} />
+                                }} className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors" title="Edit Rule">
+                                  <SquarePen size={16} />
                                 </button>
                                 <button onClick={async () => {
                                   try {
@@ -383,8 +381,8 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
                                   } catch (e) {
                                     toast.error('Failed to update status');
                                   }
-                                }} title={rule.isActive ? 'Deactivate' : 'Activate'}>
-                                  <ActiveBadge status={rule.isActive} />
+                                }} className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors" title={rule.isActive ? 'Deactivate' : 'Activate'}>
+                                  {rule.isActive ? <EyeOff size={16} /> : <Eye size={16} />}
                                 </button>
                               </>
                             )}
@@ -398,8 +396,8 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
                                 } catch (error) {
                                   toast.error('Failed to delete rule');
                                 }
-                              }} className="text-red-500 hover:text-red-600 transition-colors" title="Delete Rule">
-                                <Trash2 size={15} />
+                              }} className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors" title="Delete Rule">
+                                <Trash2 size={16} />
                               </button>
                             )}
                           </div>
@@ -408,7 +406,7 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
                     ))}
                     {paginatedRules.length === 0 && !loading && (
                       <tr>
-                        <td colSpan="7" className="px-4 py-8 text-center text-gray-500">No box rules configured.</td>
+                        <td colSpan="7" className="text-[16px] px-4 py-8 text-center text-gray-500">No box rules configured.</td>
                       </tr>
                     )}
                   </tbody>
@@ -446,10 +444,10 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
             </div>
           )}
           <div className="bg-white rounded-3xl shadow-sm border border-[#E6DFD4] overflow-hidden">
-            <table className="w-full text-sm">
+            <table className="w-full text-[16px]">
               <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
                 <tr>
-                  <th className="py-4 px-2 font-bold w-10 text-center text-[11px] uppercase tracking-widest text-gray-500 whitespace-nowrap">
+                  <th className="py-4 px-2 font-bold w-10 text-center text-[14px] uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap">
                     <input
                       type="checkbox"
                       checked={paginatedOrders.length > 0 && paginatedOrders.every(o => selectedIds.includes(o._id))}
@@ -457,21 +455,21 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
                       className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer mx-auto block"
                     />
                   </th>
-                  <th className="py-4 px-2 font-bold text-[11px] uppercase tracking-widest text-gray-500 whitespace-nowrap text-center">Order ID</th>
-                  <th className="py-4 px-2 font-bold text-[11px] uppercase tracking-widest text-gray-500 whitespace-nowrap text-center">Customer</th>
-                  <th className="py-4 px-2 font-bold text-[11px] uppercase tracking-widest text-gray-500 whitespace-nowrap text-center">Order Date</th>
-                  <th className="py-4 px-2 font-bold text-[11px] uppercase tracking-widest text-gray-500 whitespace-nowrap text-center">Delivery Date</th>
-                  <th className="py-4 px-2 font-bold text-[11px] uppercase tracking-widest text-gray-500 whitespace-nowrap text-center">Status</th>
-                  <th className="py-4 px-2 font-bold text-[11px] uppercase tracking-widest text-gray-500 whitespace-nowrap text-center">Action</th>
+                  <th className="py-4 px-2 font-bold text-[14px] uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Order ID</th>
+                  <th className="py-4 px-2 font-bold text-[14px] uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Customer</th>
+                  <th className="py-4 px-2 font-bold text-[14px] uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Order Date</th>
+                  <th className="py-4 px-2 font-bold text-[14px] uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Delivery Date</th>
+                  <th className="py-4 px-2 font-bold text-[14px] uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Status</th>
+                  <th className="py-4 px-2 font-bold text-[14px] uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Action</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {orders.length === 0 ? (
-                  <tr><td colSpan="7" className="px-4 py-3.5 text-center text-sm text-gray-500">No gift orders found.</td></tr>
+                  <tr><td colSpan="7" className="px-4 py-3.5 text-center text-[16px] text-gray-500">No gift orders found.</td></tr>
                 ) : (
                   paginatedOrders.map((order, idx) => (
                     <tr key={order._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
-                      <td className="p-4 text-center">
+                      <td className="text-[16px] p-4 text-center">
                         <input
                           type="checkbox"
                           checked={selectedIds.includes(order._id)}
@@ -479,40 +477,42 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
                           className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer mx-auto block"
                         />
                       </td>
-                      <td className="p-4 text-left whitespace-nowrap text-sm font-bold text-gray-900">
+                      <td className="p-4 text-left whitespace-nowrap text-[16px] font-bold text-gray-900">
                         {formatOrderId(order)}
                       </td>
-                      <td className="p-4 text-left whitespace-nowrap">
+                      <td className="text-[16px] p-4 text-left whitespace-nowrap">
                         {order.user ? (
                           <div className="flex flex-col">
-                            <span className="text-xs font-semibold text-gray-900">
+                            <span className="text-[16px] font-semibold text-gray-900">
                               {order.user.name || order.user.fullName}
                             </span>
-                            <span className="text-[11px] text-gray-500">{order.user.email}</span>
+                            <span className="text-[16px] font-semibold text-[#D88F5B]">{order.user.email}</span>
                           </div>
                         ) : order.shippingAddress ? (
                           <div className="flex flex-col">
-                            <span className="text-xs font-semibold text-gray-900 flex items-center gap-2">
+                            <span className="text-[14px] font-semibold text-gray-900 flex items-center gap-2">
                               {order.shippingAddress.fullName}
-                              <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-bold">Guest</span>
+                              <span className="text-[16px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-bold">Guest</span>
                             </span>
-                            <span className="text-[11px] text-gray-500">{order.shippingAddress.phone}</span>
+                            <span className="text-[16px] font-semibold text-[#D88F5B]">{order.shippingAddress.phone}</span>
                           </div>
                         ) : (
-                          <span className="text-xs text-gray-500 italic">N/A</span>
+                          <span className="text-[16px] text-gray-500 italic">N/A</span>
                         )}
                       </td>
-                      <td className="p-4 text-left whitespace-nowrap text-sm text-gray-500">
+                      <td className="p-4 text-left whitespace-nowrap text-[16px] font-semibold text-[#8B5E3C]">
                         {formatDate(order.createdAt)}
                       </td>
-                      <td className="p-4 text-left whitespace-nowrap text-sm font-medium text-[#B0611C]">
+                      <td className="p-4 text-left whitespace-nowrap text-[16px] font-medium text-[#8B5E3C]">
                         {formatDeliveryDate(getDeliveryDate(order))}
                       </td>
-                      <td className="p-4 text-left whitespace-nowrap text-xs font-semibold text-gray-900">{order.status}</td>
-                      <td className="p-4 text-center">
+                      <td className="text-[16px] p-4 text-center whitespace-nowrap">
+                        <OrderBadge status={order.status} size={16} />
+                      </td>
+                      <td className="text-[16px] p-4 text-center">
                         <div className="flex items-center justify-center">
                           <button onClick={() => setSelectedOrder(order)} className="text-green-600 hover:text-green-700 transition-colors">
-                            <Eye size={15} />
+                            <Eye size={16} />
                           </button>
                         </div>
                       </td>
@@ -585,7 +585,7 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
                           <p className="text-sm text-gray-500">Qty: {item.qty} | Price: ₹{item.price}</p>
                         </div>
                       </div>
-                      
+
                       {item.isGift && (
                         <div className="bg-[#FAF4EF] p-4 border-t border-gray-100">
                           <h4 className="text-[11px] font-bold text-[#141225] uppercase tracking-widest mb-3">GIFT PREFERENCES</h4>

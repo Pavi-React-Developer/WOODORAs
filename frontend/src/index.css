@@ -1,4 +1,24 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Lobster+Two:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+/* Custom Number Font (Lobster Two) applied only to digits and currency symbols */
+@font-face {
+  font-family: 'BrandNumberFont';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/lobstertwo/v22/BngMUXZGTXPUvIoyV6yN5-fN5qU.woff2) format('woff2');
+  unicode-range: U+0030-0039, U+20B9, U+0024, U+00A3, U+20AC, U+0025;
+}
+@font-face {
+  font-family: 'BrandNumberFont';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/lobstertwo/v22/BngRUXZGTXPUvIoyV6yN5-92w7CGwR0.woff2) format('woff2');
+  unicode-range: U+0030-0039, U+20B9, U+0024, U+00A3, U+20AC, U+0025;
+}
+
 @import "tailwindcss";
 
 @theme {
@@ -7,8 +27,8 @@
   --color-brand-light: #D7CCC8;    /* Ash Wood */
   --color-brand-beige: #FDF9F1;    /* Light Birch */
   --color-brand-green: #33691E;    /* Leaf Green */
-  --font-serif: 'Playfair Display', Georgia, serif;
-  --font-sans: 'Playfair Display', Georgia, serif;
+  --font-serif: 'BrandNumberFont', 'Playfair Display', Georgia, serif;
+  --font-sans: 'BrandNumberFont', 'Playfair Display', Georgia, serif;
 
   /* Fluid Typography Scaling */
   --text-xs: clamp(0.75rem, 0.8vw, 0.875rem);

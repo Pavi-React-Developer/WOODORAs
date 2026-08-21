@@ -359,7 +359,7 @@ export default function NavbarAdmin({ canCreate, canEdit, canDelete }) {
                         const newSubItems = currentItem.subItems.filter((_, i) => i !== sIdx);
                         setCurrentItem({ ...currentItem, subItems: newSubItems });
                       }} className="text-red-500 hover:text-red-600 transition-colors">
-                        <Trash2 size={15} />
+                        <Trash2 size={16} />
                       </button>
                     </div>
                   ))}
@@ -386,12 +386,12 @@ export default function NavbarAdmin({ canCreate, canEdit, canDelete }) {
           <table className="w-full text-left">
             <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
               <tr>
-                <th className="px-6 py-3.5 w-16 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">ORDER</th>
-                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">TITLE</th>
-                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">URL</th>
-                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">STYLE</th>
-                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">STATUS</th>
-                <th className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">ACTIONS</th>
+                <th className="px-6 py-3.5 w-16 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">ORDER</th>
+                <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">TITLE</th>
+                <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">URL</th>
+                <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">STYLE</th>
+                <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">STATUS</th>
+                <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">ACTIONS</th>
               </tr>
             </thead>
             <Reorder.Group
@@ -408,43 +408,43 @@ export default function NavbarAdmin({ canCreate, canEdit, canDelete }) {
                   as="tr"
                   className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}
                 >
-                  <td className="whitespace-nowrap px-6 py-3.5 text-center cursor-grab active:cursor-grabbing text-[#8A817C]"><GripVertical size={15} className="mx-auto" /></td>
-                  <td className="whitespace-nowrap px-6 py-3.5 text-center font-bold text-sm text-[#141225]">
+                  <td className="text-[16px] whitespace-nowrap px-6 py-3.5 text-center cursor-grab active:cursor-grabbing text-[#8A817C]"><GripVertical size={15} className="mx-auto" /></td>
+                  <td className="whitespace-nowrap px-6 py-3.5 text-center font-bold text-[16px] text-[#141225]">
                     <div className="flex items-center justify-center gap-2">
                       {item.title}
                       {item.isDropdown && <span className="text-[10px] text-brand-dark font-semibold text-sm">Dropdown</span>}
                     </div>
                   </td>
-                  <td className="whitespace-nowrap px-6 py-3.5 text-center font-semibold text-xs text-[#6D625C]">{item.url}</td>
-                  <td className="whitespace-nowrap px-6 py-3.5 text-center">
+                  <td className="whitespace-nowrap px-6 py-3.5 text-center font-semibold text-[16px] text-[#6D625C]">{item.url}</td>
+                  <td className="text-[16px] whitespace-nowrap px-6 py-3.5 text-center">
                     <div className="flex gap-1 justify-center">
                       {item.textColor && <div className="w-4 h-4 rounded-full border border-gray-200" style={{ backgroundColor: item.textColor }} title="Text Color"></div>}
                       {item.backgroundColor && <div className="w-4 h-4 rounded-full border border-gray-200" style={{ backgroundColor: item.backgroundColor }} title="Background Color"></div>}
                     </div>
                   </td>
-                  <td className="whitespace-nowrap px-6 py-3.5 text-center">
+                  <td className="text-[16px] whitespace-nowrap px-6 py-3.5 text-center">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${item.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
                       {item.status ? 'Active' : 'Inactive'}
                     </span>
                   </td>
-                  <td className="whitespace-nowrap px-6 py-3.5 text-center">
+                  <td className="text-[16px] whitespace-nowrap px-6 py-3.5 text-center">
                     <div className="flex items-center justify-center gap-2">
                       {canEdit && (
                         <>
                           <button onClick={() => handleToggleItemStatus(idx)} title="Toggle status"
                             className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors">
-                            {item.status ? <EyeOff className="w-[15px] h-[15px]" /> : <Eye className="w-[15px] h-[15px]" />}
+                            {item.status ? <EyeOff size={16} /> : <Eye size={16} />}
                           </button>
                           <button onClick={() => handleEditItem(item, idx)} title="Edit item"
                             className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors">
-                            <SquarePen className="w-[15px] h-[15px]" />
+                            <SquarePen size={16} />
                           </button>
                         </>
                       )}
                       {canDelete && (
                         <button onClick={() => handleDeleteItem(idx)} title="Delete item"
                           className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors">
-                          <Trash2 className="w-[15px] h-[15px]" />
+                          <Trash2 size={16} />
                         </button>
                       )}
                     </div>

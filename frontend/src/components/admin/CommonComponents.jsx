@@ -150,6 +150,10 @@ export const StatusBadge = ({ status }) => {
         variant = 'bg-amber-100 text-amber-700';
     } else if (['shipping', 'packed', 'out for delivery', 'shipped'].includes(s)) {
         variant = 'bg-blue-100 text-blue-700';
+    } else if (s === 'required') {
+        variant = 'bg-orange-100 text-orange-700';
+    } else if (s === 'optional') {
+        variant = 'bg-purple-100 text-purple-700';
     }
 
     return (
@@ -166,25 +170,25 @@ export const ActiveBadge = ({ status }) => {
     let label, colorClass;
 
     if (raw === 'true' || raw === 'active' || raw === 'yes') {
-        label = 'Active';
+        label = 'ACTIVE';
         colorClass = 'bg-green-100 text-green-700';
     } else if (raw === 'false' || raw === 'inactive' || raw === 'no') {
-        label = 'Inactive';
-        colorClass = 'bg-red-100 text-red-600';
+        label = 'INACTIVE';
+        colorClass = 'bg-red-100 text-red-700';
     } else if (raw === 'required') {
-        label = 'Required';
+        label = 'REQUIRED';
         colorClass = 'bg-orange-100 text-orange-700';
     } else if (raw === 'optional') {
-        label = 'Optional';
+        label = 'OPTIONAL';
         colorClass = 'bg-purple-100 text-purple-700';
     } else {
         // Fallback: capitalize whatever string was passed
-        label = raw ? raw.charAt(0).toUpperCase() + raw.slice(1) : 'Inactive';
+        label = raw ? raw.toUpperCase() : 'INACTIVE';
         colorClass = 'bg-gray-100 text-gray-600';
     }
 
     return (
-        <span className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full ${colorClass}`}>
+        <span className={`inline-flex items-center justify-center px-4 py-1 text-[13px] font-bold rounded-full ${colorClass}`}>
             {label}
         </span>
     );

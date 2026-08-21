@@ -717,20 +717,20 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                     />
                                 </th>
                                 {['Product', 'Category', 'Price', 'Total Stock', 'Status', 'Actions'].map(h => (
-                                    <th key={h} className="px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">{h}</th>
+                                    <th key={h} className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">{h}</th>
                                 ))}
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-[#E9DED3]">
                             {loading ? (
-                                <tr><td colSpan={7} className="px-6 py-4 text-center text-gray-400 text-sm">
+                                <tr><td colSpan={7} className="px-6 py-4 text-center text-gray-400 text-[16px]">
                                     <div className="flex items-center justify-center gap-2">
                                         <div className="w-4 h-4 border-2 border-[#8B5E3C] border-t-transparent rounded-full animate-spin" />
                                         Loading catalog products...
                                     </div>
                                 </td></tr>
                             ) : products.length === 0 ? (
-                                <tr><td colSpan={7} className="px-6 py-4 text-center text-gray-400 text-sm">
+                                <tr><td colSpan={7} className="px-6 py-4 text-center text-gray-400 text-[16px]">
                                     <div className="flex flex-col items-center gap-3">
                                         <div className="w-12 h-12 bg-[#F8F4EC] rounded-full flex items-center justify-center text-2xl">🧸</div>
                                         <p className="font-medium">No products matched criteria.</p>
@@ -744,7 +744,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                             key={prod._id}
                                             className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}
                                         >
-                                            <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                                            <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
                                                 <input
                                                     type="checkbox"
                                                     checked={selectedIds.includes(prod._id)}
@@ -752,7 +752,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                                     className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer mx-auto block"
                                                 />
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                            <td className="px-6 py-4 whitespace-nowrap text-[16px]">
                                                 <div className="flex items-center gap-3">
                                                     {mainImage ? (
                                                         <img src={mainImage} alt={prod.name} className="w-12 h-12 object-cover rounded-lg border border-[#E6DFD4]" />
@@ -762,33 +762,33 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                                         </div>
                                                     )}
                                                     <div>
-                                                        <p className="font-bold text-sm text-gray-800">{prod.name}</p>
-                                                        <p className="font-bold text-sm text-gray-400 font-mono mt-0.5">{prod.sku || 'No SKU'}</p>
+                                                        <p className="font-bold text-[16px] text-gray-800">{prod.name}</p>
+                                                        <p className="font-bold text-[16px] text-gray-400 mt-0.5">{prod.sku || 'No SKU'}</p>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-[#8B5E3C] text-center">{prod.category?.name || 'Unknown'}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-amber-900 text-center">₹{(prod.price || 0).toFixed(2)}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                                            <td className="px-6 py-4 whitespace-nowrap text-[16px] font-semibold text-[#8B5E3C] text-center">{prod.category?.name || 'Unknown'}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-[16px] font-semibold text-amber-900 text-center">₹{(prod.price || 0).toFixed(2)}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
                                                 <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-semibold ${prod.isLowStock ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
                                                     }`}>
                                                     {prod.totalStock} {prod.isLowStock ? 'low' : 'in stock'}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                                            <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
                                                 {canEdit ? (
                                                     <button onClick={() => handleToggleStatus(prod)} title="Click to toggle">
-                                                        <StatusBadge status={prod.isActive ? "Active" : "Inactive"} />
+                                                        <StatusBadge status={prod.isActive ? "Active" : "Inactive"} size={16} />
                                                     </button>
                                                 ) : (
-                                                    <StatusBadge status={prod.isActive ? "Active" : "Inactive"} />
+                                                    <StatusBadge status={prod.isActive ? "Active" : "Inactive"} size={16} />
                                                 )}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                                            <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
                                                 <div className="flex gap-2 justify-center">
                                                     {canEdit && (
                                                         <button onClick={() => navigate(`/admin/products/edit/${prod._id}`)} className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors" title="Edit">
-                                                            <SquarePen className="w-[15px] h-[15px]" />
+                                                            <SquarePen size={16} />
                                                         </button>
                                                     )}
                                                     {canDelete && (
@@ -797,7 +797,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                                             className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
                                                             title="Delete"
                                                         >
-                                                            <Trash2 className="w-[15px] h-[15px]" />
+                                                            <Trash2 size={16} />
                                                         </button>
                                                     )}
                                                 </div>
@@ -919,7 +919,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                                         {formErrors.subCategory && <p className="text-red-500 text-[10px] mt-1">{formErrors.subCategory}</p>}
                                     </Field>
                                 </div>
-                                
+
                                 {gstRules.length > 0 && (
                                     <div className="mb-4 bg-[#F8F4EC]/50 p-4 rounded-xl border border-[#E6DFD4]">
                                         <label className="block text-sm font-bold text-gray-800 uppercase tracking-wider mb-3">

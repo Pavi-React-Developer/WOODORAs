@@ -51,6 +51,10 @@ const advancedBookingSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    address: {
+        type: String,
+        required: true
+    },
     totalAmount: {
         type: Number,
         default: 0
