@@ -5,8 +5,10 @@ import toast from 'react-hot-toast';
 import { downloadExcelFile } from '../../../utils/exportUtils';
 
 import { adminService } from '../../../api/adminService';
+import ConfirmDialog from '../../../components/admin/ConfirmDialog';
 
 export default function CancellationManagementPage({ canCreate = true, canEdit = true, canDelete = true }) {
+  const [deleteId, setDeleteId] = useState(null);
   const [activeTab, setActiveTab] = useState('COD');
   const [selectedIds, setSelectedIds] = useState([]);
 
@@ -357,7 +359,7 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
                       </tr>
                     ) : filteredRules.map((rule, idx) => (
                       <tr key={idx} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]"}`}>
-                        <td className="text-[16px] px-4 py-6 text-center">
+                        <td className="text-[16px] px-4 py-4 text-center">
                           <input
                             type="checkbox"
                             checked={selectedIds.includes(rule._id)}
@@ -365,19 +367,19 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
                             className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
                           />
                         </td>
-                        <td className="text-[16px] px-4 py-6 text-center">
-                          <span className="text-sm font-bold text-[#141225]">{rule.orderStatus}</span>
+                        <td className="text-[16px] px-4 py-4 text-center">
+                          <span className="text-[16px] font-bold text-[#141225]">{rule.orderStatus}</span>
                         </td>
-                        <td className="text-[16px] px-4 py-6 text-center">
-                          <span className="text-xs font-semibold text-[#141225]">{rule.cancellationFee > 0 ? rule.cancellationFee : '-'}</span>
+                        <td className="text-[16px] px-4 py-4 text-center">
+                          <span className="text-[16px] font-semibold text-[#141225]">{rule.cancellationFee > 0 ? rule.cancellationFee : '-'}</span>
                         </td>
-                        <td className="text-[16px] px-4 py-6 text-center">
-                          <span className="text-xs font-semibold text-[#141225]">{rule.refundPercentage > 0 ? `${rule.refundPercentage}%` : '-'}</span>
+                        <td className="text-[16px] px-4 py-4 text-center">
+                          <span className="text-[16px] font-semibold text-[#141225]">{rule.refundPercentage > 0 ? `${rule.refundPercentage}%` : '-'}</span>
                         </td>
-                        <td className="text-[16px] px-4 py-6 text-center">
-                          <span className="text-sm font-semibold text-[#8B5E3C]">{rule.timeLimit}</span>
+                        <td className="text-[16px] px-4 py-4 text-center">
+                          <span className="text-[16px] font-semibold text-[#8B5E3C]">{rule.timeLimit}</span>
                         </td>
-                        <td className="text-[16px] px-4 py-6 text-center">
+                        <td className="text-[16px] px-4 py-4 text-center">
                           <button
                             onClick={() => handleToggleAllowed(rule)}
                             disabled={!canEdit || rule.status === 'Locked'}
@@ -391,10 +393,16 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
                             />
                           </button>
                         </td>
-                        <td className="text-[16px] px-4 py-6 text-center">
-                          <RequestBadge status={rule.status} />
+                        <td className="text-[16px] px-4 py-4 text-center">
+                          {rule.status === 'Locked' ? (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold bg-gray-100 text-gray-500">
+                              <Lock size={16} /> Locked
+                            </span>
+                          ) : (
+                            <ActiveBadge status={rule.status === 'Active'} size={16} />
+                          )}
                         </td>
-                        <td className="text-[16px] px-4 py-6 text-center whitespace-nowrap">
+                        <td className="text-[16px] px-4 py-4 text-center whitespace-nowrap">
                           {rule.status !== 'Locked' ? (
                             <div className="flex items-center justify-center gap-2">
                               {canEdit && (
@@ -403,7 +411,7 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
                                 </button>
                               )}
                               {canDelete && (
-                                <button onClick={() => handleDeleteRule(rule._id)} className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                <button onClick={() => setDeleteId(rule._id)} className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                                   <Trash2 size={16} />
                                 </button>
                               )}
@@ -531,7 +539,7 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
                         onChange={() => setFormData({ ...formData, isAllowed: true })}
                         className="w-4 h-4 text-[#8B5E3C] focus:ring-[#8B5E3C] accent-[#8B5E3C]"
                       />
-                      <span className="text-[15px] text-[#141225] font-medium">Active</span>
+                      <span className="text-[16px] text-[#141225] font-medium">Active</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
@@ -541,7 +549,7 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
                         onChange={() => setFormData({ ...formData, isAllowed: false })}
                         className="w-4 h-4 text-[#8B5E3C] focus:ring-[#8B5E3C] accent-[#8B5E3C]"
                       />
-                      <span className="text-[15px] text-[#141225] font-medium">Inactive</span>
+                      <span className="text-[16px] text-[#141225] font-medium">Inactive</span>
                     </label>
                   </div>
                 </div>
@@ -565,6 +573,18 @@ export default function CancellationManagementPage({ canCreate = true, canEdit =
         </div>
       )}
 
-    </div>
+    
+      
+      <ConfirmDialog
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={() => {
+            handleDeleteRule(deleteId); setDeleteId(null);
+        }}
+        title="Delete Item"
+        message="This action cannot be undone. Are you sure?"
+      />
+      
+</div>
   );
 }

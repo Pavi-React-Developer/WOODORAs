@@ -3,8 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { Plus, Trash2, Settings, X, PlusCircle, Trash, RefreshCw, Edit } from 'lucide-react';
 import { customizeService } from '../../../api/customizeService';
+import ConfirmDialog from '../../../components/admin/ConfirmDialog';
 
 export default function CustomizeFieldManager({ canCreate = true, canEdit = true, canDelete = true }) {
+  const [deleteId, setDeleteId] = useState(null);
   const [fields, setFields] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -129,7 +131,7 @@ export default function CustomizeFieldManager({ canCreate = true, canEdit = true
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this field?')) return;
+    
     try {
       await customizeService.deleteField(id);
       toast.success('Field deleted');
@@ -242,59 +244,59 @@ export default function CustomizeFieldManager({ canCreate = true, canEdit = true
             </thead>
             <tbody className="divide-y divide-[#E6DFD4]">
               {fields.map((field, idx) => (
-                  <tr key={field._id} className={`hover:bg-[#FAF4EF]/30 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.includes(field._id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedIds([...selectedIds, field._id]);
-                          } else {
-                            setSelectedIds(selectedIds.filter(id => id !== field._id));
-                          }
-                        }}
-                        className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer mx-auto block"
-                      />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-left text-[16px]">
-                      <p className="font-bold text-[16px] text-gray-800">{field.label}</p>
-                      {field.type === 'dropdown' && (
-                        <div className="text-[14px] text-gray-500 mt-1 truncate max-w-[200px]">
-                          {field.options.join(', ')}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
-                      <div className="flex justify-center">
-                        <TypeBadge type={field.type} />
+                <tr key={field._id} className={`hover:bg-[#FAF4EF]/30 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(field._id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedIds([...selectedIds, field._id]);
+                        } else {
+                          setSelectedIds(selectedIds.filter(id => id !== field._id));
+                        }
+                      }}
+                      className="w-4 h-4 rounded border-[#C4B9B0] accent-[#8B5E3C] cursor-pointer mx-auto block"
+                    />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-left text-[16px]">
+                    <p className="font-bold text-[16px] text-gray-800">{field.label}</p>
+                    {field.type === 'dropdown' && (
+                      <div className="text-[14px] text-gray-500 mt-1 truncate max-w-[200px]">
+                        {field.options.join(', ')}
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
-                      <div className="flex justify-center">
-                        <ActiveBadge status={field.isRequired ? 'Required' : 'Optional'} />
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
-                      <div className="flex justify-center">
-                        {canEdit ? (
-                          <button onClick={() => handleToggleStatus(field._id, field.isActive)} title="Click to toggle">
-                            <ActiveBadge status={field.isActive} />
-                          </button>
-                        ) : (
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
+                    <div className="flex justify-center">
+                      <TypeBadge type={field.type} />
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
+                    <div className="flex justify-center">
+                      <ActiveBadge status={field.isRequired ? 'Required' : 'Optional'} />
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
+                    <div className="flex justify-center">
+                      {canEdit ? (
+                        <button onClick={() => handleToggleStatus(field._id, field.isActive)} title="Click to toggle">
                           <ActiveBadge status={field.isActive} />
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
-                      <div className="flex items-center justify-center gap-3">
+                        </button>
+                      ) : (
+                        <ActiveBadge status={field.isActive} />
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
+                    <div className="flex items-center justify-center gap-3">
                       {canEdit && (
                         <button onClick={() => openEditModal(field)} className="text-blue-600 hover:text-blue-700 transition-colors" title="Edit Field">
                           <Edit size={16} />
                         </button>
                       )}
                       {canDelete && (
-                        <button onClick={() => handleDelete(field._id)} className="text-red-500 hover:text-red-600 transition-colors" title="Delete Field">
+                        <button onClick={() => setDeleteId(field._id)} className="text-red-500 hover:text-red-600 transition-colors" title="Delete Field">
                           <Trash2 size={16} />
                         </button>
                       )}
@@ -405,22 +407,22 @@ export default function CustomizeFieldManager({ canCreate = true, canEdit = true
                 </div>
               </div>
             </form>
-            
+
             <div className="p-6 border-t border-[#E9DED3] bg-[#FDFBF7] flex justify-end gap-3 sticky bottom-0 z-10">
               <button
                 type="button"
                 onClick={() => setShowAddModal(false)}
-                className="px-6 py-2.5 rounded-xl border border-[#D6C9BC] text-[#7A5C44] font-semibold hover:bg-[#F5EDE4] transition-colors"
+                className="admin-cancel-btn"
               >
-                Cancel
+                CANCEL
               </button>
               <button
                 type="submit"
                 form="addFieldForm"
                 disabled={adding}
-                className="px-8 py-2.5 rounded-xl bg-[#8B5E3C] text-white font-bold hover:bg-[#7A5234] transition-colors shadow-md disabled:opacity-70 flex items-center gap-2"
+                className="admin-btn"
               >
-                {adding ? 'Saving...' : 'Save Field'}
+                {adding ? 'Saving...' : 'SAVE FIELD'}
               </button>
             </div>
           </div>
@@ -527,27 +529,40 @@ export default function CustomizeFieldManager({ canCreate = true, canEdit = true
                 </div>
               </div>
             </form>
-            
+
             <div className="p-6 border-t border-[#E9DED3] bg-[#FDFBF7] flex justify-end gap-3 sticky bottom-0 z-10">
               <button
                 type="button"
                 onClick={() => setShowEditModal(false)}
-                className="px-6 py-2.5 rounded-xl border border-[#D6C9BC] text-[#7A5C44] font-semibold hover:bg-[#F5EDE4] transition-colors"
+                className="admin-cancel-btn"
               >
-                Cancel
+                CANCEL
               </button>
               <button
                 type="submit"
                 form="editFieldForm"
                 disabled={adding}
-                className="px-8 py-2.5 rounded-xl bg-[#8B5E3C] text-white font-bold hover:bg-[#7A5234] transition-colors shadow-md disabled:opacity-70 flex items-center gap-2"
+                className="admin-btn"
               >
-                {adding ? 'Saving...' : 'Save Changes'}
+                {adding ? 'Saving...' : 'SAVE CHANGES'}
               </button>
             </div>
           </div>
         </div>
       )}
-    </div>
+    
+      
+      <ConfirmDialog
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={() => {
+            handleDelete(deleteId); setDeleteId(null);
+        }}
+        title="Delete Item"
+        message="This action cannot be undone. Are you sure?"
+      />
+      
+
+</div>
   );
 }

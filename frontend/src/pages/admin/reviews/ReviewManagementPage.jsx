@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import axios from "axios";
+import ConfirmDialog from "../../../components/admin/ConfirmDialog";
 import toast from "react-hot-toast";
 import {
   MessageCircle, Star, Clock, AlertTriangle, Search, RefreshCw,
@@ -542,7 +543,7 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
               <tbody>
                 {loading ? (
                   Array.from({ length: 5 }).map((_, i) => (
-                    <tr key={i} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${typeof idx !== "undefined" ? (idx % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : typeof index !== "undefined" ? (index % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]") : "bg-white"}`}>
+                    <tr key={i} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${i % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]"}`}>
                       {Array.from({ length: 7 }).map((__, j) => (
                         <td key={j} className="px-6 py-4 text-[16px]"><Skeleton className="h-5 w-full" /></td>
                       ))}
@@ -621,24 +622,24 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
                         <div className="flex items-center justify-center gap-2">
                           <button onClick={() => setDetail(r)} title="View"
                             className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors">
-                            <Eye className="w-4 h-4" />
+                            <Eye size={16} />
                           </button>
                           {canEdit && r.status !== "approved" && (
                             <button onClick={() => handleStatusChange(r._id, "approved")} title="Approve"
                               className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors">
-                              <Check className="w-4 h-4" />
+                              <Check size={16} />
                             </button>
                           )}
                           {canEdit && r.status !== "rejected" && (
                             <button onClick={() => handleStatusChange(r._id, "rejected")} title="Reject"
                               className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors">
-                              <X className="w-4 h-4" />
+                              <X size={16} />
                             </button>
                           )}
                           {canDelete && (
                             <button onClick={() => setConfirm({ id: r._id })} title="Delete"
                               className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors">
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 size={16} />
                             </button>
                           )}
                         </div>
@@ -693,25 +694,16 @@ export default function ReviewManagementPage({ canEdit = true, canDelete = true 
       )}
 
       {/* Confirm Delete Dialog */}
-      {confirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full">
-            <div className="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Trash size={16} className="text-red-500" />
-            </div>
-            <h3 className="text-center font-bold text-gray-900 text-lg mb-1">Delete Review?</h3>
-            <p className="text-center text-sm text-gray-500 mb-6">This action cannot be undone.</p>
-            <div className="flex gap-3">
-              <button onClick={() => setConfirm(null)}
-                className="admin-cancel-btn">CANCEL</button>
-              <button onClick={() => handleDelete(confirm.id)}
-                className="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold text-sm transition">
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        isOpen={!!confirm}
+        onClose={() => setConfirm(null)}
+        onConfirm={() => {
+          handleDelete(confirm.id);
+          setConfirm(null);
+        }}
+        title="Delete Item"
+        message="This action cannot be undone. Are you sure?"
+      />
     </div>
   );
 }

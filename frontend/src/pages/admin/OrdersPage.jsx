@@ -13,8 +13,10 @@ import { OrderBadge } from '../../components/admin/CommonComponents';
 import { saveAs } from 'file-saver';
 import { formatOrderId, formatPaymentMethod } from '../../utils/formatters';
 import { getOrderPricing } from '../../utils/orderPricing';
+import ConfirmDialog from '../../components/admin/ConfirmDialog';
 
 export default function OrdersPage({ canView = true, canEdit = true, canDelete = true }) {
+  const [deleteId, setDeleteId] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
@@ -306,7 +308,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
   };
 
   const handleBulkDelete = async () => {
-    if (!window.confirm(`Delete ${selectedIds.length} selected order(s)? This cannot be undone.`)) return;
+    
     try {
       await Promise.all(selectedIds.map(id => orderService.deleteOrder(id)));
       toast.success(`${selectedIds.length} order(s) deleted`);
@@ -650,7 +652,7 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                             )}
                             {canDelete && (
                               <button
-                                onClick={() => handleDeleteOrder(order._id)}
+                                onClick={() => setDeleteId(order._id)}
                                 className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
                                 title="Delete"
                               >
@@ -1152,14 +1154,6 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
                 disabled={saving}
               >CANCEL</button>
               <button
-                onClick={() => handleDownloadInvoice(selectedOrder._id)}
-                className="admin-btn flex items-center gap-2 px-4 py-2 bg-[#F8F4EC] text-[#8B5E3C] border border-[#E6DFD4]"
-                disabled={downloadingInvoice === selectedOrder._id}
-              >
-                <Download className="w-4 h-4" />
-                {downloadingInvoice === selectedOrder._id ? 'Downloading...' : 'Invoice'}
-              </button>
-              <button
                 onClick={handleSaveOrderDetails}
                 className="admin-btn"
                 disabled={saving}
@@ -1349,7 +1343,19 @@ export default function OrdersPage({ canView = true, canEdit = true, canDelete =
           </div>
         </div>
       )}
-    </div>
+    
+      
+      <ConfirmDialog
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={() => {
+            handleDeleteOrder(deleteId); setDeleteId(null);
+        }}
+        title="Delete Item"
+        message="This action cannot be undone. Are you sure?"
+      />
+      
+</div>
   );
 }
 

@@ -915,7 +915,7 @@ const cancelOrder = async (req, res) => {
 
     // Create a Refund entry
     const newRefund = new Refund({
-      orderId: `#${order._id.toString().slice(-8).toUpperCase()}`,
+      orderId: order.orderId || `#${order._id.toString().slice(-8).toUpperCase()}`,
       orderRef: order._id,
       originalStatus: order.status, // this is the status before it's updated to 'Cancelled' below
       cancellationFee: cancellationFee,

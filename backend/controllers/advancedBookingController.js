@@ -152,6 +152,11 @@ exports.approveBooking = async (req, res) => {
             booking.paymentType = 'Fully Paid';
         }
 
+        // Fix for older documents missing required fields
+        if (!booking.address) booking.address = 'Not Provided';
+        if (!booking.phoneNo) booking.phoneNo = 'Not Provided';
+        if (!booking.customerName) booking.customerName = 'Not Provided';
+
         await booking.save();
         res.status(200).json({ success: true, message: 'Booking approved', booking });
     } catch (error) {
@@ -171,6 +176,11 @@ exports.rejectBooking = async (req, res) => {
 
         booking.bookingStatus = 'Rejected';
         booking.reason = reason;
+
+        // Fix for older documents missing required fields
+        if (!booking.address) booking.address = 'Not Provided';
+        if (!booking.phoneNo) booking.phoneNo = 'Not Provided';
+        if (!booking.customerName) booking.customerName = 'Not Provided';
 
         await booking.save();
         res.status(200).json({ success: true, message: 'Booking rejected', booking });

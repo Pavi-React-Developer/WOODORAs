@@ -12,14 +12,17 @@ const getHeaders = () => {
     };
 };
 
-const handleResponse = async (response) => {
+const handleResponse = async (response, options = {}) => {
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         // Validate middleware returns { errors: [...] }, service errors return { message: '...' }
         const msg = errorData.message
             || (Array.isArray(errorData.errors) ? errorData.errors.join(', ') : null)
             || `HTTP error! status: ${response.status}`;
-        console.error('[API Error]', response.status, errorData);
+        
+        if (!options.silent) {
+            console.error('[API Error]', response.status, errorData);
+        }
         throw new Error(msg);
     }
     return response.json();
@@ -57,7 +60,7 @@ const request = async (path, options = {}) => {
         }
     }
 
-    const data = await handleResponse(response);
+    const data = await handleResponse(response, options);
 
     if (method === 'GET') {
         cache.set(cacheKey, { time: Date.now(), data });
@@ -194,8 +197,8 @@ export const productV2API = {
         const query = new URLSearchParams(params).toString();
         return request(`/products?${query}`);
     },
-    getById: async (id) => {
-        return request(`/products/${id}`);
+    getById: async (id, options = {}) => {
+        return request(`/products/${id}`, options);
     },
     create: async (data) => {
         return request('/products', {

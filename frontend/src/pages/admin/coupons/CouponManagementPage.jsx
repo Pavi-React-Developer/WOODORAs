@@ -6,6 +6,7 @@ import { Download, Plus, SquarePen, Trash, Trash2, RefreshCw, X, BadgeX, BadgeCh
 import { downloadExcelFile } from '../../../utils/exportUtils';
 import Pagination from '../../../components/common/Pagination';
 import BulkActions from '../../../components/admin/BulkActions';
+import ConfirmDialog from '../../../components/admin/ConfirmDialog';
 
 const emptyForm = {
   couponCode: '',
@@ -36,6 +37,7 @@ const formatDate = (value) => {
 const getStatusBadge = (status) => {
   if (status === 'active') return 'bg-emerald-100 text-emerald-700';
   if (status === 'inactive') return 'bg-amber-100 text-amber-700';
+  if (status === 'exhausted') return 'bg-red-100 text-red-700';
   return 'bg-slate-200 text-slate-700';
 };
 
@@ -747,7 +749,7 @@ export default function CouponManagementPage({ canCreate = true, canEdit = true,
         onClear={() => setSelectedIds([])}
       />
 
-      <div className="overflow-x-auto rounded-3xl border border-[#E6DFD4] bg-white shadow-sm">
+      <div className="rounded-3xl border border-[#E6DFD4] bg-white shadow-sm overflow-hidden">
         {loading ? (
           <div className="p-8 space-y-3">
             {[1, 2, 3].map((i) => <div key={i} className="h-12 animate-pulse rounded-xl bg-[#F8F4EC]" />)}
@@ -761,56 +763,58 @@ export default function CouponManagementPage({ canCreate = true, canEdit = true,
             <p className="text-sm text-gray-500 mt-1">Create your first coupon to start offering discounts.</p>
           </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
-              <tr>
-                <th className="px-6 py-3.5 w-10 text-center">
-                  <input
-                    type="checkbox"
-                    checked={coupons.length > 0 && selectedIds.length === coupons.length}
-                    onChange={e => toggleSelectAll(e.target.checked)}
-                    className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer mx-auto block"
-                  />
-                </th>
-                <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Coupon Code</th>
-                <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Discount Type</th>
-                <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Offer Type</th>
-                <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Validity</th>
-                <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Status</th>
-                <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Visibility</th>
-                <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-[#E9DED3] text-sm">
-              {sortedCoupons.map((coupon, index) => (
-                <tr key={coupon._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${index % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
-                  <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[900px] text-sm">
+              <thead className="sticky top-0 bg-[#F8F4EC] border-b border-[#E6DFD4]">
+                <tr>
+                  <th className="px-6 py-3.5 w-10 text-center">
                     <input
                       type="checkbox"
-                      checked={selectedIds.includes(coupon._id)}
-                      onChange={e => toggleSelectOne(coupon._id, e.target.checked)}
+                      checked={coupons.length > 0 && selectedIds.length === coupons.length}
+                      onChange={e => toggleSelectAll(e.target.checked)}
                       className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer mx-auto block"
                     />
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center text-[16px] font-bold text-[#2F241D]">{coupon.couponCode}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center text-[16px] font-semibold">{coupon.discountType}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center text-[16px] font-semibold">{coupon.offerType}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">{formatDate(coupon.startDate)} - {formatDate(coupon.endDate)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]"><span className={`rounded-full px-2.5 py-1 text-sm font-semibold ${getStatusBadge(coupon.status)}`}>{coupon.status}</span></td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">{coupon.visible ? <span className="text-sm font-semibold text-emerald-700">Visible</span> : <span className="text-sm font-semibold text-slate-500">Hidden</span>}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
-                    <div className="flex items-center justify-center gap-2">
-                      <button onClick={() => setViewingCoupon(coupon)} className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors" title="View"><Eye className="w-4 h-4" /></button>
-                      {canEdit && <button onClick={() => openEdit(coupon)} className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors" title="Edit"><SquarePen className="w-4 h-4" /></button>}
-                      {canDelete && <button onClick={() => setConfirmDelete(coupon)} className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors" title="Delete"><Trash2 className="w-4 h-4" /></button>}
-                      {canEdit && <button onClick={() => handleToggleStatus(coupon)} className="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50 transition-colors" title="Enable/Disable">{coupon.status === 'active' ? <BadgeX className="w-[15px] h-[15px]" /> : <BadgeCheck className="w-[15px] h-[15px]" />}</button>}
-                      {canEdit && <button onClick={() => handleToggleVisibility(coupon)} className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors" title="Visible/Invisible">{coupon.visible ? <X className="w-4 h-4" /> : <Check className="w-4 h-4" />}</button>}
-                    </div>
-                  </td>
+                  </th>
+                  <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Coupon Code</th>
+                  <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Discount Type</th>
+                  <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Offer Type</th>
+                  <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Validity</th>
+                  <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Status</th>
+                  <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Visibility</th>
+                  <th className="px-6 py-3.5 text-[14px] font-bold uppercase tracking-widest text-[#8B5E3C] whitespace-nowrap text-center">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-[#E9DED3] text-[16px]">
+                {sortedCoupons.map((coupon, index) => (
+                  <tr key={coupon._id} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${index % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(coupon._id)}
+                        onChange={e => toggleSelectOne(coupon._id, e.target.checked)}
+                        className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer mx-auto block"
+                      />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-[16px] font-bold text-[#2F241D]">{coupon.couponCode}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-[16px] font-semibold">{coupon.discountType}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-[16px] font-semibold">{coupon.offerType}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">{formatDate(coupon.startDate)} - {formatDate(coupon.endDate)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]"><span className={`rounded-full px-2.5 py-1 text-[16px] font-semibold ${getStatusBadge(coupon.status)}`}>{coupon.status}</span></td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">{coupon.visible ? <span className="font-semibold text-[16px] text-green-600">Visible</span> : <span className="text-sm font-semibold text[16px] text-pink-600">Hidden</span>}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
+                      <div className="flex items-center justify-center gap-2">
+                        <button onClick={() => setViewingCoupon(coupon)} className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors" title="View"><Eye size={16} /></button>
+                        {canEdit && <button onClick={() => openEdit(coupon)} className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors" title="Edit"><SquarePen size={16} /></button>}
+                        {canDelete && <button onClick={() => setConfirmDelete(coupon)} className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors" title="Delete"><Trash2 size={16} /></button>}
+                        {canEdit && <button onClick={() => handleToggleStatus(coupon)} className="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50 transition-colors" title="Enable/Disable">{coupon.status === 'active' ? <BadgeX size={16} /> : <BadgeCheck size={16} />}</button>}
+                        {canEdit && <button onClick={() => handleToggleVisibility(coupon)} className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors" title="Visible/Invisible">{coupon.visible ? <X size={16} /> : <Check size={16} />}</button>}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
 
         <div className="px-5 py-6 border-t border-[#E6DFD4] flex justify-center bg-white">
@@ -822,24 +826,16 @@ export default function CouponManagementPage({ canCreate = true, canEdit = true,
         </div>
       </div>
 
-      {/* Delete Confirm Modal */}
-      {confirmDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl">
-            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Trash size={16} className="text-red-500" />
-            </div>
-            <h4 className="text-lg font-bold text-[#2F241D] text-center">Delete Coupon?</h4>
-            <p className="mt-2 text-sm text-gray-600 text-center">
-              Are you sure you want to delete <strong>{confirmDelete.couponCode}</strong>? This action will soft delete it.
-            </p>
-            <div className="mt-6 flex justify-center gap-3">
-              <button onClick={() => setConfirmDelete(null)} className="admin-cancel-btn">CANCEL</button>
-              <button onClick={handleDelete} className="px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-sm font-semibold text-white transition-colors">Delete</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        isOpen={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={handleDelete}
+        title="Delete Coupon"
+        message={`Are you sure you want to delete coupon "${confirmDelete?.couponCode}"? This action will soft delete it.`}
+        confirmText="DELETE"
+        cancelText="CANCEL"
+        variant="danger"
+      />
     </div>
   );
 }

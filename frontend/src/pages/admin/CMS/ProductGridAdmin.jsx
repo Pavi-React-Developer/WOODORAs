@@ -3,9 +3,11 @@ import { cmsService } from '../../../api/cmsService';
 import { Pencil, Trash2, Plus, Eye, EyeOff, Search, X, SquarePen, Trash } from 'lucide-react';
 import { categoryV2API, subCategoryV2API, productV2API } from '../../../api/catalogV2Service';
 import { API_ORIGIN } from '../../../api/apiClient';
+import ConfirmDialog from '../../../components/admin/ConfirmDialog';
 
 function ProductPicker({ selected, onChange, productsList }) {
   const [categories, setCategories] = useState([]);
+
   const [subcategories, setSubcategories] = useState([]);
 
   const [selectedCat, setSelectedCat] = useState('');
@@ -101,6 +103,7 @@ function ProductPicker({ selected, onChange, productsList }) {
 const emptyForm = { title: '', products: [], mobileCount: 2, desktopCount: 4, ctaText: '', ctaUrl: '', ctaPosition: 'right', showArrows: true, showDots: false, status: true, sortOrder: 0 };
 
 export default function ProductGridAdmin({ canCreate, canEdit, canDelete }) {
+  const [deleteId, setDeleteId] = useState(null);
   const [items, setItems] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -127,7 +130,7 @@ export default function ProductGridAdmin({ canCreate, canEdit, canDelete }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.products.length) return alert('Select at least one product.');
+    if (!form.products.length) return toast.success('Select at least one product.');
     setSaving(true);
 
     // We only want to send product IDs to the backend
@@ -140,7 +143,7 @@ export default function ProductGridAdmin({ canCreate, canEdit, canDelete }) {
       if (editId) await cmsService.updateProductGrid(editId, payload);
       else await cmsService.createProductGrid(payload);
       (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setShowForm(false)); setForm(emptyForm); setEditId(null); fetchItems();
-    } catch (err) { alert(err.message); }
+    } catch (err) { toast.error(err.message); }
     finally { setSaving(false); }
   };
 
@@ -168,15 +171,22 @@ export default function ProductGridAdmin({ canCreate, canEdit, canDelete }) {
     window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowForm(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Delete this product grid?')) return;
-    try { await cmsService.deleteProductGrid(id); fetchItems(); }
-    catch (err) { alert(err.message); }
+    const handleDelete = (id) => setDeleteId(id);
+  const handleDeleteConfirm = async () => {
+    if (!deleteId) return;
+    const id = deleteId;
+    try {
+      await cmsService.deleteProductGrid(id); fetchItems();
+      toast.success("Deleted successfully!");
+    } catch (err) {
+      toast.error(err.message);
+    }
+    setDeleteId(null);
   };
 
   const handleToggle = async (item) => {
     try { await cmsService.updateProductGrid(item._id, { ...item, products: item.products?.map(p => p._id || p), status: !item.status }); fetchItems(); }
-    catch (err) { alert(err.message); }
+    catch (err) { toast.error(err.message); }
   };
 
   const removeSelectedProduct = (id) => {
@@ -328,7 +338,7 @@ export default function ProductGridAdmin({ canCreate, canEdit, canDelete }) {
                 </div>
               </div>
               <div className="flex items-center gap-3 w-full sm:w-auto justify-end mt-2 sm:mt-0">
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${item.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+                <span className={`text-[16px] px-2 py-0.5 rounded-full font-medium ${item.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
                   {item.status ? 'Active' : 'Off'}
                 </span>
                 {canEdit && (
@@ -350,6 +360,18 @@ export default function ProductGridAdmin({ canCreate, canEdit, canDelete }) {
             </div>
           ))}
       </div>
-    </div>
+    
+      
+      <ConfirmDialog
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={() => {
+            handleDelete(deleteId); setDeleteId(null);
+        }}
+        title="Delete Item"
+        message="This action cannot be undone. Are you sure?"
+      />
+      
+</div>
   );
 }

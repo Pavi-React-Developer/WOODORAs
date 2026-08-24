@@ -194,7 +194,7 @@ export default function CartPage({ onNavigate }) {
 
               <button
                 onClick={handleCheckout}
-                className="flex-1 py-3.5 rounded-xl font-bold text-white bg-[#3E2723] hover:bg-[#2A1A17] shadow-sm transition-colors flex justify-center items-center text-xs"
+                className="flex-1 py-3.5 rounded-xl font-bold text-white bg-[#8B5E3C] hover:bg-[#7a5234] shadow-md shadow-[#8B5E3C]/20 transition-colors flex justify-center items-center text-xs"
               >
                 Checkout →
               </button>

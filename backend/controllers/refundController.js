@@ -54,7 +54,7 @@ const getRefunds = async (req, res) => {
     const refunds = await Refund.find()
       .populate({
         path: 'orderRef',
-        select: 'createdAt status orderItems fees shippingPrice totalPrice user',
+        select: 'createdAt status orderItems fees shippingPrice totalPrice user orderId',
         populate: [
           { path: 'user', select: 'name email' },
           { path: 'orderItems.product', select: 'name image price' }

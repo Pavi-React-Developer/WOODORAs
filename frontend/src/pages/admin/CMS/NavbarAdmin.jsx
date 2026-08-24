@@ -3,6 +3,7 @@ import { cmsService } from '../../../api/cmsService';
 import { productV2API, categoryV2API } from '../../../api/catalogV2Service';
 import { Pencil, Trash2, Plus, GripVertical, Eye, EyeOff, Loader2, Upload, X, ChevronDown, SquarePen, Trash } from 'lucide-react';
 import { Reorder } from 'framer-motion';
+import ConfirmDialog from '../../../components/admin/ConfirmDialog';
 
 function LogoUploader({ value, onChange }) {
   const [uploading, setUploading] = useState(false);
@@ -15,7 +16,7 @@ function LogoUploader({ value, onChange }) {
     try {
       const res = await cmsService.uploadImages([file]);
       onChange(res.data[0]); // pass object
-    } catch (err) { alert(err.message); }
+    } catch (err) { toast.error(err.message); }
     finally { setUploading(false); }
   };
 
@@ -55,6 +56,7 @@ function LogoUploader({ value, onChange }) {
 const emptyItem = { title: '', url: '', icon: '', textColor: '', backgroundColor: '', isDropdown: false, order: 0, status: true, position: 'left' };
 
 export default function NavbarAdmin({ canCreate, canEdit, canDelete }) {
+  const [deleteId, setDeleteId] = useState(null);
   const [config, setConfig] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -103,10 +105,10 @@ export default function NavbarAdmin({ canCreate, canEdit, canDelete }) {
     setSaving(true);
     try {
       await cmsService.updateNavbar(config);
-      alert('Navbar settings saved successfully!');
+      toast.success('Navbar settings saved successfully!');
       fetchConfig();
     } catch (err) {
-      alert(err.message);
+      toast.error(err.message);
     } finally {
       setSaving(false);
     }
@@ -133,7 +135,7 @@ export default function NavbarAdmin({ canCreate, canEdit, canDelete }) {
   };
 
   const handleDeleteItem = (index) => {
-    if (!confirm('Delete this menu item?')) return;
+
     const newItems = [...(config.items || [])];
     newItems.splice(index, 1);
     setConfig(prev => ({ ...prev, items: newItems }));
@@ -423,7 +425,7 @@ export default function NavbarAdmin({ canCreate, canEdit, canDelete }) {
                     </div>
                   </td>
                   <td className="text-[16px] whitespace-nowrap px-6 py-3.5 text-center">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${item.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[16px] font-bold ${item.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
                       {item.status ? 'Active' : 'Inactive'}
                     </span>
                   </td>
@@ -467,6 +469,16 @@ export default function NavbarAdmin({ canCreate, canEdit, canDelete }) {
           </button>
         </div>
       )}
+
+      
+      <ConfirmDialog
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={() => { handleDeleteItem(deleteId); setDeleteId(null); }}
+        title="Delete Item"
+        message="This action cannot be undone. Are you sure?"
+      />
+      
     </div>
   );
 }

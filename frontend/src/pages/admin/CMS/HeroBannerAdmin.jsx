@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { cmsService } from '../../../api/cmsService';
 import { Pencil, Trash2, Plus, Eye, EyeOff, Upload, X, SquarePen, Trash } from 'lucide-react';
+import ConfirmDialog from '../../../components/admin/ConfirmDialog';
 
 const emptyForm = {
   title: '', subtitle: '', description: '', buttonText: 'Shop Now',
@@ -20,7 +21,7 @@ function MediaUploader({ label, value, onChange, accept = "image/*,video/mp4,vid
     try {
       const res = await cmsService.uploadImages([file]);
       onChange(res.data[0]); // Pass the entire Cloudinary object
-    } catch (err) { alert(err.message); }
+    } catch (err) { toast.error(err.message); }
     finally { setUploading(false); }
   };
 
@@ -67,6 +68,7 @@ function MediaUploader({ label, value, onChange, accept = "image/*,video/mp4,vid
 }
 
 export default function HeroBannerAdmin({ canCreate, canEdit, canDelete }) {
+  const [deleteId, setDeleteId] = useState(null);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -90,7 +92,7 @@ export default function HeroBannerAdmin({ canCreate, canEdit, canDelete }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.items || form.items.length === 0 || !form.items.some(i => i.desktopUrl || i.mobileUrl)) {
-      return alert('Please upload at least one image or video for the media items.');
+      return toast.success('Please upload at least one image or video for the media items.');
     }
     setSaving(true);
     try {
@@ -98,7 +100,7 @@ export default function HeroBannerAdmin({ canCreate, canEdit, canDelete }) {
       else await cmsService.createHeroBanner(form);
       (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setShowForm(false)); setForm(emptyForm); setEditId(null);
       fetchItems();
-    } catch (err) { alert(err.message); }
+    } catch (err) { toast.error(err.message); }
     finally { setSaving(false); }
   };
 
@@ -115,15 +117,22 @@ export default function HeroBannerAdmin({ canCreate, canEdit, canDelete }) {
     setEditId(item._id); window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowForm(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Delete this banner?')) return;
-    try { await cmsService.deleteHeroBanner(id); fetchItems(); }
-    catch (err) { alert(err.message); }
+    const handleDelete = (id) => setDeleteId(id);
+  const handleDeleteConfirm = async () => {
+    if (!deleteId) return;
+    const id = deleteId;
+    try {
+      await cmsService.deleteHeroBanner(id); fetchItems();
+      toast.success("Deleted successfully!");
+    } catch (err) {
+      toast.error(err.message);
+    }
+    setDeleteId(null);
   };
 
   const handleToggle = async (item) => {
     try { await cmsService.updateHeroBanner(item._id, { ...item, status: !item.status }); fetchItems(); }
-    catch (err) { alert(err.message); }
+    catch (err) { toast.error(err.message); }
   };
 
   const sf = (key) => (val) => setForm((f) => ({ ...f, [key]: val }));
@@ -273,15 +282,15 @@ export default function HeroBannerAdmin({ canCreate, canEdit, canDelete }) {
                     {item.subtitle && <p className="text-xs text-brand-medium mt-0.5">{item.subtitle}</p>}
                   </div>
                   <div className="flex gap-1 flex-col items-end">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${item.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+                    <span className={`text-[]16px] px-2 py-0.5 rounded-full font-medium ${item.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
                       {item.status ? 'Active' : 'Off'}
                     </span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isScheduled ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                    <span className={`text-[16px] px-2 py-0.5 rounded-full font-medium ${isScheduled ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'}`}>
                       {isScheduled ? 'Live' : 'Not Scheduled'}
                     </span>
                   </div>
                 </div>
-                <p className="text-xs text-brand-medium mb-3">
+                <p className="text-[16px] text-brand-medium mb-3">
                   {new Date(item.startDate).toLocaleDateString()} → {new Date(item.endDate).toLocaleDateString()}
                 </p>
                 <div className="flex gap-2">
@@ -311,6 +320,18 @@ export default function HeroBannerAdmin({ canCreate, canEdit, canDelete }) {
           );
         })}
       </div>
-    </div>
+    
+      
+      <ConfirmDialog
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={() => {
+            handleDelete(deleteId); setDeleteId(null);
+        }}
+        title="Delete Item"
+        message="This action cannot be undone. Are you sure?"
+      />
+      
+</div>
   );
 }

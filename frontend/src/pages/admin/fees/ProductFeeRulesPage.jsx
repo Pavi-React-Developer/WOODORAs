@@ -2,10 +2,12 @@ import { ActiveBadge, RequestBadge, OrderBadge } from '../../../components/admin
 import React, { useState, useEffect } from 'react';
 import { adminService } from '../../../api/adminService';
 import { toast } from 'react-hot-toast';
-import { SquarePen, ToggleLeft, ToggleRight, Trash2, X } from 'lucide-react';
+import { SquarePen, ToggleLeft, ToggleRight, Trash2, X, Eye, EyeOff } from 'lucide-react';
 import useCartStore from '../../../store/useCartStore';
+import ConfirmDialog from '../../../components/admin/ConfirmDialog';
 
-export default function ProductFeeRulesPage() {
+export default function ProductFeeRulesPage({ canCreate, canEdit, canDelete }) {
+  const [deleteId, setDeleteId] = useState(null);
   const [rules, setRules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingRuleId, setEditingRuleId] = useState(null);
@@ -20,7 +22,7 @@ export default function ProductFeeRulesPage() {
   };
 
   const handleBulkStatusChange = async (activeStatus) => {
-    if (!window.confirm(`Are you sure you want to set ${selectedIds.length} rules to ${activeStatus ? 'Active' : 'Inactive'}?`)) return;
+    
     try {
       await Promise.all(selectedIds.map(id => adminService.updateProductFeeRule(id, { isActive: activeStatus })));
       toast.success(`Updated status for ${selectedIds.length} rules!`);
@@ -32,7 +34,7 @@ export default function ProductFeeRulesPage() {
   };
 
   const handleBulkDelete = async () => {
-    if (!window.confirm(`Are you sure you want to delete ${selectedIds.length} rules?`)) return;
+    
     try {
       await Promise.all(selectedIds.map(id => adminService.deleteProductFeeRule(id)));
       toast.success(`Deleted ${selectedIds.length} rules!`);
@@ -107,7 +109,7 @@ export default function ProductFeeRulesPage() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this rule?')) return;
+    
     try {
       await adminService.deleteProductFeeRule(id);
       toast.success('Rule deleted');
@@ -217,6 +219,7 @@ export default function ProductFeeRulesPage() {
         </div>
       </div>
 
+        {canCreate && (
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#E6DFD4] mb-8">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-[18px] font-serif font-bold text-[#3E2723]">
@@ -299,15 +302,22 @@ export default function ProductFeeRulesPage() {
             </div>
           </form>
         </div>
+        )}
 
         {/* Bulk Actions Toolbar */}
         {selectedIds.length > 0 && (
           <div className="bg-[#FDF9F5] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3 flex-wrap">
             <span className="text-sm font-semibold text-[#8B5E3C]">{selectedIds.length} selected</span>
             <div className="flex gap-2 ml-auto flex-wrap">
-              <button onClick={() => handleBulkStatusChange(true)} className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">Set Active</button>
-              <button onClick={() => handleBulkStatusChange(false)} className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">Set Inactive</button>
-              <button onClick={handleBulkDelete} className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">Delete Selected</button>
+              {canEdit && (
+                <>
+                  <button onClick={() => handleBulkStatusChange(true)} className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">Set Active</button>
+                  <button onClick={() => handleBulkStatusChange(false)} className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">Set Inactive</button>
+                </>
+              )}
+              {canDelete && (
+                <button onClick={handleBulkDelete} className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">Delete Selected</button>
+              )}
               <button onClick={() => setSelectedIds([])} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] bg-white rounded-lg hover:bg-gray-50 transition-colors text-gray-500">Clear</button>
             </div>
           </div>
@@ -353,25 +363,32 @@ export default function ProductFeeRulesPage() {
                   </td>
                   <td className="text-[16px] py-6 px-4 text-center whitespace-nowrap">
                     <div className="flex items-center justify-center gap-2">
-                      <button 
-                        onClick={() => handleEdit(rule)} 
-                        className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors" 
-                        title="Edit Rule"
-                      >
-                        <SquarePen size={16} />
-                      </button>
-                      <button 
-                        onClick={() => handleToggleStatus(rule)} 
-                        title={rule.isActive ? "Deactivate" : "Activate"}>
-                            <ActiveBadge status={rule.isActive} size={16}/>
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(rule._id)} 
-                        className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" 
-                        title="Delete Rule"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      {canEdit && (
+                        <>
+                          <button 
+                            onClick={() => handleEdit(rule)} 
+                            className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors" 
+                            title="Edit Rule"
+                          >
+                            <SquarePen size={16} />
+                          </button>
+                          <button 
+                            onClick={() => handleToggleStatus(rule)} 
+                            className="p-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors"
+                            title={rule.isActive ? "Deactivate" : "Activate"}>
+                                {rule.isActive ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </button>
+                        </>
+                      )}
+                      {canDelete && (
+                        <button 
+                          onClick={() => setDeleteId(rule._id)} 
+                          className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" 
+                          title="Delete Rule"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -384,6 +401,21 @@ export default function ProductFeeRulesPage() {
             </tbody>
           </table>
         </div>
-      </div>
+      
+      
+
+      
+      <ConfirmDialog
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={() => {
+            handleDelete(deleteId); setDeleteId(null);
+        }}
+        title="Delete Item"
+        message="This action cannot be undone. Are you sure?"
+      />
+      
+
+</div>
   );
 }

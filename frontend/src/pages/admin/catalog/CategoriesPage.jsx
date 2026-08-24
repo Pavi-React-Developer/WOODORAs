@@ -5,6 +5,7 @@ import { Plus, Download, RefreshCw, X, Image as ImageIcon, Trash2, SquarePen } f
 import Pagination from '../../../components/common/Pagination';
 import { downloadExcelFile } from '../../../utils/exportUtils';
 import { API_BASE } from '../../../api/apiClient';
+import ConfirmDialog from '../../../components/admin/ConfirmDialog';
 
 // ─── Reusable Badge ───────────────────────────────────────────────────────────
 const StatusBadge = ({ active }) => (
@@ -617,22 +618,16 @@ export const CategoriesPage = ({ canCreate = true, canEdit = true, canDelete = t
         </div>
       )}
 
-      {/* ── DELETE CONFIRM MODAL ──────────────────────────────────────────── */}
-      {deleteTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full">
-            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-            </div>
-            <h3 className="text-lg font-bold text-gray-800 text-center mb-2">Delete Category</h3>
-            <p className="text-sm text-gray-500 text-center mb-6">This will soft-delete the category. Are you sure?</p>
-            <div className="flex gap-3">
-              <button onClick={() => setDeleteTarget(null)} className="admin-cancel-btn">CANCEL</button>
-              <button onClick={handleDelete} className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-semibold transition-colors">Delete</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        title="Delete Category"
+        message="This will soft-delete the category. Are you sure?"
+        confirmText="DELETE"
+        cancelText="CANCEL"
+        variant="danger"
+      />
 
       {/* Slide animation style */}
       <style>{`@keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }`}</style>

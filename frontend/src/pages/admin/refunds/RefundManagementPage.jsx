@@ -175,7 +175,8 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
       matchStatus = r.status === statusFilter;
     }
     const searchLower = searchQuery.toLowerCase();
-    const matchSearch = r.orderId?.toLowerCase().includes(searchLower) || r.customerName?.toLowerCase().includes(searchLower);
+    const actualOrderId = r.orderRef?.orderId || r.orderId || '';
+    const matchSearch = actualOrderId.toLowerCase().includes(searchLower) || r.customerName?.toLowerCase().includes(searchLower);
 
     let matchDate = true;
     if (dateFilter !== 'all') {
@@ -275,7 +276,7 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
               Refresh
             </button>
             <div className="relative">
-              <button 
+              <button
                 onClick={() => setIsDateDropdownOpen(!isDateDropdownOpen)}
                 className="bg-white border border-[#E9DED3] text-[#4A403B] text-sm rounded-full h-[40px] px-4 py-2 focus:outline-none shadow-sm cursor-pointer flex items-center justify-between min-w-[140px] hover:border-[#C8B9A5] transition-colors"
               >
@@ -521,7 +522,7 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
                   </tr>
                 ) : currentRefunds.map((refund, idx) => (
                   <tr key={idx} className={`border-b border-[#F0EAE2] transition-colors hover:bg-[#FDF9F5] ${idx % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]"}`}>
-                    <td className="text-[16px] px-4 py-6 text-center">
+                    <td className="text-[16px] px-4 py-4 text-center">
                       <input
                         type="checkbox"
                         checked={selectedIds.includes(refund._id)}
@@ -529,28 +530,30 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
                         className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
                       />
                     </td>
-                    <td className="px-4 py-6 text-center text-[16px] font-bold text-[#141225]">{refund.orderId}</td>
-                    <td className="px-4 py-6 text-center text-[16px] font-bold text-[#141225]">{refund.customerName}</td>
-                    <td className="px-4 py-6 text-center text-[16px] font-semibold text-[#141225]">₹{refund.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                    <td className="text-[16px] px-4 py-6 text-center">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tracking-wide ${refund.paymentType === 'Cashfree' ? 'text-blue-500 bg-blue-50' : 'text-purple-500 bg-purple-50'}`}>
+                    <td className="px-4 py-4 text-center text-[16px] font-bold text-[#141225]">{refund.orderRef?.orderId || refund.orderId}</td>
+                    <td className="px-4 py-4 text-center text-[16px] font-bold text-[#141225]">{refund.customerName}</td>
+                    <td className="px-4 py-4 text-center text-[16px] font-semibold text-[#141225]">₹{refund.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="text-[16px] px-4 py-4 text-center">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-[14px] font-bold tracking-wide ${refund.paymentType === 'Cashfree' ? 'text-blue-500 bg-blue-50' : 'text-purple-500 bg-purple-50'}`}>
                         {refund.paymentType}
                       </span>
                     </td>
-                    <td className="text-[16px] px-4 py-6 text-center">
-                      <span className="text-sm font-bold text-[#8B5E3C]">
+                    <td className="text-[16px] px-4 py-4 text-center">
+                      <span className="text-[16px] font-bold text-[#8B5E3C]">
                         {refund.slaTimeline}
                       </span>
                     </td>
-                    <td className="text-[16px] px-4 py-6 text-center">
-                      <RequestBadge status={refund.status} />
+                    <td className="text-[14px] px-4 py-4 text-center">
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[14px] font-bold whitespace-nowrap ${getStatusStyle(refund.status)}`}>
+                        {refund.status}
+                      </span>
                     </td>
-                    <td className="text-[16px] px-4 py-6 text-center">
+                    <td className="text-[16px] px-4 py-4 text-center">
                       {/* Step 2: Approve button (only for Approval Pending) */}
                       {(refund.status === 'Approval Pending' || refund.status === 'Pending') && canEdit && (
                         <button
                           onClick={() => setApproveRefund(refund)}
-                          className="inline-block px-4 py-1.5 rounded-lg text-[10px] font-bold shadow-sm bg-[#8B5E3C] text-white cursor-pointer hover:opacity-80 transition-opacity"
+                          className="inline-block px-4 py-1.5 rounded-lg text-[16px] font-bold shadow-sm bg-[#8B5E3C] text-white cursor-pointer hover:opacity-80 transition-opacity"
                         >
                           Approve
                         </button>
@@ -559,19 +562,19 @@ export default function RefundManagementPage({ canEdit = true, canDelete = true 
                       {refund.status === 'Refund Approved' && canEdit && (
                         <button
                           onClick={() => { setProcessRefund(refund); setRefundMethod(walletEnabled ? 'Wallet' : 'UPI'); }}
-                          className="inline-block px-4 py-1.5 rounded-lg text-[10px] font-bold shadow-sm bg-[#155DFC] text-white cursor-pointer hover:opacity-80 transition-opacity"
+                          className="inline-block px-4 py-1.5 rounded-lg text-[16px] font-bold shadow-sm bg-[#155DFC] text-white cursor-pointer hover:opacity-80 transition-opacity"
                         >
                           Refund
                         </button>
                       )}
                       {/* Final state: Refunded */}
                       {(refund.status === 'Refunded' || refund.status === 'Completed' || refund.status === 'Approved Refund') && (
-                        <span className="inline-block px-4 py-1.5 rounded-lg text-[10px] font-bold bg-emerald-500 text-white opacity-90">
+                        <span className="inline-block px-4 py-1.5 rounded-lg text-[16px] font-bold bg-emerald-500 text-white opacity-90">
                           Refunded
                         </span>
                       )}
                     </td>
-                    <td className="text-[16px] px-4 py-6 text-center whitespace-nowrap">
+                    <td className="text-[16px] px-4 py-4 text-center whitespace-nowrap">
                       <div className="flex items-center justify-center gap-2">
                         <button onClick={() => openViewModal(refund)} className="p-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors">
                           <Eye size={16} />

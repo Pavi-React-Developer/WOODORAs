@@ -3,6 +3,7 @@ import axios from 'axios';
 import { cmsService } from '../../../api/cmsService';
 import {  Plus, Trash, SquarePen, Eye, EyeOff, X, Upload , Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import ConfirmDialog from '../../../components/admin/ConfirmDialog';
 
 function MultiImageUploader({ label, images, onChange }) {
   const [uploading, setUploading] = useState(false);
@@ -15,7 +16,7 @@ function MultiImageUploader({ label, images, onChange }) {
     try {
       const res = await cmsService.uploadImages(files);
       onChange([...images, ...res.data]);
-    } catch (err) { alert(err.message); }
+    } catch (err) { toast.error(err.message); }
     finally { setUploading(false); }
   };
 
@@ -56,6 +57,7 @@ function MultiImageUploader({ label, images, onChange }) {
 const FieldLabel = ({ children }) => <label className="block text-xs font-semibold text-brand-dark mb-1">{children}</label>;
 
 export default function GiftCardBannerAdmin({ canCreate, canEdit, canDelete }) {
+  const [deleteId, setDeleteId] = useState(null);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -104,12 +106,18 @@ export default function GiftCardBannerAdmin({ canCreate, canEdit, canDelete }) {
     finally { setSaving(false); }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this banner?')) return;
+    const handleDelete = (id) => setDeleteId(id);
+  const handleDeleteConfirm = async () => {
+    if (!deleteId) return;
+    const id = deleteId;
     try {
       await cmsService.deleteGiftCardBanner(id);
       toast.success('Banner deleted'); fetchBanners();
-    } catch (err) { toast.error('Failed to delete'); }
+      toast.success("Deleted successfully!");
+    } catch (err) {
+      toast.error(err.message);
+    }
+    setDeleteId(null);
   };
 
   const handleToggle = async (item) => {
@@ -276,7 +284,7 @@ export default function GiftCardBannerAdmin({ canCreate, canEdit, canDelete }) {
               <p className="text-xs text-brand-medium mt-0.5">L: "{item.leftButtonText || 'Explore Here'}" - R: "{item.rightButtonText || 'Explore Here'}"</p>
             </div>
             <div className="flex items-center gap-2">
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${item.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+              <span className={`text-[16px] px-2 py-0.5 rounded-full font-medium ${item.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
                 {item.status ? 'Active' : 'Off'}
               </span>
               {canEdit && (
@@ -298,6 +306,18 @@ export default function GiftCardBannerAdmin({ canCreate, canEdit, canDelete }) {
           </div>
         ))}
       </div>
-    </div>
+    
+      
+      <ConfirmDialog
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={() => {
+            handleDelete(deleteId); setDeleteId(null);
+        }}
+        title="Delete Item"
+        message="This action cannot be undone. Are you sure?"
+      />
+      
+</div>
   );
 }

@@ -63,8 +63,7 @@ exports.getAllBulkOrders = async (req, res) => {
         .populate('subCategory', 'name image')
         .populate({
           path: 'product',
-          select: 'name images image sku price basePrice compareAtPrice',
-          populate: { path: 'images' },
+          select: 'name images image sku price basePrice compareAtPrice'
         })
         .sort({ createdAt: -1 })
         .skip((numPage - 1) * numLimit)
@@ -99,8 +98,7 @@ exports.getMyBulkOrders = async (req, res) => {
       .populate('subCategory', 'name image')
       .populate({
         path: 'product',
-        select: 'name images image price basePrice compareAtPrice',
-        populate: { path: 'images' },
+        select: 'name images image price basePrice compareAtPrice'
       })
       .sort({ createdAt: -1 })
       .lean();

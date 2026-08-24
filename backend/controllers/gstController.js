@@ -72,14 +72,11 @@ exports.deleteRule = async (req, res) => {
     try {
         const ruleId = req.params.id;
         
-        // Optionally check if rule is used in products
-        const productsUsingRule = await Product.countDocuments({ gstRule: ruleId });
-        if (productsUsingRule > 0) {
-            return res.status(400).json({ 
-                success: false, 
-                message: `Cannot delete rule because it is used by ${productsUsingRule} product(s).`
-            });
-        }
+        // Remove this gstRule reference from any products that are using it
+        await Product.updateMany(
+            { gstRule: ruleId },
+            { $unset: { gstRule: "" } }
+        );
 
         const rule = await GSTRule.findByIdAndDelete(ruleId);
         if (!rule) {

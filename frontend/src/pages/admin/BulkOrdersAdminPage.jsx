@@ -314,7 +314,7 @@ export default function BulkOrdersAdminPage({ canEdit = true }) {
                     <td className="text-[16px] p-4 border-b border-[#E6DFD4] text-left">
                       <RequestBadge status={order.status || 'Pending'} size={16} />
                       {order.status === 'Rejected' && order.rejectionReason && (
-                        <p className="text-[10px] text-red-600 mt-1 max-w-[150px] truncate" title={order.rejectionReason}>
+                        <p className="text-[16px] text-red-600 mt-1 max-w-[150px] truncate" title={order.rejectionReason}>
                           {order.rejectionReason}
                         </p>
                       )}

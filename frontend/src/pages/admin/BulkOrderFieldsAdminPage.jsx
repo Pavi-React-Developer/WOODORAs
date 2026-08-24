@@ -3,8 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, CheckCircle, XCircle, SquarePen, Trash, Check, X } from 'lucide-react';
 import { bulkOrderService } from '../../api/bulkOrderService';
 import { toast } from 'react-hot-toast';
+import ConfirmDialog from '../../components/admin/ConfirmDialog';
 
 export default function BulkOrderFieldsAdminPage({ canCreate = true, canEdit = true, canDelete = true }) {
+  const [deleteId, setDeleteId] = useState(null);
   const [fields, setFields] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -137,7 +139,7 @@ export default function BulkOrderFieldsAdminPage({ canCreate = true, canEdit = t
   };
 
   const handleBulkDelete = async () => {
-    if (!window.confirm(`Delete ${selectedIds.length} selected field(s)? This cannot be undone.`)) return;
+    
     try {
       await Promise.all(selectedIds.map(id => bulkOrderService.deleteField(id)));
       toast.success(`${selectedIds.length} field(s) deleted`);
@@ -280,7 +282,7 @@ export default function BulkOrderFieldsAdminPage({ canCreate = true, canEdit = t
                         <TypeBadge type={field.type} size={16} />
                       </div>
                       {field.type === 'dropdown' && field.options && (
-                        <div className="text-[10px] text-gray-500 mt-1 truncate max-w-[200px] text-center">
+                        <div className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
                           {field.options.join(', ')}
                         </div>
                       )}
@@ -308,7 +310,7 @@ export default function BulkOrderFieldsAdminPage({ canCreate = true, canEdit = t
                         )}
                         {canDelete && (
                           <button
-                            onClick={() => handleDelete(field._id)}
+                            onClick={() => setDeleteId(field._id)}
                             className="text-red-500 hover:text-red-600 transition-colors flex items-center justify-center"
                             title="Delete"
                           >
@@ -496,6 +498,18 @@ export default function BulkOrderFieldsAdminPage({ canCreate = true, canEdit = t
           </div>
         </div>
       )}
-    </div>
+    
+      
+      <ConfirmDialog
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={() => {
+            handleDelete(deleteId); setDeleteId(null);
+        }}
+        title="Delete Item"
+        message="This action cannot be undone. Are you sure?"
+      />
+      
+</div>
   );
 }

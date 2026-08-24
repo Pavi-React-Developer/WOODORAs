@@ -4,6 +4,7 @@ import { cmsService } from '../../../api/cmsService';
 import { categoryV2API, productV2API } from '../../../api/catalogV2Service';
 import { catalogService } from '../../../api/catalogService';
 import { ImageUploader } from '../../../components/admin/ImageUploader';
+import ConfirmDialog from '../../../components/admin/ConfirmDialog';
 
 const emptyForm = {
   title: '',
@@ -90,7 +91,9 @@ function ProductPicker({ selected, onChange, productsList, selectedCategory }) {
 }
 
 export default function CategoryGridAdmin({ canCreate, canEdit, canDelete }) {
+  const [deleteId, setDeleteId] = useState(null);
   const [items, setItems] = useState([]);
+
   const [categories, setCategories] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -141,8 +144,8 @@ export default function CategoryGridAdmin({ canCreate, canEdit, canDelete }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.category) return alert('Choose a category.');
-    if (!form.products.length) return alert('Select at least one product.');
+    if (!form.category) return toast.success('Choose a category.');
+    if (!form.products.length) return toast.success('Select at least one product.');
 
     setSaving(true);
     try {
@@ -167,7 +170,7 @@ export default function CategoryGridAdmin({ canCreate, canEdit, canDelete }) {
       const refreshed = await cmsService.getCategoryGrids();
       setItems(refreshed.data || []);
     } catch (err) {
-      alert(err.message);
+      toast.error(err.message);
     } finally {
       setSaving(false);
     }
@@ -194,15 +197,19 @@ export default function CategoryGridAdmin({ canCreate, canEdit, canDelete }) {
     window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowForm(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Delete this category grid?')) return;
+    const handleDelete = (id) => setDeleteId(id);
+  const handleDeleteConfirm = async () => {
+    if (!deleteId) return;
+    const id = deleteId;
     try {
       await cmsService.deleteCategoryGrid(id);
       const refreshed = await cmsService.getCategoryGrids();
       setItems(refreshed.data || []);
+      toast.success("Deleted successfully!");
     } catch (err) {
-      alert(err.message);
+      toast.error(err.message);
     }
+    setDeleteId(null);
   };
 
   const handleToggle = async (item) => {
@@ -211,7 +218,7 @@ export default function CategoryGridAdmin({ canCreate, canEdit, canDelete }) {
       const refreshed = await cmsService.getCategoryGrids();
       setItems(refreshed.data || []);
     } catch (err) {
-      alert(err.message);
+      toast.error(err.message);
     }
   };
 
@@ -333,7 +340,7 @@ export default function CategoryGridAdmin({ canCreate, canEdit, canDelete }) {
               </div>
             </div>
             <div className="flex items-center gap-3 w-full sm:w-auto justify-end mt-2 sm:mt-0">
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${item.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>{item.status ? 'Active' : 'Off'}</span>
+              <span className={`text-[16px] px-2 py-0.5 rounded-full font-medium ${item.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>{item.status ? 'Active' : 'Off'}</span>
               {canEdit && (
                 <>
                   <button onClick={() => handleToggle(item)} className="text-green-600 hover:text-green-700 transition-colors">
@@ -353,6 +360,18 @@ export default function CategoryGridAdmin({ canCreate, canEdit, canDelete }) {
           </div>
         ))}
       </div>
-    </div>
+    
+      
+      <ConfirmDialog
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={() => {
+            handleDelete(deleteId); setDeleteId(null);
+        }}
+        title="Delete Item"
+        message="This action cannot be undone. Are you sure?"
+      />
+      
+</div>
   );
 }

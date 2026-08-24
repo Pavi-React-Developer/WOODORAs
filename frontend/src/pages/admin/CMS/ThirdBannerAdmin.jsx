@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { cmsService } from '../../../api/cmsService';
 import { Pencil, Trash2, Plus, Eye, EyeOff, Upload, X, SquarePen, Trash } from 'lucide-react';
+import ConfirmDialog from '../../../components/admin/ConfirmDialog';
 
 function MultiImageUploader({ label, images, onChange }) {
   const [uploading, setUploading] = useState(false);
@@ -13,7 +14,7 @@ function MultiImageUploader({ label, images, onChange }) {
     try {
       const res = await cmsService.uploadImages(files);
       onChange([...images, ...res.data]); // res.data contains Cloudinary objects
-    } catch (err) { alert(err.message); }
+    } catch (err) { toast.error(err.message); }
     finally { setUploading(false); }
   };
 
@@ -64,7 +65,9 @@ function FieldLabel({ children }) {
 }
 
 export default function ThirdBannerAdmin({ canCreate, canEdit, canDelete }) {
+  const [deleteId, setDeleteId] = useState(null);
   const [items, setItems] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
@@ -86,14 +89,14 @@ export default function ThirdBannerAdmin({ canCreate, canEdit, canDelete }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.leftImages.length || !form.rightImages.length) return alert('Please add at least one image for each column.');
+    if (!form.leftImages.length || !form.rightImages.length) return toast.success('Please add at least one image for each column.');
     setSaving(true);
     try {
       if (editId) await cmsService.updateThirdBanner(editId, form);
       else await cmsService.createThirdBanner(form);
       (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setShowForm(false)); setForm(emptyForm); setEditId(null);
       fetchItems();
-    } catch (err) { alert(err.message); }
+    } catch (err) { toast.error(err.message); }
     finally { setSaving(false); }
   };
 
@@ -108,15 +111,22 @@ export default function ThirdBannerAdmin({ canCreate, canEdit, canDelete }) {
     setEditId(item._id); window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowForm(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Delete this banner section?')) return;
-    try { await cmsService.deleteThirdBanner(id); fetchItems(); }
-    catch (err) { alert(err.message); }
+    const handleDelete = (id) => setDeleteId(id);
+  const handleDeleteConfirm = async () => {
+    if (!deleteId) return;
+    const id = deleteId;
+    try {
+      await cmsService.deleteThirdBanner(id); fetchItems();
+      toast.success("Deleted successfully!");
+    } catch (err) {
+      toast.error(err.message);
+    }
+    setDeleteId(null);
   };
 
   const handleToggle = async (item) => {
     try { await cmsService.updateThirdBanner(item._id, { ...item, status: !item.status }); fetchItems(); }
-    catch (err) { alert(err.message); }
+    catch (err) { toast.error(err.message); }
   };
 
   return (
@@ -251,11 +261,11 @@ export default function ThirdBannerAdmin({ canCreate, canEdit, canDelete }) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-medium text-brand-dark text-sm truncate">{item.title || 'Dual Banner'}</p>
-              <p className="text-xs text-brand-medium mt-0.5">{item.leftImages?.length} left / {item.rightImages?.length} right images</p>
-              <p className="text-xs text-brand-medium mt-0.5">L: "{item.leftButtonText || 'Explore Here'}" · R: "{item.rightButtonText || 'Explore Here'}"</p>
+              <p className="text-[16px] text-brand-medium mt-0.5">{item.leftImages?.length} left / {item.rightImages?.length} right images</p>
+              <p className="text-[16px] text-brand-medium mt-0.5">L: "{item.leftButtonText || 'Explore Here'}" · R: "{item.rightButtonText || 'Explore Here'}"</p>
             </div>
             <div className="flex items-center gap-2">
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${item.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+              <span className={`text-[16px] px-2 py-0.5 rounded-full font-medium ${item.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
                 {item.status ? 'Active' : 'Off'}
               </span>
               {canEdit && (
@@ -277,6 +287,18 @@ export default function ThirdBannerAdmin({ canCreate, canEdit, canDelete }) {
           </div>
         ))}
       </div>
-    </div>
+    
+      
+      <ConfirmDialog
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={() => {
+            handleDelete(deleteId); setDeleteId(null);
+        }}
+        title="Delete Item"
+        message="This action cannot be undone. Are you sure?"
+      />
+      
+</div>
   );
 }

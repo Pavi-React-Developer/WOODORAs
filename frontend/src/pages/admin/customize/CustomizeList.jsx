@@ -31,7 +31,7 @@ const getPaginationPages = (currentPage, totalPages) => {
   return pages;
 };
 
-export default function CustomizeList() {
+export default function CustomizeList({ canCreate, canEdit, canDelete }) {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -171,14 +171,20 @@ export default function CustomizeList() {
         <div className="bg-[#F8F4EC] border border-[#E6DFD4] rounded-2xl px-5 py-3 mb-4 flex items-center gap-3 flex-wrap">
           <span className="text-sm font-semibold text-[#8B5E3C]">{selectedIds.length} selected</span>
           <div className="flex gap-2 ml-auto flex-wrap">
-            <button onClick={() => toast.success('Status updated')} className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">Set Active</button>
-            <button onClick={() => toast.success('Status updated')} className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">Set Inactive</button>
-            <button
-              onClick={handleBulkDelete}
-              className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
-            >
-              Delete Selected
-            </button>
+            {canEdit && (
+              <>
+                <button onClick={() => toast.success('Status updated')} className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">Set Active</button>
+                <button onClick={() => toast.success('Status updated')} className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">Set Inactive</button>
+              </>
+            )}
+            {canDelete && (
+              <button
+                onClick={handleBulkDelete}
+                className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+              >
+                Delete Selected
+              </button>
+            )}
             <button onClick={() => setSelectedIds([])} className="px-3 py-1.5 text-xs font-semibold border border-[#E6DFD4] rounded-lg hover:bg-white transition-colors text-gray-500">Clear</button>
           </div>
         </div>
@@ -249,8 +255,8 @@ export default function CustomizeList() {
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center text-[16px] font-semibold text-gray-600">{getProductName(req.productDetails)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center text-[16px]">
-                    <span className={`px-2.5 py-1 text-sm font-medium rounded-full ${req.status === 'Approved' ? 'bg-green-100 text-green-800' :
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-[15px]">
+                    <span className={`px-2.5 py-1 text-[15px] font-medium rounded-full ${req.status === 'Approved' ? 'bg-green-100 text-green-800' :
                       req.status === 'Rejected' ? 'bg-red-100 text-red-800' :
                         'bg-yellow-100 text-yellow-800'
                       }`}>
@@ -275,7 +281,7 @@ export default function CustomizeList() {
                           <Download size={16} />
                         </button>
                       )}
-                      {req.status === 'Pending' && (
+                      {canEdit && req.status === 'Pending' && (
                         <>
                           <button
                             onClick={() => handleUpdateStatus(req._id, 'Approved')}
@@ -386,7 +392,7 @@ export default function CustomizeList() {
               )}
             </div>
             <div className="p-6 border-t border-[#E6DFD4] bg-white flex justify-end gap-4 rounded-b-[20px] items-center">
-              {selectedRequest.status === 'Pending' && (
+              {canEdit && selectedRequest.status === 'Pending' && (
                 <>
                   <button
                     onClick={() => openRejectModal(selectedRequest)}

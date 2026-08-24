@@ -5,6 +5,7 @@ import { RefreshCw, Eye, SquarePen, Trash2, Plus, X } from 'lucide-react';
 
 import { gstService } from '../../../api/gstService';
 import BulkActions from '../../../components/admin/BulkActions';
+import ConfirmDialog from '../../../components/admin/ConfirmDialog';
 import toast from 'react-hot-toast';
 
 export default function GSTRulesPage({ canCreate = true, canEdit = true, canDelete = true }) {
@@ -26,6 +27,7 @@ export default function GSTRulesPage({ canCreate = true, canEdit = true, canDele
 
     const [saving, setSaving] = useState(false);
     const [selectedIds, setSelectedIds] = useState([]);
+    const [deleteTarget, setDeleteTarget] = useState(null); // single delete confirm
 
     useEffect(() => {
         fetchRules();
@@ -151,16 +153,16 @@ export default function GSTRulesPage({ canCreate = true, canEdit = true, canDele
         }
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm('Are you sure you want to delete this GST rule?')) {
-            try {
-                await gstService.deleteRule(id);
-                toast.success('GST Rule deleted successfully');
-                setSelectedIds(prev => prev.filter(selId => selId !== id));
-                fetchRules();
-            } catch (error) {
-                toast.error(error.response?.data?.message || 'Failed to delete GST rule');
-            }
+    const handleDelete = async () => {
+        if (!deleteTarget) return;
+        try {
+            await gstService.deleteRule(deleteTarget);
+            toast.success('GST Rule deleted successfully');
+            setSelectedIds(prev => prev.filter(selId => selId !== deleteTarget));
+            setDeleteTarget(null);
+            fetchRules();
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to delete GST rule');
         }
     };
 
@@ -181,17 +183,17 @@ export default function GSTRulesPage({ canCreate = true, canEdit = true, canDele
     };
 
     const handleBulkDelete = async () => {
-        if (window.confirm(`Are you sure you want to delete ${selectedIds.length} GST rule(s)?`)) {
-            setLoading(true);
-            try {
-                await Promise.all(selectedIds.map(id => gstService.deleteRule(id)));
-                toast.success('Selected GST rules deleted');
-                setSelectedIds([]);
-                fetchRules();
-            } catch (error) {
-                toast.error('Failed to delete some GST rules');
-                fetchRules();
-            }
+        setLoading(true);
+        try {
+            await Promise.all(selectedIds.map(id => gstService.deleteRule(id)));
+            toast.success('Selected GST rules deleted');
+            setSelectedIds([]);
+            fetchRules();
+        } catch (error) {
+            toast.error('Failed to delete some GST rules');
+            fetchRules();
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -223,6 +225,7 @@ export default function GSTRulesPage({ canCreate = true, canEdit = true, canDele
     const inputCls = 'w-full px-4 py-2.5 text-sm border border-[#E6DFD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 focus:border-[#8B5E3C] transition-colors';
 
     return (
+        <>
         <div className="flex-1 overflow-y-auto p-8 space-y-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
                 <div>
@@ -334,7 +337,7 @@ export default function GSTRulesPage({ canCreate = true, canEdit = true, canDele
                                                 )}
                                                 {canDelete && (
                                                     <button
-                                                        onClick={() => handleDelete(rule._id)}
+                                                        onClick={() => setDeleteTarget(rule._id)}
                                                         className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
                                                         title="Delete"
                                                     >
@@ -445,5 +448,17 @@ export default function GSTRulesPage({ canCreate = true, canEdit = true, canDele
                 </div>
             )}
         </div>
+
+        <ConfirmDialog
+            isOpen={!!deleteTarget}
+            onClose={() => setDeleteTarget(null)}
+            onConfirm={handleDelete}
+            title="Delete GST Rule"
+            message="Are you sure you want to delete this GST rule? It will also be removed from any products using it. This action cannot be undone."
+            confirmText="DELETE"
+            cancelText="CANCEL"
+            variant="danger"
+        />
+        </>
     );
 }

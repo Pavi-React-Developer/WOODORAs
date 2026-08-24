@@ -311,7 +311,7 @@ export default function CartOffcanvas({ isOpen, onClose }) {
               type="button"
               disabled={cartItems.length === 0}
               onClick={handleCheckout}
-              className="flex-1 py-3.5 bg-[#3E2723] hover:bg-[#2A1A17] text-white font-bold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md text-xs flex justify-center items-center gap-1"
+              className="flex-1 py-3.5 bg-[#8B5E3C] hover:bg-[#7a5234] text-white font-bold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-[#8B5E3C]/20 text-xs flex justify-center items-center gap-1"
             >
               Checkout →
             </button>

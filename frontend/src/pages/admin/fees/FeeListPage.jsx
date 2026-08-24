@@ -287,7 +287,7 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
               ) : (
                 paginatedFees.map((fee, idx) => (
                   <tr key={fee._id} className="transition-colors hover:bg-[#FDF9F5] bg-white">
-                    <td className="text-[16px] py-6 px-4 text-center">
+                    <td className="text-[16px] py-4 px-4 text-center">
                       <input
                         type="checkbox"
                         checked={selectedIds.includes(fee._id)}
@@ -295,12 +295,12 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
                         className="w-4 h-4 accent-[#8B5E3C] rounded cursor-pointer"
                       />
                     </td>
-                    <td className="py-6 px-4 font-bold text-[16px] text-center">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
-                    <td className="py-6 px-4 text-[16px] font-bold text-center text-gray-900">{fee.feeName}</td>
-                    <td className="py-6 px-4 text-[16px] font-bold text-center text-gray-900">{fee.feeCategory?.name}</td>
-                    <td className="py-6 px-4 text-[16px] font-semibold text-center text-gray-700">{fee.feeType}</td>
-                    <td className="py-6 px-4 text-[16px] font-semibold text-center text-gray-700">{fee.paymentMethod || 'Both (COD & CashFree)'}</td>
-                    <td className="py-6 px-4 text-[16px] font-semibold text-center text-gray-700">
+                    <td className="py-4 px-4 font-bold text-[16px] text-center whitespace-nowrap">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
+                    <td className="py-4 px-4 text-[16px] font-bold text-center text-gray-900 whitespace-nowrap">{fee.feeName}</td>
+                    <td className="py-4 px-4 text-[16px] font-bold text-center text-gray-900 whitespace-nowrap">{fee.feeCategory?.name}</td>
+                    <td className="py-4 px-4 text-[16px] font-semibold text-center text-gray-700 whitespace-nowrap">{fee.feeType}</td>
+                    <td className="py-4 px-4 text-[16px] font-semibold text-center text-gray-700 whitespace-nowrap">{fee.paymentMethod || 'Both (COD & CashFree)'}</td>
+                    <td className="py-4 px-4 text-[16px] font-semibold text-center text-gray-700 whitespace-nowrap">
                       <div className="flex flex-wrap justify-center gap-x-1">
                         {(Array.isArray(fee.applicationState) ? fee.applicationState : [fee.applicationState]).filter(Boolean).map((s, i, arr) => (
                           <div key={i} className="whitespace-nowrap">
@@ -309,7 +309,7 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
                         ))}
                       </div>
                     </td>
-                    <td className="py-6 px-4 text-[16px] text-center">
+                    <td className="py-4 px-4 text-[16px] text-center whitespace-nowrap">
                       {fee.weightSlabs && fee.weightSlabs.length > 0 ? (
                         fee.weightSlabs.map((slab, i) => (
                           <div key={i} className="text-[16px] mb-1">
@@ -320,15 +320,14 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
                         <span className="font-bold text-[16px]">{fee.feeType === 'Fixed Amount' ? '₹' : ''}{fee.flatFeeValue !== undefined ? fee.flatFeeValue : 'Not Set'}{fee.feeType === 'Percentage' ? '%' : ''}</span>
                       )}
                     </td>
-                    <td className="text-[16px] py-6 px-4 text-center">
+                    <td className="text-[16px] py-4 px-4 text-center">
                       <button 
                         onClick={() => handleToggleStatus(fee)}
-                        title="Click to toggle status"
                         className="transition-colors hover:opacity-80" title={fee.active ? "Deactivate" : "Activate"}>
                         <ActiveBadge status={fee.active} size={16} />
                       </button>
                     </td>
-                    <td className="text-[16px] py-6 px-4 text-center whitespace-nowrap">
+                    <td className="text-[16px] py-4 px-4 text-center whitespace-nowrap">
                       <div className="flex items-center justify-center gap-2">
                         {canEdit && (
                           <button

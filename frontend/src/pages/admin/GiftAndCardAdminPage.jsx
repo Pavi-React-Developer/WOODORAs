@@ -12,8 +12,21 @@ import OrderPricingSummary from '../../components/OrderPricingSummary';
 
 const formatDate = formatDeliveryDate;
 import { formatOrderId } from '../../utils/formatters';
+import ConfirmDialog from '../../components/admin/ConfirmDialog';
 
 export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate = true, canEdit = true, canDelete = true }) {
+  const [deleteId, setDeleteId] = useState(null);
+  const handleDeleteConfirm = async () => {
+    if (!deleteId) return;
+    try {
+      await adminService.deleteGiftBoxRule(deleteId);
+      toast.success('Rule deleted');
+      fetchGiftBoxRules();
+    } catch (error) {
+      toast.error('Failed to delete rule');
+    }
+    setDeleteId(null);
+  };
   const [activeTab, setActiveTab] = useState(activeSubTab);
   useEffect(() => {
     setActiveTab(activeSubTab);
@@ -387,16 +400,7 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
                               </>
                             )}
                             {canDelete && (
-                              <button onClick={async () => {
-                                if (!window.confirm('Are you sure you want to delete this rule?')) return;
-                                try {
-                                  await adminService.deleteGiftBoxRule(rule._id);
-                                  toast.success('Rule deleted');
-                                  fetchGiftBoxRules();
-                                } catch (error) {
-                                  toast.error('Failed to delete rule');
-                                }
-                              }} className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors" title="Delete Rule">
+                              <button onClick={() => setDeleteId(rule._id)} className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors" title="Delete Rule">
                                 <Trash2 size={16} />
                               </button>
                             )}
@@ -640,6 +644,21 @@ export default function GiftAndCardAdminPage({ activeSubTab = 'rules', canCreate
           </div>
         </div>
       )}
-    </div>
+    
+      
+
+      
+      <ConfirmDialog
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={() => {
+            handleDeleteConfirm();
+        }}
+        title="Delete Item"
+        message="This action cannot be undone. Are you sure?"
+      />
+      
+
+</div>
   );
 }
