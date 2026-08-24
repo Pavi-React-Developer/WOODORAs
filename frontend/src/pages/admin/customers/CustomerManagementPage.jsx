@@ -372,11 +372,11 @@ export default function CustomerManagementPage({ canEdit = true, canDelete = tru
             type="text"
             placeholder="Search customers by name, email, or mobile..."
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
             className="flex-1 bg-transparent text-sm text-[#141225] placeholder-[#C4B9B0] outline-none"
           />
           {search && (
-            <button onClick={() => setSearch('')} className="text-[#8A817C] hover:text-[#141225]">
+            <button onClick={() => { setSearch(''); setCurrentPage(1); }} className="text-[#8A817C] hover:text-[#141225]">
               ✕
             </button>
           )}

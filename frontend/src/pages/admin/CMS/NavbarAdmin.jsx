@@ -373,7 +373,7 @@ export default function NavbarAdmin({ canCreate, canEdit, canDelete }) {
                 className="admin-cancel-btn">CANCEL</button>
               <button type="submit"
                 className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60">
-                {editIndex !== null ? 'Update Item' : 'Add Item'}
+                {editIndex !== null ? 'Save Changes' : 'Save'}
               </button>
             </div>
           </form>
@@ -458,7 +458,7 @@ export default function NavbarAdmin({ canCreate, canEdit, canDelete }) {
         )}
       </div>
 
-      {canEdit && (
+      {(canEdit || canCreate) && (
         <div className="flex justify-end pt-4 pb-8 border-t border-[#E6DFD4]">
           <button
             onClick={handleSaveAll}

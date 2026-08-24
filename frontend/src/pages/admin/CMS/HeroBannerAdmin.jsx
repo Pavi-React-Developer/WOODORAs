@@ -20,7 +20,7 @@ function MediaUploader({ label, value, onChange, accept = "image/*,video/mp4,vid
     setUploading(true);
     try {
       const res = await cmsService.uploadImages([file]);
-      onChange(res.data[0]); // Pass the entire Cloudinary object
+      onChange(res.data[0]);
     } catch (err) { toast.error(err.message); }
     finally { setUploading(false); }
   };
@@ -98,7 +98,8 @@ export default function HeroBannerAdmin({ canCreate, canEdit, canDelete }) {
     try {
       if (editId) await cmsService.updateHeroBanner(editId, form);
       else await cmsService.createHeroBanner(form);
-      (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setShowForm(false)); setForm(emptyForm); setEditId(null);
+      (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setShowForm(false));
+      setForm(emptyForm); setEditId(null);
       fetchItems();
     } catch (err) { toast.error(err.message); }
     finally { setSaving(false); }
@@ -114,19 +115,20 @@ export default function HeroBannerAdmin({ canCreate, canEdit, canDelete }) {
       desktopVideo: item.desktopVideo || '', mobileVideo: item.mobileVideo || '',
       items: item.items || [],
     });
-    setEditId(item._id); window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowForm(true);
+    setEditId(item._id);
+    window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit');
+    setShowForm(true);
   };
 
-    const handleDelete = (id) => setDeleteId(id);
+  const handleDelete = (id) => setDeleteId(id);
+
   const handleDeleteConfirm = async () => {
     if (!deleteId) return;
     const id = deleteId;
     try {
       await cmsService.deleteHeroBanner(id); fetchItems();
-      toast.success("Deleted successfully!");
-    } catch (err) {
-      toast.error(err.message);
-    }
+      toast.success('Deleted successfully!');
+    } catch (err) { toast.error(err.message); }
     setDeleteId(null);
   };
 
@@ -135,15 +137,18 @@ export default function HeroBannerAdmin({ canCreate, canEdit, canDelete }) {
     catch (err) { toast.error(err.message); }
   };
 
-  const sf = (key) => (val) => setForm((f) => ({ ...f, [key]: val }));
+  // Helper: resolve a media URL from string or object
+  const getUrl = (v) => (!v ? '' : typeof v === 'string' ? v : v.url || '');
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-bold text-brand-dark">Hero Banners</h3>
         {canCreate && (
-          <button onClick={() => { window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowForm(true); setEditId(null); setForm(emptyForm); }}
-            className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60">
+          <button
+            onClick={() => { window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowForm(true); setEditId(null); setForm(emptyForm); }}
+            className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60"
+          >
             <Plus size={16} /> Add Banner
           </button>
         )}
@@ -263,15 +268,19 @@ export default function HeroBannerAdmin({ canCreate, canEdit, canDelete }) {
           </div>
         ) : items.map((item) => {
           const now = new Date();
-          const start = new Date(item.startDate);
-          start.setHours(0, 0, 0, 0);
-          const end = new Date(item.endDate);
-          end.setHours(23, 59, 59, 999);
+          const start = new Date(item.startDate); start.setHours(0, 0, 0, 0);
+          const end = new Date(item.endDate); end.setHours(23, 59, 59, 999);
           const isScheduled = start <= now && end >= now;
+
+          // Resolve preview image from items[].desktopUrl or fallback to legacy bannerImage
+          const previewUrl = getUrl(item.items?.[0]?.desktopUrl) ||
+            getUrl(item.items?.[0]?.mobileUrl) ||
+            getUrl(item.bannerImage) || '';
+
           return (
             <div key={item._id} className="bg-white rounded-2xl border border-[#E6DFD4] overflow-hidden shadow-sm">
-              {item.bannerImage ? (
-                <img src={item.bannerImage?.url || item.bannerImage} alt={item.title} className="w-full h-36 object-cover" />
+              {previewUrl ? (
+                <img src={previewUrl} alt={item.title} className="w-full h-36 object-cover" />
               ) : (
                 <div className="w-full h-36 bg-[#F7F3EE] flex items-center justify-center text-brand-medium text-xs">No Image</div>
               )}
@@ -282,34 +291,32 @@ export default function HeroBannerAdmin({ canCreate, canEdit, canDelete }) {
                     {item.subtitle && <p className="text-xs text-brand-medium mt-0.5">{item.subtitle}</p>}
                   </div>
                   <div className="flex gap-1 flex-col items-end">
-                    <span className={`text-[]16px] px-2 py-0.5 rounded-full font-medium ${item.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${item.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
                       {item.status ? 'Active' : 'Off'}
                     </span>
-                    <span className={`text-[16px] px-2 py-0.5 rounded-full font-medium ${isScheduled ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isScheduled ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'}`}>
                       {isScheduled ? 'Live' : 'Not Scheduled'}
                     </span>
                   </div>
                 </div>
-                <p className="text-[16px] text-brand-medium mb-3">
+                <p className="text-xs text-brand-medium mb-3">
                   {new Date(item.startDate).toLocaleDateString()} → {new Date(item.endDate).toLocaleDateString()}
                 </p>
                 <div className="flex gap-2">
                   {canEdit && (
                     <>
-                      <button onClick={() => handleToggle(item)}
-                        className="text-green-600 hover:text-green-700 transition-colors"
-                        title={item.status ? 'Disable' : 'Enable'}>
+                      <button onClick={() => handleToggle(item)} title={item.status ? 'Disable' : 'Enable'}
+                        className="text-green-600 hover:text-green-700 transition-colors">
                         {item.status ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
-                      <button onClick={() => handleEdit(item)}
-                        className="text-blue-600 hover:text-blue-700 transition-colors"
-                        title="Edit">
+                      <button onClick={() => handleEdit(item)} title="Edit"
+                        className="text-blue-600 hover:text-blue-700 transition-colors">
                         <SquarePen size={16} />
                       </button>
                     </>
                   )}
                   {canDelete && (
-                    <button onClick={() => handleDelete(item._id)}
+                    <button onClick={() => handleDelete(item._id)} title="Delete"
                       className="text-red-500 hover:text-red-600 transition-colors">
                       <Trash2 size={16} />
                     </button>
@@ -320,18 +327,14 @@ export default function HeroBannerAdmin({ canCreate, canEdit, canDelete }) {
           );
         })}
       </div>
-    
-      
+
       <ConfirmDialog
         isOpen={!!deleteId}
         onClose={() => setDeleteId(null)}
-        onConfirm={() => {
-            handleDelete(deleteId); setDeleteId(null);
-        }}
+        onConfirm={() => { handleDeleteConfirm(); }}
         title="Delete Item"
         message="This action cannot be undone. Are you sure?"
       />
-      
-</div>
+    </div>
   );
 }

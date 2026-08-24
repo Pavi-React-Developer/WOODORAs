@@ -347,7 +347,7 @@ export default function CustomerProfilePage({
             }
             return item;
           }).filter(Boolean); // Remove products that returned 404
-          
+
           setRecentlyViewed(updatedRecent);
           localStorage.setItem('recentlyViewed', JSON.stringify(updatedRecent));
         }
@@ -604,8 +604,8 @@ export default function CustomerProfilePage({
                             </div>
                           </div>
                           <div>
-                            <p className="text-xs font-semibold text-gray-400">Order</p>
-                            <p className="text-base font-bold text-[#141225]">#{refund.orderId?.slice(-8).toUpperCase() || refund.orderId}</p>
+                            <p className="text-xs text-gray-500 mb-0.5">Order</p>
+                            <h4 className="font-serif font-bold text-black text-[16px] leading-tight mb-1">#{refund.orderId?.slice(-8).toUpperCase() || refund.orderId}</h4>
                           </div>
                         </div>
                         <div className="flex items-center gap-1.5 rounded-md bg-[#FFF3E9] px-3 py-1.5 text-xs font-bold text-[#D97736]">
@@ -621,7 +621,7 @@ export default function CustomerProfilePage({
                             <IndianRupee className="h-5 w-5" />
                           </div>
                           <div>
-                            <p className="text-[11px] font-semibold text-gray-400">Refund Amount</p>
+                            <p className="text-xs text-gray-500 mb-0.5">Refund Amount</p>
                             <p className="text-sm font-bold text-[#141225]">₹{(refund.amount || 0).toFixed(2)}</p>
                           </div>
                         </div>
@@ -630,7 +630,7 @@ export default function CustomerProfilePage({
                             <CreditCard className="h-5 w-5" />
                           </div>
                           <div>
-                            <p className="text-[11px] font-semibold text-gray-400">Payment Method</p>
+                            <p className="text-xs text-gray-500 mb-0.5">Payment Method</p>
                             <p className="text-sm font-bold text-[#141225]">{isWallet ? 'Wallet' : 'UPI / Phone'}</p>
                           </div>
                         </div>
@@ -639,7 +639,7 @@ export default function CustomerProfilePage({
                             <Calendar className="h-5 w-5" />
                           </div>
                           <div>
-                            <p className="text-[11px] font-semibold text-gray-400">Requested On</p>
+                            <p className="text-xs text-gray-500 mb-0.5">Requested On</p>
                             <p className="text-sm font-bold text-[#141225]">{new Date(refund.createdAt).toLocaleDateString()}</p>
                             <p className="text-[10px] text-gray-500 mt-0.5">{new Date(refund.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</p>
                           </div>
@@ -649,7 +649,7 @@ export default function CustomerProfilePage({
                             <Gift className="h-5 w-5" />
                           </div>
                           <div>
-                            <p className="text-[11px] font-semibold text-gray-400">Items</p>
+                            <p className="text-xs text-gray-500 mb-0.5">Items</p>
                             <p className="text-sm font-bold text-[#141225]">{refund.items?.length || 1} {refund.items?.length > 1 ? 'Items' : 'Item'}</p>
                           </div>
                         </div>
@@ -1152,21 +1152,21 @@ export default function CustomerProfilePage({
                           </div>
                           <div className="flex gap-2 mt-4">
                             <button onClick={() => { setActiveOrder(order); setActiveModule('order-details'); navigate('/profile/order-history/details'); }} className="w-full py-2.5 rounded-lg border border-[#8B5E3C] text-[#8B5E3C] text-xs font-bold transition hover:bg-[#F0EAE1] flex items-center justify-center gap-1.5">
-                          View Details</button>
+                              View Details</button>
                           </div>
                         </div>
                       </div>
 
                       {/* Mobile Layout (unchanged visually but adapted) */}
                       <div className="flex sm:hidden flex-col gap-4">
-                        <div className="flex items-center gap-4">
-                          <div className="h-16 w-16 shrink-0 overflow-hidden rounded-[10px] bg-[#F8F3EF]">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 shrink-0 overflow-hidden rounded-[10px] bg-[#F8F3EF]">
                             <img src={imageSrc} alt={item.name} className="h-full w-full object-cover" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="font-bold text-[#141225]">{item.name}</p>
-                            <p className="mt-1 text-sm text-[#6D625C]">Qty: {item.qty} • ₹ {Number(item.price || 0).toLocaleString()}</p>
-                            <p className="mt-1 text-sm text-[#6D625C]">Order #{formatOrderId(order)} • <span className={`font-semibold ${orderStatus === 'Delivered' ? 'text-emerald-600' : 'text-[#8B5E3C]'}`}>{orderStatus}</span></p>
+                            <h4 className="font-serif font-bold text-[#141225] text-[16px] leading-tight mb-1">#{formatOrderId(order)}</h4>
+                            <p className="text-[13px] font-medium text-gray-500 line-clamp-1">{item.name}</p>
+                            <p className="mt-1 text-xs text-[#6D625C]">Qty: {item.qty} • ₹ {Number(item.price || 0).toLocaleString()} • <span className={`font-semibold ${orderStatus === 'Delivered' ? 'text-emerald-600' : 'text-[#8B5E3C]'}`}>{orderStatus}</span></p>
                           </div>
                         </div>
                         <div className="flex flex-col gap-2">
@@ -1454,7 +1454,7 @@ export default function CustomerProfilePage({
                           </div>
                           <div className="flex gap-2 mt-4">
                             <button onClick={() => { setActiveOrder(order); setActiveModule('order-details'); navigate('/profile/order-history/details'); }} className="w-full py-2.5 rounded-lg border border-[#8B5E3C] text-[#8B5E3C] text-xs font-bold transition hover:bg-[#F0EAE1] flex items-center justify-center gap-1.5">
-                          View Details</button>
+                              View Details</button>
                             <button onClick={() => { const pId = firstItem.product?._id || firstItem.product; if (pId) navigate(`/product/${pId}`); }} className="flex-1 py-2 rounded bg-[#8B5E3C] text-white text-xs font-bold flex items-center justify-center gap-1 transition hover:bg-[#7E4B25]"><RefreshCw className="w-3 h-3" /> Buy Again</button>
                           </div>
                         </div>
@@ -1479,9 +1479,14 @@ export default function CustomerProfilePage({
                           <div className="w-12 h-12 rounded-lg bg-[#F8F4EC] border border-gray-100 overflow-hidden shrink-0 flex items-center justify-center">
                             {imageSrc ? <img src={imageSrc} alt={firstItem.name} className="w-full h-full object-cover" /> : <Package className="w-6 h-6 text-gray-400" />}
                           </div>
-                          <h4 className="font-bold text-[#111] text-[15px] line-clamp-2 leading-snug">
-                            {firstItem.name || `Order #${formatOrderId(order)}`}
-                          </h4>
+                          <div>
+                            <h4 className="font-serif font-bold text-[#141225] text-[16px] leading-tight mb-1">
+                              #{formatOrderId(order)}
+                            </h4>
+                            <p className="text-[13px] font-medium text-gray-500 line-clamp-1">
+                              {firstItem.name || 'Product'}
+                            </p>
+                          </div>
                         </div>
                         <span className="shrink-0 px-2.5 py-1 rounded-[6px] text-[10px] font-bold uppercase tracking-wider bg-[#FFF9E6] text-[#B8860B] border border-[#F5E6B3]">
                           {order.status || 'PLACED'}
@@ -1647,23 +1652,19 @@ export default function CustomerProfilePage({
                 <div key={order._id} className="rounded-[12px] border border-[#E9DED3] bg-white p-4 shadow-sm">
                   {isMobile ? (
                     <div className="flex flex-col">
-                      <div className="flex items-start gap-4">
-                        <div className="w-20 h-20 rounded-lg bg-[#FAF8F5] shrink-0 overflow-hidden">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-lg bg-[#FAF8F5] shrink-0 overflow-hidden">
                           <img src={imageUrl} alt={productName} className="w-full h-full object-cover" />
                         </div>
-                        <div className="flex-1 flex flex-col justify-between min-h-[5rem]">
+                        <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between w-full">
-                            <span className="text-sm font-bold text-[#141225]">{reqId}</span>
-                            <div className="flex items-center gap-2">
-                              <span className={`inline-flex rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${statusClasses}`}>
-                                {status}
-                              </span>
-                            </div>
+                            <h4 className="font-serif font-bold text-[#141225] text-[16px] leading-tight mb-1">{reqId}</h4>
+                            <span className={`inline-flex rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${statusClasses}`}>
+                              {status}
+                            </span>
                           </div>
-                          <div>
-                            <p className="text-sm font-bold text-[#141225] truncate">{productName}</p>
-                            <p className="text-[11px] text-gray-500 mt-0.5">Requested on {date}</p>
-                          </div>
+                          <p className="text-[13px] font-medium text-gray-500 line-clamp-1">{productName}</p>
+                          <p className="text-[11px] text-gray-500 mt-1">Requested on {date}</p>
                         </div>
                       </div>
 
@@ -1692,11 +1693,13 @@ export default function CustomerProfilePage({
                             </div>
                           </div>
                         </div>
-                        <button
-                          onClick={() => { setActiveCustomizeOrder(order); setActiveModule('customize-order-details'); navigate('/profile/customize-orders/details'); }}
-                          className="w-full py-2.5 rounded-lg border border-[#8B5E3C] text-[#8B5E3C] text-xs font-bold transition hover:bg-[#F0EAE1] flex items-center justify-center gap-1.5">
-                          View Details
-                        </button>
+                        <div className="mt-5">
+                          <button
+                            onClick={() => { setActiveCustomizeOrder(order); setActiveModule('customize-order-details'); navigate('/profile/customize-orders/details'); }}
+                            className="w-full py-2.5 rounded-lg border border-[#8B5E3C] text-[#8B5E3C] text-xs font-bold transition hover:bg-[#F0EAE1] flex items-center justify-center gap-1.5">
+                            View Details
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ) : (
@@ -1711,7 +1714,7 @@ export default function CustomerProfilePage({
 
                         {/* Column 1: Order ID & Product */}
                         <div className="flex flex-col gap-3 h-full">
-                          <h3 className="font-serif font-bold text-[#D04E26] text-[17px]">{reqId}</h3>
+                          <h3 className="font-serif font-bold text-[#141225] text-[17px]">{reqId}</h3>
                           <div className="p-3 bg-[#FAF8F5] rounded-md border border-[#E9DED3] flex-1">
                             <p className="text-xs text-gray-500 mb-0.5">Product</p>
                             <p className="text-sm font-bold text-[#141225] line-clamp-2">{productName}</p>
@@ -1764,7 +1767,7 @@ export default function CustomerProfilePage({
                           <button
                             onClick={() => { setActiveCustomizeOrder(order); setActiveModule('customize-order-details'); navigate('/profile/customize-orders/details'); }}
                             className="w-full py-2.5 rounded-md border border-[#8B5E3C] text-[#8B5E3C] text-[13px] font-bold hover:bg-[#FAF8F5] transition text-center flex items-center justify-center gap-1.5">
-                              View Details
+                            View Details
                           </button>
                         </div>
                       </div>
@@ -1782,7 +1785,7 @@ export default function CustomerProfilePage({
                         </div>
                         <div className="flex gap-2 mt-4">
                           <button onClick={() => { setActiveCustomizeOrder(order); setActiveModule('customize-order-details'); navigate('/profile/customize-orders/details'); }} className="w-full py-2.5 rounded-lg border border-[#8B5E3C] text-[#8B5E3C] text-xs font-bold transition hover:bg-[#F0EAE1] flex items-center justify-center gap-1.5">
-                          View Details</button>
+                            View Details</button>
                         </div>
                       </div>
                     </div>
@@ -2007,7 +2010,7 @@ export default function CustomerProfilePage({
 
                         {/* Column 1: Order ID & Product */}
                         <div className="flex flex-col gap-3 h-full">
-                          <h3 className="font-serif font-bold text-[#D04E26] text-[17px]">{reqId}</h3>
+                          <h3 className="font-serif font-bold text-[#141225] text-[17px]">{reqId}</h3>
                           <div className="p-3 bg-[#FAF8F5] rounded-md border border-[#E9DED3] flex-1">
                             <p className="text-xs text-gray-500 mb-0.5">Company Name</p>
                             <p className="text-sm font-bold text-[#141225] line-clamp-2 uppercase">{company}</p>
@@ -2079,7 +2082,7 @@ export default function CustomerProfilePage({
                         </div>
                         <div className="flex gap-2 mt-4">
                           <button onClick={() => { setActiveBulkOrder(order); setActiveModule('bulk-order-details'); navigate('/profile/bulk-orders/details'); }} className="w-full py-2.5 rounded-lg border border-[#8B5E3C] text-[#8B5E3C] text-xs font-bold transition hover:bg-[#F0EAE1] flex items-center justify-center gap-1.5">
-                          View Details</button>
+                            View Details</button>
                         </div>
                       </div>
                     </div>
@@ -2123,7 +2126,10 @@ export default function CustomerProfilePage({
                         <div className="w-12 h-12 shrink-0 rounded-lg overflow-hidden bg-[#F8F3EF]">
                           {imageSrc ? <img src={imageSrc} alt="Product" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Package className="w-5 h-5 text-[#D04E26] opacity-70" /></div>}
                         </div>
-                        <span className="text-[15px] font-bold text-[#D04E26]">{reqId}</span>
+                        <div>
+                          <h4 className="font-serif font-bold text-[#141225] text-[16px] leading-tight mb-1">{reqId}</h4>
+                          <p className="text-[13px] font-medium text-gray-500 line-clamp-1">{order.product?.name || order.subCategory?.name || 'Bulk Order'}</p>
+                        </div>
                       </div>
                       <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-[10px] font-bold tracking-wider ${statusClasses}`}>
                         {status}
@@ -2132,27 +2138,27 @@ export default function CustomerProfilePage({
 
                     <div className="grid grid-cols-2 gap-y-3 gap-x-2 text-sm text-[#141225]">
                       <div className="flex items-center gap-2">
-                        <Landmark className="w-4 h-4 text-gray-400 shrink-0" />
+                        <Landmark className="w-5 h-5 text-gray-400 shrink-0" />
                         <span className="uppercase truncate font-medium">{company}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <CalendarDays className="w-4 h-4 text-gray-400 shrink-0" />
+                        <CalendarDays className="w-5 h-5 text-gray-400 shrink-0" />
                         <span className="truncate">{date}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-gray-400 shrink-0" />
+                        <User className="w-5 h-5 text-gray-400 shrink-0" />
                         <span className="capitalize truncate">{name}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Phone className="w-4 h-4 text-gray-400 shrink-0" />
+                        <Phone className="w-5 h-5 text-gray-400 shrink-0" />
                         <span className="truncate">{phone}</span>
                       </div>
                     </div>
 
-                    <div className="flex justify-end pt-2 border-t border-gray-100/50 mt-1">
+                    <div className="flex gap-2 pt-2 border-t border-gray-100/50 mt-1">
                       <button
                         onClick={() => { setActiveBulkOrder(order); setActiveModule('bulk-order-details'); navigate('/profile/bulk-orders/details'); }}
-                        className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-md bg-white border border-[#8B5E3C] text-[#8B5E3C] text-xs font-bold hover:bg-[#FAF8F5] transition"
+                        className="w-full py-2.5 rounded-lg border border-[#8B5E3C] text-[#8B5E3C] text-[13px] font-bold transition hover:bg-[#F0EAE1] flex items-center justify-center gap-1.5"
                       >
                         View Details
                       </button>
@@ -2368,11 +2374,6 @@ export default function CustomerProfilePage({
                     {isCompleted ? <Check className="w-3 h-3 sm:w-4 sm:h-4" /> : <div className="w-1.5 h-1.5 sm:w-2.5 sm:h-2.5 rounded-full bg-gray-200" />}
                   </div>
 
-                  {isCurrent && (idx === 2 || idx === 3) && (
-                    <div className="absolute top-0 -right-3 sm:-right-6 text-[rgb(176,97,28)] bg-white p-0.5 rounded-full z-20 shadow-sm border border-[rgb(176,97,28)]/20">
-                      <Truck className="w-3 h-3 sm:w-5 sm:h-5 fill-current" />
-                    </div>
-                  )}
 
                   <div className="text-center mt-1 sm:mt-2 w-[52px] sm:w-20">
                     <p className={`text-[8.5px] sm:text-xs font-bold leading-tight ${isCompleted ? 'text-[#141225]' : 'text-gray-400'}`}>{step.label}</p>
@@ -3109,6 +3110,7 @@ export default function CustomerProfilePage({
               {paginatedGiftOrders.map((order) => {
                 const firstItem = order.orderItems?.[0] || {};
                 const imageSrc = firstItem.image ? (firstItem.image.startsWith('http') || firstItem.image.startsWith('data:') ? firstItem.image : (firstItem.image.startsWith('/uploads') || firstItem.image.startsWith('uploads/')) ? `http://localhost:5000${firstItem.image.startsWith('/') ? '' : '/'}${firstItem.image}` : firstItem.image) : '';
+                const paidAmount = Number(order.paid_amount) || Number(order.advance_payment) || (order.paymentMethod === 'COD' ? (Number(order.codAdvance) || 0) : (order.isPaid ? Number(order.totalPrice) : 0));
 
                 return (
                   <div key={order._id} className="rounded-xl border border-[#E9DED3] bg-white p-3 sm:p-4 shadow-sm flex flex-col lg:flex-row gap-4 lg:gap-6">
@@ -3120,10 +3122,10 @@ export default function CustomerProfilePage({
                       </div>
 
                       {/* Mobile Only: Basic Info next to image */}
-                      <div className="flex flex-col justify-between py-0.5 sm:py-1 lg:hidden flex-1">
+                      <div className="flex flex-col justify-between py-0.5 sm:py-1 lg:hidden flex-1 min-w-0">
                         <div>
-                          <h3 className="font-serif font-bold text-[#141225] text-[14px] sm:text-[16px] leading-tight">#{formatOrderId(order)}</h3>
-                          <p className="text-[11px] sm:text-xs text-gray-500 mt-1">{formatDate(order.createdAt)}</p>
+                          <h4 className="font-serif font-bold text-[#141225] text-[16px] leading-tight mb-1">#{formatOrderId(order)}</h4>
+                          <p className="text-[13px] font-medium text-gray-500 line-clamp-1">{order.orderItems?.[0]?.name || 'Gift Order'}</p>
                         </div>
 
                         <div className="flex items-center gap-1.5 mt-2 mb-1">
@@ -3178,7 +3180,7 @@ export default function CustomerProfilePage({
                           <CreditCard className="w-5 h-5 text-[#8B5E3C] shrink-0 mt-0.5" />
                           <div>
                             <p className="text-xs text-gray-500 mb-0.5">Paid Amount</p>
-                            <p className="text-sm font-bold text-[#141225]">₹ {Number(order.paid_amount || order.advance_payment || order.codAdvance || (order.isPaid ? order.totalPrice : 0) || 0).toLocaleString()}</p>
+                            <p className="text-sm font-bold text-[#141225]">₹ {Number(paidAmount || 0).toLocaleString()}</p>
                           </div>
                         </div>
                       </div>

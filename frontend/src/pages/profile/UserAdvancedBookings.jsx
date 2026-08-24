@@ -255,7 +255,6 @@ export default function UserAdvancedBookings() {
               return (
                 <div key={booking._id} className="bg-white rounded-[16px] shadow-sm border border-[#E9DED3] overflow-hidden p-5 lg:p-6 mb-2 transition-shadow hover:shadow-md">
                   <div className="flex flex-row gap-4 lg:gap-8 w-full items-start">
-                    {/* Image Column */}
                     <div className="w-32 h-32 lg:w-40 lg:h-40 shrink-0 rounded-lg overflow-hidden bg-[#F8F3EF]">
                       {imageSrc ? <img src={imageSrc} alt={booking.productName} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Package className="w-8 h-8 text-gray-400" /></div>}
                     </div>
@@ -265,8 +264,9 @@ export default function UserAdvancedBookings() {
 
                       {/* Column 1: Order ID & Product */}
                       <div className="flex flex-col gap-3 h-full">
-                        <h3 className="font-serif font-bold text-[#141225] text-[17px] truncate">{booking.productName}</h3>
+                        <h3 className="font-serif font-bold text-[#141225] text-[17px]">#{booking.orderId || formatBookingId(booking._id)}</h3>
                         <div className="p-3 bg-[#FAF8F5] rounded-md border border-[#E9DED3] flex-1">
+                          <p className="text-sm font-bold text-[#141225] line-clamp-2 mb-1.5">{booking.productName}</p>
                           {Object.keys(booking.variants || {}).length > 0 ? (
                             <div className="flex flex-col gap-1.5">
                               {Object.entries(booking.variants).map(([k, v]) => (
@@ -351,8 +351,9 @@ export default function UserAdvancedBookings() {
 
                     {/* Tablet Grid - sm to lg */}
                     <div className="hidden sm:flex lg:hidden flex-1 flex-col justify-between py-1">
-                      <div>
-                        <h3 className="font-serif font-bold text-[#141225] text-[16px] leading-tight line-clamp-2">{booking.productName}</h3>
+                      <div className="w-full">
+                        <h3 className="font-serif font-bold text-[#141225] text-[16px] leading-tight">#{booking.orderId || formatBookingId(booking._id)}</h3>
+                        <p className="text-sm font-bold text-[#141225] mt-2 line-clamp-1">{booking.productName}</p>
                         <p className="text-xs text-gray-500 mt-1">{date}</p>
                       </div>
                       <div className="flex justify-between items-end mt-auto">
@@ -398,19 +399,21 @@ export default function UserAdvancedBookings() {
                   {/* Header Row: Image, Order ID, Status */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-[#F8F3EF] shrink-0 overflow-hidden">
+                      <div className="w-12 h-12 rounded-lg bg-[#F8F3EF] shrink-0 overflow-hidden">
                         {imageSrc ? <img src={imageSrc} alt={booking.productName} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Package className="w-5 h-5 text-gray-400" /></div>}
                       </div>
-                      <p className="font-bold text-[#141225] text-sm">#{booking.orderId}</p>
+                      <div>
+                        <h4 className="font-serif font-bold text-[#141225] text-[16px] leading-tight mb-1">#{booking.orderId || formatBookingId(booking._id)}</h4>
+                        <p className="text-[13px] font-medium text-gray-500 line-clamp-1">{booking.productName}</p>
+                      </div>
                     </div>
                     <div className="flex items-center gap-1">
                       <span className={`inline-flex rounded-full px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider ${getBookingStatusStyle(booking.bookingStatus)}`}>{booking.bookingStatus}</span>
                     </div>
                   </div>
 
-                  {/* Title & Date */}
+                  {/* Date */}
                   <div className="mt-3">
-                    <p className="font-serif font-bold text-[#141225] text-[16px] leading-tight">{booking.productName}</p>
                     <p className="text-[#8A817C] text-xs mt-1">Requested on {date}</p>
                   </div>
 

@@ -417,7 +417,7 @@ export default function AdvancedBookingManagement({ canCreate = true, canEdit = 
             type="text"
             placeholder="Search by name, phone or product..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
             className="w-full pl-12 pr-4 py-2.5 bg-gray-50 rounded-full focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/20 border border-transparent focus:border-[#8B5E3C] text-sm text-[#141225] placeholder-gray-400 transition-all"
           />
           <Search className="absolute left-5 top-3 text-gray-400" size={18} />
@@ -606,7 +606,7 @@ export default function AdvancedBookingManagement({ canCreate = true, canEdit = 
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col border border-[#E6DFD4]">
             <div className="flex items-center justify-between p-6 border-b border-[#E6DFD4] bg-[#F8F4EC]">
               <h2 className="text-xl font-serif font-bold text-[#141225]">Booking Details</h2>
-              <button onClick={() => setViewBooking(null)} className="text-gray-500 hover:text-gray-800"><X size={24} /></button>
+              <button onClick={() => setViewBooking(null)} className="text-red-500 hover:text-red-800"><X size={24} /></button>
             </div>
             <div className="p-6 overflow-y-auto space-y-6">
               <div className="grid grid-cols-2 gap-6">
@@ -703,7 +703,7 @@ export default function AdvancedBookingManagement({ canCreate = true, canEdit = 
           <form onSubmit={handleApproveSubmit} className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between p-6 border-b border-[#E6DFD4] bg-[#F8F4EC] shrink-0">
               <h2 className="text-xl font-serif font-bold text-green-800">Approve Booking</h2>
-              <button type="button" onClick={() => setApproveBookingData(null)} className="text-gray-500 hover:text-gray-800"><X size={24} /></button>
+              <button type="button" onClick={() => setApproveBookingData(null)} className="text-red-500 hover:text-red-800"><X size={24} /></button>
             </div>
             <div className="p-6 space-y-5 overflow-y-auto flex-1">
               <div>
@@ -775,7 +775,7 @@ export default function AdvancedBookingManagement({ canCreate = true, canEdit = 
           <form onSubmit={handleRejectSubmit} className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
             <div className="flex items-center justify-between p-6 border-b border-[#E6DFD4] bg-red-50">
               <h2 className="text-xl font-serif font-bold text-red-800">Reject Booking</h2>
-              <button type="button" onClick={() => setRejectBookingData(null)} className="text-gray-500 hover:text-gray-800"><X size={24} /></button>
+              <button type="button" onClick={() => setRejectBookingData(null)} className="text-red-500 hover:text-red-800"><X size={24} /></button>
             </div>
             <div className="p-6">
               <label className="block text-sm font-medium text-gray-700 mb-1">Reason for Rejection</label>
@@ -797,7 +797,7 @@ export default function AdvancedBookingManagement({ canCreate = true, canEdit = 
           <form onSubmit={handleEditSubmit} className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between p-6 border-b border-[#E6DFD4] bg-[#F8F4EC] shrink-0">
               <h2 className="text-xl font-serif font-bold text-[#8B5E3C]">Update Order Details</h2>
-              <button type="button" onClick={() => setEditBookingData(null)} className="text-gray-500 hover:text-gray-800"><X size={24} /></button>
+              <button type="button" onClick={() => setEditBookingData(null)} className="text-red-500 hover:text-red-800"><X size={24} /></button>
             </div>
             <div className="p-6 space-y-6 overflow-y-auto flex-1">
               {editBookingData.address && (

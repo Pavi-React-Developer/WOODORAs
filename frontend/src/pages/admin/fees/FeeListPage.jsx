@@ -6,7 +6,7 @@ import Pagination from '../../../components/common/Pagination';
 import { downloadExcelFile } from '../../../utils/exportUtils';
 import ProductFeeRulesPage from './ProductFeeRulesPage';
 
-export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, canEdit = true, canDelete = true }) {
+export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, canEdit = true, canDelete = true, isAdmin = false }) {
   const [fees, setFees] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
 
@@ -171,7 +171,7 @@ export default function FeeListPage({ onNavigate, onEditFee, canCreate = true, c
           <button onClick={loadData} className="admin-secondary-btn">
             <RefreshCw size={16} /> Refresh
           </button>
-          {canEdit && (
+          {isAdmin && (
             <button
               onClick={() => setShowGlobalFees(true)}
               className="admin-btn"

@@ -2438,6 +2438,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }) {
           {/* ── FEE MANAGEMENT ── */}
           {(isAdmin || canView('fees')) && currentTab === 'fees' && feeSubTab === 'list' && (
             <FeeListPage
+              isAdmin={isAdmin}
               canCreate={hasPermission('fees', 'create')}
               canEdit={hasPermission('fees', 'edit')}
               canDelete={hasPermission('fees', 'delete')}

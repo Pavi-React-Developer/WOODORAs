@@ -630,7 +630,7 @@ export const ProductsPage = ({ canCreate = true, canEdit = true, canDelete = tru
                         type="text"
                         placeholder="Search products SKU, name..."
                         value={search}
-                        onChange={(e) => setSearch(e.target.value)}
+                        onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                         className="w-full pl-9 pr-4 py-2.5 text-sm border border-[#E6DFD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30"
                     />
                 </div>

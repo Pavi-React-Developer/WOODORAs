@@ -8,7 +8,6 @@ import ConfirmDialog from '../../../components/admin/ConfirmDialog';
 function CategoryPicker({ selected, onChange, categoriesList }) {
   const [search, setSearch] = useState('');
 
-  // Filter categories
   const filtered = categoriesList.filter(c => {
     let match = true;
     if (search && !c.name?.toLowerCase().includes(search.toLowerCase())) match = false;
@@ -17,11 +16,8 @@ function CategoryPicker({ selected, onChange, categoriesList }) {
 
   const toggle = (category) => {
     const isSelected = selected.some(x => x._id === category._id);
-    if (isSelected) {
-      onChange(selected.filter(x => x._id !== category._id));
-    } else {
-      onChange([...selected, category]);
-    }
+    if (isSelected) onChange(selected.filter(x => x._id !== category._id));
+    else onChange([...selected, category]);
   };
 
   return (
@@ -54,7 +50,6 @@ const emptyForm = { title: '', categories: [], mobileCount: '2', desktopCount: '
 export default function CategoriesGridAdmin({ canCreate, canEdit, canDelete }) {
   const [deleteId, setDeleteId] = useState(null);
   const [items, setItems] = useState([]);
-
   const [allCategories, setAllCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -63,7 +58,6 @@ export default function CategoriesGridAdmin({ canCreate, canEdit, canDelete }) {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    // Fetch all categories once to map IDs to objects easily
     categoryV2API.getAll({ limit: 500, isActive: 'true' })
       .then(d => setAllCategories(d.categories || d.data || []))
       .catch(console.error);
@@ -82,8 +76,6 @@ export default function CategoriesGridAdmin({ canCreate, canEdit, canDelete }) {
     e.preventDefault();
     if (!form.categories.length) return toast.success('Select at least one category.');
     setSaving(true);
-
-    // We only want to send category IDs to the backend
     const payload = {
       ...form,
       sortOrder: parseInt(form.sortOrder) || 0,
@@ -91,34 +83,28 @@ export default function CategoriesGridAdmin({ canCreate, canEdit, canDelete }) {
       desktopCount: parseInt(form.desktopCount) || 4,
       categories: form.categories.map(c => c._id || c)
     };
-
     try {
       if (editId) await cmsService.updateCategoriesGrid(editId, payload);
       else await cmsService.createCategoriesGrid(payload);
-      (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setShowForm(false)); setForm(emptyForm); setEditId(null); fetchItems();
+      (window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '')), setShowForm(false));
+      setForm(emptyForm); setEditId(null); fetchItems();
     } catch (err) { toast.error(err.message); }
     finally { setSaving(false); }
   };
 
   const handleEdit = async (item) => {
-    // If categories haven't loaded yet, fetch them first
     let cats = allCategories;
     if (!cats.length) {
       try {
         const d = await categoryV2API.getAll({ limit: 500, isActive: 'true' });
         cats = d.categories || d.data || [];
         setAllCategories(cats);
-      } catch (e) {
-        console.error(e);
-      }
+      } catch (e) { console.error(e); }
     }
-
-    // Map category IDs back to objects so the picker shows them correctly
     const populatedCategories = (item.categories || []).map(cId => {
-      if (typeof cId === 'object' && cId._id) return cId; // Already populated
+      if (typeof cId === 'object' && cId._id) return cId;
       return cats.find(x => x._id === cId) || { _id: cId, name: 'Unknown Category' };
     });
-
     setForm({
       title: item.title,
       categories: populatedCategories,
@@ -133,29 +119,39 @@ export default function CategoriesGridAdmin({ canCreate, canEdit, canDelete }) {
       sortOrder: String(item.sortOrder ?? 0)
     });
     setEditId(item._id);
-    window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowForm(true);
+    window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit');
+    setShowForm(true);
   };
 
-    const handleDelete = (id) => setDeleteId(id);
+  const handleDelete = (id) => setDeleteId(id);
+
   const handleDeleteConfirm = async () => {
     if (!deleteId) return;
     const id = deleteId;
     try {
       await cmsService.deleteCategoriesGrid(id); fetchItems();
-      toast.success("Deleted successfully!");
-    } catch (err) {
-      toast.error(err.message);
-    }
+      toast.success('Deleted successfully!');
+    } catch (err) { toast.error(err.message); }
     setDeleteId(null);
   };
 
   const handleToggle = async (item) => {
-    try { await cmsService.updateCategoriesGrid(item._id, { ...item, categories: item.categories?.map(c => c._id || c), status: !item.status }); fetchItems(); }
-    catch (err) { toast.error(err.message); }
+    try {
+      await cmsService.updateCategoriesGrid(item._id, { ...item, categories: item.categories?.map(c => c._id || c), status: !item.status });
+      fetchItems();
+    } catch (err) { toast.error(err.message); }
   };
 
   const removeSelectedCategory = (id) => {
     setForm(f => ({ ...f, categories: f.categories.filter(c => c._id !== id) }));
+  };
+
+  // Helper: resolve category image src
+  const resolveImg = (c) => {
+    const populated = typeof c === 'object' ? c : allCategories.find(x => x._id === c);
+    let src = populated?.image?.url || populated?.image || null;
+    if (src && typeof src === 'string' && src.startsWith('/uploads')) src = `${API_ORIGIN}${src}`;
+    return { src, name: populated?.name || '' };
   };
 
   return (
@@ -163,8 +159,10 @@ export default function CategoriesGridAdmin({ canCreate, canEdit, canDelete }) {
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-bold text-brand-dark">Categories Grid Sections</h3>
         {canCreate && (
-          <button onClick={() => { window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowForm(true); setEditId(null); setForm(emptyForm); }}
-            className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60">
+          <button
+            onClick={() => { window.history.pushState({}, '', window.location.pathname.replace(/\/edit$|\/add$/, '') + '/edit'); setShowForm(true); setEditId(null); setForm(emptyForm); }}
+            className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60"
+          >
             <Plus size={15} /> Add Categories Grid
           </button>
         )}
@@ -241,7 +239,6 @@ export default function CategoriesGridAdmin({ canCreate, canEdit, canDelete }) {
               <CategoryPicker selected={form.categories} onChange={(categories) => setForm(f => ({ ...f, categories }))} categoriesList={allCategories} />
             </div>
 
-            {/* Selected Categories Display */}
             {form.categories.length > 0 && (
               <div className="bg-[#FDFCFB] p-4 rounded-xl border border-[#E6DFD4]">
                 <p className="text-xs font-semibold text-brand-medium uppercase tracking-wider mb-3">Selected Categories ({form.categories.length})</p>
@@ -275,68 +272,112 @@ export default function CategoriesGridAdmin({ canCreate, canEdit, canDelete }) {
         </div>
       )}
 
-      <div className="space-y-3">
-        {loading ? [1, 2].map(i => <div key={i} className="h-20 bg-gray-100 rounded-2xl animate-pulse" />) :
-          items.length === 0 ? (
-            <div className="p-8 text-center text-brand-medium text-sm bg-white rounded-2xl border border-[#E6DFD4]">No categories grids yet.</div>
-          ) : items.map(item => (
-            <div key={item._id} className="bg-white rounded-2xl border border-[#E6DFD4] p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 shadow-sm">
-              <div className="flex gap-1">
-                {(item.categories || []).slice(0, 4).map((c, i) => {
-                  const populated = typeof c === 'object' ? c : allCategories.find(x => x._id === c);
-                  let src = populated?.image?.url || populated?.image || null;
-                  if (src && typeof src === 'string' && src.startsWith('/uploads')) {
-                    src = `${API_ORIGIN}${src}`;
-                  }
-                  if (!src) return <div key={i} className="w-10 h-10 rounded-lg border border-[#E6DFD4] bg-[#F7F3EE]" />;
-                  return <img key={i} src={src} alt="" onError={e => e.target.style.display = 'none'} className="w-10 h-10 rounded-lg object-cover border border-[#E6DFD4] bg-[#F7F3EE]" />;
-                })}
-              </div>
-              <div className="flex-1 w-full">
-                <p className="font-semibold text-brand-dark text-sm">{item.title}</p>
-                <div className="flex items-center gap-3 text-xs text-brand-medium mt-0.5">
-                  <span>{item.categories?.length || 0} categories</span>
-                  <span className="w-1 h-1 text-sm font-semibold text-gray-800" />
-                  <span>M: {item.mobileCount || 2}</span>
-                  <span className="w-1 h-1 text-sm font-semibold text-gray-800" />
-                  <span>D: {item.desktopCount || 4}</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 w-full sm:w-auto justify-end mt-2 sm:mt-0">
-                <span className={`text-[16px] px-2 py-0.5 rounded-full font-medium ${item.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
-                  {item.status ? 'Active' : 'Off'}
-                </span>
-                {canEdit && (
-                  <>
-                    <button onClick={() => handleToggle(item)} className="text-green-600 hover:text-green-700 transition-colors">
-                      {item.status ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
-                    <button onClick={() => handleEdit(item)} className="text-blue-600 hover:text-blue-700 transition-colors">
-                      <SquarePen size={16} />
-                    </button>
-                  </>
-                )}
-                {canDelete && (
-                  <button onClick={() => handleDelete(item._id)} className="text-red-500 hover:text-red-600 transition-colors">
-                    <Trash2 size={16} />
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
+      {/* ── Grid List ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {loading
+          ? [1, 2, 3].map(i => <div key={i} className="h-44 bg-gray-100 rounded-2xl animate-pulse" />)
+          : items.length === 0
+            ? <div className="col-span-3 p-8 text-center text-brand-medium text-sm bg-white rounded-2xl border border-[#E6DFD4]">No categories grids yet.</div>
+            : items.map(item => {
+                const cats = item.categories || [];
+                const left = cats[0] ? resolveImg(cats[0]) : null;
+                const right = cats[1] ? resolveImg(cats[1]) : null;
+                const extra = cats.length > 2 ? cats.length - 2 : 0;
+
+                return (
+                  <div key={item._id} className="bg-white rounded-2xl border border-[#E6DFD4] overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200">
+
+                    {/* ── Dual Split Banner ── */}
+                    <div className="relative w-full h-36 flex overflow-hidden">
+                      {/* Left half */}
+                      <div className="relative w-1/2 h-full overflow-hidden">
+                        {left?.src
+                          ? <img src={left.src} alt={left.name} onError={e => e.target.style.display = 'none'} className="w-full h-full object-cover" />
+                          : <div className="w-full h-full bg-[#F0EAE1] flex items-center justify-center text-[#C4A882] text-[10px]">No image</div>
+                        }
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/25 pointer-events-none" />
+                      </div>
+
+                      {/* Center divider */}
+                      <div className="absolute inset-y-0 left-1/2 w-0.5 bg-white/70 z-10 pointer-events-none" />
+
+                      {/* Right half */}
+                      <div className="relative w-1/2 h-full overflow-hidden">
+                        {right?.src
+                          ? <img src={right.src} alt={right.name} onError={e => e.target.style.display = 'none'} className="w-full h-full object-cover" />
+                          : <div className="w-full h-full bg-[#E8DDD4] flex items-center justify-center text-[#C4A882] text-[10px]">No image</div>
+                        }
+                        <div className="absolute inset-0 bg-gradient-to-l from-transparent to-black/25 pointer-events-none" />
+                      </div>
+
+                      {/* Bottom gradient + title overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent flex flex-col justify-end p-3 z-20 pointer-events-none">
+                        <p className="text-white text-sm font-bold leading-tight drop-shadow-sm truncate">{item.title}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="text-white/75 text-[10px]">{cats.length} categories</span>
+                          <span className="text-white/40 text-[10px]">·</span>
+                          <span className="text-white/75 text-[10px]">M:{item.mobileCount || 2}</span>
+                          <span className="text-white/40 text-[10px]">·</span>
+                          <span className="text-white/75 text-[10px]">D:{item.desktopCount || 4}</span>
+                        </div>
+                      </div>
+
+                      {/* Extra count badge */}
+                      {extra > 0 && (
+                        <div className="absolute top-2 right-2 z-30 bg-black/55 backdrop-blur-sm text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                          +{extra} more
+                        </div>
+                      )}
+
+                      {/* Status badge */}
+                      <div className={`absolute top-2 left-2 z-30 text-[9px] font-bold px-2 py-0.5 rounded-full shadow ${item.status ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'}`}>
+                        {item.status ? 'Active' : 'Off'}
+                      </div>
+                    </div>
+
+                    {/* ── Footer: remaining thumbnails + actions ── */}
+                    <div className="flex items-center justify-between px-3 py-2 border-t border-[#E6DFD4] bg-white">
+                      {/* Thumbnails 3–6 */}
+                      <div className="flex gap-1 overflow-x-auto">
+                        {cats.slice(2, 6).map((c, i) => {
+                          const { src } = resolveImg(c);
+                          if (!src) return <div key={i} className="w-11 h-11 rounded-md border border-[#E6DFD4] bg-[#F7F3EE] shrink-0" />;
+                          return <img key={i} src={src} alt="" onError={e => e.target.style.display = 'none'} className="w-11 h-11 rounded-md object-cover border border-[#E6DFD4] shrink-0" />;
+                        })}
+                      </div>
+
+                      {/* Action buttons */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        {canEdit && (
+                          <>
+                            <button onClick={() => handleToggle(item)} title={item.status ? 'Deactivate' : 'Activate'} className="text-emerald-600 hover:text-emerald-700 transition-colors">
+                              {item.status ? <EyeOff size={15} /> : <Eye size={15} />}
+                            </button>
+                            <button onClick={() => handleEdit(item)} title="Edit" className="text-blue-600 hover:text-blue-700 transition-colors">
+                              <SquarePen size={15} />
+                            </button>
+                          </>
+                        )}
+                        {canDelete && (
+                          <button onClick={() => handleDelete(item._id)} title="Delete" className="text-red-500 hover:text-red-600 transition-colors">
+                            <Trash2 size={15} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+        }
       </div>
-    
-      
+
       <ConfirmDialog
         isOpen={!!deleteId}
         onClose={() => setDeleteId(null)}
-        onConfirm={() => {
-            handleDelete(deleteId); setDeleteId(null);
-        }}
+        onConfirm={() => { handleDeleteConfirm(); }}
         title="Delete Item"
         message="This action cannot be undone. Are you sure?"
       />
-      
-</div>
+    </div>
   );
 }

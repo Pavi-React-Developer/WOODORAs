@@ -382,8 +382,8 @@ export const SubCategoriesPage = ({ canCreate = true, canEdit = true, canDelete 
                         type="text"
                         placeholder="Search subcategories..."
                         value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2.5 text-sm border border-[#E6DFD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30"
+                        onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                        className="w-full pl-10 pr-4 py-2 border border-[#E6DFD4] rounded-lg text-sm outline-none focus:border-[#8B5E3C] transition-colors"
                     />
                 </div>
                 <select

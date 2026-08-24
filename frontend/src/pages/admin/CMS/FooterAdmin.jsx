@@ -230,7 +230,7 @@ export default function FooterAdmin({ canCreate, canEdit, canDelete }) {
           </div>
         </div>
 
-        {canEdit && (
+        {(canEdit || canCreate) && (
           <div className="flex justify-end">
             <button type="submit" disabled={saving}
               className="flex items-center gap-2 bg-[#8B5E3C] text-white px-5 py-2.5 rounded-full hover:bg-[#7a5234] transition-colors disabled:opacity-60">

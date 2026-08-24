@@ -458,7 +458,7 @@ export default function GiftAndCardPage({ onNavigate, onAddToCart }) {
               {selectedProducts.map((sp, index) => (
                 <div key={`${sp._id}-${index}`} className="flex flex-col gap-4 bg-gray-50 p-4 rounded-sm border border-gray-200">
                   <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 bg-white rounded overflow-hidden shrink-0 border border-gray-100 shadow-sm">
+                    <div className="w-12 h-12 bg-white rounded overflow-hidden shrink-0 border border-gray-100 shadow-sm">
                       {sp.images?.[0] && (
                         <img src={getImageSrc(sp.images[0])} alt={sp.name} className="w-full h-full object-cover" />
                       )}

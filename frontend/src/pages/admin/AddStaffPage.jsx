@@ -334,7 +334,7 @@ export default function AddStaffPage({ onBack, onSuccess, editingStaff, currentU
   };
 
   return (
-    <div className="flex-1 overflow-y-auto p-8">
+    <div className="w-full">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
           <p className="text-[13px] md:text-sm font-serif text-white mb-1">
@@ -491,7 +491,7 @@ export default function AddStaffPage({ onBack, onSuccess, editingStaff, currentU
               className="flex items-center gap-2 bg-[#8B5E3C] hover:bg-[#7a5234] disabled:opacity-60 text-white px-8 py-3 rounded-full text-[15px] font-bold shadow-sm transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-              {loading ? 'Saving...' : isEdit ? 'Save Changes' : 'Create Staff'}
+              {loading ? 'Saving...' : isEdit ? 'Save Changes' : 'Save'}
             </button>
           </div>
         </form>
