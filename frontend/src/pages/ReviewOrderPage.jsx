@@ -32,18 +32,18 @@ export default function ReviewOrderPage({ onNavigate }) {
         {/* Progress Bar (Optional UI enhancement) */}
         <div className="flex items-center justify-center mb-10 max-w-2xl mx-auto">
           <div className="flex items-center text-[#8B5E3C] font-bold">
-            <div className="w-8 h-8 rounded-full bg-[#8B5E3C] text-white flex items-center justify-center text-sm shadow-md">1</div>
-            <span className="ml-2">Cart</span>
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#8B5E3C] text-white flex items-center justify-center text-base sm:text-lg shadow-md">1</div>
+            <span className="hidden sm:inline ml-2 sm:ml-3">Cart</span>
           </div>
-          <div className="w-16 sm:w-32 h-1 bg-[#8B5E3C] mx-2 sm:mx-4 rounded"></div>
+          <div className="w-8 sm:w-32 h-1 bg-[#8B5E3C] mx-2 sm:mx-4 rounded"></div>
           <div className="flex items-center text-[#8B5E3C] font-bold">
-            <div className="w-8 h-8 rounded-full border-2 border-[#8B5E3C] bg-white flex items-center justify-center text-sm">2</div>
-            <span className="ml-2">Review</span>
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-[3px] border-[#8B5E3C] bg-white flex items-center justify-center text-base sm:text-lg">2</div>
+            <span className="hidden sm:inline ml-2 sm:ml-3">Review</span>
           </div>
-          <div className="w-16 sm:w-32 h-1 bg-gray-300 mx-2 sm:mx-4 rounded"></div>
+          <div className="w-8 sm:w-32 h-1 bg-gray-300 mx-2 sm:mx-4 rounded"></div>
           <div className="flex items-center text-gray-400 font-bold">
-            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm">3</div>
-            <span className="ml-2">Payment</span>
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-200 flex items-center justify-center text-base sm:text-lg">3</div>
+            <span className="hidden sm:inline ml-2 sm:ml-3">Payment</span>
           </div>
         </div>
 

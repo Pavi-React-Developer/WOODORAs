@@ -425,18 +425,18 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
         {/* Progress Bar */}
         <div className="flex items-center justify-center mb-10 max-w-2xl mx-auto">
           <div className="flex items-center text-[#8B5E3C] font-bold">
-            <div className="w-8 h-8 rounded-full bg-[#8B5E3C] text-white flex items-center justify-center text-sm shadow-md">1</div>
-            <span className="hidden sm:inline ml-2">Cart</span>
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#8B5E3C] text-white flex items-center justify-center text-base sm:text-lg shadow-md">1</div>
+            <span className="hidden sm:inline ml-2 sm:ml-3">Cart</span>
           </div>
-          <div className="w-10 sm:w-32 h-1 bg-[#8B5E3C] mx-2 sm:mx-4 rounded"></div>
+          <div className="w-8 sm:w-32 h-1 bg-[#8B5E3C] mx-2 sm:mx-4 rounded"></div>
           <div className="flex items-center text-[#8B5E3C] font-bold">
-            <div className="w-8 h-8 rounded-full bg-[#8B5E3C] text-white flex items-center justify-center text-sm shadow-md">2</div>
-            <span className="hidden sm:inline ml-2">Review</span>
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#8B5E3C] text-white flex items-center justify-center text-base sm:text-lg shadow-md">2</div>
+            <span className="hidden sm:inline ml-2 sm:ml-3">Review</span>
           </div>
-          <div className="w-10 sm:w-32 h-1 bg-[#8B5E3C] mx-2 sm:mx-4 rounded"></div>
+          <div className="w-8 sm:w-32 h-1 bg-[#8B5E3C] mx-2 sm:mx-4 rounded"></div>
           <div className="flex items-center text-[#8B5E3C] font-bold">
-            <div className="w-8 h-8 rounded-full border-2 border-[#8B5E3C] bg-white flex items-center justify-center text-sm">3</div>
-            <span className="hidden sm:inline ml-2">Payment</span>
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-[3px] border-[#8B5E3C] bg-white flex items-center justify-center text-base sm:text-lg">3</div>
+            <span className="hidden sm:inline ml-2 sm:ml-3">Payment</span>
           </div>
         </div>
 
@@ -606,9 +606,22 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
                 <h2 className="text-xl font-bold text-gray-900">Payment Method</h2>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1">
-                  <label className={`relative p-4 rounded-2xl border-2 transition-all flex items-center gap-4 ${!codStatus.codEnabled ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed' : paymentMethod === 'COD' ? 'border-[#8B5E3C] bg-[#F8F4EC]/50 cursor-pointer' : 'border-[#E6DFD4] hover:border-[#8B5E3C]/50 cursor-pointer'}`}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 auto-rows-fr items-stretch mb-4">
+                <label className={`h-full w-full relative p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-center gap-4 ${paymentMethod === 'Cashfree' ? 'border-[#8B5E3C] bg-[#F8F4EC]/50' : 'border-[#E6DFD4] bg-white hover:border-[#8B5E3C]/50'}`}>
+                  <input type="radio" name="paymentMethod" value="Cashfree" checked={paymentMethod === 'Cashfree'} onChange={(e) => setPaymentMethod(e.target.value)} className="w-4 h-4 text-[#8B5E3C] focus:ring-[#8B5E3C] shrink-0" />
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 shrink-0">
+                      <CreditCard className="w-4 h-4" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="font-bold text-gray-800 leading-tight block">Pay Online</span>
+                      <span className="text-[11px] text-gray-500 mt-0.5 block">via Cashfree Gateway</span>
+                    </div>
+                  </div>
+                </label>
+
+                <div className="flex flex-col w-full h-full relative">
+                  <label className={`h-full w-full relative p-4 rounded-2xl border-2 transition-all flex items-center gap-4 ${paymentMethod === 'COD' ? 'border-[#8B5E3C] bg-[#F8F4EC]/50 cursor-pointer' : 'border-[#E6DFD4] bg-white cursor-pointer hover:border-[#8B5E3C]/50'} ${!codStatus.codEnabled ? '!cursor-not-allowed opacity-100' : ''}`}>
                     <input 
                       type="radio" 
                       name="paymentMethod" 
@@ -616,32 +629,19 @@ export default function CompleteOrderPage({ onNavigate, user, onAuthSuccess, onA
                       checked={paymentMethod === 'COD'} 
                       onChange={(e) => setPaymentMethod(e.target.value)} 
                       disabled={!codStatus.codEnabled}
-                      className="w-4 h-4 text-[#8B5E3C] focus:ring-[#8B5E3C] disabled:cursor-not-allowed" 
+                      className="w-4 h-4 text-[#8B5E3C] focus:ring-[#8B5E3C] disabled:cursor-not-allowed shrink-0" 
                     />
                     <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${!codStatus.codEnabled ? 'bg-gray-200 text-gray-500' : 'bg-blue-100 text-blue-600'}`}>
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center bg-blue-100 text-blue-600 shrink-0">
                         <Banknote className="w-4 h-4" />
                       </div>
-                      <span className="font-bold text-gray-800">Cash on Delivery</span>
+                      <span className="font-bold text-gray-800 leading-tight">Cash on Delivery</span>
                     </div>
                   </label>
                   {!codStatus.codEnabled && codStatus.message && (
-                    <p className="text-xs font-semibold text-red-500 pl-2 mt-1">{codStatus.message}</p>
+                    <p className="absolute -bottom-5 left-0 text-[11.5px] font-semibold text-red-500 pl-2 whitespace-nowrap">{codStatus.message}</p>
                   )}
                 </div>
-
-                <label className={`relative p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-center gap-4 ${paymentMethod === 'Cashfree' ? 'border-[#8B5E3C] bg-[#F8F4EC]/50' : 'border-[#E6DFD4] hover:border-[#8B5E3C]/50'}`}>
-                  <input type="radio" name="paymentMethod" value="Cashfree" checked={paymentMethod === 'Cashfree'} onChange={(e) => setPaymentMethod(e.target.value)} className="w-4 h-4 text-[#8B5E3C] focus:ring-[#8B5E3C]" />
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
-                      <CreditCard className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <span className="font-bold text-gray-800 block">Pay Online</span>
-                      <span className="text-xs text-gray-500">via Cashfree Gateway</span>
-                    </div>
-                  </div>
-                </label>
               </div>
             </div>
 

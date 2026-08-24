@@ -21,7 +21,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange, clas
 
   const navCls = (disabled) =>
     [
-      'w-8 h-8 flex items-center justify-center rounded-md border text-sm font-medium transition-all select-none',
+      'w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-md border text-base font-medium transition-all select-none',
       disabled
         ? 'border-[#E9DED3] text-[#C5B8AD] cursor-not-allowed opacity-50'
         : 'border-[#D6C9BC] text-[#7A5C44] hover:bg-[#F5EDE4] hover:border-[#C4A98B] cursor-pointer',
@@ -57,7 +57,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange, clas
           return (
             <span
               key={`ellipsis-${index}`}
-              className="w-8 h-8 flex items-center justify-center text-[#A89585] text-sm select-none"
+              className="w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center text-[#A89585] text-base select-none"
             >
               …
             </span>
@@ -70,7 +70,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange, clas
             type="button"
             onClick={() => onPageChange(page)}
             className={[
-              'w-8 h-8 flex items-center justify-center rounded-md text-sm font-semibold transition-all select-none border',
+              'w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-md text-base font-semibold transition-all select-none border',
               isActive
                 ? 'bg-[#C4965A] text-white border-[#C4965A] shadow-sm'
                 : 'border-[#D6C9BC] text-[#7A5C44] hover:bg-[#F5EDE4] hover:border-[#C4A98B]',

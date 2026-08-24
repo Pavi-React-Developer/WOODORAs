@@ -3,7 +3,7 @@ import SectionRenderer from '../components/home/SectionRenderer';
 import useCMSStore from '../store/useCMSStore';
 
 import { Loader2 } from 'lucide-react';
-import { FaStar, FaCircle, FaHeart } from "react-icons/fa";
+import { FaStar, FaCircle, FaHeart, FaWhatsapp } from "react-icons/fa";
 import { RiHeartAdd2Line } from "react-icons/ri";
 import { TbTriangleFilled } from "react-icons/tb";
 import { BsFillPuzzleFill } from "react-icons/bs";
@@ -166,6 +166,21 @@ export default function Home({ user, cartItems, wishlistItems, onOpenCart, onOpe
       {layout.map(section => (
         <SectionRenderer key={section.id} section={section} context={context} renderedTypes={renderedTypes} />
       ))}
+      
+      {/* Floating WhatsApp Enquiry Button */}
+      <a 
+          href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER || '919789660115'}?text=${encodeURIComponent(`Hi, I have an inquiry about your products:`)}`}
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="fixed bottom-[90px] right-6 z-40 bg-[#25D366] text-white p-4 rounded-full shadow-[0_4px_14px_rgba(37,211,102,0.4)] hover:scale-110 hover:shadow-[0_6px_20px_rgba(37,211,102,0.6)] transition-all duration-300 md:bottom-8 md:right-8 group flex items-center justify-center animate-bounce-slow"
+          aria-label="WhatsApp Enquiry"
+      >
+          <FaWhatsapp className="w-6 h-6 md:w-8 md:h-8" />
+          {/* Optional tooltip */}
+          <span className="absolute right-full mr-4 bg-white text-[#25D366] px-3 py-1.5 rounded-lg text-sm font-semibold shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap pointer-events-none hidden md:block">
+            Chat with us
+          </span>
+      </a>
     </div>
   );
 }
