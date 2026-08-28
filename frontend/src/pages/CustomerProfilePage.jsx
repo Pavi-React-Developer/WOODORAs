@@ -3653,7 +3653,7 @@ export default function CustomerProfilePage({
                 <button
                   onClick={executeCancelOrder}
                   disabled={cancelLoading || !refundDestinationInput.trim()}
-                  className="flex-[1.5] flex justify-center items-center gap-2 py-2.5 bg-[#647C5E] text-white rounded-[8px] font-bold text-sm shadow-sm hover:bg-[#52664d] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-[1.5] flex justify-center items-center gap-2 py-2.5 bg-[#8a4708] text-white rounded-[8px] font-bold text-sm shadow-sm hover:bg-[#703806] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {cancelLoading ? 'Processing...' : (
                     <>
