@@ -135,8 +135,12 @@ const processRefund = async (req, res) => {
         // Fix #3: Pass whether the order was delivered so inventory is also restored
         const wasDelivered = order.status === 'Delivered' ||
           (refund.originalStatus === 'Delivered');
-        for (const item of order.orderItems) {
-          await restoreProductStock(item, wasDelivered);
+
+        // Since Pending orders do not reserve stock, we only restore stock if it progressed past Pending
+        if (refund.originalStatus !== 'Pending') {
+          for (const item of order.orderItems) {
+            await restoreProductStock(item, wasDelivered);
+          }
         }
         refund.stockRestored = true;
         console.log(`Inventory restored automatically for refund ${refund._id} (order ${refund.orderId}), wasDelivered=${wasDelivered}`);

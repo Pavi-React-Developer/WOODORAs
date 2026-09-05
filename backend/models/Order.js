@@ -258,7 +258,7 @@ const orderSchema = new mongoose.Schema(
         ret.advance_payment = Number(ret.advance_payment) || Number(ret.codAdvance) || 0;
         ret.total_amount = Number(ret.total_amount) || Number(ret.totalPrice) || 0;
         ret.paid_amount = Number(ret.paid_amount) || (ret.paymentMethod === 'COD'
-          ? ret.advance_payment
+          ? (ret.isPaid ? ret.advance_payment : 0)
           : (ret.isPaid ? ret.total_amount : 0));
         ret.balance_amount = Number(ret.balance_amount) || Number(ret.balanceAmount)
           || Math.max(0, ret.total_amount - ret.paid_amount);

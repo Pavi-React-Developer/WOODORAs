@@ -58,8 +58,8 @@ const buildPricingSnapshot = ({ pricing = {}, subtotal, discountAmount, fees, sh
     : (snapshot.product_fee + snapshot.gift_fee + snapshot.shipping_fee + snapshot.weight_fee + snapshot.platform_fee);
 
   snapshot.total_amount = Math.max(0, snapshot.subtotal - snapshot.coupon_discount + totalFees + snapshot.gst_amount);
-  snapshot.paid_amount = paymentMethod === 'COD' ? Math.min(snapshot.advance_payment, snapshot.total_amount) : 0;
-  snapshot.balance_amount = Math.max(0, snapshot.total_amount - snapshot.paid_amount);
+  snapshot.paid_amount = 0;
+  snapshot.balance_amount = snapshot.total_amount;
   return snapshot;
 };
 
@@ -482,12 +482,15 @@ const addOrderItems = async (req, res) => {
         grand_total: createdOrder.total_amount,
       });
 
-      // Reserve stock when order is placed
-      for (const item of createdOrder.orderItems) {
-        if (item.variant) {
-          await updateVariantStock(item.variant, item.qty, 'reserve');
-        } else if (item.product) {
-          await updateProductStock(item.product, item.qty, 'reserve');
+      // Reserve stock only if the order is not Pending (e.g. pure COD)
+      // For Pending orders (Cashfree or partial COD), stock is reserved upon successful payment
+      if (createdOrder.status !== 'Pending') {
+        for (const item of createdOrder.orderItems) {
+          if (item.variant) {
+            await updateVariantStock(item.variant, item.qty, 'reserve');
+          } else if (item.product) {
+            await updateProductStock(item.product, item.qty, 'reserve');
+          }
         }
       }
 
@@ -547,6 +550,8 @@ const updateOrderToPaid = async (req, res) => {
       const advancePayment = Number(order.advance_payment || order.codAdvance || 0);
       const isCodAdvancePayment = order.paymentMethod === 'COD';
       const paidAmount = isCodAdvancePayment ? Math.min(advancePayment, totalAmount) : totalAmount;
+      const wasPending = order.status === 'Pending';
+
       order.isPaid = !isCodAdvancePayment || paidAmount >= totalAmount;
       order.paidAt = Date.now();
       order.paymentResult = {
@@ -559,6 +564,16 @@ const updateOrderToPaid = async (req, res) => {
       order.paid_amount = paidAmount;
       order.balance_amount = Math.max(0, totalAmount - paidAmount);
       order.balanceAmount = order.balance_amount;
+
+      if (wasPending) {
+        for (const item of order.orderItems) {
+          if (item.variant) {
+            await updateVariantStock(item.variant, item.qty, 'reserve');
+          } else if (item.product) {
+            await updateProductStock(item.product, item.qty, 'reserve');
+          }
+        }
+      }
 
       const updatedOrder = await order.save();
       // If order had a coupon applied, consume it now (increment usageCount)
@@ -629,7 +644,20 @@ const updateOrderStatus = async (req, res) => {
       return res.status(400).json({ message: 'Cannot move order status backwards' });
     }
 
+    const wasPending = order.status === 'Pending';
+    const isMovingToActive = wasPending && status !== 'Cancelled' && status !== 'Pending';
+
     order.status = status;
+
+    if (isMovingToActive) {
+      for (const item of order.orderItems) {
+        if (item.variant) {
+          await updateVariantStock(item.variant, item.qty, 'reserve');
+        } else if (item.product) {
+          await updateProductStock(item.product, item.qty, 'reserve');
+        }
+      }
+    }
 
     if (status === 'Delivered') {
       order.isDelivered = true;
@@ -685,8 +713,19 @@ const updateOrderToDelivered = async (req, res) => {
       return res.status(404).json({ message: 'Order not found' });
     }
 
+    const wasPending = order.status === 'Pending';
+
     // Only deduct stock if not already delivered to prevent double deduction
     if (order.status !== 'Delivered') {
+      if (wasPending) {
+        for (const item of order.orderItems) {
+          if (item.variant) {
+            await updateVariantStock(item.variant, item.qty, 'reserve');
+          } else if (item.product) {
+            await updateProductStock(item.product, item.qty, 'reserve');
+          }
+        }
+      }
       for (const item of order.orderItems) {
         if (item.variant) {
           await updateVariantStock(item.variant, item.qty, 'deliver');
@@ -787,7 +826,20 @@ const updateOrderDetails = async (req, res) => {
         return res.status(400).json({ message: 'Please update order status step by step' });
       }
 
+      const wasPending = order.status === 'Pending';
+      const isMovingToActive = wasPending && status !== 'Cancelled' && status !== 'Pending';
+
       order.status = status;
+
+      if (isMovingToActive) {
+        for (const item of order.orderItems) {
+          if (item.variant) {
+            await updateVariantStock(item.variant, item.qty, 'reserve');
+          } else if (item.product) {
+            await updateProductStock(item.product, item.qty, 'reserve');
+          }
+        }
+      }
       if (status === 'Delivered' && !order.isDelivered) {
         order.isDelivered = true;
         order.deliveredAt = Date.now();
@@ -1135,5 +1187,7 @@ module.exports = {
   deleteOrder,
   downloadInvoice,
   getBadgeCounts,
+  updateVariantStock,
+  updateProductStock,
 };
 

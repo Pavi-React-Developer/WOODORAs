@@ -8,6 +8,7 @@
 
 const Order = require('../models/Order');
 const { createCashfreeOrder, verifyCashfreePayment, getCashfreeDiagnostics } = require('../services/cashfreeService');
+const { updateVariantStock, updateProductStock } = require('./orderController');
 
 const diagnostics = async (req, res) => {
   try {
@@ -143,8 +144,10 @@ const verifyPayment = async (req, res) => {
       order.balance_amount = Math.max(0, totalAmount - paidAmount);
       order.balanceAmount = order.balance_amount;
       
+      let wasPending = false;
       if (order.status === 'Pending') {
         order.status = 'Placed';
+        wasPending = true;
       }
       order.paymentResult = {
         id: cfOrder.cf_order_id,
@@ -155,6 +158,16 @@ const verifyPayment = async (req, res) => {
       };
 
       const updatedOrder = await order.save();
+
+      if (wasPending) {
+        for (const item of updatedOrder.orderItems) {
+          if (item.variant) {
+            await updateVariantStock(item.variant, item.qty, 'reserve');
+          } else if (item.product) {
+            await updateProductStock(item.product, item.qty, 'reserve');
+          }
+        }
+      }
 
       // Clear the user's cart upon successful payment
       try {
